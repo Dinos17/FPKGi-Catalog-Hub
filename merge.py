@@ -52,14 +52,16 @@ headers = {
 
 def parse_json_robust(text):
     text = text.lstrip('\ufeff').strip()
+    
+    # 1. Απευθείας standard JSON parse
     try:
         return json.loads(text)
     except Exception:
         pass
 
-    # Καθαρισμός σχολίων και trailing commas
-    cleaned = re.sub(r'//.*', '', text)
-    cleaned = re.sub(r'/\*.*?\*/', '', cleaned, flags=re.DOTALL)
+    # 2. Αφαίρεση σχολίων χωρίς να καταστρέφονται τα https:// URLs
+    cleaned = re.sub(r'/\*.*?\*/', '', text, flags=re.DOTALL)
+    cleaned = re.sub(r'(?<!:)\/\/.*', '', cleaned)  # Αγνοεί το ://
     cleaned = re.sub(r',(?=\s*[\}\]])', '', cleaned)
 
     try:
@@ -67,12 +69,24 @@ def parse_json_robust(text):
     except Exception:
         pass
 
-    # Fallback σε Python literal evaluation αν έχει single quotes ή Python dict format
+    # 3. Διόρθωση κλειδιών χωρίς εισαγωγικά {key: "val"} -> {"key": "val"}
+    fixed_keys = re.sub(r'({\s*|,\s*)([a-zA-Z_][a-zA-Z0-9_]*)\s*:', r'\1"\2":', cleaned)
     try:
-        py_text = cleaned.replace('true', 'True').replace('false', 'False').replace('null', 'None')
-        return ast.literal_eval(py_text)
+        return json.loads(fixed_keys)
     except Exception:
         pass
+
+    # 4. Fallback με ast.literal_eval για single quotes ή Python dicts
+    for raw in [cleaned, fixed_keys]:
+        try:
+            py_text = re.sub(r'\btrue\b', 'True', raw, flags=re.IGNORECASE)
+            py_text = re.sub(r'\bfalse\b', 'False', py_text, flags=re.IGNORECASE)
+            py_text = re.sub(r'\bnull\b', 'None', py_text, flags=re.IGNORECASE)
+            res = ast.literal_eval(py_text)
+            if isinstance(res, (dict, list)):
+                return res
+        except Exception:
+            pass
 
     return None
 
@@ -81,19 +95,16 @@ def extract_items(data):
         return data
     
     if isinstance(data, dict):
-        # 1. Έλεγχος για κλειδιά-κοντέινερ
         for key in ['items', 'games', 'pkgs', 'data', 'files', 'list', 'updates', 'dlc']:
             if key in data and isinstance(data[key], list):
                 return data[key]
         
-        # 2. Έλεγχος αν τα values του dict είναι τα ίδια τα αντικείμενα (π.χ. {"CUSA001": {...}})
         dict_vals = list(data.values())
         if dict_vals and all(isinstance(v, dict) for v in dict_vals[:10]):
             first_val = dict_vals[0]
-            if any(k in first_val for k in ['pkg_url', 'name', 'url', 'title_id', 'title', 'link']):
+            if any(k in first_val for k in ['pkg_url', 'name', 'url', 'title_id', 'title', 'link', 'update_url']):
                 return dict_vals
         
-        # 3. Αναδρομικός έλεγχος
         for val in dict_vals:
             if isinstance(val, list):
                 return val
@@ -105,7 +116,7 @@ def extract_items(data):
 
 def get_item_url(item):
     if isinstance(item, dict):
-        for key in ['pkg_url', 'pkg_direct_link', 'url', 'link', 'pkg', 'download']:
+        for key in ['pkg_url', 'pkg_direct_link', 'url', 'link', 'pkg', 'download', 'update_url']:
             if key in item and item[key]:
                 return str(item[key])
     return None
