@@ -1,8 +1,6 @@
 name: Auto Merge FPKGi JSONs
 
 on:
-  schedule:
-    - cron: '0 */12 * * *'
   workflow_dispatch:
 
 permissions:
@@ -20,63 +18,17 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Run Community FPKGi Merger Script
+      - name: Diagnose JSON Structure
         run: |
           node -e '
-          const fs = require("fs");
-
-          async function fetchUrl(url) {
-            try {
-              const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
-              console.log(`URL: ${url} -> Status: ${res.status}`);
-              if (!res.ok) return [];
-              const json = await res.json();
-              if (Array.isArray(json)) return json;
-              if (json.DATA && Array.isArray(json.DATA)) return json.DATA;
-              if (json.data && Array.isArray(json.data)) return json.data;
-              if (json.games && Array.isArray(json.games)) return json.games;
-              return [];
-            } catch (e) {
-              console.log(`Error fetching ${url}: ${e.message}`);
-              return [];
+          async function check() {
+            const res = await fetch("https://archive.org/download/ps4-fpkg-collection-english-fpkgi/GAMES.json");
+            const json = await res.json();
+            console.log("GAMES.json keys:", Object.keys(json));
+            if (!Array.isArray(json)) {
+              const firstKey = Object.keys(json)[0];
+              console.log("First key sample:", firstKey, Array.isArray(json[firstKey]) ? "is array with length " + json[firstKey].length : "not array");
             }
           }
-
-          async function processCategory(filename, urls) {
-            let combined = [];
-            for (const url of urls) {
-              const list = await fetchUrl(url);
-              combined = combined.concat(list);
-            }
-            const unique = Array.from(new Map(combined.map(item => [item.title_id || item.name || Math.random(), item])).values());
-            fs.writeFileSync(filename, JSON.stringify({ DATA: unique }, null, 2));
-            console.log(`Saved ${filename} with ${unique.length} items.\n`);
-          }
-
-          async function run() {
-            await processCategory("games.json", [
-              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/GAMES.json"
-            ]);
-            await processCategory("updates.json", [
-              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/UPDATES.json"
-            ]);
-            await processCategory("dlc.json", [
-              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/DLC.json"
-            ]);
-            await processCategory("ps1.json", [
-              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PS1.json"
-            ]);
-            await processCategory("ps2.json", [
-              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PS2.json"
-            ]);
-          }
-
-          run();
+          check();
           '
-
-      - name: Commit & Push updated JSONs
-        run: |
-          git config --global user.name "github-actions[bot]"
-          git config --global user.email "github-actions[bot]@users.noreply.github.com"
-          git add *.json
-          git diff --quiet && git diff --staged --quiet || (git commit -m "Auto-update merged FPKGi JSON files" && git push)
