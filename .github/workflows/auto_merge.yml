@@ -9,26 +9,20 @@ permissions:
 jobs:
   merge:
     runs-on: ubuntu-latest
+
     steps:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          node-version: '20'
+          python-version: "3.x"
 
-      - name: Diagnose JSON Structure
+      - name: Install Dependencies
         run: |
-          node -e '
-          async function check() {
-            const res = await fetch("https://archive.org/download/ps4-fpkg-collection-english-fpkgi/GAMES.json");
-            const json = await res.json();
-            console.log("GAMES.json keys:", Object.keys(json));
-            if (!Array.isArray(json)) {
-              const firstKey = Object.keys(json)[0];
-              console.log("First key sample:", firstKey, Array.isArray(json[firstKey]) ? "is array with length " + json[firstKey].length : "not array");
-            }
-          }
-          check();
-          '
+          python -m pip install requests
+
+      - name: Run FPKGi Merger
+        run: |
+          python merge.py
