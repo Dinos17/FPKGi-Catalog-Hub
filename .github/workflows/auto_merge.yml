@@ -1,0 +1,32 @@
+name: Auto Merge FPKGi JSONs
+
+on:
+  schedule:
+    - cron: '0 0 * * *' # Τρέχει αυτόματα κάθε μέρα
+  workflow_dispatch: # Σου επιτρέπει να το τρέχεις και χειροκίνητα
+
+permissions:
+  contents: write
+
+jobs:
+  merge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repo
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.x'
+
+      - name: Run Merge Script
+        run: python merge.py
+
+      - name: Commit & Push updated JSONs
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git add *.json
+          git commit -m "Auto-update merged JSONs" || exit 0
+          git push
