@@ -25,7 +25,7 @@ jobs:
 
       - name: Run FPKGi Merger
         run: |
-          python merge.py
+          python tools/merge.py
 
       - name: Commit Generated JSON
         run: |
