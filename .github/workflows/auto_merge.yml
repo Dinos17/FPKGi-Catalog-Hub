@@ -2,8 +2,8 @@ name: Auto Merge FPKGi JSONs
 
 on:
   schedule:
-    - cron: '0 0 * * *' # Τρέχει αυτόματα κάθε μέρα
-  workflow_dispatch: # Σου επιτρέπει να το τρέχεις και χειροκίνητα
+    - cron: '0 0 * * *'
+  workflow_dispatch:
 
 permissions:
   contents: write
@@ -19,6 +19,9 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.x'
+
+      - name: Install Dependencies
+        run: pip install requests
 
       - name: Run Merge Script
         run: python merge.py
