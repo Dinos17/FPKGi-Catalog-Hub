@@ -1,4 +1,5 @@
 import json
+import re
 import requests
 import urllib3
 
@@ -12,8 +13,7 @@ CATEGORIES = {
         "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/GAMES.json"
     ],
     "updates": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/UPDATES.json",
-        "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/UPDATES.json"
+        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/UPDATES.json"
     ],
     "dlc": [
         "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DLC.json",
@@ -23,8 +23,7 @@ CATEGORIES = {
         "https://raw.githubusercontent.com/ps4arab/fpkgi/main/HOMEBREW.json"
     ],
     "demos": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DEMOS.json",
-        "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/DEMO.json"
+        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DEMOS.json"
     ],
     "emulators": [
         "https://raw.githubusercontent.com/ps4arab/fpkgi/main/EMULATORS.json"
@@ -33,20 +32,16 @@ CATEGORIES = {
         "https://raw.githubusercontent.com/ps4arab/fpkgi/main/THEMES.json"
     ],
     "ps1": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS1.json",
-        "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PS1.json"
+        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS1.json"
     ],
     "ps2": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS2.json",
-        "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PS2.json"
+        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS2.json"
     ],
     "psp": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PSP.json",
-        "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PSP.json"
+        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PSP.json"
     ],
     "apps": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/APPS.json",
-        "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/APPS.json"
+        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/APPS.json"
     ]
 }
 
@@ -54,17 +49,37 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
+def clean_json_text(text):
+    # Αφαίρεση UTF-8 BOM
+    text = text.lstrip('\ufeff')
+    # Αφαίρεση C-style σχολίων (// ...)
+    text = re.sub(r'//.*', '', text)
+    # Αφαίρεση trailing commas πριν από ] ή }
+    text = re.sub(r',(\s*[\}\]])', r'\1', text)
+    return text
+
 def extract_items(data):
     if isinstance(data, list):
         return data
-    elif isinstance(data, dict):
-        for key in ['items', 'games', 'pkgs', 'data', 'files']:
+    if isinstance(data, dict):
+        for key in ['items', 'games', 'pkgs', 'data', 'files', 'list']:
             if key in data and isinstance(data[key], list):
                 return data[key]
         for val in data.values():
             if isinstance(val, list):
                 return val
+            elif isinstance(val, dict):
+                sub = extract_items(val)
+                if sub:
+                    return sub
     return []
+
+def get_item_url(item):
+    if isinstance(item, dict):
+        for key in ['pkg_url', 'pkg_direct_link', 'url', 'link', 'pkg', 'download']:
+            if key in item and item[key]:
+                return str(item[key])
+    return None
 
 for category, urls in CATEGORIES.items():
     merged_items = []
@@ -75,11 +90,17 @@ for category, urls in CATEGORIES.items():
         try:
             res = requests.get(url, headers=headers, timeout=30, verify=False, allow_redirects=True)
             if res.status_code == 200:
-                data = res.json()
+                cleaned_text = clean_json_text(res.text)
+                try:
+                    data = json.loads(cleaned_text)
+                except Exception as parse_err:
+                    print(f"JSON Parse Error for {url}: {parse_err}")
+                    continue
+                
                 items = extract_items(data)
                 added = 0
                 for item in items:
-                    pkg_url = item.get('pkg_url') if isinstance(item, dict) else None
+                    pkg_url = get_item_url(item)
                     if pkg_url and pkg_url not in seen_urls:
                         seen_urls.add(pkg_url)
                         merged_items.append(item)
@@ -87,7 +108,8 @@ for category, urls in CATEGORIES.items():
                     elif not pkg_url and item not in merged_items:
                         merged_items.append(item)
                         added += 1
-                print(f"SUCCESS: {url} | Found: {len(items)} | New Added: {added}")
+                
+                print(f"SUCCESS: {url} | Found: {len(items)} items | New Added: {added}")
             else:
                 print(f"HTTP ERROR {res.status_code}: {url}")
         except Exception as e:
