@@ -30,10 +30,43 @@ jobs:
         run: |
           python tools/merge.py
 
-      - name: Commit Generated Catalogs
+      - name: Check for Catalog Changes
+        id: changes
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add *.json
-          git diff --cached --quiet || git commit -m "Update merged FPKGi catalogs"
-          git push
+
+          if git diff --cached --quiet; then
+            echo "updated=false" >> "$GITHUB_OUTPUT"
+
+            echo "### ℹ️ FPKGi Auto Merge" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Status:** Success" >> "$GITHUB_STEP_SUMMARY"
+            echo "**JSON catalogs updated:** No" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "No catalog changes were detected." >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "updated=true" >> "$GITHUB_OUTPUT"
+
+            echo "### ✅ FPKGi Auto Merge" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Status:** Success" >> "$GITHUB_STEP_SUMMARY"
+            echo "**JSON catalogs updated:** Yes" >> "$GITHUB_STEP_SUMMARY"
+            echo "" >> "$GITHUB_STEP_SUMMARY"
+            echo "**Updated files:**" >> "$GITHUB_STEP_SUMMARY"
+
+            git diff --cached --name-only -- '*.json' | sed 's/^/- /' >> "$GITHUB_STEP_SUMMARY"
+
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+            git commit -m "Update merged FPKGi catalogs"
+            git push
+          fi
+
+      - name: Report Failure
+        if: ${{ failure() }}
+        run: |
+          echo "### ❌ FPKGi Auto Merge — Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "**Status:** Failed" >> "$GITHUB_STEP_SUMMARY"
+          echo "Check the failed step above for details." >> "$GITHUB_STEP_SUMMARY"
