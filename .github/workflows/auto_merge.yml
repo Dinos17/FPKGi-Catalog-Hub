@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout Repository
         uses: actions/checkout@v4
 
       - name: Setup Python
@@ -27,7 +27,7 @@ jobs:
         run: |
           python tools/merge.py
 
-      - name: Commit Generated JSON
+      - name: Commit Generated Catalogs
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
