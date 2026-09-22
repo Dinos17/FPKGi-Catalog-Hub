@@ -18,30 +18,28 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '18'
+          node-version: '20'
 
       - name: Run Community FPKGi Merger Script
         run: |
           node -e '
           const fs = require("fs");
-          const https = require("https");
 
-          const fetchUrl = (url) => new Promise((resolve) => {
-            https.get(url, (res) => {
-              let data = "";
-              res.on("data", (chunk) => data += chunk);
-              res.on("end", () => {
-                try {
-                  const json = JSON.parse(data);
-                  if (Array.isArray(json)) return resolve(json);
-                  if (json.DATA && Array.isArray(json.DATA)) return resolve(json.DATA);
-                  if (json.data && Array.isArray(json.data)) return resolve(json.data);
-                  if (json.games && Array.isArray(json.games)) return resolve(json.games);
-                  resolve([]);
-                } catch (e) { resolve([]); }
-              });
-            }).on("error", () => resolve([]));
-          });
+          async function fetchUrl(url) {
+            try {
+              const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+              if (!res.ok) return [];
+              const json = await res.json();
+              if (Array.isArray(json)) return json;
+              if (json.DATA && Array.isArray(json.DATA)) return json.DATA;
+              if (json.data && Array.isArray(json.data)) return json.data;
+              if (json.games && Array.isArray(json.games)) return json.games;
+              return [];
+            } catch (e) {
+              console.error("Fetch error for " + url + ":", e.message);
+              return [];
+            }
+          }
 
           async function processCategory(filename, urls) {
             let combined = [];
