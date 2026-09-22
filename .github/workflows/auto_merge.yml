@@ -33,7 +33,11 @@ jobs:
               res.on("end", () => {
                 try {
                   const json = JSON.parse(data);
-                  resolve(Array.isArray(json) ? json : (json.DATA || json.games || []));
+                  if (Array.isArray(json)) return resolve(json);
+                  if (json.DATA && Array.isArray(json.DATA)) return resolve(json.DATA);
+                  if (json.data && Array.isArray(json.data)) return resolve(json.data);
+                  if (json.games && Array.isArray(json.games)) return resolve(json.games);
+                  resolve([]);
                 } catch (e) { resolve([]); }
               });
             }).on("error", () => resolve([]));
@@ -45,17 +49,24 @@ jobs:
               const list = await fetchUrl(url);
               combined = combined.concat(list);
             }
-            // Αφαίρεση διπλότυπων βάσει title_id / name
             const unique = Array.from(new Map(combined.map(item => [item.title_id || item.name || Math.random(), item])).values());
-            
-            // Αποθήκευση με το σωστό "DATA" wrapper που ζητάει το FPKGi
             fs.writeFileSync(filename, JSON.stringify({ DATA: unique }, null, 2));
+            console.log(`Saved ${filename} with ${unique.length} items.`);
           }
 
-          // Λίστα πηγών για συγχώνευση
-          processCategory("games.json", [
-            "https://raw.githubusercontent.com/GAMES-archive/main/games.json"
-          ]);
+          async function run() {
+            await processCategory("games.json", [
+              "https://raw.githubusercontent.com/pop75811-netere/ps4-fpkgi-collection-english-icon/main/GAMES-archive.json"
+            ]);
+            await processCategory("updates.json", [
+              "https://raw.githubusercontent.com/pop75811-netere/ps4-fpkgi-collection-english-icon/main/UPDATES-archive.json"
+            ]);
+            await processCategory("dlc.json", [
+              "https://raw.githubusercontent.com/pop75811-netere/ps4-fpkgi-collection-english-icon/main/DLC-archive.json"
+            ]);
+          }
+
+          run();
           '
 
       - name: Commit & Push updated JSONs
