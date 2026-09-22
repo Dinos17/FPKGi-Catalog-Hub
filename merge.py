@@ -1,5 +1,6 @@
 import json
 import re
+import ast
 import requests
 import urllib3
 
@@ -49,20 +50,51 @@ headers = {
     'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
 }
 
-def clean_json_text(text):
-    text = text.lstrip('\ufeff')
-    # Αφαίρεση trailing commas πριν από ] ή } με ασφαλή τρόπο
-    text = re.sub(r',(?=\s*[\}\]])', '', text)
-    return text
+def parse_json_robust(text):
+    text = text.lstrip('\ufeff').strip()
+    try:
+        return json.loads(text)
+    except Exception:
+        pass
+
+    # Καθαρισμός σχολίων και trailing commas
+    cleaned = re.sub(r'//.*', '', text)
+    cleaned = re.sub(r'/\*.*?\*/', '', cleaned, flags=re.DOTALL)
+    cleaned = re.sub(r',(?=\s*[\}\]])', '', cleaned)
+
+    try:
+        return json.loads(cleaned)
+    except Exception:
+        pass
+
+    # Fallback σε Python literal evaluation αν έχει single quotes ή Python dict format
+    try:
+        py_text = cleaned.replace('true', 'True').replace('false', 'False').replace('null', 'None')
+        return ast.literal_eval(py_text)
+    except Exception:
+        pass
+
+    return None
 
 def extract_items(data):
     if isinstance(data, list):
         return data
+    
     if isinstance(data, dict):
-        for key in ['items', 'games', 'pkgs', 'data', 'files', 'list']:
+        # 1. Έλεγχος για κλειδιά-κοντέινερ
+        for key in ['items', 'games', 'pkgs', 'data', 'files', 'list', 'updates', 'dlc']:
             if key in data and isinstance(data[key], list):
                 return data[key]
-        for val in data.values():
+        
+        # 2. Έλεγχος αν τα values του dict είναι τα ίδια τα αντικείμενα (π.χ. {"CUSA001": {...}})
+        dict_vals = list(data.values())
+        if dict_vals and all(isinstance(v, dict) for v in dict_vals[:10]):
+            first_val = dict_vals[0]
+            if any(k in first_val for k in ['pkg_url', 'name', 'url', 'title_id', 'title', 'link']):
+                return dict_vals
+        
+        # 3. Αναδρομικός έλεγχος
+        for val in dict_vals:
             if isinstance(val, list):
                 return val
             elif isinstance(val, dict):
@@ -87,11 +119,9 @@ for category, urls in CATEGORIES.items():
         try:
             res = requests.get(url, headers=headers, timeout=20, verify=False, allow_redirects=True)
             if res.status_code == 200:
-                cleaned_text = clean_json_text(res.text)
-                try:
-                    data = json.loads(cleaned_text)
-                except Exception as parse_err:
-                    print(f"JSON Parse Error for {url}: {parse_err}", flush=True)
+                data = parse_json_robust(res.text)
+                if data is None:
+                    print(f"FAILED PARSING: {url}", flush=True)
                     continue
                 
                 items = extract_items(data)
@@ -102,7 +132,7 @@ for category, urls in CATEGORIES.items():
                         seen_urls.add(pkg_url)
                         merged_items.append(item)
                         added += 1
-                    elif not pkg_url and item not in merged_items:
+                    elif not pkg_url and isinstance(item, dict) and item not in merged_items:
                         merged_items.append(item)
                         added += 1
                 
