@@ -1,5 +1,7 @@
 # FPKGi Merged Catalog
 
+[![Auto Merge](https://github.com/Dinos17/fpkgi-merged/actions/workflows/auto_merge.yml/badge.svg)](https://github.com/Dinos17/fpkgi-merged/actions/workflows/auto_merge.yml)
+
 > A unified, automatically maintained FPKGi catalog that combines multiple compatible JSON sources into clean, category-based catalogs.
 
 ## Overview
@@ -97,7 +99,7 @@ Example:
 
 ## Automated Updates
 
-The repository uses **GitHub Actions** to automatically maintain the generated catalogs.
+The repository uses **GitHub Actions** to maintain the generated catalogs.
 
 The workflow:
 
