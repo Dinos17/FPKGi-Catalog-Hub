@@ -15,8 +15,48 @@ jobs:
       - name: Checkout Repo
         uses: actions/checkout@v4
 
-      - name: Run Community FPKGi Merger
-        uses: superuser866/ps4@main
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+
+      - name: Run Community FPKGi Merger Script
+        run: |
+          node -e '
+          const fs = require("fs");
+          const https = require("https");
+
+          const fetchUrl = (url) => new Promise((resolve) => {
+            https.get(url, (res) => {
+              let data = "";
+              res.on("data", (chunk) => data += chunk);
+              res.on("end", () => {
+                try {
+                  const json = JSON.parse(data);
+                  resolve(Array.isArray(json) ? json : (json.DATA || json.games || []));
+                } catch (e) { resolve([]); }
+              });
+            }).on("error", () => resolve([]));
+          });
+
+          async function processCategory(filename, urls) {
+            let combined = [];
+            for (const url of urls) {
+              const list = await fetchUrl(url);
+              combined = combined.concat(list);
+            }
+            // Αφαίρεση διπλότυπων βάσει title_id / name
+            const unique = Array.from(new Map(combined.map(item => [item.title_id || item.name || Math.random(), item])).values());
+            
+            // Αποθήκευση με το σωστό "DATA" wrapper που ζητάει το FPKGi
+            fs.writeFileSync(filename, JSON.stringify({ DATA: unique }, null, 2));
+          }
+
+          // Λίστα πηγών για συγχώνευση
+          processCategory("games.json", [
+            "https://raw.githubusercontent.com/GAMES-archive/main/games.json"
+          ]);
+          '
 
       - name: Commit & Push updated JSONs
         run: |
