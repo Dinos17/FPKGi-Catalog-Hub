@@ -50,12 +50,9 @@ headers = {
 }
 
 def clean_json_text(text):
-    # Αφαίρεση UTF-8 BOM
     text = text.lstrip('\ufeff')
-    # Αφαίρεση C-style σχολίων (// ...)
-    text = re.sub(r'//.*', '', text)
-    # Αφαίρεση trailing commas πριν από ] ή }
-    text = re.sub(r',(\s*[\}\]])', r'\1', text)
+    # Αφαίρεση trailing commas πριν από ] ή } με ασφαλή τρόπο
+    text = re.sub(r',(?=\s*[\}\]])', '', text)
     return text
 
 def extract_items(data):
@@ -85,16 +82,16 @@ for category, urls in CATEGORIES.items():
     merged_items = []
     seen_urls = set()
 
-    print(f"\n--- Processing: {category.upper()} ---")
+    print(f"\n--- Processing: {category.upper()} ---", flush=True)
     for url in urls:
         try:
-            res = requests.get(url, headers=headers, timeout=30, verify=False, allow_redirects=True)
+            res = requests.get(url, headers=headers, timeout=20, verify=False, allow_redirects=True)
             if res.status_code == 200:
                 cleaned_text = clean_json_text(res.text)
                 try:
                     data = json.loads(cleaned_text)
                 except Exception as parse_err:
-                    print(f"JSON Parse Error for {url}: {parse_err}")
+                    print(f"JSON Parse Error for {url}: {parse_err}", flush=True)
                     continue
                 
                 items = extract_items(data)
@@ -109,12 +106,12 @@ for category, urls in CATEGORIES.items():
                         merged_items.append(item)
                         added += 1
                 
-                print(f"SUCCESS: {url} | Found: {len(items)} items | New Added: {added}")
+                print(f"SUCCESS: {url} | Found: {len(items)} items | New Added: {added}", flush=True)
             else:
-                print(f"HTTP ERROR {res.status_code}: {url}")
+                print(f"HTTP ERROR {res.status_code}: {url}", flush=True)
         except Exception as e:
-            print(f"FAILED: {url} | Error: {e}")
+            print(f"FAILED: {url} | Error: {e}", flush=True)
 
-    print(f"TOTAL MERGED ({category}): {len(merged_items)}")
+    print(f"TOTAL MERGED ({category}): {len(merged_items)}", flush=True)
     with open(f"{category}.json", "w", encoding="utf-8") as f:
         json.dump(merged_items, f, indent=2, ensure_ascii=False)
