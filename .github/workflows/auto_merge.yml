@@ -36,7 +36,6 @@ jobs:
               if (json.games && Array.isArray(json.games)) return json.games;
               return [];
             } catch (e) {
-              console.error("Fetch error for " + url + ":", e.message);
               return [];
             }
           }
@@ -54,13 +53,46 @@ jobs:
 
           async function run() {
             await processCategory("games.json", [
-              "https://raw.githubusercontent.com/pop75811-netere/ps4-fpkgi-collection-english-icon/main/GAMES-archive.json"
+              "https://raw.githubusercontent.com/gop753811-netizen/fpkgi/main/GAMES-archive.org.json",
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/GAMES.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/GAMES.json"
             ]);
             await processCategory("updates.json", [
-              "https://raw.githubusercontent.com/pop75811-netere/ps4-fpkgi-collection-english-icon/main/UPDATES-archive.json"
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/UPDATES.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/UPDATES.json"
             ]);
             await processCategory("dlc.json", [
-              "https://raw.githubusercontent.com/pop75811-netere/ps4-fpkgi-collection-english-icon/main/DLC-archive.json"
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DLC.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/DLC.json"
+            ]);
+            await processCategory("homebrew.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/HOMEBREW.json"
+            ]);
+            await processCategory("demos.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DEMOS.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/DEMO.json"
+            ]);
+            await processCategory("emulators.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/EMULATORS.json"
+            ]);
+            await processCategory("themes.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/THEMES.json"
+            ]);
+            await processCategory("ps1.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS1.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PS1.json"
+            ]);
+            await processCategory("ps2.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS2.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PS2.json"
+            ]);
+            await processCategory("psp.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PSP.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/PSP.json"
+            ]);
+            await processCategory("apps.json", [
+              "https://raw.githubusercontent.com/ps4arab/fpkgi/main/APPS.json",
+              "https://archive.org/download/ps4-fpkg-collection-english-fpkgi/APPS.json"
             ]);
           }
 
