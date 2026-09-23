@@ -177,9 +177,10 @@ def fetch_release_entries():
             if download_url in entries_by_category[category]:
                 continue
 
-            entries_by_category[category][download_url] = metadata
             if tag.startswith("PS5-"):
                 ps5_entries_by_category[category][download_url] = metadata
+            else:
+                entries_by_category[category][download_url] = metadata
             added += 1
 
         print(f"Release: {tag} | PKG assets: {added}")
