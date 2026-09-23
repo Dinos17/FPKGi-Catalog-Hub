@@ -6,7 +6,7 @@ import requests
 from pkg_metadata import extract_metadata
 
 
-GITHUB_REPO = "Dinos17/fpkgi-merged"
+GITHUB_REPO = "Dinos17/FPKGi-Catalog-Hub"
 GITHUB_API = f"https://api.github.com/repos/{GITHUB_REPO}/releases"
 TIMEOUT = 60
 
@@ -37,7 +37,7 @@ VERSION_RE = re.compile(r"(?:^|[_-])v(\d+(?:\.\d+)+)(?:[_-]|\.)", re.IGNORECASE)
 
 API_HEADERS = {
     "Accept": "application/vnd.github+json",
-    "User-Agent": "fpkgi-merged/1.0",
+    "User-Agent": "FPKGi-Catalog-Hub/1.0",
 }
 
 
