@@ -99,7 +99,9 @@ Change it to:
 
 Inside `config.json`, find the `CONTENT_URLS` section.
 
-Replace the catalog URLs with the **Direct raw URLs** from this README.
+Replace the catalog URLs with the **Direct raw URLs** listed further down in this README, under **“Direct raw URLs”** in the **“Use the catalogs”** section.
+
+You can find them by scrolling down past the setup guide to that section. There you will find the raw URL for each catalog category.
 
 You only need to do this once. The URLs point to the same catalog files on GitHub, so you do **not** need to replace them whenever the catalog is updated.
 
