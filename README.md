@@ -119,25 +119,9 @@ Do not save it as `config.json.txt`.
 
 > **Screenshot placeholder — Saved config:** Show the edited `config.json` saved on the PC.
 
-### Step 9 — Upload config.json back to the PS4
+### Step 9 — Restart FPKGi
 
-Return to FileZilla.
-
-Open the PS4 folder:
-
-```text
-/user/data/FPKGi/
-```
-
-Upload your edited `config.json` back into this folder.
-
-If FileZilla asks whether you want to replace the existing file, choose **Replace/Overwrite**.
-
-> **Screenshot placeholder — Upload config.json:** Show the edited file being uploaded to `/user/data/FPKGi/` and the overwrite/replace prompt if it appears.
-
-### Step 10 — Start FPKGi
-
-Restart FPKGi after replacing the configuration file.
+After FileZilla shows **Transfer completed**, close/restart FPKGi so it loads the updated configuration.
 
 You should now have:
 
