@@ -1,4 +1,4 @@
-# FPKGi-Merged Catalog Use Terms
+# FPKGi Catalog Hub Catalog Use Terms
 
 Copyright © 2026 Dinos17 with respect to original contributions to the catalog compilation and structure.
 
