@@ -53,7 +53,7 @@ Leave the other fields unchanged unless your setup requires them.
 
 Click **Quickconnect**.
 
-> **Screenshot placeholder — FileZilla Quickconnect:** Show the Host and Port fields filled in and the **Quickconnect** button clearly visible.
+![FileZilla Quickconnect](screenshots/fpkgi-setup-01-quickconnect.png)
 
 ### Step 5 — Open the FPKGi folder
 
@@ -71,7 +71,7 @@ You should find:
 config.json
 ```
 
-> **Screenshot placeholder — FPKGi folder:** Show the Remote site path `/user/data/FPKGi/` with `config.json` visible.
+![FPKGi folder in FileZilla](screenshots/fpkgi-setup-02-fpkgi-folder.png)
 
 ### Step 6 — Edit config.json directly in FileZilla
 
@@ -93,7 +93,21 @@ Change it to:
 "directDownload": true
 ```
 
-> **Screenshot placeholder — Direct Download:** Show the exact `directDownload` setting before/after the change, with the value `true` clearly visible.
+![FileZilla View/Edit](screenshots/fpkgi-setup-03-view-edit.png)
+
+Find:
+
+```json
+"directDownload": false
+```
+
+Change it to:
+
+```json
+"directDownload": true
+```
+
+![Direct Download enabled](screenshots/fpkgi-setup-04-direct-download.png)
 
 ### Step 7 — Add the FPKGi Catalog Hub links
 
@@ -124,25 +138,29 @@ You can also find these same **Direct raw URLs** further down in this README und
 
 You only need to do this once. The URLs point to the same catalog files on GitHub, so you do **not** need to replace them whenever the catalog is updated.
 
-> **Screenshot placeholder — CONTENT_URLS:** Show the `CONTENT_URLS` section with the Catalog Hub raw URLs in place.
+![CONTENT_URLS section](screenshots/fpkgi-setup-05-content-urls.png)
 
-### Step 8 — Save the configuration
+### Step 8 — Save and upload the configuration
 
-Save the edited `config.json`.
+Press **Ctrl + S** in the text editor.
 
-Make sure it is still named:
+FileZilla will show a **File has changed** dialog asking whether to upload the edited file back to the server.
 
-```text
-config.json
-```
+Make sure **Finish editing and delete local file** is checked, then click **Yes**.
 
-Do not save it as `config.json.txt`.
+![File has changed dialog](screenshots/fpkgi-setup-06-file-changed.png)
 
-> **Screenshot placeholder — Saved config:** Show the edited `config.json` saved on the PC.
+FileZilla will automatically upload the edited `config.json` back to the PS4. You do **not** need to manually upload the file.
 
-### Step 9 — Restart FPKGi
+### Step 9 — Confirm the transfer
 
-After FileZilla shows **Transfer completed**, close/restart FPKGi so it loads the updated configuration.
+Wait for FileZilla to finish the upload and confirm that the transfer has completed successfully.
+
+![Transfer completed](screenshots/fpkgi-setup-07-transfer-completed.png)
+
+### Step 10 — Restart FPKGi
+
+Close FPKGi completely and launch it again so it loads the updated configuration.
 
 You should now have:
 
