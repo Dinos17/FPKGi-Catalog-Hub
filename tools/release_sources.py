@@ -99,8 +99,14 @@ def asset_to_entry(asset, release, category):
         raise ValueError(f"Invalid GitHub asset size for {name}")
 
     metadata = {
+        "title_id": None,
+        "region": None,
         "name": name,
+        "version": None,
+        "release": None,
         "size": size,
+        "min_fw": None,
+        "cover_url": None,
     }
 
     try:
@@ -132,11 +138,8 @@ def asset_to_entry(asset, release, category):
         except ValueError:
             pass
 
-    # APP_VER is the useful version field for update packages.
-    if category == "updates" and metadata.get("app_ver"):
-        metadata["version"] = metadata["app_ver"]
-
-    metadata.pop("app_ver", None)
+    # Keep the generated entry aligned with FPKGi's core metadata schema.
+    # APP_VER is already mapped to "version" by pkg_metadata.py.
     return download_url, metadata
 
 
