@@ -26,8 +26,6 @@ On your PC, download **FileZilla Client** from the official FileZilla website. C
 
 **[Download FileZilla Client](https://filezilla-project.org/download.php)**
 
-> **Screenshot placeholder — FileZilla download:** Show the official FileZilla download page and clearly identify **FileZilla Client**.
-
 ### Step 3 — Connect FileZilla to your PS4
 
 Open FileZilla.
