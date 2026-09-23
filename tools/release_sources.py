@@ -95,7 +95,7 @@ def parse_cover_urls(release):
 
     cover_urls = {}
     header = None
-    separator = re.compile(r"^\\s*\\|?\\s*:?-{3,}:?\\s*(?:\\|\\s*:?-{3,}:?\\s*)+\\|?\\s*$")
+    separator = re.compile(r"^\s*\|?\s*:?-{3,}:?\s*(?:\|\s*:?-{3,}:?\s*)+\|?\s*$")
 
     for raw_line in body.splitlines():
         line = raw_line.strip()
