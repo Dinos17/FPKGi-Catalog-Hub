@@ -20,11 +20,11 @@ From the PS4 Home Screen:
 4. Turn on **Enable FTP Server**.
 5. Note the **IP address** and **FTP port** shown by GoldHEN.
 
-You do not need a screenshot for this part. The menu path is short and straightforward.
-
 ### Step 2 — Download FileZilla
 
-On your PC, download **FileZilla Client**. FileZilla is the recommended FTP client for this guide.
+On your PC, download **FileZilla Client** from the official FileZilla website. Choose the download that matches your operating system.
+
+**[Download FileZilla Client](https://filezilla-project.org/download.php)**
 
 > **Screenshot placeholder — FileZilla download:** Show the official FileZilla download page and clearly identify **FileZilla Client**.
 
