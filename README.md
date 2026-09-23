@@ -1,127 +1,181 @@
-# FPKGi Merged Catalog
+# FPKGi Catalog Hub
 
-[![Auto Merge](https://github.com/Dinos17/fpkgi-merged/actions/workflows/auto_merge.yml/badge.svg)](https://github.com/Dinos17/fpkgi-merged/actions/workflows/auto_merge.yml)
+[![Auto Merge](https://github.com/Dinos17/FPKGi-Catalog-Hub/actions/workflows/auto_merge.yml/badge.svg)](https://github.com/Dinos17/FPKGi-Catalog-Hub/actions/workflows/auto_merge.yml)
 
-> A unified, automatically maintained FPKGi catalog that combines multiple compatible JSON sources into clean, category-based catalogs.
+> A unified FPKGi catalog hub that I built to bring multiple compatible catalog sources together, validate them, remove duplicates, and keep the resulting JSON catalogs updated automatically.
 
-## Overview
+## What is this?
 
-**FPKGi Merged Catalog** is a catalog aggregation project for [FPKGi](https://github.com/ItsJokerZz/FPKGi).
+I wanted one place where I could keep my FPKGi catalogs organized instead of relying on a bunch of separate sources.
 
-It collects compatible FPKGi JSON sources, validates their structure and entry metadata, merges their entries, removes duplicate package URLs, and publishes the resulting catalogs through GitHub.
+**FPKGi Catalog Hub** collects compatible public FPKGi JSON catalogs, checks the data, combines them, removes duplicate package URLs, and publishes the result as category-based JSON files.
 
-The goal is to provide a simple, organized, and reliable set of catalog URLs for use with FPKGi.
+The goal is simple:
+
+**one place → organized catalogs → automatic updates → ready to use with FPKGi.**
+
+I also added GitHub Release integration so supported `.pkg` assets can be discovered and turned into catalog entries automatically.
 
 ---
 
-## Catalogs
+## Use the catalogs
 
-| Category      | Catalog          |
-| ------------- | ---------------- |
-| 🎮 Games      | `games.json`     |
-| 📦 DLC        | `dlc.json`       |
-| 🏠 Homebrew   | `homebrew.json`  |
-| 🧪 Demos      | `demos.json`     |
+The generated catalogs are available directly from the repository's `main` branch.
+
+| Category | Catalog |
+|---|---|
+| 🎮 Games | `games.json` |
+| 📦 DLC | `dlc.json` |
+| 🛠️ Apps | `apps.json` |
+| 🏠 Homebrew | `homebrew.json` |
+| 🧪 Demos | `demos.json` |
 | 🕹️ Emulators | `emulators.json` |
-| 🎨 Themes     | `themes.json`    |
-| 💿 PS1        | `ps1.json`       |
-| 💿 PS2        | `ps2.json`       |
-| 🎮 PSP        | `psp.json`       |
-| 🛠️ Apps      | `apps.json`      |
-| 🔄 Updates    | `updates.json`   |
+| 🎨 Themes | `themes.json` |
+| 💿 PS1 | `ps1.json` |
+| 💿 PS2 | `ps2.json` |
+| 🎮 PSP | `psp.json` |
+| 🔄 Updates | `updates.json` |
 
-All generated catalogs use the FPKGi JSON format.
+### Direct raw URLs
 
----
+You can use the generated JSON files directly in FPKGi.
 
-## How It Works
+For example:
 
-```text
-                    Source Catalogs
-                          │
-                          ▼
-                  ┌───────────────┐
-                  │   merge.py    │
-                  │    (tools/)   │
-                  └───────┬───────┘
-                          │
-              ┌───────────┼───────────┐
-              │           │           │
-           Fetch       Validate     Merge
-              │           │           │
-              └───────────┼───────────┘
-                          ▼
-                  Generated Catalogs
-                          │
-                          ▼
-                    GitHub Repository
-                          │
-                          ▼
-                         FPKGi
+```
+https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json
+https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/dlc.json
+https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/apps.json
+https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/homebrew.json
 ```
 
-The merger:
-
-1. Downloads configured source catalogs.
-2. Validates their JSON structure and individual entries.
-3. Extracts the `DATA` objects.
-4. Combines entries from multiple sources.
-5. Removes duplicate package URLs.
-6. Adds entries discovered from configured GitHub Releases.
-7. Generates the category JSON files.
-8. Publishes updated catalogs only when changes are detected.
+The other catalog URLs follow the same pattern.
 
 ---
 
-## FPKGi Configuration
+## How I built it
 
-The generated catalogs can be added to FPKGi through its `CONTENT_URLS` configuration.
+The basic idea is pretty straightforward:
 
-Example:
+```text
+             Public Catalog Sources
+                       │
+                       ▼
+                 Fetch Sources
+                       │
+                       ▼
+                  Validate Data
+                       │
+                       ▼
+                 Merge Entries
+                       │
+                       ▼
+                Remove Duplicates
+                       │
+                       ▼
+              Generated JSON Catalogs
+                       │
+                       ▼
+                     FPKGi
+```
+
+Every automated run:
+
+1. Fetches the configured catalog sources.
+2. Checks that the JSON has the expected structure.
+3. Validates individual entries.
+4. Merges entries from the different sources.
+5. Removes duplicate package URLs.
+6. Checks configured GitHub Releases for supported `.pkg` assets.
+7. Generates the category JSON files.
+8. Commits changes only when the catalogs actually change.
+
+---
+
+## Automatic updates
+
+I use **GitHub Actions** to keep the catalogs maintained automatically.
+
+The workflow runs on a daily schedule, and I can also start it manually from the **Actions** tab.
+
+If nothing changed, nothing gets committed.
+
+If the catalogs changed, the workflow commits the updated JSON files automatically.
+
+---
+
+## GitHub Release integration
+
+I also built support for discovering `.pkg` files from specific GitHub Releases.
+
+The merger can:
+
+- find supported release assets;
+- inspect PKG metadata using HTTP range requests;
+- extract information such as title ID, version, firmware requirement, size, and region when available; and
+- generate an FPKGi catalog entry from the asset.
+
+This means I can add supported packages through Releases without having to manually maintain another external JSON source.
+
+Only packages that are legally redistributable should be hosted through this mechanism.
+
+---
+
+## Source configuration
+
+The sources I use are defined in:
+
+```text
+config/sources.json
+```
+
+Each catalog category can have multiple sources.
+
+For example:
 
 ```json
-"CONTENT_URLS": {
-  "PS1": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/ps1.json",
-  "PS2": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/ps2.json",
-  "PSP": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/psp.json",
-  "PS5": "https://raw.githubusercontent.com/ps4arab/fpkgi/main/GAMES.json",
-  "games": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/games.json",
-  "apps": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/apps.json",
-  "updates": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/updates.json",
-  "DLC": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/dlc.json",
-  "demos": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/demos.json",
-  "homebrew": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/homebrew.json",
-  "emulators": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/emulators.json",
-  "themes": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/themes.json"
-}
+"games": [
+  "https://example.com/GAMES.json",
+  "https://example.com/another-games.json"
+]
 ```
 
----
-
-## Automated Updates
-
-The repository uses **GitHub Actions** to maintain the generated catalogs.
-
-The workflow:
-
-1. Checks out the repository on a pinned `ubuntu-24.04` GitHub-hosted runner.
-2. Sets up Python.
-3. Installs the required dependencies.
-4. Runs `tools/merge.py`.
-5. Validates and generates the catalog files.
-6. Detects whether generated JSON files changed.
-7. Commits and pushes changes only when updates are detected.
-
-The workflow runs on a daily schedule and can also be started manually from the **Actions** tab.
-
-The workflow can also be started manually from the **Actions** tab.
+The merger combines the valid entries from those sources into the corresponding catalog.
 
 ---
 
-## Project Structure
+## Validation
+
+I don't want one bad entry to break the entire catalog.
+
+The merger checks things such as:
+
+- valid HTTP(S) package URLs;
+- valid JSON structure;
+- metadata types;
+- title ID format;
+- package size;
+- version format; and
+- required catalog structure.
+
+Invalid entries can be rejected while usable entries continue through the merge.
+
+If an entire source is unavailable or malformed, the merger reports the problem and continues with the remaining sources.
+
+---
+
+## Duplicate handling
+
+The **package URL** is used as the unique key for an entry.
+
+That means different versions, regions, or packages can still coexist when they have different package URLs.
+
+---
+
+## Project structure
 
 ```text
-fpkgi-merged/
+FPKGi-Catalog-Hub/
 │
 ├── .github/
 │   └── workflows/
@@ -147,185 +201,74 @@ fpkgi-merged/
 ├── themes.json
 ├── updates.json
 │
+├── LICENSE
+├── CATALOG-LICENSE.md
 └── README.md
 ```
 
-### `config/`
+### The main tools
 
-* `sources.json` — defines the external FPKGi catalog sources used by the merger.
-
-### `tools/`
-
-Contains the scripts used to maintain the project.
-
-* `merge.py` — downloads, validates, merges, and generates the catalog files.
-* `release_sources.py` — discovers `.pkg` assets from configured GitHub Releases and extracts metadata for catalog entries.
-* `pkg_metadata.py` — reads PS4 PKG metadata using HTTP range requests without downloading the complete package.
-
-### Catalog files
-
-The `.json` files in the repository root are the generated FPKGi catalogs.
-
-They are intended to be consumed directly by FPKGi.
+- `merge.py` — fetches, validates, merges, and generates the catalogs.
+- `release_sources.py` — discovers supported PKG assets from GitHub Releases.
+- `pkg_metadata.py` — reads PKG metadata using HTTP range requests.
 
 ---
 
-## Adding Sources
+## Want to suggest a source?
 
-Source URLs are configured in:
+I'm open to **source suggestions**.
 
-```text
-config/sources.json
-```
+If you know a compatible public FPKGi catalog that could be useful here, you can open an issue and point me to it.
 
-Each category can contain one or more compatible FPKGi JSON sources.
+I will check the source before adding it.
 
-For example:
-
-```json
-"games": [
-  "https://example.com/GAMES.json",
-  "https://example.com/another-games.json"
-]
-```
-
-Entries from all valid sources are combined into the corresponding catalog.
-
-Duplicate entries are detected using the package URL.
+Please make sure the source is publicly accessible and that its use is compatible with the relevant rights and terms.
 
 ---
 
-## Source & Entry Validation
+## Important
 
-Each source must contain a structure similar to:
+This project is a **catalog aggregator**. The information inside the generated catalogs can come from third-party sources.
 
-```json
-{
-  "DATA": {
-    "https://example.com/example.pkg": {
-      "title_id": "CUSA00000",
-      "region": "USA",
-      "name": "Example",
-      "version": "01.00",
-      "release": "01-01-2026",
-      "size": 123456789,
-      "min_fw": "9.00",
-      "cover_url": null
-    }
-  }
-}
-```
+I don't claim ownership of third-party metadata, packages, trademarks, or other third-party material just because it appears in a catalog.
 
-The merger rejects structurally invalid entries and reports metadata warnings without unnecessarily discarding otherwise usable entries. A source that fails to load or does not contain a valid `DATA` object is skipped so other sources can still be processed.
+The presence of a package or URL in a catalog does **not** mean I am granting permission to redistribute that package.
 
----
-
-## Duplicate Handling
-
-The merger uses the **package URL** as the unique key for catalog entries.
-
-This allows different versions, regions, or package files associated with the same title ID to coexist when their package URLs are different.
-
----
-
-## Error Handling
-
-If a configured source is unavailable, returns invalid JSON, or does not contain the expected `DATA` object, the merger reports the error and continues processing the remaining sources.
-
-This prevents a single unavailable source from stopping the entire catalog update.
-
----
-
-## GitHub Release Integration
-
-The merger can discover `.pkg` assets from specific GitHub Releases and automatically generate corresponding FPKGi catalog entries.
-
-The release integration reads package metadata through HTTP range requests, so it can inspect the relevant PKG structures without downloading the entire package during metadata scanning.
-
-Only packages that are legally redistributable should be hosted this way.
-
-The workflow is:
-
-```text
-Local PKG
-   │
-   ▼
-GitHub Release
-   │
-   ▼
-Direct Download URL
-   │
-   ▼
-FPKGi Catalog Entry
-   │
-   ▼
-apps.json / homebrew.json
-```
-
-This will make adding new supported packages much easier without requiring a new external catalog source.
-
----
-
-## Contributing
-
-This repository does **not** operate under an open contribution model.
-
-Do not submit code, documentation, configuration, or other material with the expectation that it will automatically receive broad reuse rights or that you will receive a license to the project's proprietary materials.
-
-If you wish to propose a change, open an issue or contact the repository owner first. Any contribution or permission to incorporate third-party material must be separately agreed upon where necessary.
-
-When proposing a new catalog source:
-
-* Make sure it uses the expected FPKGi JSON structure.
-* Verify that the source is publicly accessible.
-* Avoid adding duplicate sources.
-* Make sure package distribution is permitted by the relevant copyright and licensing terms.
-
----
-
-## Disclaimer
-
-This project provides catalog aggregation and automation tools.
-
-Individual packages referenced by external catalogs may have their own licenses, copyrights, and redistribution restrictions.
-
-Only distribute packages that you have the legal right or permission to redistribute.
+Use and distribution of individual packages is your responsibility and depends on the rights applicable to those packages and their sources.
 
 ---
 
 ## Licensing
 
-This repository intentionally separates the licensing of the project's original materials from the generated catalog files.
+I intentionally keep the **project code** and the **generated catalogs** under separate terms.
 
-### Original Code and Project Materials
+### Project code
 
-The project's original Python source code, automation scripts, documentation, configuration, and other original project materials are **not released under an open-source license**.
+The original code, scripts, documentation, configuration, and other original project materials are **not open source**.
 
 They are governed by [LICENSE](LICENSE).
 
-Except for the limited permissions expressly granted there, the original materials may not be copied, modified, redistributed, republished, incorporated into another project, or commercially exploited without permission from Dinos17.
+### Generated catalogs
 
-### Generated Catalogs
+The generated FPKGi catalogs are governed by [CATALOG-LICENSE.md](CATALOG-LICENSE.md).
 
-The generated FPKGi JSON catalogs are governed separately by [CATALOG-LICENSE.md](CATALOG-LICENSE.md).
+The catalog terms allow the catalogs to be used with FPKGi, subject to the rights applicable to third-party information contained within them.
 
-The catalogs may be accessed and used as catalogs with FPKGi in accordance with those terms.
+For the full terms, read:
 
-The catalog files contain information obtained from multiple sources. Dinos17 does **not** claim ownership of third-party metadata merely because it appears in these catalogs. Third-party material remains subject to the rights and terms applicable to its original source.
-
-Permission to use a catalog does not grant permission to redistribute any package referenced by that catalog.
-
-### GitHub Platform
-
-This repository is public. GitHub may provide technical functions such as viewing, downloading, cloning, or forking public repository content.
-
-Those platform functions do not expand the permissions granted under [LICENSE](LICENSE) or [CATALOG-LICENSE.md](CATALOG-LICENSE.md).
+- [LICENSE](LICENSE)
+- [CATALOG-LICENSE.md](CATALOG-LICENSE.md)
 
 ---
 
-## License Files
+## Disclaimer
 
-* [LICENSE](LICENSE) — terms governing the project's original code and other Original Materials.
-* [CATALOG-LICENSE.md](CATALOG-LICENSE.md) — terms governing use of the generated FPKGi catalogs, subject to third-party rights.
+This project is provided as-is.
 
-Third-party catalog data, package metadata, packages, libraries, trademarks, and other third-party materials remain subject to their respective rights and licenses.
+Catalog contents, external URLs, metadata, and package availability can change or disappear at any time.
+
+Always make sure that your use or distribution of any referenced package is legally permitted in your jurisdiction.
+
+---
+
+**Built and maintained by Dinos17.**
