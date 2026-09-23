@@ -36,6 +36,23 @@ The generated catalogs are available directly from the repository's `main` branc
 | 🎮 PSP | `psp.json` |
 | 🔄 Updates | `updates.json` |
 
+### PS5-only catalogs
+
+The repository also generates optional PS5-only catalogs from packages published through the supported `PS5-*` GitHub Release tags. These are kept separate from the normal combined catalogs so PS5 users can use a PS5-only source when they want one.
+
+| Category | PS5-only catalog |
+|---|---|
+| 🎮 Games | `ps5-games.json` |
+| 📦 DLC | `ps5-dlc.json` |
+| 🛠️ Apps | `ps5-apps.json` |
+| 🏠 Homebrew | `ps5-homebrew.json` |
+| 🧪 Demos | `ps5-demos.json` |
+| 🕹️ Emulators | `ps5-emulators.json` |
+| 🎨 Themes | `ps5-themes.json` |
+| 🔄 Updates | `ps5-updates.json` |
+
+These PS5-only files do **not** create new FPKGi UI categories. They are alternative JSON sources containing only packages discovered from the corresponding `PS5-*` release tags. The normal catalogs remain available and continue to contain all merged sources.
+
 ### Direct raw URLs
 
 If you want to use a catalog with FPKGi, copy the **Raw URL** for the JSON file and add it to your FPKGi configuration.
@@ -53,6 +70,17 @@ I've also listed the raw URLs here so you don't have to open each file manually:
 - **PS2:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps2.json
 - **PSP:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/psp.json
 - **Updates:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/updates.json
+
+### PS5-only raw URLs
+
+- **PS5 Games:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-games.json
+- **PS5 DLC:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-dlc.json
+- **PS5 Apps:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-apps.json
+- **PS5 Homebrew:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-homebrew.json
+- **PS5 Demos:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-demos.json
+- **PS5 Emulators:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-emulators.json
+- **PS5 Themes:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-themes.json
+- **PS5 Updates:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-updates.json
 
 ### Add the links once
 
@@ -107,8 +135,9 @@ Every automated run:
 4. Merges entries from the different sources.
 5. Removes duplicate package URLs.
 6. Checks configured GitHub Releases for supported `.pkg` assets.
-7. Generates the category JSON files.
-8. Commits changes only when the catalogs actually change.
+7. Generates the normal combined category JSON files.
+8. Generates matching PS5-only JSON files from `PS5-*` release tags.
+9. Commits changes only when the catalogs actually change.
 
 ---
 
@@ -229,7 +258,7 @@ FPKGi-Catalog-Hub/
 ### The main tools
 
 - `merge.py` — fetches, validates, merges, and generates the catalogs.
-- `release_sources.py` — discovers supported PKG assets from GitHub Releases.
+- `release_sources.py` — discovers supported PKG assets from GitHub Releases and tracks PS5 release entries separately.
 - `pkg_metadata.py` — reads PKG metadata using HTTP range requests.
 
 ---
