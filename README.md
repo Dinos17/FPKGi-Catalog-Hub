@@ -4,29 +4,153 @@
 
 > A unified FPKGi catalog hub that I built to bring multiple compatible catalog sources together, validate them, remove duplicates, and keep the resulting JSON catalogs updated automatically.
 
-## ⚠️ Important FPKGi setup
+## ⚠️ First-time FPKGi setup
 
-**Before you try to download anything from this catalog, make sure FPKGi is using Direct Download mode.**
+**Before downloading packages from this catalog, make sure FPKGi is using Direct Download mode.**
 
-If you've never changed this setting before, follow these steps:
+This guide assumes you are starting from scratch. You do **not** need to understand FTP, JSON, GitHub redirects, or BGFT beforehand.
 
-1. Open **FPKGi** on your PS4.
-2. Open **Settings**.
-3. Find the **Downloads** settings.
-4. Find **Direct Download**.
-5. Turn **Direct Download** **ON**.
-6. Leave the other download settings unchanged unless you have a reason to change them.
-7. Restart FPKGi if necessary, then use the catalog normally.
+### Step 1 — Enable the FTP server on your PS4
+
+From the PS4 Home Screen:
+
+1. Open **Settings**.
+2. Open **GoldHEN** at the top of the settings list.
+3. Open **Server Settings**.
+4. Turn on **Enable FTP Server**.
+5. Note the **IP address** and **FTP port** shown by GoldHEN.
+
+You do not need a screenshot for this part. The menu path is short and straightforward.
+
+### Step 2 — Download FileZilla
+
+On your PC, download **FileZilla Client**. FileZilla is the recommended FTP client for this guide.
+
+> **Screenshot placeholder — FileZilla download:** Show the official FileZilla download page and clearly identify **FileZilla Client**.
+
+### Step 3 — Connect FileZilla to your PS4
+
+Open FileZilla.
+
+At the top, enter:
+
+- **Host:** your PS4 IP address
+- **Port:** the FTP port shown by GoldHEN
+
+Leave the other fields unchanged unless your setup requires them.
+
+Click **Quickconnect**.
+
+> **Screenshot placeholder — FileZilla Quickconnect:** Show the Host and Port fields filled in and the **Quickconnect** button clearly visible.
+
+### Step 4 — Open the FPKGi folder
+
+After connecting, use FileZilla's **Remote site** panel (the PS4 side).
+
+Open:
+
+```text
+/user/data/FPKGi/
+```
+
+You should find:
+
+```text
+config.json
+```
+
+> **Screenshot placeholder — FPKGi folder:** Show the Remote site path `/user/data/FPKGi/` with `config.json` visible.
+
+### Step 5 — Download config.json to your PC
+
+You need a copy of `config.json` on your PC so you can edit it.
+
+You can either:
+
+- drag `config.json` from the PS4 side to your PC side in FileZilla; or
+- right-click it and choose **Download**.
+
+> **Screenshot placeholder — Download config.json:** Show `config.json` being downloaded from the PS4 to the PC.
+
+### Step 6 — Open config.json
+
+Open the downloaded `config.json` with a text editor such as **Notepad**.
+
+Find:
+
+```json
+"directDownload": false
+```
+
+Change it to:
+
+```json
+"directDownload": true
+```
+
+> **Screenshot placeholder — Direct Download:** Show the exact `directDownload` setting before/after the change, with the value `true` clearly visible.
+
+### Step 7 — Add the FPKGi Catalog Hub links
+
+Inside `config.json`, find the `CONTENT_URLS` section.
+
+Replace the catalog URLs with the **Direct raw URLs** from this README.
+
+You only need to do this once. The URLs point to the same catalog files on GitHub, so you do **not** need to replace them whenever the catalog is updated.
+
+> **Screenshot placeholder — CONTENT_URLS:** Show the `CONTENT_URLS` section with the Catalog Hub raw URLs being added.
+
+### Step 8 — Save the configuration
+
+Save the edited `config.json`.
+
+Make sure it is still named:
+
+```text
+config.json
+```
+
+Do not save it as `config.json.txt`.
+
+> **Screenshot placeholder — Saved config:** Show the edited `config.json` saved on the PC.
+
+### Step 9 — Upload config.json back to the PS4
+
+Return to FileZilla.
+
+Open the PS4 folder:
+
+```text
+/user/data/FPKGi/
+```
+
+Upload your edited `config.json` back into this folder.
+
+If FileZilla asks whether you want to replace the existing file, choose **Replace/Overwrite**.
+
+> **Screenshot placeholder — Upload config.json:** Show the edited file being uploaded to `/user/data/FPKGi/` and the overwrite/replace prompt if it appears.
+
+### Step 10 — Start FPKGi
+
+Restart FPKGi after replacing the configuration file.
+
+You should now have:
+
+- **Direct Download enabled**
+- **FPKGi Catalog Hub catalog URLs configured**
+- automatic access to updated catalog data using the same URLs
+
+You do **not** need to repeat this setup every time the catalog is updated.
 
 ### If you use the configuration file instead
 
-You can also check the setting directly in:
+The relevant configuration file is:
 
-```
+```text
 /user/data/FPKGi/config.json
 ```
 
-Look for:
+The important setting is:
 
 ```json
 "PREFERENCES": {
@@ -36,32 +160,18 @@ Look for:
 }
 ```
 
-If it says:
-
-```json
-"directDownload": false
-```
-
-change it to:
-
-```json
-"directDownload": true
-```
-
-### Why is this required?
+### Why is Direct Download required?
 
 Packages hosted through this project's GitHub Releases are served through GitHub's release-asset download system. During testing, FPKGi's normal background/BGFT download path rejected the redirected package URL with:
 
-```
+```text
 [BGFT] ERROR: [2239] Not supported extension.
 sceBgftServiceIntDebugDownloadRegisterPkg failed error: 80990033
 ```
 
 **Direct Download uses a different download path and avoids that failure for these GitHub-hosted packages.**
 
-You do **not** need to change the catalog URLs because of this. Just enable Direct Download once and keep using the catalog normally.
-
-> **First-time users:** You don't need to understand JSON, GitHub redirects, BGFT, or any of the technical details above. Just turn **Direct Download ON** in FPKGi before downloading packages from this catalog.
+> **First-time users:** You do not need to understand JSON, GitHub redirects, BGFT, or any of the technical details above. Follow the numbered steps, enable Direct Download, and add the Catalog Hub URLs once.
 
 > This setting is specifically important for packages served from this project's GitHub Releases. See the [FPKGi documentation](https://github.com/ItsJokerZz/FPKGi) for the application's configuration and JSON format.
 
