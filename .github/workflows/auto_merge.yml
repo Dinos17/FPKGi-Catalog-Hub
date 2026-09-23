@@ -115,7 +115,7 @@ jobs:
             print(f"- 🔄 Modified records: **{changed_total}**")
             print()
             print("The file list above only includes JSON files whose DATA records actually changed.")
-PY
+            PY
 
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
