@@ -1,0 +1,97 @@
+# FPKGi-Merged Code License 1.0
+
+Copyright © 2026 Dinos17. All rights reserved.
+
+## 1. Scope
+
+This license applies only to the original software, source code, scripts, documentation, configuration, automation, and other original creative materials contained in this repository that are authored or owned by Dinos17 ("Original Materials").
+
+This license does not grant any rights to third-party software, libraries, data, metadata, package information, trademarks, logos, images, or other content that may be included in, referenced by, or obtained through this repository. Third-party materials remain subject to their respective rights and licenses.
+
+The generated FPKGi catalog files are governed separately by `CATALOG-LICENSE.md`.
+
+## 2. Limited Permission
+
+Subject to compliance with this license, Dinos17 grants you a limited, non-exclusive, non-transferable, revocable permission to access and use the Original Materials solely for personal, educational, research, or other non-commercial purposes directly related to operating, evaluating, or generating FPKGi catalog data for use with the FPKGi application.
+
+This permission does not transfer ownership of the Original Materials to you.
+
+## 3. Restrictions
+
+Except where expressly permitted by this license or required by applicable law, you may not:
+
+* copy or reproduce the Original Materials for reuse in another project;
+* modify, adapt, translate, or create derivative works from the Original Materials;
+* redistribute, republish, rehost, sublicense, sell, rent, lease, or otherwise make the Original Materials available as a separate software project;
+* incorporate the Original Materials into another software project, product, service, or distribution;
+* publish a modified or substantially similar version of the Original Materials;
+* remove, obscure, or alter copyright, attribution, or license notices contained in the Original Materials;
+* use the Original Materials for commercial purposes without prior written permission from Dinos17;
+* represent the Original Materials, or a modified version of them, as your own work; or
+* grant or purport to grant third parties rights in the Original Materials that you do not have.
+
+For clarity, this license does not grant permission to create, maintain, or distribute a derivative or modified version of the project's Python merger or automation software.
+
+## 4. GitHub Platform Operations
+
+This license does not attempt to restrict technical functions that GitHub makes available for public repositories, including viewing, downloading, cloning, or forking where those actions are supported by GitHub's platform.
+
+The availability of such a technical function does not, by itself, grant permission under this license to reuse, modify, redistribute, repackage, or commercially exploit the Original Materials.
+
+Nothing in this license overrides GitHub's Terms of Service or other applicable platform terms.
+
+## 5. Copyright and Ownership
+
+Dinos17 retains all copyright and other rights in the Original Materials except for the limited permissions expressly granted by this license.
+
+No ownership interest is transferred by providing access to this repository.
+
+Third-party rights are expressly reserved and are not claimed by Dinos17 through this license.
+
+## 6. Contributions
+
+Unless a separate written agreement states otherwise, no contribution to this repository should be interpreted as granting rights broader than those applicable to the contributed material.
+
+Contributors must have the necessary rights to submit material to the repository.
+
+## 7. Termination
+
+The permissions granted by this license automatically terminate if you materially breach its terms.
+
+Upon termination, you must cease the use of the Original Materials that is not otherwise authorized by applicable law or a separate written permission from Dinos17.
+
+Termination does not affect rights or obligations that arose before termination.
+
+## 8. No Warranty
+
+THE ORIGINAL MATERIALS ARE PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.
+
+Dinos17 DISCLAIMS WARRANTIES INCLUDING, TO THE MAXIMUM EXTENT PERMITTED BY LAW, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+
+## 9. Limitation of Liability
+
+TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, DINOS17 SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF DATA, PROFITS, REVENUE, OR BUSINESS ARISING FROM OR RELATING TO THE USE OF THE ORIGINAL MATERIALS.
+
+Nothing in this license excludes or limits liability that cannot lawfully be excluded or limited.
+
+## 10. No Trademark License
+
+This license does not grant permission to use the names, logos, trademarks, service marks, or other identifying marks of Dinos17 or third parties, except as necessary to accurately describe the software or its intended compatibility.
+
+## 11. Separate Permission
+
+Dinos17 may grant additional permissions in writing.
+
+Any additional permission must be explicit and applies only to the scope stated in that permission.
+
+## 12. Governing Law
+
+This license is intended to be interpreted under applicable copyright and other applicable laws.
+
+No governing-law or jurisdiction clause is specified by this license. Such a clause may be added by the copyright holder following appropriate legal advice.
+
+---
+
+**Copyright © 2026 Dinos17. All rights reserved.**
+
+For permission requests concerning the Original Materials, contact the repository owner through the contact method provided on the project's GitHub profile or repository.
