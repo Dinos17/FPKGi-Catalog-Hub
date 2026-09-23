@@ -38,18 +38,23 @@ The generated catalogs are available directly from the repository's `main` branc
 
 ### Direct raw URLs
 
-You can use the generated JSON files directly in FPKGi.
+If you want to use a catalog with FPKGi, copy the **Raw URL** for the JSON file and add it to your FPKGi configuration.
 
-For example:
+I've also listed the raw URLs here so you don't have to open each file manually:
 
-```
-https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json
-https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/dlc.json
-https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/apps.json
-https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/homebrew.json
-```
+- **Games:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json
+- **DLC:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/dlc.json
+- **Apps:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/apps.json
+- **Homebrew:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/homebrew.json
+- **Demos:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/demos.json
+- **Emulators:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/emulators.json
+- **Themes:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/themes.json
+- **PS1:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps1.json
+- **PS2:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps2.json
+- **PSP:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/psp.json
+- **Updates:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/updates.json
 
-The other catalog URLs follow the same pattern.
+These are the URLs you should use in FPKGi. They point directly to the generated JSON files, so you don't need to download the files manually first.
 
 ---
 
