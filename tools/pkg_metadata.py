@@ -1,5 +1,4 @@
 import struct
-from datetime import datetime
 from typing import Dict, Optional
 
 import requests
@@ -83,7 +82,7 @@ def parse_sfo(data: bytes) -> Dict[str, object]:
     if len(data) < 20:
         raise ValueError("PARAM.SFO is too small")
 
-    magic, version, key_offset, data_offset, entry_count = struct.unpack_from(
+    magic, _version, key_offset, data_offset, entry_count = struct.unpack_from(
         "<5I", data, 0
     )
 
@@ -97,7 +96,7 @@ def parse_sfo(data: bytes) -> Dict[str, object]:
         if offset + 16 > len(data):
             raise ValueError("PARAM.SFO entry table is truncated")
 
-        key_rel, fmt, value_len, max_len, value_rel = struct.unpack_from(
+        key_rel, fmt, value_len, _max_len, value_rel = struct.unpack_from(
             "<HHIII", data, offset
         )
 
@@ -116,7 +115,6 @@ def parse_sfo(data: bytes) -> Dict[str, object]:
 
         raw = data[value_start:value_end]
 
-        # SFO format 0x0204 is UTF-8 string; 0x0404 is integer.
         if fmt == 0x0204:
             value = _decode_c_string(raw)
         elif fmt == 0x0404:
@@ -189,6 +187,10 @@ def extract_metadata(url: str, size: int) -> Dict[str, object]:
     if not isinstance(system_ver, int):
         system_ver = None
 
+    # FPKGi's "version" should represent the application's version.
+    # PS4 PARAM.SFO exposes that as APP_VER; VERSION is the package/disc revision.
+    fpkgi_version = app_ver or version
+
     region = None
     if content_id:
         region = REGION_MAP.get(content_id[:2].upper())
@@ -196,8 +198,7 @@ def extract_metadata(url: str, size: int) -> Dict[str, object]:
     metadata = {
         "name": title,
         "title_id": title_id,
-        "version": version,
-        "app_ver": app_ver,
+        "version": fpkgi_version,
         "min_fw": _format_system_version(system_ver) if system_ver is not None else None,
         "content_id": content_id or None,
         "category": params.get("CATEGORY"),
