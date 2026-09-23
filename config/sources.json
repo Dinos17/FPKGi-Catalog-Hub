@@ -10,24 +10,12 @@
   "homebrew": [
     "https://raw.githubusercontent.com/ps4arab/fpkgi/main/HOMEBREW.json"
   ],
-  "demos": [
-    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DEMOS.json"
-  ],
-  "emulators": [
-    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/EMULATORS.json"
-  ],
-  "themes": [
-    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/THEMES.json"
-  ],
-  "ps1": [
-    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS1.json"
-  ],
-  "ps2": [
-    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS2.json"
-  ],
-  "psp": [
-    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PSP.json"
-  ],
+  "demos": [],
+  "emulators": [],
+  "themes": [],
+  "ps1": [],
+  "ps2": [],
+  "psp": [],
   "apps": [],
   "updates": []
 }
