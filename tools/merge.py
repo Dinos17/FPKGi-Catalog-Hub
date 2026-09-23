@@ -3,6 +3,8 @@ from pathlib import Path
 
 import requests
 
+from release_sources import fetch_release_entries
+
 
 SOURCES = {
     "games": [
@@ -38,6 +40,7 @@ SOURCES = {
     "apps": [
         "https://raw.githubusercontent.com/ps4arab/fpkgi/main/APPS.json",
     ],
+    "updates": [],
 }
 
 
@@ -68,7 +71,7 @@ def fetch_source(url):
     return entries
 
 
-def merge_category(category, urls):
+def merge_category(category, urls, release_entries):
     merged = {}
     total_source_entries = 0
 
@@ -101,6 +104,23 @@ def merge_category(category, urls):
             print(f"ERROR: {exc}")
             print("Skipping this source.")
 
+    release_added = 0
+    release_duplicates = 0
+
+    for pkg_url, metadata in release_entries.items():
+        if pkg_url in merged:
+            release_duplicates += 1
+            continue
+
+        merged[pkg_url] = metadata
+        release_added += 1
+
+    if release_entries:
+        print(
+            f"GitHub Releases: {len(release_entries)} assets | "
+            f"Added: {release_added} | Duplicates: {release_duplicates}"
+        )
+
     output = {
         "DATA": merged
     }
@@ -122,8 +142,14 @@ def main():
     print("FPKGi JSON Merger")
     print("=================")
 
+    release_entries = fetch_release_entries()
+
     for category, urls in SOURCES.items():
-        merge_category(category, urls)
+        merge_category(
+            category,
+            urls,
+            release_entries.get(category, {}),
+        )
 
     print("\nMerge completed.")
 
