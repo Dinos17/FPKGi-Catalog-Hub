@@ -1,0 +1,34 @@
+{
+  "games": [
+    "https://raw.githubusercontent.com/gop753811-netizen/fpkgi/main/GAMES-archive.org.json",
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/GAMES.json",
+    "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/GAMES.json"
+  ],
+  "dlc": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DLC.json",
+    "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/DLC.json"
+  ],
+  "homebrew": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/HOMEBREW.json"
+  ],
+  "demos": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DEMOS.json"
+  ],
+  "emulators": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/EMULATORS.json"
+  ],
+  "themes": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/THEMES.json"
+  ],
+  "ps1": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS1.json"
+  ],
+  "ps2": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS2.json"
+  ],
+  "psp": [
+    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PSP.json"
+  ],
+  "apps": [],
+  "updates": []
+}
