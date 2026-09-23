@@ -10,7 +10,21 @@
 
 This guide assumes you are starting from scratch. You do **not** need to understand FTP, JSON, GitHub redirects, or BGFT beforehand.
 
-### Step 1 — Enable the FTP server on your PS4
+### Step 1 — Open FPKGi at least once
+
+Before looking for `config.json`, make sure FPKGi is installed on your PS4 and has been opened at least once.
+
+Start FPKGi from the PS4 Home Screen and press **X** to open the application.
+
+This first launch creates FPKGi's configuration files, including:
+
+```text
+/user/data/FPKGi/config.json
+```
+
+You only need to do this once.
+
+### Step 2 — Enable the FTP server on your PS4
 
 From the PS4 Home Screen:
 
@@ -20,13 +34,13 @@ From the PS4 Home Screen:
 4. Turn on **Enable FTP Server**.
 5. Note the **IP address** and **FTP port** shown by GoldHEN.
 
-### Step 2 — Download FileZilla
+### Step 3 — Download FileZilla
 
 On your PC, download **FileZilla Client** from the official FileZilla website. Choose the download that matches your operating system.
 
 **[Download FileZilla Client](https://filezilla-project.org/download.php)**
 
-### Step 3 — Connect FileZilla to your PS4
+### Step 4 — Connect FileZilla to your PS4
 
 Open FileZilla.
 
@@ -41,7 +55,7 @@ Click **Quickconnect**.
 
 > **Screenshot placeholder — FileZilla Quickconnect:** Show the Host and Port fields filled in and the **Quickconnect** button clearly visible.
 
-### Step 4 — Open the FPKGi folder
+### Step 5 — Open the FPKGi folder
 
 After connecting, use FileZilla's **Remote site** panel (the PS4 side).
 
@@ -59,20 +73,13 @@ config.json
 
 > **Screenshot placeholder — FPKGi folder:** Show the Remote site path `/user/data/FPKGi/` with `config.json` visible.
 
-### Step 5 — Download config.json to your PC
+### Step 6 — Edit config.json directly in FileZilla
 
-You need a copy of `config.json` on your PC so you can edit it.
+You do **not** need to download `config.json` to your PC.
 
-You can either:
+In FileZilla, right-click `config.json` in the **Remote site** panel and choose **View/Edit**.
 
-- drag `config.json` from the PS4 side to your PC side in FileZilla; or
-- right-click it and choose **Download**.
-
-> **Screenshot placeholder — Download config.json:** Show `config.json` being downloaded from the PS4 to the PC.
-
-### Step 6 — Open config.json
-
-Open the downloaded `config.json` with a text editor such as **Notepad**.
+FileZilla will open the file using your configured text editor. Edit the file there.
 
 Find:
 
