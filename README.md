@@ -53,7 +53,7 @@ Leave the other fields unchanged unless your setup requires them.
 
 Click **Quickconnect**.
 
-![FileZilla Quickconnect](screenshots/fpkgi-setup-01-quickconnect.png)
+![FileZilla Quickconnect](screenshots/screenshot_1.png)
 
 ### Step 5 — Open the FPKGi folder
 
@@ -71,7 +71,7 @@ You should find:
 config.json
 ```
 
-![FPKGi folder in FileZilla](screenshots/fpkgi-setup-02-fpkgi-folder.png)
+![FPKGi folder in FileZilla](screenshots/screenshot_2.png)
 
 ### Step 6 — Edit config.json directly in FileZilla
 
@@ -93,7 +93,7 @@ Change it to:
 "directDownload": true
 ```
 
-![FileZilla View/Edit](screenshots/fpkgi-setup-03-view-edit.png)
+![FileZilla View/Edit](screenshots/screenshot_3.png)
 
 Find:
 
@@ -107,7 +107,7 @@ Change it to:
 "directDownload": true
 ```
 
-![Direct Download enabled](screenshots/fpkgi-setup-04-direct-download.png)
+![Direct Download enabled](screenshots/screenshot_4.png)
 
 ### Step 7 — Add the FPKGi Catalog Hub links
 
@@ -138,7 +138,7 @@ You can also find these same **Direct raw URLs** further down in this README und
 
 You only need to do this once. The URLs point to the same catalog files on GitHub, so you do **not** need to replace them whenever the catalog is updated.
 
-![CONTENT_URLS section](screenshots/fpkgi-setup-05-content-urls.png)
+![CONTENT_URLS section](screenshots/screenshot_5.png)
 
 ### Step 8 — Save and upload the configuration
 
@@ -148,7 +148,7 @@ FileZilla will show a **File has changed** dialog asking whether to upload the e
 
 Make sure **Finish editing and delete local file** is checked, then click **Yes**.
 
-![File has changed dialog](screenshots/fpkgi-setup-06-file-changed.png)
+![File has changed dialog](screenshots/screenshot_6.png)
 
 FileZilla will automatically upload the edited `config.json` back to the PS4. You do **not** need to manually upload the file.
 
@@ -156,7 +156,7 @@ FileZilla will automatically upload the edited `config.json` back to the PS4. Yo
 
 Wait for FileZilla to finish the upload and confirm that the transfer has completed successfully.
 
-![Transfer completed](screenshots/fpkgi-setup-07-transfer-completed.png)
+![Transfer completed](screenshots/screenshot_7.png)
 
 ### Step 10 — Restart FPKGi
 
