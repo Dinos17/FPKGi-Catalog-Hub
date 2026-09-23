@@ -117,9 +117,9 @@ Inside `config.json`, find the `CONTENT_URLS` section.
       "emulators": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/emulators.json",
       "themes": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/themes.json"
     }
-  }
-}
 ```
+
+**Important:** Replace only the `CONTENT_URLS` section itself. Do **not** replace or delete the closing braces for the surrounding `PREFERENCES` and root objects.
 
 You can also find these same **Direct raw URLs** further down in this README under **“Direct raw URLs”** in the **“Use the catalogs”** section.
 
