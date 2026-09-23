@@ -147,6 +147,9 @@ def fetch_release_entries():
     entries_by_category = {
         category: {} for category in set(RELEASE_TO_CATEGORY.values())
     }
+    ps5_entries_by_category = {
+        category: {} for category in set(RELEASE_TO_CATEGORY.values())
+    }
 
     for release in fetch_releases():
         tag = release.get("tag_name")
@@ -175,8 +178,10 @@ def fetch_release_entries():
                 continue
 
             entries_by_category[category][download_url] = metadata
+            if tag.startswith("PS5-"):
+                ps5_entries_by_category[category][download_url] = metadata
             added += 1
 
         print(f"Release: {tag} | PKG assets: {added}")
 
-    return entries_by_category
+    return entries_by_category, ps5_entries_by_category
