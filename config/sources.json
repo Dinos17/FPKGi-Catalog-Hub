@@ -5,7 +5,6 @@
     "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/GAMES.json"
   ],
   "dlc": [
-    "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DLC.json",
     "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/DLC.json"
   ],
   "homebrew": [
