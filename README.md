@@ -95,19 +95,6 @@ Change it to:
 
 ![FileZilla View/Edit](screenshots/screenshot_3.png)
 
-Find:
-
-```json
-"directDownload": false
-```
-
-Change it to:
-
-```json
-"directDownload": true
-```
-
-![Direct Download enabled](screenshots/screenshot_4.png)
 
 ### Step 7 — Add the FPKGi Catalog Hub links
 
