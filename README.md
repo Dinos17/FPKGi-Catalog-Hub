@@ -268,9 +268,13 @@ This will make adding new supported packages much easier without requiring a new
 
 ## Contributing
 
-Contributions are welcome.
+This repository does **not** operate under an open contribution model.
 
-When adding a new catalog source:
+Do not submit code, documentation, configuration, or other material with the expectation that it will automatically receive broad reuse rights or that you will receive a license to the project's proprietary materials.
+
+If you wish to propose a change, open an issue or contact the repository owner first. Any contribution or permission to incorporate third-party material must be separately agreed upon where necessary.
+
+When proposing a new catalog source:
 
 * Make sure it uses the expected FPKGi JSON structure.
 * Verify that the source is publicly accessible.
@@ -289,8 +293,39 @@ Only distribute packages that you have the legal right or permission to redistri
 
 ---
 
-## License
+## Licensing
 
-The catalog aggregation and automation code in this repository is provided under the repository's chosen license.
+This repository intentionally separates the licensing of the project's original materials from the generated catalog files.
 
-Third-party catalog data and packages remain subject to their respective licenses and distribution terms.
+### Original Code and Project Materials
+
+The project's original Python source code, automation scripts, documentation, configuration, and other original project materials are **not released under an open-source license**.
+
+They are governed by [LICENSE](LICENSE).
+
+Except for the limited permissions expressly granted there, the original materials may not be copied, modified, redistributed, republished, incorporated into another project, or commercially exploited without permission from Dinos17.
+
+### Generated Catalogs
+
+The generated FPKGi JSON catalogs are governed separately by [CATALOG-LICENSE.md](CATALOG-LICENSE.md).
+
+The catalogs may be accessed and used as catalogs with FPKGi in accordance with those terms.
+
+The catalog files contain information obtained from multiple sources. Dinos17 does **not** claim ownership of third-party metadata merely because it appears in these catalogs. Third-party material remains subject to the rights and terms applicable to its original source.
+
+Permission to use a catalog does not grant permission to redistribute any package referenced by that catalog.
+
+### GitHub Platform
+
+This repository is public. GitHub may provide technical functions such as viewing, downloading, cloning, or forking public repository content.
+
+Those platform functions do not expand the permissions granted under [LICENSE](LICENSE) or [CATALOG-LICENSE.md](CATALOG-LICENSE.md).
+
+---
+
+## License Files
+
+* [LICENSE](LICENSE) — terms governing the project's original code and other Original Materials.
+* [CATALOG-LICENSE.md](CATALOG-LICENSE.md) — terms governing use of the generated FPKGi catalogs, subject to third-party rights.
+
+Third-party catalog data, package metadata, packages, libraries, trademarks, and other third-party materials remain subject to their respective rights and licenses.
