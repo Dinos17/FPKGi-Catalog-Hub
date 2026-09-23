@@ -8,7 +8,7 @@
 
 **FPKGi Merged Catalog** is a catalog aggregation project for [FPKGi](https://github.com/ItsJokerZz/FPKGi).
 
-It collects compatible FPKGi JSON sources, validates them, merges their entries, removes duplicate package URLs, and publishes the resulting catalogs through GitHub.
+It collects compatible FPKGi JSON sources, validates their structure and entry metadata, merges their entries, removes duplicate package URLs, and publishes the resulting catalogs through GitHub.
 
 The goal is to provide a simple, organized, and reliable set of catalog URLs for use with FPKGi.
 
@@ -63,12 +63,13 @@ All generated catalogs use the FPKGi JSON format.
 The merger:
 
 1. Downloads configured source catalogs.
-2. Validates their JSON structure.
+2. Validates their JSON structure and individual entries.
 3. Extracts the `DATA` objects.
 4. Combines entries from multiple sources.
 5. Removes duplicate package URLs.
-6. Generates the category JSON files.
-7. Publishes the updated catalogs through the repository.
+6. Adds entries discovered from configured GitHub Releases.
+7. Generates the category JSON files.
+8. Publishes updated catalogs only when changes are detected.
 
 ---
 
@@ -103,13 +104,15 @@ The repository uses **GitHub Actions** to maintain the generated catalogs.
 
 The workflow:
 
-1. Checks out the repository.
+1. Checks out the repository on a pinned `ubuntu-24.04` GitHub-hosted runner.
 2. Sets up Python.
 3. Installs the required dependencies.
 4. Runs `tools/merge.py`.
-5. Generates the updated catalog files.
-6. Commits changes when updates are detected.
-7. Pushes the updated catalogs back to the repository.
+5. Validates and generates the catalog files.
+6. Detects whether generated JSON files changed.
+7. Commits and pushes changes only when updates are detected.
+
+The workflow runs on a daily schedule and can also be started manually from the **Actions** tab.
 
 The workflow can also be started manually from the **Actions** tab.
 
@@ -124,8 +127,13 @@ fpkgi-merged/
 │   └── workflows/
 │       └── auto_merge.yml
 │
+├── config/
+│   └── sources.json
+│
 ├── tools/
-│   └── merge.py
+│   ├── merge.py
+│   ├── pkg_metadata.py
+│   └── release_sources.py
 │
 ├── apps.json
 ├── demos.json
@@ -142,11 +150,17 @@ fpkgi-merged/
 └── README.md
 ```
 
+### `config/`
+
+* `sources.json` — defines the external FPKGi catalog sources used by the merger.
+
 ### `tools/`
 
 Contains the scripts used to maintain the project.
 
 * `merge.py` — downloads, validates, merges, and generates the catalog files.
+* `release_sources.py` — discovers `.pkg` assets from configured GitHub Releases and extracts metadata for catalog entries.
+* `pkg_metadata.py` — reads PS4 PKG metadata using HTTP range requests without downloading the complete package.
 
 ### Catalog files
 
@@ -161,18 +175,18 @@ They are intended to be consumed directly by FPKGi.
 Source URLs are configured in:
 
 ```text
-tools/merge.py
+config/sources.json
 ```
 
 Each category can contain one or more compatible FPKGi JSON sources.
 
 For example:
 
-```python
+```json
 "games": [
-    "https://example.com/GAMES.json",
-    "https://example.com/another-games.json",
-],
+  "https://example.com/GAMES.json",
+  "https://example.com/another-games.json"
+]
 ```
 
 Entries from all valid sources are combined into the corresponding catalog.
@@ -181,7 +195,7 @@ Duplicate entries are detected using the package URL.
 
 ---
 
-## Source Validation
+## Source & Entry Validation
 
 Each source must contain a structure similar to:
 
@@ -202,7 +216,7 @@ Each source must contain a structure similar to:
 }
 ```
 
-Invalid or incompatible sources are skipped instead of stopping the entire merge process.
+The merger rejects structurally invalid entries and reports metadata warnings without unnecessarily discarding otherwise usable entries. A source that fails to load or does not contain a valid `DATA` object is skipped so other sources can still be processed.
 
 ---
 
@@ -222,13 +236,15 @@ This prevents a single unavailable source from stopping the entire catalog updat
 
 ---
 
-## Package Hosting
+## GitHub Release Integration
 
-The project can also support packages hosted independently from third-party catalog servers.
+The merger can discover `.pkg` assets from specific GitHub Releases and automatically generate corresponding FPKGi catalog entries.
 
-For packages that are legally redistributable, future tooling can upload `.pkg` files to GitHub Releases and automatically generate the corresponding FPKGi catalog entries.
+The release integration reads package metadata through HTTP range requests, so it can inspect the relevant PKG structures without downloading the entire package during metadata scanning.
 
-The planned workflow is:
+Only packages that are legally redistributable should be hosted this way.
+
+The workflow is:
 
 ```text
 Local PKG
