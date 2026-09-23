@@ -1,6 +1,6 @@
 {
   "DATA": {
-    "https://github.com/Dinos17/fpkgi-merged/releases/download/PS4-apps/PS4_CUSA00127_v1.53.pkg": {
+    "https://github.com/Dinos17/FPKGi-Catalog-Hub/releases/download/PS4-apps/PS4_CUSA00127_v1.53.pkg": {
       "title_id": "CUSA00127",
       "region": null,
       "name": "Netflix",
@@ -11,7 +11,7 @@
       "cover_url": null,
       "category": "gde"
     },
-    "https://github.com/Dinos17/fpkgi-merged/releases/download/PS4-apps/PS4_CUSA01116_v2.32.pkg": {
+    "https://github.com/Dinos17/FPKGi-Catalog-Hub/releases/download/PS4-apps/PS4_CUSA01116_v2.32.pkg": {
       "title_id": "CUSA01015",
       "region": null,
       "name": "YouTube",
