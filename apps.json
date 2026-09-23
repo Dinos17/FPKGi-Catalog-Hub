@@ -79,6 +79,24 @@
       "size": 151650304,
       "min_fw": "5.05",
       "cover_url": "https://i.imgur.com/h2XvrcZ.jpeg"
+    },
+    "https://github.com/Dinos17/fpkgi-merged/releases/download/PS4-apps/PS4_CUSA00127_v1.53.pkg": {
+      "name": "Netflix",
+      "size": 64028672,
+      "title_id": "CUSA00127",
+      "version": "01.00",
+      "min_fw": "8.80.128",
+      "category": "gde",
+      "release": "23-09-2026"
+    },
+    "https://github.com/Dinos17/fpkgi-merged/releases/download/PS4-apps/PS4_CUSA01116_v2.32.pkg": {
+      "name": "YouTube",
+      "size": 151650304,
+      "title_id": "CUSA01015",
+      "version": "02.32",
+      "min_fw": "5.05",
+      "category": "gd",
+      "release": "23-09-2026"
     }
   }
 }
