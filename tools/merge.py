@@ -6,46 +6,19 @@ import requests
 from release_sources import fetch_release_entries
 
 
-SOURCES = {
-    "games": [
-        "https://raw.githubusercontent.com/gop753811-netizen/fpkgi/main/GAMES-archive.org.json",
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/GAMES.json",
-        "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/GAMES.json",
-    ],
-    "dlc": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DLC.json",
-        "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/DLC.json",
-    ],
-    "homebrew": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/HOMEBREW.json",
-    ],
-    "demos": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/DEMOS.json",
-    ],
-    "emulators": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/EMULATORS.json",
-    ],
-    "themes": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/THEMES.json",
-    ],
-    "ps1": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS1.json",
-    ],
-    "ps2": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PS2.json",
-    ],
-    "psp": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/PSP.json",
-    ],
-    "apps": [
-        "https://raw.githubusercontent.com/ps4arab/fpkgi/main/APPS.json",
-    ],
-    "updates": [],
-}
-
-
+CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent
 TIMEOUT = 60
+
+
+def load_sources():
+    with CONFIG_PATH.open("r", encoding="utf-8") as file:
+        sources = json.load(file)
+
+    if not isinstance(sources, dict):
+        raise ValueError("Source configuration must be a JSON object")
+
+    return sources
 
 
 def fetch_source(url):
@@ -142,9 +115,10 @@ def main():
     print("FPKGi JSON Merger")
     print("=================")
 
+    sources = load_sources()
     release_entries = fetch_release_entries()
 
-    for category, urls in SOURCES.items():
+    for category, urls in sources.items():
         merge_category(
             category,
             urls,
