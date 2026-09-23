@@ -99,13 +99,30 @@ Change it to:
 
 Inside `config.json`, find the `CONTENT_URLS` section.
 
-Replace the catalog URLs with the **Direct raw URLs** listed further down in this README, under **“Direct raw URLs”** in the **“Use the catalogs”** section.
+**Replace the entire `CONTENT_URLS` section with the following:**
 
-You can find them by scrolling down past the setup guide to that section. There you will find the raw URL for each catalog category.
+```json
+"CONTENT_URLS": {
+  "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps1.json",
+  "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps2.json",
+  "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/psp.json",
+  "PS5": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/dlc.json",
+  "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json",
+  "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/apps.json",
+  "updates": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/updates.json",
+  "DLC": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/dlc.json",
+  "demos": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/demos.json",
+  "homebrew": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/homebrew.json",
+  "emulators": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/emulators.json",
+  "themes": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/themes.json"
+}
+```
+
+You can also find these same **Direct raw URLs** further down in this README under **“Direct raw URLs”** in the **“Use the catalogs”** section.
 
 You only need to do this once. The URLs point to the same catalog files on GitHub, so you do **not** need to replace them whenever the catalog is updated.
 
-> **Screenshot placeholder — CONTENT_URLS:** Show the `CONTENT_URLS` section with the Catalog Hub raw URLs being added.
+> **Screenshot placeholder — CONTENT_URLS:** Show the `CONTENT_URLS` section with the Catalog Hub raw URLs in place.
 
 ### Step 8 — Save the configuration
 
