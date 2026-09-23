@@ -201,13 +201,25 @@ def main():
     print("=================")
 
     sources = load_sources()
-    release_entries = fetch_release_entries()
+    release_entries, ps5_release_entries = fetch_release_entries()
 
     for category, urls in sources.items():
         merge_category(
             category,
             urls,
             release_entries.get(category, {}),
+        )
+
+        ps5_output = {
+            "DATA": ps5_release_entries.get(category, {})
+        }
+        ps5_output_path = OUTPUT_DIR / f"ps5-{category}.json"
+        with ps5_output_path.open("w", encoding="utf-8") as file:
+            json.dump(ps5_output, file, indent=2, ensure_ascii=False)
+            file.write("\n")
+        print(
+            f"PS5 catalog: {ps5_output_path} | "
+            f"Entries: {len(ps5_output['DATA'])}"
         )
 
     print("\nMerge completed.")
