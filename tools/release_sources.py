@@ -122,7 +122,12 @@ def asset_to_entry(asset, release, category, cover_urls=None):
     download_url = asset.get("browser_download_url")
     size = asset.get("size")
     cover_urls = cover_urls or {}
-    cover_url = cover_urls.get(name)
+    cover_url = cover_urls.get(name) or cover_urls.get(name.strip())
+    if cover_url is None:
+        cover_url = next(
+            (url for package_name, url in cover_urls.items() if package_name.lower() == name.lower()),
+            None,
+        )
 
     if not name or not download_url or not name.lower().endswith(".pkg"):
         return None
