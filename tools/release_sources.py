@@ -91,6 +91,7 @@ def asset_to_entry(asset, release, category):
     name = asset.get("name")
     download_url = asset.get("browser_download_url")
     size = asset.get("size")
+    cover_url = asset.get("label")
 
     if not name or not download_url or not name.lower().endswith(".pkg"):
         return None
@@ -106,7 +107,7 @@ def asset_to_entry(asset, release, category):
         "release": None,
         "size": size,
         "min_fw": None,
-        "cover_url": None,
+        "cover_url": cover_url if isinstance(cover_url, str) and cover_url.startswith(("http://", "https://")) else None,
     }
 
     try:
@@ -138,7 +139,8 @@ def asset_to_entry(asset, release, category):
         except ValueError:
             pass
 
-    # Keep the generated entry aligned with FPKGi's core metadata schema.
+    # GitHub release asset labels are used as optional per-package cover URLs.
+    # Put the cover URL in the asset's "Label" field when uploading the PKG.
     # APP_VER is already mapped to "version" by pkg_metadata.py.
     return download_url, metadata
 
