@@ -87,11 +87,42 @@ def fetch_release_assets(release):
     return assets
 
 
-def asset_to_entry(asset, release, category):
+def parse_cover_urls(release):
+    """Read optional cover URLs from a Markdown table in the release body."""
+    body = release.get("body")
+    if not isinstance(body, str) or not body.strip():
+        return {}
+
+    cover_urls = {}
+    header = None
+    separator = re.compile(r"^\\s*\\|?\\s*:?-{3,}:?\\s*(?:\\|\\s*:?-{3,}:?\\s*)+\\|?\\s*$")
+
+    for raw_line in body.splitlines():
+        line = raw_line.strip()
+        if not line or "|" not in line:
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        normalized = [cell.lower() for cell in cells]
+        if header is None and "package" in normalized and "cover url" in normalized:
+            header = normalized
+            continue
+        if header is None or separator.match(line):
+            continue
+        if len(cells) != len(header):
+            continue
+        package_name = cells[header.index("package")].strip("`").strip()
+        cover_url = cells[header.index("cover url")].strip().strip("<>")
+        if package_name and cover_url.startswith(("http://", "https://")) and package_name.lower().endswith(".pkg"):
+            cover_urls[package_name] = cover_url
+    return cover_urls
+
+
+def asset_to_entry(asset, release, category, cover_urls=None):
     name = asset.get("name")
     download_url = asset.get("browser_download_url")
     size = asset.get("size")
-    cover_url = asset.get("label")
+    cover_urls = cover_urls or {}
+    cover_url = cover_urls.get(name)
 
     if not name or not download_url or not name.lower().endswith(".pkg"):
         return None
@@ -107,7 +138,7 @@ def asset_to_entry(asset, release, category):
         "release": None,
         "size": size,
         "min_fw": None,
-        "cover_url": cover_url if isinstance(cover_url, str) and cover_url.startswith(("http://", "https://")) else None,
+        "cover_url": cover_url if isinstance(cover_url, str) else None,
     }
 
     try:
@@ -139,8 +170,7 @@ def asset_to_entry(asset, release, category):
         except ValueError:
             pass
 
-    # GitHub release asset labels are used as optional per-package cover URLs.
-    # Put the cover URL in the asset's "Label" field when uploading the PKG.
+    # Optional cover URLs come from the release body Markdown table.
     # APP_VER is already mapped to "version" by pkg_metadata.py.
     return download_url, metadata
 
@@ -168,9 +198,10 @@ def fetch_release_entries():
             print("Skipping this release.")
             continue
 
+        cover_urls = parse_cover_urls(release)
         added = 0
         for asset in assets:
-            result = asset_to_entry(asset, release, category)
+            result = asset_to_entry(asset, release, category, cover_urls)
             if result is None:
                 continue
 
