@@ -1,4 +1,5 @@
 import json
+import re
 from pathlib import Path
 
 import requests
@@ -44,6 +45,87 @@ def fetch_source(url):
     return entries
 
 
+
+ALLOWED_METADATA_TYPES = (str, int, float, bool, type(None))
+TITLE_ID_RE = re.compile(r"^[A-Z]{4}\\d{5}$", re.IGNORECASE)
+VERSION_RE = re.compile(r"^\\d+(?:\\.\\d+)*$")
+
+
+def validate_entry(pkg_url, metadata):
+    errors = []
+    warnings = []
+
+    if not isinstance(pkg_url, str) or not pkg_url.strip():
+        errors.append("package URL is missing or is not a string")
+    elif not pkg_url.lower().startswith(("http://", "https://")):
+        errors.append("package URL is not HTTP(S)")
+
+    if not isinstance(metadata, dict):
+        errors.append("metadata is not an object")
+        return errors, warnings
+
+    for key, value in metadata.items():
+        if not isinstance(value, ALLOWED_METADATA_TYPES):
+            errors.append(f"metadata field '{key}' has an unsupported type")
+
+    name = metadata.get("name")
+    if not isinstance(name, str) or not name.strip():
+        warnings.append("missing name")
+
+    title_id = metadata.get("title_id")
+    if title_id not in (None, ""):
+        if not isinstance(title_id, str) or not TITLE_ID_RE.fullmatch(title_id.strip()):
+            warnings.append(f"invalid title_id: {title_id!r}")
+
+    size = metadata.get("size")
+    if size is not None:
+        if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
+            warnings.append(f"invalid size: {size!r}")
+
+    version = metadata.get("version")
+    if version not in (None, ""):
+        if not isinstance(version, str) or not VERSION_RE.fullmatch(version.strip()):
+            warnings.append(f"invalid version: {version!r}")
+
+    return errors, warnings
+
+
+def validate_entries(entries, source_name):
+    if not isinstance(entries, dict):
+        raise ValueError(f"{source_name}: DATA must be an object")
+
+    valid = {}
+    rejected = 0
+    warning_count = 0
+
+    for pkg_url, metadata in entries.items():
+        errors, warnings = validate_entry(pkg_url, metadata)
+
+        if errors:
+            rejected += 1
+            print(
+                f"WARNING: Rejected entry from {source_name}: "
+                f"{'; '.join(errors)}"
+            )
+            continue
+
+        if warnings:
+            warning_count += len(warnings)
+            print(
+                f"WARNING: Entry from {source_name}: "
+                f"{pkg_url} | {'; '.join(warnings)}"
+            )
+
+        valid[pkg_url] = metadata
+
+    if rejected or warning_count:
+        print(
+            f"Validation: {len(valid)} accepted | "
+            f"{rejected} rejected | {warning_count} warnings"
+        )
+
+    return valid
+
 def merge_category(category, urls, release_entries):
     merged = {}
     total_source_entries = 0
@@ -55,6 +137,7 @@ def merge_category(category, urls, release_entries):
     for url in urls:
         try:
             entries = fetch_source(url)
+            entries = validate_entries(entries, url)
             total_source_entries += len(entries)
 
             added = 0
@@ -76,6 +159,8 @@ def merge_category(category, urls, release_entries):
         except Exception as exc:
             print(f"ERROR: {exc}")
             print("Skipping this source.")
+
+    release_entries = validate_entries(release_entries, "GitHub Releases")
 
     release_added = 0
     release_duplicates = 0
