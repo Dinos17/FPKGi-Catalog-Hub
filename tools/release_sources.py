@@ -35,6 +35,11 @@ RELEASE_TO_CATEGORY = {
 TITLE_ID_RE = re.compile(r"(?<![A-Z0-9])(CUSA\d{5})(?!\d)", re.IGNORECASE)
 VERSION_RE = re.compile(r"(?:^|[_-])v(\d+(?:\.\d+)+)(?:[_-]|\.)", re.IGNORECASE)
 
+API_HEADERS = {
+    "Accept": "application/vnd.github+json",
+    "User-Agent": "fpkgi-merged/1.0",
+}
+
 
 def fetch_releases():
     print("\nFetching GitHub Releases")
@@ -43,10 +48,7 @@ def fetch_releases():
         GITHUB_API,
         params={"per_page": 100},
         timeout=TIMEOUT,
-        headers={
-            "Accept": "application/vnd.github+json",
-            "User-Agent": "fpkgi-merged/1.0",
-        },
+        headers=API_HEADERS,
     )
     response.raise_for_status()
 
@@ -56,6 +58,33 @@ def fetch_releases():
         raise ValueError("GitHub Releases API did not return a list")
 
     return releases
+
+
+def fetch_release_assets(release):
+    assets_url = release.get("assets_url")
+
+    if not assets_url:
+        raise ValueError(
+            f"Release {release.get('tag_name', '<unknown>')} has no assets_url"
+        )
+
+    response = requests.get(
+        assets_url,
+        params={"per_page": 100},
+        timeout=TIMEOUT,
+        headers=API_HEADERS,
+    )
+    response.raise_for_status()
+
+    assets = response.json()
+
+    if not isinstance(assets, list):
+        raise ValueError(
+            f"Release {release.get('tag_name', '<unknown>')} assets endpoint "
+            "did not return a list"
+        )
+
+    return assets
 
 
 def asset_to_entry(asset, release, category):
@@ -123,7 +152,13 @@ def fetch_release_entries():
             continue
 
         category = RELEASE_TO_CATEGORY[tag]
-        assets = release.get("assets") or []
+
+        try:
+            assets = fetch_release_assets(release)
+        except Exception as exc:
+            print(f"ERROR: Could not fetch assets for {tag}: {exc}")
+            print("Skipping this release.")
+            continue
 
         added = 0
         for asset in assets:
