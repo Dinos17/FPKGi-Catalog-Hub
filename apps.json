@@ -8,7 +8,7 @@
       "release": "23-09-2026",
       "size": 64028672,
       "min_fw": "8.80.128",
-      "cover_url": null,
+      "cover_url": "https://pkg-zone.com/images/CUSA00127/cover.png",
       "category": "gde"
     },
     "https://github.com/Dinos17/FPKGi-Catalog-Hub/releases/download/PS4-apps/PS4_CUSA01116_v2.32.pkg": {
@@ -19,7 +19,7 @@
       "release": "23-09-2026",
       "size": 151650304,
       "min_fw": "5.05",
-      "cover_url": null,
+      "cover_url": "https://pkg-zone.com/images/CUSA01116/cover.png",
       "category": "gd"
     }
   }
