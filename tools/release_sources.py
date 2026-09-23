@@ -181,6 +181,7 @@ def fetch_release_entries():
                 ps5_entries_by_category[category][download_url] = metadata
             else:
                 entries_by_category[category][download_url] = metadata
+                ps5_entries_by_category[category][download_url] = metadata
             added += 1
 
         print(f"Release: {tag} | PKG assets: {added}")
