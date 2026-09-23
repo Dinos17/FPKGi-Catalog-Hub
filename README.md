@@ -6,21 +6,27 @@
 
 ## ⚠️ Important FPKGi setup
 
-**If you want to download packages hosted through this project's GitHub Releases, enable FPKGi's _Direct Download_ mode before downloading.**
+**Before you try to download anything from this catalog, make sure FPKGi is using Direct Download mode.**
 
-In FPKGi, set:
+If you've never changed this setting before, follow these steps:
 
-```json
-"directDownload": true
-```
+1. Open **FPKGi** on your PS4.
+2. Open **Settings**.
+3. Find the **Downloads** settings.
+4. Find **Direct Download**.
+5. Turn **Direct Download** **ON**.
+6. Leave the other download settings unchanged unless you have a reason to change them.
+7. Restart FPKGi if necessary, then use the catalog normally.
 
-You can find this setting in:
+### If you use the configuration file instead
+
+You can also check the setting directly in:
 
 ```
 /user/data/FPKGi/config.json
 ```
 
-under:
+Look for:
 
 ```json
 "PREFERENCES": {
@@ -30,20 +36,34 @@ under:
 }
 ```
 
-### Why?
+If it says:
 
-GitHub Release package links redirect to GitHub's release-asset download service. During testing, FPKGi's background/BGFT download path rejected the redirected package URL with:
+```json
+"directDownload": false
+```
+
+change it to:
+
+```json
+"directDownload": true
+```
+
+### Why is this required?
+
+Packages hosted through this project's GitHub Releases are served through GitHub's release-asset download system. During testing, FPKGi's normal background/BGFT download path rejected the redirected package URL with:
 
 ```
 [BGFT] ERROR: [2239] Not supported extension.
 sceBgftServiceIntDebugDownloadRegisterPkg failed error: 80990033
 ```
 
-Using **Direct Download** avoids that failure path for these GitHub-hosted packages.
+**Direct Download uses a different download path and avoids that failure for these GitHub-hosted packages.**
 
-**If you already use Direct Download, no other catalog change is required.** The catalog URLs themselves can remain configured normally.
+You do **not** need to change the catalog URLs because of this. Just enable Direct Download once and keep using the catalog normally.
 
-> This setting is specifically important for packages served from this project's GitHub Releases. FPKGi's own documentation recommends direct package URLs ending in `.pkg`. See the [FPKGi documentation](https://github.com/ItsJokerZz/FPKGi) for the application's configuration and JSON format.
+> **First-time users:** You don't need to understand JSON, GitHub redirects, BGFT, or any of the technical details above. Just turn **Direct Download ON** in FPKGi before downloading packages from this catalog.
+
+> This setting is specifically important for packages served from this project's GitHub Releases. See the [FPKGi documentation](https://github.com/ItsJokerZz/FPKGi) for the application's configuration and JSON format.
 
 ---
 
