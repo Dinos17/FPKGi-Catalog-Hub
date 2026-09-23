@@ -28,7 +28,7 @@ def fetch_source(url):
     response = requests.get(
         url,
         timeout=TIMEOUT,
-        headers={"User-Agent": "fpkgi-merged/1.0"},
+        headers={"User-Agent": "FPKGi-Catalog-Hub/1.0"},
     )
     response.raise_for_status()
 
