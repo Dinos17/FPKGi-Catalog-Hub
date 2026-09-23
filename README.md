@@ -54,7 +54,22 @@ I've also listed the raw URLs here so you don't have to open each file manually:
 - **PSP:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/psp.json
 - **Updates:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/updates.json
 
-These are the URLs you should use in FPKGi. They point directly to the generated JSON files, so you don't need to download the files manually first.
+### Add the links once
+
+You only need to add these catalog links to FPKGi **once**.
+
+After that, you don't need to replace or re-add the links whenever the catalogs are updated. The links always point to the same JSON files on GitHub.
+
+When the GitHub repository gets an update, the catalog JSON files are updated automatically. The next time FPKGi fetches the catalogs, it gets the latest data from GitHub using the same links.
+
+**In short:**
+
+1. Add the catalog links to FPKGi once.
+2. Leave them there.
+3. I keep the catalogs updated automatically.
+4. FPKGi gets the latest data from the same GitHub links.
+
+So you **don't need to keep changing the URLs** every time the catalog gets updated.
 
 ---
 
