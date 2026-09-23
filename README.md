@@ -4,6 +4,49 @@
 
 > A unified FPKGi catalog hub that I built to bring multiple compatible catalog sources together, validate them, remove duplicates, and keep the resulting JSON catalogs updated automatically.
 
+## ⚠️ Important FPKGi setup
+
+**If you want to download packages hosted through this project's GitHub Releases, enable FPKGi's _Direct Download_ mode before downloading.**
+
+In FPKGi, set:
+
+```json
+"directDownload": true
+```
+
+You can find this setting in:
+
+```
+/user/data/FPKGi/config.json
+```
+
+under:
+
+```json
+"PREFERENCES": {
+  "DOWNLOADS": {
+    "directDownload": true
+  }
+}
+```
+
+### Why?
+
+GitHub Release package links redirect to GitHub's release-asset download service. During testing, FPKGi's background/BGFT download path rejected the redirected package URL with:
+
+```
+[BGFT] ERROR: [2239] Not supported extension.
+sceBgftServiceIntDebugDownloadRegisterPkg failed error: 80990033
+```
+
+Using **Direct Download** avoids that failure path for these GitHub-hosted packages.
+
+**If you already use Direct Download, no other catalog change is required.** The catalog URLs themselves can remain configured normally.
+
+> This setting is specifically important for packages served from this project's GitHub Releases. FPKGi's own documentation recommends direct package URLs ending in `.pkg`. See the [FPKGi documentation](https://github.com/ItsJokerZz/FPKGi) for the application's configuration and JSON format.
+
+---
+
 ## What is this?
 
 I wanted one place where I could keep my FPKGi catalogs organized instead of relying on a bunch of separate sources.
