@@ -33,7 +33,7 @@ class RangeReader:
             headers={
                 "Range": f"bytes={start}-{end}",
                 "Accept-Encoding": "identity",
-                "User-Agent": "fpkgi-merged/1.0",
+                "User-Agent": "FPKGi-Catalog-Hub/1.0",
             },
             timeout=TIMEOUT,
             allow_redirects=True,
