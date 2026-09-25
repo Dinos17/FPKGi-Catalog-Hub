@@ -208,3 +208,90 @@ def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     merge.main()
 
     assert json.loads(output_path.read_text(encoding="utf-8")) == existing
+
+
+def test_merge_category_preserves_catalog_on_sharp_shrink_after_source_failure(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    output_path = tmp_path / "games.json"
+    existing = {
+        "DATA": {
+            f"https://example.com/existing-{index}.pkg": {
+                "name": f"Existing Game {index}",
+            }
+            for index in range(10)
+        }
+    }
+    output_path.write_text(json.dumps(existing), encoding="utf-8")
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+
+    def source(url):
+        if "failed" in url:
+            raise RuntimeError("temporary upstream failure")
+        return {
+            "https://example.com/new.pkg": {
+                "name": "New Game",
+            }
+        }
+
+    monkeypatch.setattr(merge, "fetch_source", source)
+
+    result = merge.merge_category(
+        "games",
+        [
+            "https://example.com/healthy-source.json",
+            "https://example.com/failed-source.json",
+        ],
+        {},
+    )
+
+    assert result == 10
+    assert json.loads(output_path.read_text(encoding="utf-8")) == existing
+
+
+def test_merge_category_allows_shrink_when_sources_succeed(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    output_path = tmp_path / "games.json"
+    existing = {
+        "DATA": {
+            f"https://example.com/existing-{index}.pkg": {
+                "name": f"Existing Game {index}",
+            }
+            for index in range(10)
+        }
+    }
+    output_path.write_text(json.dumps(existing), encoding="utf-8")
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(
+        merge,
+        "fetch_source",
+        lambda _url: {
+            "https://example.com/new.pkg": {
+                "name": "New Game",
+            }
+        },
+    )
+
+    result = merge.merge_category(
+        "games",
+        ["https://example.com/healthy-source.json"],
+        {},
+    )
+
+    assert result == 1
+    assert json.loads(output_path.read_text(encoding="utf-8")) == {
+        "DATA": {
+            "https://example.com/new.pkg": {
+                "name": "New Game",
+            }
+        }
+    }
