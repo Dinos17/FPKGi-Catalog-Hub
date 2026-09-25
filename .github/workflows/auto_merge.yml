@@ -30,6 +30,10 @@ jobs:
         run: |
           python tools/merge.py
 
+      - name: Validate Generated Catalogs
+        run: |
+          python tools/validate_catalogs.py
+
       - name: Check for Catalog Changes
         id: changes
         run: |
