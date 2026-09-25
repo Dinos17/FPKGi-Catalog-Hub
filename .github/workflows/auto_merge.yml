@@ -85,7 +85,7 @@ jobs:
               )
 
           subprocess.run(
-              ["git", "add", "--", *files],
+              ["git", "add", "-A", "--", "*.json"],
               check=True,
           )
           PY
