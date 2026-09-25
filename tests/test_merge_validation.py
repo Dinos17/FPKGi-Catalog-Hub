@@ -60,34 +60,34 @@ def test_validate_entry_rejects_non_json_metadata_types(metadata):
     assert warnings == []
 
 
-def test_validate_entry_warns_for_invalid_title_id_without_rejecting():
+def test_validate_entry_rejects_invalid_title_id():
     errors, warnings = validate_entry(
         "https://example.com/game.pkg",
         {"name": "Example Game", "title_id": "NOT-A-TITLE-ID"},
     )
 
-    assert errors == []
-    assert any("invalid title_id" in warning for warning in warnings)
+    assert any("invalid title_id" in error for error in errors)
+    assert warnings == []
 
 
-def test_validate_entry_warns_for_invalid_size_without_rejecting():
+def test_validate_entry_rejects_invalid_size():
     errors, warnings = validate_entry(
         "https://example.com/game.pkg",
         {"name": "Example Game", "size": 0},
     )
 
-    assert errors == []
-    assert any("invalid size" in warning for warning in warnings)
+    assert any("invalid size" in error for error in errors)
+    assert warnings == []
 
 
-def test_validate_entry_warns_for_invalid_version_without_rejecting():
+def test_validate_entry_rejects_invalid_version():
     errors, warnings = validate_entry(
         "https://example.com/game.pkg",
         {"name": "Example Game", "version": "v1"},
     )
 
-    assert errors == []
-    assert any("invalid version" in warning for warning in warnings)
+    assert any("invalid version" in error for error in errors)
+    assert warnings == []
 
 
 def test_validate_entry_warns_when_name_is_missing():
@@ -119,7 +119,6 @@ def test_validate_entries_keeps_valid_entries_and_rejects_errors():
 
     assert set(result) == {
         "https://example.com/valid.pkg",
-        "https://example.com/warned.pkg",
     }
 
 
