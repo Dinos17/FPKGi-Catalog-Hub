@@ -70,7 +70,8 @@ def validate_entry(pkg_url, metadata):
 
     name = metadata.get("name")
     if not isinstance(name, str) or not name.strip():
-        warnings.append("missing name")
+        if not errors:
+            warnings.append("missing name")
 
     title_id = metadata.get("title_id")
     if title_id not in (None, ""):
