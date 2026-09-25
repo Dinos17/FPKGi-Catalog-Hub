@@ -39,36 +39,7 @@ jobs:
 
       - name: Prepare Generated Catalogs
         run: |
-          python - <<'PY'
-          import json
-          import shutil
-          from pathlib import Path
-
-          root = Path(".")
-          output = root / "generated-catalogs"
-          output.mkdir()
-
-          with (root / "config" / "sources.json").open(
-              "r", encoding="utf-8"
-          ) as file:
-              categories = json.load(file)
-
-          for filename in ("ps5.json",):
-              source = root / filename
-              if not source.is_file():
-                  raise FileNotFoundError(f"Expected generated catalog is missing: {filename}")
-              shutil.copy2(source, output / filename)
-
-          for category in categories:
-              for filename in (f"{category}.json", f"ps5-{category}.json"):
-
-                  source = root / filename
-                  if not source.is_file():
-                      raise FileNotFoundError(
-                          f"Expected generated catalog is missing: {filename}"
-                      )
-                  shutil.copy2(source, output / filename)
-          PY
+          python tools/catalog_pipeline.py prepare --artifact generated-catalogs
 
       - name: Upload Generated Catalogs
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -95,7 +66,7 @@ jobs:
 
       - name: Apply Generated Catalogs
         run: |
-          cp generated-catalogs/*.json .
+          python tools/catalog_pipeline.py apply --artifact generated-catalogs
 
       - name: Check for Catalog Changes
         id: changes
