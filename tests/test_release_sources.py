@@ -122,3 +122,55 @@ def test_fetch_paginated_json_follows_next_link(monkeypatch):
         {"id": 2},
     ]
     assert calls == [1, 2]
+
+
+
+def test_fetch_release_entries_keeps_ps4_out_of_ps5_catalog(monkeypatch):
+    monkeypatch.setattr(
+        release_sources,
+        "fetch_releases",
+        lambda: [
+            {"tag_name": "PS4-apps", "assets_url": "https://example.com/ps4-assets"},
+            {"tag_name": "PS5-apps", "assets_url": "https://example.com/ps5-assets"},
+        ],
+    )
+
+    assets = {
+        "https://example.com/ps4-assets": [
+            {
+                "name": "PS4_CUSA00127.pkg",
+                "browser_download_url": "https://example.com/ps4.pkg",
+                "size": 123,
+            }
+        ],
+        "https://example.com/ps5-assets": [
+            {
+                "name": "PS5_PPSA00127.pkg",
+                "browser_download_url": "https://example.com/ps5.pkg",
+                "size": 456,
+            }
+        ],
+    }
+    monkeypatch.setattr(
+        release_sources,
+        "fetch_release_assets",
+        lambda release: assets[release["assets_url"]],
+    )
+    monkeypatch.setattr(
+        release_sources,
+        "asset_to_entry",
+        lambda asset, _release, _category, _cover_urls: (
+            asset["browser_download_url"],
+            {"name": asset["name"]},
+        ),
+    )
+
+    entries, ps5_entries = release_sources.fetch_release_entries()
+
+    assert set(entries["apps"]) == {
+        "https://example.com/ps4.pkg",
+        "https://example.com/ps5.pkg",
+    }
+    assert set(ps5_entries["apps"]) == {
+        "https://example.com/ps5.pkg",
+    }
