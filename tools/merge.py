@@ -10,6 +10,7 @@ from release_sources import fetch_release_entries
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent
 TIMEOUT = 60
+MIN_CATALOG_RETENTION_RATIO = 0.5
 
 
 def load_sources():
@@ -130,6 +131,7 @@ def validate_entries(entries, source_name):
 def merge_category(category, urls, release_entries):
     merged = {}
     total_source_entries = 0
+    failed_sources = 0
 
     print(f"\n{'=' * 60}")
     print(f"{category.upper()}")
@@ -158,6 +160,7 @@ def merge_category(category, urls, release_entries):
             )
 
         except Exception as exc:
+            failed_sources += 1
             print(f"ERROR: {exc}")
             print("Skipping this source.")
 
@@ -181,6 +184,40 @@ def merge_category(category, urls, release_entries):
         )
 
     output_path = OUTPUT_DIR / f"{category}.json"
+
+    # If an upstream source failed and the resulting catalog shrank sharply,
+    # preserve the published catalog instead of publishing a partial merge.
+    if failed_sources and output_path.exists() and merged:
+        try:
+            with output_path.open("r", encoding="utf-8") as file:
+                existing_output = json.load(file)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(
+                f"Cannot safely inspect existing catalog {output_path}: {exc}"
+            ) from exc
+
+        existing_entries = (
+            existing_output.get("DATA")
+            if isinstance(existing_output, dict)
+            else None
+        )
+        if not isinstance(existing_entries, dict):
+            raise RuntimeError(
+                f"Cannot safely inspect existing catalog {output_path}: "
+                'missing valid "DATA" object'
+            )
+
+        if (
+            existing_entries
+            and len(merged) < len(existing_entries) * MIN_CATALOG_RETENTION_RATIO
+        ):
+            print(
+                f"WARNING: Refusing to publish sharp catalog shrink after "
+                f"{failed_sources} source failure(s): "
+                f"{len(existing_entries)} -> {len(merged)} entries"
+            )
+            print(f"Preserved existing catalog: {output_path}")
+            return len(existing_entries)
 
     # Never replace an existing non-empty catalog with an empty result.
     # This protects published data from transient source failures, empty
