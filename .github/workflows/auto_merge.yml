@@ -6,12 +6,11 @@ on:
   schedule:
     - cron: "0 3 * * *"
 
-permissions:
-  contents: write
-
 jobs:
   merge:
     runs-on: ubuntu-24.04
+    permissions:
+      contents: read
 
     steps:
       - name: Checkout Repository
@@ -34,6 +33,33 @@ jobs:
         run: |
           python tools/validate_catalogs.py
 
+      - name: Upload Generated Catalogs
+        uses: actions/upload-artifact@v4
+        with:
+          name: generated-catalogs
+          path: "*.json"
+          if-no-files-found: error
+
+  publish:
+    needs: merge
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v7
+
+      - name: Download Generated Catalogs
+        uses: actions/download-artifact@v4
+        with:
+          name: generated-catalogs
+          path: generated-catalogs
+
+      - name: Apply Generated Catalogs
+        run: |
+          cp generated-catalogs/*.json .
+
       - name: Check for Catalog Changes
         id: changes
         run: |
@@ -53,7 +79,6 @@ jobs:
 
             python tools/catalog_diff.py >> "$GITHUB_STEP_SUMMARY"
 
-
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -67,4 +92,4 @@ jobs:
           echo "### ❌ FPKGi Auto Merge — Failed" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Status:** Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "Check the failed step above for details." >> "$GITHUB_STEP_SUMMARY"
+          echo "Check the failed step above for details."
