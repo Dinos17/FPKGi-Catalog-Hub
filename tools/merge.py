@@ -1,6 +1,8 @@
+import ipaddress
 import json
 import re
 from pathlib import Path
+from urllib.parse import urlsplit
 
 import requests
 
@@ -11,6 +13,39 @@ CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent
 TIMEOUT = 60
 MIN_CATALOG_RETENTION_RATIO = 0.5
+ALLOWED_SOURCE_HOSTS = {"raw.githubusercontent.com"}
+ALLOWED_SOURCE_HOST_SUFFIXES = (".archive.org",)
+
+
+def validate_source_url(url):
+    if not isinstance(url, str) or not url.strip():
+        raise ValueError("Source URL must be a non-empty string")
+
+    parsed = urlsplit(url.strip())
+    if parsed.scheme.lower() != "https":
+        raise ValueError("Source URL must use HTTPS")
+    if parsed.username is not None or parsed.password is not None:
+        raise ValueError("Source URL must not contain embedded credentials")
+    if parsed.port is not None:
+        raise ValueError("Source URL must not specify a custom port")
+
+    hostname = (parsed.hostname or "").lower().rstrip(".")
+    if not hostname:
+        raise ValueError("Source URL must contain a hostname")
+
+    try:
+        ipaddress.ip_address(hostname)
+    except ValueError:
+        pass
+    else:
+        raise ValueError("Source URL must use an approved public hostname")
+
+    if hostname not in ALLOWED_SOURCE_HOSTS and not any(
+        hostname.endswith(suffix) for suffix in ALLOWED_SOURCE_HOST_SUFFIXES
+    ):
+        raise ValueError(f"Source URL host is not approved: {hostname}")
+
+    return url.strip()
 
 
 def load_sources():
@@ -26,14 +61,12 @@ def load_sources():
         if not isinstance(urls, list):
             raise ValueError(f"Source configuration category '{category}' must be a list")
         for url in urls:
-            if (
-                not isinstance(url, str)
-                or not url.strip()
-                or not url.lower().startswith(("http://", "https://"))
-            ):
+            try:
+                validate_source_url(url)
+            except ValueError as exc:
                 raise ValueError(
-                    f"Source configuration category '{category}' contains an invalid HTTP(S) URL"
-                )
+                    f"Source configuration category '{category}' contains an invalid source URL: {exc}"
+                ) from exc
 
     return sources
 
@@ -41,11 +74,17 @@ def load_sources():
 def fetch_source(url):
     print(f"\nFetching: {url}")
 
+    url = validate_source_url(url)
+
     response = requests.get(
         url,
         timeout=TIMEOUT,
         headers={"User-Agent": "FPKGi-Catalog-Hub/1.0"},
+        allow_redirects=False,
     )
+
+    if 300 <= response.status_code < 400:
+        raise ValueError("Source URL returned a redirect; refusing to follow it")
     response.raise_for_status()
 
     data = response.json()
