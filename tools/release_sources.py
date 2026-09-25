@@ -41,22 +41,39 @@ API_HEADERS = {
 }
 
 
+def fetch_paginated_json(url):
+    items = []
+    page = 1
+
+    while True:
+        response = requests.get(
+            url,
+            params={"per_page": 100, "page": page},
+            timeout=TIMEOUT,
+            headers=API_HEADERS,
+        )
+        response.raise_for_status()
+
+        data = response.json()
+        if not isinstance(data, list):
+            raise ValueError(f"GitHub API did not return a list for {url}")
+
+        items.extend(data)
+
+        if len(data) < 100 or "next" not in response.links:
+            break
+
+        page += 1
+
+    return items
+
+
 def fetch_releases():
     print("\nFetching GitHub Releases")
 
-    response = requests.get(
-        GITHUB_API,
-        params={"per_page": 100},
-        timeout=TIMEOUT,
-        headers=API_HEADERS,
-    )
-    response.raise_for_status()
+    releases = fetch_paginated_json(GITHUB_API)
 
-    releases = response.json()
-
-    if not isinstance(releases, list):
-        raise ValueError("GitHub Releases API did not return a list")
-
+    print(f"Fetched {len(releases)} GitHub releases.")
     return releases
 
 
@@ -68,21 +85,7 @@ def fetch_release_assets(release):
             f"Release {release.get('tag_name', '<unknown>')} has no assets_url"
         )
 
-    response = requests.get(
-        assets_url,
-        params={"per_page": 100},
-        timeout=TIMEOUT,
-        headers=API_HEADERS,
-    )
-    response.raise_for_status()
-
-    assets = response.json()
-
-    if not isinstance(assets, list):
-        raise ValueError(
-            f"Release {release.get('tag_name', '<unknown>')} assets endpoint "
-            "did not return a list"
-        )
+    assets = fetch_paginated_json(assets_url)
 
     return assets
 
