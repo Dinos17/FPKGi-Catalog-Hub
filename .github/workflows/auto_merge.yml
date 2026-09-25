@@ -6,6 +6,10 @@ on:
   schedule:
     - cron: "0 3 * * *"
 
+concurrency:
+  group: fpkgi-catalog-auto-merge
+  cancel-in-progress: false
+
 jobs:
   merge:
     runs-on: ubuntu-24.04
