@@ -33,11 +33,37 @@ jobs:
         run: |
           python tools/validate_catalogs.py
 
+      - name: Prepare Generated Catalogs
+        run: |
+          python - <<'PY'
+          import json
+          import shutil
+          from pathlib import Path
+
+          root = Path(".")
+          output = root / "generated-catalogs"
+          output.mkdir()
+
+          with (root / "config" / "sources.json").open(
+              "r", encoding="utf-8"
+          ) as file:
+              categories = json.load(file)
+
+          for category in categories:
+              for filename in (f"{category}.json", f"ps5-{category}.json"):
+                  source = root / filename
+                  if not source.is_file():
+                      raise FileNotFoundError(
+                          f"Expected generated catalog is missing: {filename}"
+                      )
+                  shutil.copy2(source, output / filename)
+          PY
+
       - name: Upload Generated Catalogs
         uses: actions/upload-artifact@v4
         with:
           name: generated-catalogs
-          path: "*.json"
+          path: generated-catalogs/*.json
           if-no-files-found: error
 
   publish:
@@ -63,7 +89,24 @@ jobs:
       - name: Check for Catalog Changes
         id: changes
         run: |
-          git add *.json
+          python - <<'PY'
+          import json
+          import subprocess
+
+          with open("config/sources.json", "r", encoding="utf-8") as file:
+              categories = json.load(file)
+
+          files = []
+          for category in categories:
+              files.extend(
+                  (f"{category}.json", f"ps5-{category}.json")
+              )
+
+          subprocess.run(
+              ["git", "add", "--", *files],
+              check=True,
+          )
+          PY
 
           if git diff --cached --quiet; then
             echo "updated=false" >> "$GITHUB_OUTPUT"
