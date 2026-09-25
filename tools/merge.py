@@ -241,10 +241,10 @@ def merge_category(category, urls, release_entries):
             print(f"Preserved existing catalog: {output_path}")
             return len(existing_entries)
 
-    # Never replace an existing non-empty catalog with an empty result.
-    # This protects published data from transient source failures, empty
-    # upstream responses, or intentionally empty source configuration.
-    if not merged and output_path.exists():
+    # If every configured source completed successfully and produced no
+    # entries, an empty catalog is intentional and must be publishable.
+    # Preserve a non-empty catalog only when at least one source failed.
+    if not merged and failed_sources and output_path.exists():
         try:
             with output_path.open("r", encoding="utf-8") as file:
                 existing_output = json.load(file)
