@@ -221,7 +221,7 @@ def test_merge_category_allows_intentional_empty_result_when_sources_succeed(
     output_path.write_text(json.dumps(existing), encoding="utf-8")
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr(merge, "fetch_source", lambda _url: {"DATA": {}})
+    monkeypatch.setattr(merge, "fetch_source", lambda _url: {})
 
     result = merge_category("games", ["https://example.com/source.json"], {})
 
