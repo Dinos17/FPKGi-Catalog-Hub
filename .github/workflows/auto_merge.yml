@@ -49,8 +49,15 @@ jobs:
           ) as file:
               categories = json.load(file)
 
+          for filename in ("ps5.json",):
+              source = root / filename
+              if not source.is_file():
+                  raise FileNotFoundError(f"Expected generated catalog is missing: {filename}")
+              shutil.copy2(source, output / filename)
+
           for category in categories:
               for filename in (f"{category}.json", f"ps5-{category}.json"):
+
                   source = root / filename
                   if not source.is_file():
                       raise FileNotFoundError(
@@ -74,7 +81,7 @@ jobs:
 
     steps:
       - name: Checkout Repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
       - name: Download Generated Catalogs
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
@@ -96,7 +103,7 @@ jobs:
           with open("config/sources.json", "r", encoding="utf-8") as file:
               categories = json.load(file)
 
-          files = []
+          files = ["ps5.json"]
           for category in categories:
               files.extend(
                   (f"{category}.json", f"ps5-{category}.json")
