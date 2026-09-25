@@ -295,3 +295,42 @@ def test_merge_category_allows_shrink_when_sources_succeed(
             }
         }
     }
+
+
+def test_merge_category_treats_all_invalid_source_as_failure(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    output_path = tmp_path / "games.json"
+    existing = {
+        "DATA": {
+            f"https://example.com/existing-{index}.pkg": {
+                "name": f"Existing Game {index}",
+            }
+            for index in range(10)
+        }
+    }
+    output_path.write_text(json.dumps(existing), encoding="utf-8")
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+
+    def source(_url):
+        return {
+            "https://example.com/bad.pkg": {
+                "name": "Bad Game",
+                "version": "not-a-version",
+            }
+        }
+
+    monkeypatch.setattr(merge, "fetch_source", source)
+
+    result = merge.merge_category(
+        "games",
+        ["https://example.com/all-invalid.json"],
+        {},
+    )
+
+    assert result == 10
+    assert json.loads(output_path.read_text(encoding="utf-8")) == existing
