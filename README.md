@@ -333,11 +333,18 @@ Every automated run:
 
 I use **GitHub Actions** to keep the catalogs maintained automatically.
 
-The workflow runs on a daily schedule, and I can also start it manually from the **Actions** tab.
+The production workflow:
 
-If nothing changed, nothing gets committed.
+1. Runs on a daily schedule or can be started manually from the **Actions** tab.
+2. Uses the pinned Python 3.12 runtime and dependencies from `requirements.txt`.
+3. Runs the merger.
+4. Validates every generated catalog before anything is committed.
+5. Produces a catalog-diff summary when changes are detected.
+6. Commits and pushes changes only when the catalogs actually changed.
 
-If the catalogs changed, the workflow commits the updated JSON files automatically.
+If validation fails, the workflow stops before publishing the generated catalogs.
+
+Separate CI workflows also run the test suite and catalog validation independently, so changes to the code are checked before they become part of the production workflow.
 
 ---
 
@@ -416,7 +423,9 @@ FPKGi-Catalog-Hub/
 │
 ├── .github/
 │   └── workflows/
-│       └── auto_merge.yml
+│       ├── auto_merge.yml
+│       ├── catalog-validation.yml
+│       └── tests.yml
 │
 ├── config/
 │   └── sources.json
@@ -424,7 +433,16 @@ FPKGi-Catalog-Hub/
 ├── tools/
 │   ├── merge.py
 │   ├── pkg_metadata.py
-│   └── release_sources.py
+│   ├── release_sources.py
+│   ├── validate_catalogs.py
+│   └── catalog_diff.py
+│
+├── tests/
+│   ├── test_merge_validation.py
+│   ├── test_pkg_metadata.py
+│   └── test_release_sources.py
+│
+├── requirements.txt
 │
 ├── apps.json
 ├── demos.json
@@ -438,6 +456,8 @@ FPKGi-Catalog-Hub/
 ├── themes.json
 ├── updates.json
 │
+├── ps5-*.json
+│
 ├── LICENSE
 ├── CATALOG-LICENSE.md
 └── README.md
@@ -445,9 +465,16 @@ FPKGi-Catalog-Hub/
 
 ### The main tools
 
-- `merge.py` — fetches, validates, merges, and generates the catalogs.
-- `release_sources.py` — discovers supported PKG assets from GitHub Releases and tracks PS5 release entries separately.
+- `merge.py` — fetches, validates, merges, protects existing catalogs from an empty replacement, and generates the catalogs.
+- `release_sources.py` — discovers supported PKG assets from GitHub Releases, uses paginated GitHub API requests, and tracks PS5 release entries separately.
 - `pkg_metadata.py` — reads PKG metadata using HTTP range requests.
+- `validate_catalogs.py` — validates the generated catalog structure and individual entries before publication.
+- `catalog_diff.py` — summarizes catalog changes for the GitHub Actions run.
+
+### Tests and dependencies
+
+- `tests/` contains regression tests for catalog validation, PKG metadata parsing, release-source handling, PS4/PS5 title-ID fallback, and GitHub API pagination.
+- `requirements.txt` pins the runtime `requests` dependency used by the merger.
 
 ---
 
