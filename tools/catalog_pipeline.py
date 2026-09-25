@@ -23,12 +23,26 @@ def prepare_catalog_artifact(root, output):
         shutil.copy2(source, output / filename)
 
 
+def reconcile_catalog_files(root):
+    expected = set(expected_catalogs(root))
+    removed = []
+
+    for path in root.glob("*.json"):
+        if path.is_file() and path.name not in expected:
+            path.unlink()
+            removed.append(path.name)
+
+    return sorted(removed)
+
+
 def apply_catalog_artifact(root, artifact):
     for filename in expected_catalogs(root):
         source = artifact / filename
         if not source.is_file():
             raise FileNotFoundError(f"Expected generated artifact is missing: {filename}")
         shutil.copy2(source, root / filename)
+
+    return reconcile_catalog_files(root)
 
 
 if __name__ == "__main__":
