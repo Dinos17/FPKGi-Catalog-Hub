@@ -101,6 +101,9 @@ def parse_sfo(data: bytes) -> Dict[str, object]:
         )
 
         key_start = key_offset + key_rel
+        if key_start < 0 or key_start >= len(data):
+            raise ValueError(f"PARAM.SFO key for entry {index} is outside the file")
+
         key_end = data.find(b"\x00", key_start)
         if key_end == -1:
             key_end = len(data)
