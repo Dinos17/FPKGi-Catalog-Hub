@@ -30,6 +30,8 @@ def main():
     sources = load_sources()
     paths = []
 
+    paths.append(ROOT / "ps5.json")
+
     for category in sources:
         paths.append(ROOT / f"{category}.json")
         paths.append(ROOT / f"ps5-{category}.json")
