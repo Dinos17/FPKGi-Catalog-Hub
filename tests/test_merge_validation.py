@@ -6,7 +6,7 @@ import pytest
 TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
-from merge import validate_entry, validate_entries  # noqa: E402
+from merge import merge_category, validate_entry, validate_entries  # noqa: E402
 
 
 def test_validate_entry_accepts_valid_entry():
@@ -138,3 +138,34 @@ def test_validate_entries_preserves_metadata_values():
     )
 
     assert result["https://example.com/game.pkg"] == metadata
+
+
+def test_merge_category_preserves_existing_catalog_when_result_is_empty(
+    tmp_path, monkeypatch
+):
+    output_path = tmp_path / "games.json"
+    existing = {
+        "DATA": {
+            "https://example.com/existing.pkg": {
+                "name": "Existing Game",
+            }
+        }
+    }
+    output_path.write_text(
+        __import__("json").dumps(existing),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr("merge.OUTPUT_DIR", tmp_path)
+
+    def failing_source(_url):
+        raise RuntimeError("temporary upstream failure")
+
+    monkeypatch.setattr("merge.fetch_source", failing_source)
+
+    result = merge_category("games", ["https://example.com/source.json"], {})
+
+    assert result == 1
+    assert __import__("json").loads(
+        output_path.read_text(encoding="utf-8")
+    ) == existing
