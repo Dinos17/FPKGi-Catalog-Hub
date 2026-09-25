@@ -107,7 +107,7 @@ Inside `config.json`, find the `CONTENT_URLS` section.
       "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps1.json",
       "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps2.json",
       "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/psp.json",
-      "PS5": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/dlc.json",
+      "PS5": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5.json",
       "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json",
       "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/apps.json",
       "updates": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/updates.json",
@@ -450,13 +450,14 @@ FPKGi-Catalog-Hub/
 ├── emulators.json
 ├── games.json
 ├── homebrew.json
+├── ps5.json
 ├── ps1.json
 ├── ps2.json
 ├── psp.json
 ├── themes.json
 ├── updates.json
 │
-├── ps5-*.json
+├── ps5-*.json  (per-category PS5 release catalogs)
 │
 ├── LICENSE
 ├── CATALOG-LICENSE.md
