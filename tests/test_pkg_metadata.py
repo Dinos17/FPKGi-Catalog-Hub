@@ -116,3 +116,47 @@ def test_range_reader_rejects_out_of_bounds():
 
     with pytest.raises(ValueError):
         reader.read(90, 20)
+
+
+class FakeResponse:
+    def __init__(self, content, content_range, status_code=206):
+        self.content = content
+        self.headers = {"Content-Range": content_range}
+        self.status_code = status_code
+
+    def raise_for_status(self):
+        pass
+
+
+@pytest.mark.parametrize(
+    "content_range",
+    [
+        "bytes 10-19/99",
+        "bytes 11-19/100",
+        "bytes 10-18/100",
+        "bytes 10-19/*",
+        "bytes 10-19/100/extra",
+        "invalid",
+    ],
+)
+def test_range_reader_rejects_inexact_content_range(monkeypatch, content_range):
+    monkeypatch.setattr(
+        "pkg_metadata.requests.get",
+        lambda *args, **kwargs: FakeResponse(b"x" * 10, content_range),
+    )
+
+    reader = RangeReader("https://example.com/file.pkg", 100)
+
+    with pytest.raises(RuntimeError, match="Content-Range"):
+        reader.read(10, 10)
+
+
+def test_range_reader_accepts_exact_content_range(monkeypatch):
+    monkeypatch.setattr(
+        "pkg_metadata.requests.get",
+        lambda *args, **kwargs: FakeResponse(b"x" * 10, "bytes 10-19/100"),
+    )
+
+    reader = RangeReader("https://example.com/file.pkg", 100)
+
+    assert reader.read(10, 10) == b"x" * 10
