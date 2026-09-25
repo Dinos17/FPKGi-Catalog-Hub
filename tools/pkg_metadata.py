@@ -72,7 +72,7 @@ def _format_system_version(raw: int) -> Optional[str]:
     if major == 0:
         return None
 
-    if patch:
+    if patch or (raw & 0xFF):
         return f"{major}.{minor:02d}.{patch:02d}"
 
     return f"{major}.{minor:02d}"
