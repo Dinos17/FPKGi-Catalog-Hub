@@ -1,3 +1,4 @@
+import re
 import struct
 from typing import Dict, Optional
 
@@ -43,10 +44,18 @@ class RangeReader:
         content = response.content
         content_range = response.headers.get("Content-Range", "")
 
-        if response.status_code != 206 or not content_range.startswith("bytes "):
+        match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)", content_range)
+        if response.status_code != 206 or match is None:
             raise RuntimeError(
-                "PKG source did not honor HTTP range requests; refusing to download "
+                "PKG source did not return an exact Content-Range; refusing to download "
                 "the full package during metadata scanning."
+            )
+
+        range_start, range_end, total = map(int, match.groups())
+        if range_start != start or range_end != end or total != self.size:
+            raise RuntimeError(
+                f"Content-Range mismatch: expected bytes {start}-{end}/{self.size}, "
+                f"got {content_range!r}"
             )
 
         if len(content) != length:
