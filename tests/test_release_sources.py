@@ -64,6 +64,27 @@ def test_asset_to_entry_uses_filename_fallback_when_metadata_fails(monkeypatch):
     assert metadata["cover_url"] == "https://example.com/cover.png"
 
 
+def test_asset_to_entry_supports_ps5_title_id_filename_fallback(monkeypatch):
+    monkeypatch.setattr(
+        release_sources,
+        "extract_metadata",
+        lambda _url, _size: (_ for _ in ()).throw(RuntimeError("bad pkg")),
+    )
+
+    result = release_sources.asset_to_entry(
+        {
+            "name": "PPSA12345_v1.0.0.pkg",
+            "browser_download_url": "https://example.com/game.pkg",
+            "size": 123,
+        },
+        {},
+        "games",
+    )
+
+    assert result[1]["title_id"] == "PPSA12345"
+    assert result[1]["version"] == "1.0.0"
+
+
 def test_asset_to_entry_rejects_non_pkg_assets():
     asset = {
         "name": "README.txt",
