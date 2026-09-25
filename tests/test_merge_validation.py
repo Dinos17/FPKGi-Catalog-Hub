@@ -34,7 +34,7 @@ def test_load_sources_rejects_invalid_configuration(tmp_path, monkeypatch, sourc
     config_path.write_text(json.dumps(sources), encoding="utf-8")
     monkeypatch.setattr(merge, "CONFIG_PATH", config_path)
 
-    with pytest.raises(ValueError, match="Source configuration"):
+    with pytest.raises(ValueError, match="(?i)source configuration"):
         merge.load_sources()
 
 
