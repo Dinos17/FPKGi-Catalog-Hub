@@ -72,3 +72,22 @@ def test_apply_fails_when_expected_artifact_is_missing(tmp_path):
         assert "ps5-games.json" in str(exc)
     else:
         raise AssertionError("Expected missing artifact catalog to fail")
+
+
+def test_apply_removes_stale_root_catalogs(tmp_path):
+    root = tmp_path / "repo"
+    artifact = tmp_path / "artifact"
+    root.mkdir()
+
+    write_catalogs(root, {"games": []})
+    stale = root / "legacy-category.json"
+    stale.write_text(json.dumps({"DATA": {"stale": {}}}), encoding="utf-8")
+
+    catalog_pipeline.prepare_catalog_artifact(root, artifact)
+    removed = catalog_pipeline.apply_catalog_artifact(root, artifact)
+
+    assert removed == ["legacy-category.json"]
+    assert not stale.exists()
+    assert sorted(p.name for p in root.glob("*.json")) == sorted(
+        catalog_pipeline.expected_catalogs(root)
+    )
