@@ -334,3 +334,40 @@ def test_merge_category_treats_all_invalid_source_as_failure(
 
     assert result == 10
     assert json.loads(output_path.read_text(encoding="utf-8")) == existing
+
+
+def test_main_preserves_existing_unified_ps5_catalog_when_release_result_is_empty(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    output_path = tmp_path / "ps5.json"
+    existing = {
+        "DATA": {
+            "https://github.com/example/PS5-app.pkg": {
+                "name": "Existing PS5 App",
+                "title_id": "PPSA12345",
+                "size": 123,
+                "version": "1.0",
+            }
+        }
+    }
+    output_path.write_text(json.dumps(existing), encoding="utf-8")
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(merge, "load_sources", lambda: {"apps": []})
+    monkeypatch.setattr(
+        merge,
+        "fetch_release_entries",
+        lambda: ({}, {"apps": {}}),
+    )
+    monkeypatch.setattr(
+        merge,
+        "merge_category",
+        lambda category, urls, release_entries: 0,
+    )
+
+    merge.main()
+
+    assert json.loads(output_path.read_text(encoding="utf-8")) == existing
