@@ -6,6 +6,7 @@ from urllib.parse import urlsplit
 
 import requests
 
+from catalog_names import validate_category_name
 from release_sources import fetch_release_entries
 
 
@@ -56,8 +57,10 @@ def load_sources():
         raise ValueError("Source configuration must be a non-empty JSON object")
 
     for category, urls in sources.items():
-        if not isinstance(category, str) or not category.strip():
-            raise ValueError("Source configuration category names must be non-empty strings")
+        try:
+            validate_category_name(category)
+        except ValueError as exc:
+            raise ValueError(f"Invalid source configuration category {category!r}: {exc}") from exc
         if not isinstance(urls, list):
             raise ValueError(f"Source configuration category '{category}' must be a list")
         for url in urls:
