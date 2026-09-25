@@ -6,7 +6,12 @@ import pytest
 TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
-from merge import merge_category, validate_entry, validate_entries  # noqa: E402
+from merge import (  # noqa: E402
+    merge_category,
+    validate_entry,
+    validate_entries,
+    validate_source_url,
+)
 
 
 @pytest.mark.parametrize(
@@ -33,12 +38,44 @@ def test_load_sources_rejects_invalid_configuration(tmp_path, monkeypatch, sourc
         merge.load_sources()
 
 
+@pytest.mark.parametrize(
+    "url",
+    [
+        "http://raw.githubusercontent.com/example/source.json",
+        "https://example.com/source.json",
+        "https://127.0.0.1/source.json",
+        "https://localhost/source.json",
+        "https://169.254.169.254/latest/meta-data/",
+        "https://raw.githubusercontent.com:443/example/source.json",
+        "https://user:pass@raw.githubusercontent.com/example/source.json",
+    ],
+)
+def test_validate_source_url_rejects_unapproved_or_unsafe_urls(url):
+    with pytest.raises(ValueError):
+        validate_source_url(url)
+
+
+@pytest.mark.parametrize(
+    "url",
+    [
+        "https://raw.githubusercontent.com/example/source.json",
+        "https://dn721605.ca.archive.org/0/items/example/source.json",
+        "https://ia800000.us.archive.org/0/items/example/source.json",
+    ],
+)
+def test_validate_source_url_accepts_approved_hosts(url):
+    assert validate_source_url(url) == url
+
+
 def test_load_sources_accepts_valid_configuration(tmp_path, monkeypatch):
     import json
     import merge
 
     config_path = tmp_path / "sources.json"
-    sources = {"games": ["https://example.com/source.json"], "demos": []}
+    sources = {
+        "games": ["https://raw.githubusercontent.com/example/source.json"],
+        "demos": [],
+    }
     config_path.write_text(json.dumps(sources), encoding="utf-8")
     monkeypatch.setattr(merge, "CONFIG_PATH", config_path)
 
