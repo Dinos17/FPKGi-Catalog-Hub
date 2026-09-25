@@ -125,18 +125,30 @@ def asset_to_entry(asset, release, category, cover_urls=None):
     download_url = asset.get("browser_download_url")
     size = asset.get("size")
     cover_urls = cover_urls or {}
-    cover_url = cover_urls.get(name) or cover_urls.get(name.strip())
-    if cover_url is None:
-        cover_url = next(
-            (url for package_name, url in cover_urls.items() if package_name.lower() == name.lower()),
-            None,
-        )
 
-    if not name or not download_url or not name.lower().endswith(".pkg"):
+    if not isinstance(name, str) or not name.strip():
+        return None
+    if not isinstance(download_url, str) or not download_url.strip():
+        return None
+    if not name.lower().endswith(".pkg"):
+        return None
+    if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
         return None
 
-    if not isinstance(size, int) or size <= 0:
-        raise ValueError(f"Invalid GitHub asset size for {name}")
+    name = name.strip()
+    download_url = download_url.strip()
+
+    cover_url = cover_urls.get(name)
+    if cover_url is None:
+        cover_url = next(
+            (
+                url
+                for package_name, url in cover_urls.items()
+                if isinstance(package_name, str)
+                and package_name.lower() == name.lower()
+            ),
+            None,
+        )
 
     metadata = {
         "title_id": None,
@@ -209,7 +221,12 @@ def fetch_release_entries():
         cover_urls = parse_cover_urls(release)
         added = 0
         for asset in assets:
-            result = asset_to_entry(asset, release, category, cover_urls)
+            try:
+                result = asset_to_entry(asset, release, category, cover_urls)
+            except Exception as exc:
+                print(f"WARNING: Skipping malformed asset in {tag}: {exc}")
+                continue
+
             if result is None:
                 continue
 
