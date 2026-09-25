@@ -1,0 +1,54 @@
+{
+  "DATA": {
+    "https://archive.org/download/ps4-fpkg-collection-english-r/Rock%20Band%204%20Expansion%20Pack%201.pkg": {
+      "title_id": "CUSA02084",
+      "region": "USA",
+      "name": "Rock Band™ Expansion Pack 1",
+      "version": "",
+      "release": "11-15-2013",
+      "size": 20590559232,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02084.png"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-r/Rock%20Band%204%20Expansion%20Pack%202.pkg": {
+      "title_id": "CUSA02084",
+      "region": "USA",
+      "name": "Rock Band™ Expansion Pack 2",
+      "version": "",
+      "release": "11-15-2013",
+      "size": 20640694272,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02084.png"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-r/Rock%20Band%204%20Expansion%20Pack%203.pkg": {
+      "title_id": "CUSA02084",
+      "region": "USA",
+      "name": "Rock Band™ Expansion Pack 3",
+      "version": "",
+      "release": "11-15-2013",
+      "size": 20640956416,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02084.png"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-r/Rock%20Band%204%20Expansion%20Pack%204.pkg": {
+      "title_id": "CUSA02084",
+      "region": "USA",
+      "name": "Rock Band™ Expansion Pack 4",
+      "version": "",
+      "release": "11-15-2013",
+      "size": 20620115968,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02084.png"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-t/TowerFall%20Dark%20World%20Expansion.pkg": {
+      "title_id": "CUSA00466",
+      "region": "USA",
+      "name": "TowerFall Dark World Expansion",
+      "version": "",
+      "release": "11-15-2013",
+      "size": 1048576,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00466.png"
+    }
+  }
+}
