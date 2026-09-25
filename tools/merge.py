@@ -241,10 +241,45 @@ def main():
             release_entries.get(category, {}),
         )
 
-        ps5_output = {
-            "DATA": ps5_release_entries.get(category, {})
-        }
+        ps5_entries = ps5_release_entries.get(category, {})
         ps5_output_path = OUTPUT_DIR / f"ps5-{category}.json"
+
+        # Never replace an existing non-empty PS5 catalog with an empty
+        # release result. This protects published PS5 data from transient
+        # GitHub API failures or missing release assets.
+        if not ps5_entries and ps5_output_path.exists():
+            try:
+                with ps5_output_path.open("r", encoding="utf-8") as file:
+                    existing_ps5_output = json.load(file)
+            except (OSError, json.JSONDecodeError) as exc:
+                raise RuntimeError(
+                    f"Cannot safely preserve existing PS5 catalog "
+                    f"{ps5_output_path}: {exc}"
+                ) from exc
+
+            existing_ps5_entries = (
+                existing_ps5_output.get("DATA")
+                if isinstance(existing_ps5_output, dict)
+                else None
+            )
+            if not isinstance(existing_ps5_entries, dict):
+                raise RuntimeError(
+                    f"Cannot safely preserve existing PS5 catalog "
+                    f"{ps5_output_path}: missing valid \"DATA\" object"
+                )
+
+            if existing_ps5_entries:
+                print(
+                    f"WARNING: Refusing to replace non-empty PS5 catalog "
+                    f"with 0 entries: {ps5_output_path}"
+                )
+                print(
+                    f"Preserved existing PS5 entries: "
+                    f"{len(existing_ps5_entries)}"
+                )
+                continue
+
+        ps5_output = {"DATA": ps5_entries}
         with ps5_output_path.open("w", encoding="utf-8") as file:
             json.dump(ps5_output, file, indent=2, ensure_ascii=False)
             file.write("\n")
