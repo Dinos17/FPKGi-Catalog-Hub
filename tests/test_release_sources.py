@@ -85,6 +85,49 @@ def test_asset_to_entry_supports_ps5_title_id_filename_fallback(monkeypatch):
     assert result[1]["version"] == "1.0.0"
 
 
+def test_asset_to_entry_rejects_malformed_asset_fields():
+    malformed_assets = [
+        {"name": None, "browser_download_url": "https://example.com/a.pkg", "size": 123},
+        {"name": "a.pkg", "browser_download_url": None, "size": 123},
+        {"name": "a.pkg", "browser_download_url": "https://example.com/a.pkg", "size": "123"},
+        {"name": "a.pkg", "browser_download_url": "https://example.com/a.pkg", "size": True},
+    ]
+
+    for asset in malformed_assets:
+        assert release_sources.asset_to_entry(asset, {}, "games") is None
+
+
+def test_fetch_release_entries_skips_malformed_asset_and_keeps_release(monkeypatch):
+    monkeypatch.setattr(
+        release_sources,
+        "fetch_releases",
+        lambda: [
+            {"tag_name": "PS4-games", "assets_url": "https://example.com/assets"}
+        ],
+    )
+    monkeypatch.setattr(
+        release_sources,
+        "fetch_release_assets",
+        lambda _release: [
+            {"name": None, "browser_download_url": "https://example.com/bad.pkg", "size": 123},
+            {"name": "GOOD.pkg", "browser_download_url": "https://example.com/good.pkg", "size": 123},
+        ],
+    )
+    monkeypatch.setattr(
+        release_sources,
+        "asset_to_entry",
+        lambda asset, _release, _category, _cover_urls: (
+            (asset["browser_download_url"], {"name": asset["name"]})
+            if asset["name"] == "GOOD.pkg"
+            else (_ for _ in ()).throw(ValueError("malformed asset"))
+        ),
+    )
+
+    entries, _ = release_sources.fetch_release_entries()
+
+    assert set(entries["games"]) == {"https://example.com/good.pkg"}
+
+
 def test_asset_to_entry_rejects_non_pkg_assets():
     asset = {
         "name": "README.txt",
