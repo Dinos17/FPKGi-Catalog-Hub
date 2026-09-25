@@ -46,7 +46,6 @@ def fetch_source(url):
     return entries
 
 
-
 ALLOWED_METADATA_TYPES = (str, int, float, bool, type(None))
 TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
 VERSION_RE = re.compile(r"^\d+(?:\.\d+)*$")
@@ -128,6 +127,7 @@ def validate_entries(entries, source_name):
 
     return valid
 
+
 def merge_category(category, urls, release_entries):
     merged = {}
     total_source_entries = 0
@@ -140,7 +140,14 @@ def merge_category(category, urls, release_entries):
     for url in urls:
         try:
             entries = fetch_source(url)
+            raw_entry_count = len(entries)
             entries = validate_entries(entries, url)
+
+            if raw_entry_count and not entries:
+                raise ValueError(
+                    f"{url}: all {raw_entry_count} source entries failed validation"
+                )
+
             total_source_entries += len(entries)
 
             added = 0
