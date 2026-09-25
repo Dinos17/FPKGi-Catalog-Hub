@@ -74,7 +74,7 @@ def test_apply_fails_when_expected_artifact_is_missing(tmp_path):
         raise AssertionError("Expected missing artifact catalog to fail")
 
 
-def test_apply_removes_stale_root_catalogs(tmp_path):
+def test_apply_removes_only_catalogs_recorded_in_manifest(tmp_path):
     root = tmp_path / "repo"
     artifact = tmp_path / "artifact"
     root.mkdir()
@@ -82,12 +82,19 @@ def test_apply_removes_stale_root_catalogs(tmp_path):
     write_catalogs(root, {"games": []})
     stale = root / "legacy-category.json"
     stale.write_text(json.dumps({"DATA": {"stale": {}}}), encoding="utf-8")
+    unrelated = root / "project-data.json"
+    unrelated.write_text(json.dumps({"keep": True}), encoding="utf-8")
+    (root / "config" / "generated_catalogs.json").write_text(
+        json.dumps(catalog_pipeline.expected_catalogs(root) + ["legacy-category.json"]),
+        encoding="utf-8",
+    )
 
     catalog_pipeline.prepare_catalog_artifact(root, artifact)
     removed = catalog_pipeline.apply_catalog_artifact(root, artifact)
 
     assert removed == ["legacy-category.json"]
     assert not stale.exists()
-    assert sorted(p.name for p in root.glob("*.json")) == sorted(
+    assert unrelated.exists()
+    assert json.loads((root / "config" / "generated_catalogs.json").read_text(encoding="utf-8")) == sorted(
         catalog_pipeline.expected_catalogs(root)
     )
