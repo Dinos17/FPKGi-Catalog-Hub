@@ -47,8 +47,8 @@ def fetch_source(url):
 
 
 ALLOWED_METADATA_TYPES = (str, int, float, bool, type(None))
-TITLE_ID_RE = re.compile(r"^[A-Z]{4}\\d{5}$", re.IGNORECASE)
-VERSION_RE = re.compile(r"^\\d+(?:\\.\\d+)*$")
+TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
+VERSION_RE = re.compile(r"^\d+(?:\.\d+)*$")
 
 
 def validate_entry(pkg_url, metadata):
@@ -75,17 +75,17 @@ def validate_entry(pkg_url, metadata):
     title_id = metadata.get("title_id")
     if title_id not in (None, ""):
         if not isinstance(title_id, str) or not TITLE_ID_RE.fullmatch(title_id.strip()):
-            warnings.append(f"invalid title_id: {title_id!r}")
+            errors.append(f"invalid title_id: {title_id!r}")
 
     size = metadata.get("size")
     if size is not None:
         if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
-            warnings.append(f"invalid size: {size!r}")
+            errors.append(f"invalid size: {size!r}")
 
     version = metadata.get("version")
     if version not in (None, ""):
         if not isinstance(version, str) or not VERSION_RE.fullmatch(version.strip()):
-            warnings.append(f"invalid version: {version!r}")
+            errors.append(f"invalid version: {version!r}")
 
     return errors, warnings
 
