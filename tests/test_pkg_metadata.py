@@ -86,6 +86,12 @@ def test_parse_sfo_rejects_invalid_data(data):
         parse_sfo(data)
 
 
+def test_parse_sfo_rejects_key_offset_outside_file():
+    data = struct.pack("<5I", 0x46535000, 0x101, 0x1000, 20, 1) + (b"\x00" * 16)
+    with pytest.raises(ValueError, match="key"):
+        parse_sfo(data)
+
+
 def test_parse_sfo_rejects_truncated_entry_table():
     data = struct.pack("<5I", 0x46535000, 0x101, 20, 36, 1)
     with pytest.raises(ValueError, match="entry table"):
