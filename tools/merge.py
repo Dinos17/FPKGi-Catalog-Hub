@@ -179,11 +179,42 @@ def merge_category(category, urls, release_entries):
             f"Added: {release_added} | Duplicates: {release_duplicates}"
         )
 
+    output_path = OUTPUT_DIR / f"{category}.json"
+
+    # Never replace an existing non-empty catalog with an empty result.
+    # This protects published data from transient source failures, empty
+    # upstream responses, or intentionally empty source configuration.
+    if not merged and output_path.exists():
+        try:
+            with output_path.open("r", encoding="utf-8") as file:
+                existing_output = json.load(file)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(
+                f"Cannot safely preserve existing catalog {output_path}: {exc}"
+            ) from exc
+
+        existing_entries = (
+            existing_output.get("DATA")
+            if isinstance(existing_output, dict)
+            else None
+        )
+        if not isinstance(existing_entries, dict):
+            raise RuntimeError(
+                f"Cannot safely preserve existing catalog {output_path}: "
+                'missing valid "DATA" object'
+            )
+
+        if existing_entries:
+            print(
+                f"WARNING: Refusing to replace non-empty catalog with 0 entries: "
+                f"{output_path}"
+            )
+            print(f"Preserved existing entries: {len(existing_entries)}")
+            return len(existing_entries)
+
     output = {
         "DATA": merged
     }
-
-    output_path = OUTPUT_DIR / f"{category}.json"
 
     with output_path.open("w", encoding="utf-8") as file:
         json.dump(output, file, indent=2, ensure_ascii=False)
