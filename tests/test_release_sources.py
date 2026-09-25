@@ -211,6 +211,6 @@ def test_validate_ps5_catalogs_requires_unified_catalog_to_match_categories():
     try:
         validate_ps5_catalogs({}, {"games": category_entry})
     except ValueError as exc:
-        assert "equal to the union" in str(exc)
+        assert "does not equal the union" in str(exc)
     else:
         raise AssertionError("Expected unified PS5 mismatch to be rejected")
