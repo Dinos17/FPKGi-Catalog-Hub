@@ -142,6 +142,9 @@ def extract_metadata(url: str, size: int) -> Dict[str, object]:
     entry_count = struct.unpack_from(">I", header, 0x10)[0]
     table_offset = struct.unpack_from(">I", header, 0x18)[0]
 
+    if table_offset >= size:
+        raise ValueError("PKG file table offset is outside the asset")
+
     content_id = _decode_c_string(header[0x30:0x54])
 
     if entry_count == 0:
