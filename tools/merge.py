@@ -7,7 +7,6 @@ from urllib.parse import urlsplit
 import requests
 
 from catalog_names import validate_category_name
-from catalog_names import validate_category_name
 from release_sources import fetch_release_entries
 
 
