@@ -9,6 +9,42 @@ sys.path.insert(0, str(TOOLS_DIR))
 from merge import merge_category, validate_entry, validate_entries  # noqa: E402
 
 
+@pytest.mark.parametrize(
+    "sources",
+    [
+        None,
+        [],
+        {"games": "https://example.com/source.json"},
+        {"games": ["" ]},
+        {"games": ["ftp://example.com/source.json"]},
+        {"games": [None]},
+        {"": ["https://example.com/source.json"]},
+    ],
+)
+def test_load_sources_rejects_invalid_configuration(tmp_path, monkeypatch, sources):
+    import json
+    import merge
+
+    config_path = tmp_path / "sources.json"
+    config_path.write_text(json.dumps(sources), encoding="utf-8")
+    monkeypatch.setattr(merge, "CONFIG_PATH", config_path)
+
+    with pytest.raises(ValueError, match="Source configuration"):
+        merge.load_sources()
+
+
+def test_load_sources_accepts_valid_configuration(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    config_path = tmp_path / "sources.json"
+    sources = {"games": ["https://example.com/source.json"], "demos": []}
+    config_path.write_text(json.dumps(sources), encoding="utf-8")
+    monkeypatch.setattr(merge, "CONFIG_PATH", config_path)
+
+    assert merge.load_sources() == sources
+
+
 def test_validate_entry_accepts_valid_entry():
     errors, warnings = validate_entry(
         "https://example.com/game.pkg",
