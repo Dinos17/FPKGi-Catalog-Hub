@@ -175,7 +175,7 @@ def test_validate_entries_preserves_metadata_values():
     assert result["https://example.com/game.pkg"] == metadata
 
 
-def test_merge_category_preserves_existing_catalog_when_result_is_empty(
+def test_merge_category_preserves_existing_catalog_when_source_fails(
     tmp_path, monkeypatch
 ):
     output_path = tmp_path / "games.json"
@@ -205,6 +205,28 @@ def test_merge_category_preserves_existing_catalog_when_result_is_empty(
         output_path.read_text(encoding="utf-8")
     ) == existing
 
+
+def test_merge_category_allows_intentional_empty_result_when_sources_succeed(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    output_path = tmp_path / "games.json"
+    existing = {
+        "DATA": {
+            "https://example.com/stale.pkg": {"name": "Stale Game"}
+        }
+    }
+    output_path.write_text(json.dumps(existing), encoding="utf-8")
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(merge, "fetch_source", lambda _url: {"DATA": {}})
+
+    result = merge_category("games", ["https://example.com/source.json"], {})
+
+    assert result == 0
+    assert json.loads(output_path.read_text(encoding="utf-8")) == {"DATA": {}}
 def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     tmp_path, monkeypatch
 ):
