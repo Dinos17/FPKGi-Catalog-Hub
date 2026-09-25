@@ -17,8 +17,23 @@ def load_sources():
     with CONFIG_PATH.open("r", encoding="utf-8") as file:
         sources = json.load(file)
 
-    if not isinstance(sources, dict):
-        raise ValueError("Source configuration must be a JSON object")
+    if not isinstance(sources, dict) or not sources:
+        raise ValueError("Source configuration must be a non-empty JSON object")
+
+    for category, urls in sources.items():
+        if not isinstance(category, str) or not category.strip():
+            raise ValueError("Source configuration category names must be non-empty strings")
+        if not isinstance(urls, list):
+            raise ValueError(f"Source configuration category '{category}' must be a list")
+        for url in urls:
+            if (
+                not isinstance(url, str)
+                or not url.strip()
+                or not url.lower().startswith(("http://", "https://"))
+            ):
+                raise ValueError(
+                    f"Source configuration category '{category}' contains an invalid HTTP(S) URL"
+                )
 
     return sources
 
