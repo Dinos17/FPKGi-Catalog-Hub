@@ -32,7 +32,7 @@ RELEASE_TO_CATEGORY = {
     "PSP": "psp",
 }
 
-TITLE_ID_RE = re.compile(r"(?<![A-Z0-9])(CUSA\d{5})(?!\d)", re.IGNORECASE)
+TITLE_ID_RE = re.compile(r"(?<![A-Z0-9])((?:CUSA|PPSA)\d{5})(?!\d)", re.IGNORECASE)
 VERSION_RE = re.compile(r"(?:^|[_-])v(\d+(?:\.\d+)+)(?:[_-]|\.)", re.IGNORECASE)
 
 API_HEADERS = {
@@ -60,7 +60,7 @@ def fetch_paginated_json(url):
 
         items.extend(data)
 
-        if len(data) < 100 or "next" not in response.links:
+        if "next" not in response.links:
             break
 
         page += 1
