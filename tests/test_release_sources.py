@@ -174,3 +174,43 @@ def test_fetch_release_entries_keeps_ps4_out_of_ps5_catalog(monkeypatch):
     assert set(ps5_entries["apps"]) == {
         "https://example.com/ps5.pkg",
     }
+
+
+def test_validate_ps5_catalogs_rejects_ps4_release_url():
+    from validate_catalogs import validate_ps5_catalogs
+
+    ps4_entry = {
+        "https://github.com/example/releases/download/PS4-apps/CUSA12345.pkg": {
+            "title_id": "CUSA12345",
+            "name": "PS4 App",
+            "size": 123,
+            "version": "1.0",
+        }
+    }
+
+    try:
+        validate_ps5_catalogs(ps4_entry, {"apps": ps4_entry})
+    except ValueError as exc:
+        assert "PS4 release asset" in str(exc)
+    else:
+        raise AssertionError("Expected PS4 entry to be rejected")
+
+
+def test_validate_ps5_catalogs_requires_unified_catalog_to_match_categories():
+    from validate_catalogs import validate_ps5_catalogs
+
+    category_entry = {
+        "https://github.com/example/releases/download/PS5-games/PPSA12345.pkg": {
+            "title_id": "PPSA12345",
+            "name": "PS5 Game",
+            "size": 123,
+            "version": "1.0",
+        }
+    }
+
+    try:
+        validate_ps5_catalogs({}, {"games": category_entry})
+    except ValueError as exc:
+        assert "equal to the union" in str(exc)
+    else:
+        raise AssertionError("Expected unified PS5 mismatch to be rejected")
