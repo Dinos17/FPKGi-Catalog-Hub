@@ -365,6 +365,30 @@ Only packages that are legally redistributable should be hosted through this mec
 
 ---
 
+## External package database
+
+The external package database is configured separately from the normal JSON catalog sources.
+
+Its URL is stored in:
+
+```text
+config/external_database.json
+```
+
+For example:
+
+```json
+{
+  "url": "https://huggingface.co/datasets/dinos17/FPKGi-Packages"
+}
+```
+
+The merger reads this URL at runtime. The database location is not hardcoded in the Python loader, so the configured external database can be changed without modifying the merger code.
+
+`config/sources.json` remains reserved for external FPKGi JSON catalog sources.
+
+---
+
 ## Source configuration
 
 The sources I use are defined in:
@@ -428,7 +452,8 @@ FPKGi-Catalog-Hub/
 │       └── tests.yml
 │
 ├── config/
-│   └── sources.json
+│   ├── sources.json
+│   └── external_database.json
 │
 ├── tools/
 │   ├── merge.py
