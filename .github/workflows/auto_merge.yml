@@ -37,15 +37,15 @@ jobs:
         run: |
           python tools/validate_catalogs.py
 
-      - name: Prepare Generated Catalogs
+      - name: Prepare Catalog Build Artifacts
         run: |
-          python tools/catalog_pipeline.py prepare --artifact generated-catalogs
+          python tools/catalog_pipeline.py prepare --artifact build-artifacts
 
-      - name: Upload Generated Catalogs
+      - name: Upload Catalog Build Artifacts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: generated-catalogs
-          path: generated-catalogs/*.json
+          name: catalog-build-artifacts
+          path: build-artifacts/*.json
           if-no-files-found: error
 
   publish:
@@ -58,15 +58,15 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
 
-      - name: Download Generated Catalogs
+      - name: Download Catalog Build Artifacts
         uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
         with:
-          name: generated-catalogs
-          path: generated-catalogs
+          name: catalog-build-artifacts
+          path: build-artifacts
 
-      - name: Apply Generated Catalogs
+      - name: Apply Catalog Build Artifacts
         run: |
-          python tools/catalog_pipeline.py apply --artifact generated-catalogs
+          python tools/catalog_pipeline.py apply --artifact build-artifacts
 
       - name: Check for Catalog Changes
         id: changes
@@ -117,4 +117,4 @@ jobs:
           echo "### ❌ FPKGi Auto Merge — Failed" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Status:** Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "Check the failed step above for details."
+          echo "Check the failed step above for details." >> "$GITHUB_STEP_SUMMARY"
