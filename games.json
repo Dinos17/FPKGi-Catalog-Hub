@@ -8762,6 +8762,39 @@
       "min_fw": "5.00.128",
       "cover_url": null,
       "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tales%20from%20the%20Borderlands%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.07%5D.pkg?download=true": {
+      "title_id": "CUSA00870",
+      "region": null,
+      "name": "Tales from the Borderlands",
+      "version": "01.00",
+      "release": null,
+      "size": 9244311552,
+      "min_fw": "1.117",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tearaway%20Unfolded%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
+      "title_id": "CUSA00562",
+      "region": null,
+      "name": "Tearaway™ Unfolded",
+      "version": "01.00",
+      "release": null,
+      "size": 6738477056,
+      "min_fw": "7.80",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Teenage%20Mutant%20Ninja%20Turtles%20Shredder%27s%20Revenge%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg?download=true": {
+      "title_id": "CUSA30991",
+      "region": null,
+      "name": "Teenage Mutant Ninja Turtles: Shredder's Revenge",
+      "version": "01.00",
+      "release": null,
+      "size": 803274752,
+      "min_fw": "7.80",
+      "cover_url": null,
+      "category": "gd"
     }
   }
 }
