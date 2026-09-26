@@ -95,41 +95,33 @@ if added_total:
         if not added:
             continue
 
-        path = Path(filename)
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-            catalog_data = data.get("DATA", {})
+            new_data = json.loads(
+                Path(filename).read_text(encoding="utf-8")
+            ).get("DATA", {})
         except (json.JSONDecodeError, AttributeError):
-            catalog_data = {}
+            new_data = {}
 
         print(f"### {filename}")
         print()
 
         for pkg_url in sorted(added):
-            metadata = catalog_data.get(pkg_url, {})
-            name = metadata.get("name") or pkg_url
-            title_id = metadata.get("title_id") or "N/A"
-            version = metadata.get("version") or "N/A"
-            size = metadata.get("size")
-            release = metadata.get("release") or "N/A"
+            metadata = new_data.get(pkg_url)
 
-            if repo:
-                catalog_link = f"{server_url}/{repo}/blob/main/{filename}"
-                print(f"- **{name}** — [Open catalog]({catalog_link})")
-            else:
-                print(f"- **{name}**")
+            if not isinstance(metadata, dict):
+                metadata = {}
 
-            print(f"  - Title ID: {title_id}")
-            print(f"  - Version: {version}")
-            print(f"  - Release: {release}")
-            if isinstance(size, int):
-                print(f"  - Size: {size:,} bytes")
-            print(f"  - PKG: [{pkg_url}]({pkg_url})")
+            record = {"url": pkg_url, **metadata}
+
+            print(f"**{metadata.get('name') or pkg_url}**")
+            print()
+            print("```json")
+            print(json.dumps(record, indent=2, ensure_ascii=False))
+            print("```")
             print()
 
     print("</details>")
     print()
-
 if run_url:
     print(f"🔎 [Open this workflow run]({run_url})")
     print()
