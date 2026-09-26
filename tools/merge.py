@@ -8,7 +8,7 @@ import requests
 
 from catalog_names import validate_category_name
 from release_sources import fetch_release_entries
-from hf_sources import fetch_dataset_entries
+from external_database import fetch_dataset_entries
 
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
