@@ -95,7 +95,7 @@ def parse_title_id(name):
     return match.group(1).upper() if match else None
 
 
-def fetch_dataset_entries():
+def fetch_external_database_entries():
     print("\nFetching external package database")
     files, database_url = fetch_database_files()
 
