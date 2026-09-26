@@ -8,6 +8,7 @@ import requests
 
 from catalog_names import validate_category_name
 from release_sources import fetch_release_entries
+from hf_sources import fetch_dataset_entries
 
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
@@ -335,12 +336,13 @@ def main():
 
     sources = load_sources()
     release_entries, ps5_release_entries = fetch_release_entries()
+    dataset_entries = fetch_dataset_entries()
 
     for category, urls in sources.items():
         merge_category(
             category,
             urls,
-            release_entries.get(category, {}),
+            {**release_entries.get(category, {}), **(dataset_entries if category == "games" else {})},
         )
 
         ps5_entries = ps5_release_entries.get(category, {})
