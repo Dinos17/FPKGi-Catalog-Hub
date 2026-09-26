@@ -1,2 +1,2 @@
-# GitHub Actions temporary catalog artifact
-/generated-catalogs/
+# GitHub Actions temporary catalog build artifacts
+/build-artifacts/
