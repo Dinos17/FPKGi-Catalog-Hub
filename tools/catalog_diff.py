@@ -47,6 +47,16 @@ for filename in files:
     changed_total += len(changed)
     changed_files.append((filename, added, removed, changed))
 
+import os
+
+repo = os.environ.get("GITHUB_REPOSITORY", "")
+server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
+run_url = (
+    f"{server_url}/{repo}/actions/runs/{os.environ.get('GITHUB_RUN_ID')}"
+    if repo and os.environ.get("GITHUB_RUN_ID")
+    else None
+)
+
 print("### ✅ FPKGi Auto Merge")
 print()
 print("**Status:** Success")
@@ -62,7 +72,12 @@ for filename, added, removed, changed in changed_files:
         parts.append(f"{len(removed)} removed")
     if changed:
         parts.append(f"{len(changed)} modified")
-    print(f"- {filename} — " + ", ".join(parts))
+
+    if repo:
+        file_link = f"{server_url}/{repo}/blob/main/{filename}"
+        print(f"- [{filename}]({file_link}) — " + ", ".join(parts))
+    else:
+        print(f"- {filename} — " + ", ".join(parts))
 
 print()
 print("**Record changes:**")
@@ -70,4 +85,53 @@ print(f"- 🆕 New records: **{added_total}**")
 print(f"- 🗑️ Removed records: **{removed_total}**")
 print(f"- 🔄 Modified records: **{changed_total}**")
 print()
+
+if added_total:
+    print("<details>")
+    print(f"<summary>🆕 <strong>View exactly what was registered ({added_total} new records)</strong></summary>")
+    print()
+
+    for filename, added, removed, changed in changed_files:
+        if not added:
+            continue
+
+        path = Path(filename)
+        try:
+            data = json.loads(path.read_text(encoding="utf-8"))
+            catalog_data = data.get("DATA", {})
+        except (json.JSONDecodeError, AttributeError):
+            catalog_data = {}
+
+        print(f"### {filename}")
+        print()
+
+        for pkg_url in sorted(added):
+            metadata = catalog_data.get(pkg_url, {})
+            name = metadata.get("name") or pkg_url
+            title_id = metadata.get("title_id") or "N/A"
+            version = metadata.get("version") or "N/A"
+            size = metadata.get("size")
+            release = metadata.get("release") or "N/A"
+
+            if repo:
+                catalog_link = f"{server_url}/{repo}/blob/main/{filename}"
+                print(f"- **{name}** — [Open catalog]({catalog_link})")
+            else:
+                print(f"- **{name}**")
+
+            print(f"  - Title ID: {title_id}")
+            print(f"  - Version: {version}")
+            print(f"  - Release: {release}")
+            if isinstance(size, int):
+                print(f"  - Size: {size:,} bytes")
+            print(f"  - PKG: [{pkg_url}]({pkg_url})")
+            print()
+
+    print("</details>")
+    print()
+
+if run_url:
+    print(f"🔎 [Open this workflow run]({run_url})")
+    print()
+
 print("The file list above only includes JSON files whose DATA records actually changed.")
