@@ -8795,6 +8795,28 @@
       "min_fw": "7.80",
       "cover_url": null,
       "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Telling%20Lies%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.00%5D.pkg?download=true": {
+      "title_id": "CUSA16927",
+      "region": null,
+      "name": "Telling Lies",
+      "version": "01.00",
+      "release": null,
+      "size": 7886077952,
+      "min_fw": "6.80.128",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Terraria%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.35%5D.pkg?download=true": {
+      "title_id": "CUSA00740",
+      "region": null,
+      "name": "Terraria",
+      "version": "01.00",
+      "release": null,
+      "size": 328073216,
+      "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "gd"
     }
   }
 }
