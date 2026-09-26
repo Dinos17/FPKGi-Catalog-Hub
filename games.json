@@ -8729,6 +8729,39 @@
       "size": 24603983872,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01073.png"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/THE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
+      "title_id": "CUSA11736",
+      "region": null,
+      "name": "THE QUIET MAN",
+      "version": "01.00",
+      "release": null,
+      "size": 24921702400,
+      "min_fw": "5.80.128",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tacoma%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
+      "title_id": "CUSA11366",
+      "region": null,
+      "name": "Tacoma",
+      "version": "01.00",
+      "release": null,
+      "size": 1599275008,
+      "min_fw": "5.00.128",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Taiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20%5BJP%5D%20%5BEN%5D%20%5B1.28%5D.pkg?download=true": {
+      "title_id": "CUSA07515",
+      "region": null,
+      "name": "Taiko No Tatsujin – Drum Session",
+      "version": "01.00",
+      "release": null,
+      "size": 1552482304,
+      "min_fw": "5.00.128",
+      "cover_url": null,
+      "category": "gd"
     }
   }
 }
