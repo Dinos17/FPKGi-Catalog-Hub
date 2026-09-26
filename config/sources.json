@@ -2,8 +2,7 @@
   "games": [
     "https://raw.githubusercontent.com/gop753811-netizen/fpkgi/main/GAMES-archive.org.json",
     "https://raw.githubusercontent.com/ps4arab/fpkgi/main/GAMES.json",
-    "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/GAMES.json",
-    "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/config/hosted-games.json"
+    "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/GAMES.json"
   ],
   "dlc": [
     "https://dn721605.ca.archive.org/0/items/ps4-fpkg-collection-english-fpkgi/DLC.json"
