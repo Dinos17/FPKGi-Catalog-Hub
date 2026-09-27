@@ -14,8 +14,8 @@ def load_catalogs():
             continue
         for path in sorted(platform_dir.glob("*.json")):
             if path.name in EXCLUDED or path.name == "new-registrations.json":
-            continue
-        try:
+                continue
+            try:
                 data = json.loads(path.read_text(encoding="utf-8"))
             except json.JSONDecodeError as exc:
                 raise ValueError(f"{path}: invalid JSON: {exc}") from exc
@@ -87,20 +87,9 @@ def classify_identity_duplicates(by_identity):
     return expected_mirrors, duplicates
 
 
-def build_report(
-    catalogs,
-    exact_duplicates,
-    expected_mirrors,
-    duplicate_identities,
-):
+def build_report(catalogs, exact_duplicates, expected_mirrors, duplicate_identities):
     total_registrations = sum(len(entries) for entries in catalogs.values())
-    unique_urls = len(
-        {
-            url
-            for entries in catalogs.values()
-            for url in entries
-        }
-    )
+    unique_urls = len({url for entries in catalogs.values() for url in entries})
 
     lines = [
         "### FPKGi Duplication Check",
@@ -124,8 +113,7 @@ def build_report(
 
     if expected_mirrors:
         lines.extend(["#### ℹ️ Expected Archive.org ↔ Hugging Face mirrors", ""])
-        for (is_ps5, title_id, version), records in sorted(expected_mirrors.items()):
-            platform = "PS5" if is_ps5 else "PS4"
+        for (platform, title_id, version), records in sorted(expected_mirrors.items()):
             lines.append(f"- **{platform} {title_id} v{version}**")
             for filename, url in records:
                 lines.append(f"  - `{filename}` — {url}")
@@ -133,8 +121,7 @@ def build_report(
 
     if duplicate_identities:
         lines.extend(["#### ❌ Duplicate package identities", ""])
-        for (is_ps5, title_id, version), records in sorted(duplicate_identities.items()):
-            platform = "PS5" if is_ps5 else "PS4"
+        for (platform, title_id, version), records in sorted(duplicate_identities.items()):
             lines.append(f"- **{platform} {title_id} v{version}**")
             for filename, url in records:
                 lines.append(f"  - `{filename}` — {url}")
@@ -164,6 +151,7 @@ def check_duplicates():
     by_identity = defaultdict(list)
 
     for filename, entries in catalogs.items():
+        platform = Path(filename).parent.name.upper()
         for pkg_url, metadata in entries.items():
             by_url[pkg_url].append(filename)
             if not isinstance(metadata, dict):
@@ -172,11 +160,7 @@ def check_duplicates():
             version = metadata.get("version")
             if not title_id or not version:
                 continue
-            identity = (
-                filename.startswith("ps5-"),
-                str(title_id).upper(),
-                str(version),
-            )
+            identity = (platform, str(title_id).upper(), str(version))
             by_identity[identity].append((filename, pkg_url))
 
     exact_duplicates = {
