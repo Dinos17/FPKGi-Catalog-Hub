@@ -142,7 +142,7 @@ def build_report(
             "",
             "The workflow failed so these duplicates can be reviewed before changing the catalogs.",
         ])
-    elif suspicious_duplicates:
+    elif duplicate_identities:
         lines.extend([
             "### ❌ Result: Duplicate package identities detected.",
             "",
