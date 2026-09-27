@@ -24,8 +24,8 @@ CATEGORY_SLUGS = {
     "Update": "update",
     "Media": "media",
     "DLC": "dlc",
-    "Retail PKG": "retail",
-    "Fake PKG": "fake",
+    "Retail PKG": "pkg",
+    "Fake PKG": "fpkg",
     "Dev Menu": "dev+menu",
 }
 
