@@ -34,7 +34,17 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v5
       - name: Prepare dashboard data
-        run: cp games.json dashboard/games.json
+        run: |
+          cp -- *.json dashboard/
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          files = sorted(p.name for p in Path(".").glob("*.json"))
+          Path("dashboard/catalog-manifest.json").write_text(
+              json.dumps(files, indent=2),
+              encoding="utf-8"
+          )
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
