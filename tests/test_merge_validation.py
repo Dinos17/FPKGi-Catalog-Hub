@@ -310,12 +310,13 @@ def test_merge_category_allows_intentional_empty_result_when_sources_succeed(
     import json
     import merge
 
-    output_path = tmp_path / "games.json"
+    output_path = tmp_path / "ps4" / "games.json"
     existing = {
         "DATA": {
             "https://example.com/stale.pkg": {"name": "Stale Game"}
         }
     }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(existing), encoding="utf-8")
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
@@ -359,7 +360,7 @@ def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     monkeypatch.setattr(
         merge,
         "merge_category",
-        lambda category, urls, release_entries: 0,
+        lambda category, urls, release_entries, excluded_urls=None: 0,
     )
 
     merge.main()
@@ -373,7 +374,7 @@ def test_merge_category_preserves_catalog_on_sharp_shrink_after_source_failure(
     import json
     import merge
 
-    output_path = tmp_path / "games.json"
+    output_path = tmp_path / "ps4" / "games.json"
     existing = {
         "DATA": {
             f"https://example.com/existing-{index}.pkg": {
