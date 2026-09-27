@@ -6,7 +6,7 @@ from urllib.parse import quote, urlsplit
 import requests
 
 from pkg_metadata import extract_metadata
-from title_resolver import resolve_title
+from title_resolver import resolve_category, resolve_title
 
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "external_database.json"
@@ -122,6 +122,37 @@ def normalize_category(value):
     return PKG_CATEGORY_MAP.get(value.lower(), value.lower())
 
 
+EXTERNAL_CATEGORY_MAP = {
+    "game": "games",
+    "games": "games",
+    "application": "apps",
+    "applications": "apps",
+    "app": "apps",
+    "apps": "apps",
+    "media": "apps",
+    "utility": "apps",
+    "utilities": "apps",
+    "dlc": "dlc",
+    "addon": "dlc",
+    "add-on": "dlc",
+    "demo": "demos",
+    "demos": "demos",
+    "emulator": "emulators",
+    "emulators": "emulators",
+    "theme": "themes",
+    "themes": "themes",
+    "homebrew": "homebrew",
+    "update": "updates",
+    "updates": "updates",
+}
+
+
+def normalize_external_category(value):
+    if not isinstance(value, str):
+        return None
+    return EXTERNAL_CATEGORY_MAP.get(value.strip().lower())
+
+
 def fetch_external_database_entries():
     print("\nFetching external package database")
     files, database_url = fetch_database_files()
@@ -169,11 +200,23 @@ def fetch_external_database_entries():
             print(f"  WARNING: Could not inspect {filename}: {exc}")
 
         title_id = metadata.get("title_id")
-        if metadata.get("name") == filename and title_id:
-            resolved_name = resolve_title(title_id)
+        lookup_title_id = title_id or parse_title_id(filename)
+
+        if metadata.get("name") == filename and lookup_title_id:
+            resolved_name = resolve_title(lookup_title_id)
             if resolved_name:
                 metadata["name"] = resolved_name
-                print(f"  Title lookup: {title_id} -> {resolved_name}")
+                print(f"  Title lookup: {lookup_title_id} -> {resolved_name}")
+
+        if lookup_title_id:
+            external_category = normalize_external_category(
+                resolve_category(lookup_title_id)
+            )
+            if external_category:
+                metadata["category"] = external_category
+                print(
+                    f"  Category lookup: {lookup_title_id} -> {external_category}"
+                )
 
         entries[url] = metadata
 
