@@ -14,6 +14,15 @@ from external_database import fetch_external_database_entries
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
 EXCLUSIONS_PATH = Path(__file__).resolve().parent.parent / "config" / "exclusions.json"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent
+PS4_OUTPUT_DIR = OUTPUT_DIR / "ps4"
+PS5_OUTPUT_DIR = OUTPUT_DIR / "ps5"
+
+
+def catalog_output_path(category, ps5=False):
+    directory = PS5_OUTPUT_DIR if ps5 else PS4_OUTPUT_DIR
+    directory.mkdir(parents=True, exist_ok=True)
+    return directory / f"{category}.json"
+
 TIMEOUT = 60
 MIN_CATALOG_RETENTION_RATIO = 0.5
 ALLOWED_SOURCE_HOSTS = {"raw.githubusercontent.com"}
@@ -284,7 +293,7 @@ def merge_category(category, urls, release_entries, excluded_urls=None):
             f"Added: {release_added} | Duplicates: {release_duplicates}"
         )
 
-    output_path = OUTPUT_DIR / f"{category}.json"
+    output_path = catalog_output_path(category)
 
     # If an upstream source failed and the resulting catalog shrank sharply,
     # preserve the published catalog instead of publishing a partial merge.
@@ -396,7 +405,7 @@ def main():
             for pkg_url, metadata in ps5_release_entries.get(category, {}).items()
             if pkg_url not in exclusions.get(category, set())
         }
-        ps5_output_path = OUTPUT_DIR / f"ps5-{category}.json"
+        ps5_output_path = catalog_output_path(f"ps5-{category}", ps5=True)
 
         # Never replace an existing non-empty PS5 catalog with an empty
         # release result. This protects published PS5 data from transient
@@ -442,7 +451,7 @@ def main():
             f"Entries: {len(ps5_output['DATA'])}"
         )
 
-    ps5_output_path = OUTPUT_DIR / "ps5.json"
+    ps5_output_path = catalog_output_path("ps5.json", ps5=True)
     ps5_entries = {}
     for category, category_entries in ps5_release_entries.items():
         for pkg_url, metadata in category_entries.items():
