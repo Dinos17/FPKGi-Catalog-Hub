@@ -87,14 +87,14 @@ def test_apply_removes_only_catalogs_recorded_in_manifest(tmp_path):
     unrelated = root / "project-data.json"
     unrelated.write_text(json.dumps({"keep": True}), encoding="utf-8")
     (root / "config" / "generated_catalogs.json").write_text(
-        json.dumps(catalog_pipeline.expected_catalogs(root) + ["legacy-category.json"]),
+        json.dumps(catalog_pipeline.expected_catalogs(root) + ["ps4/legacy-category.json"]),
         encoding="utf-8",
     )
 
     catalog_pipeline.prepare_catalog_artifact(root, artifact)
     removed = catalog_pipeline.apply_catalog_artifact(root, artifact)
 
-    assert removed == ["legacy-category.json"]
+    assert removed == ["ps4/legacy-category.json"]
     assert not stale.exists()
     assert unrelated.exists()
     assert json.loads((root / "config" / "generated_catalogs.json").read_text(encoding="utf-8")) == sorted(
