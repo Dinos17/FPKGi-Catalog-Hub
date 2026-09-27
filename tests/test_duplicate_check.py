@@ -29,6 +29,7 @@ def test_title_version_duplicate_fails(tmp_path, monkeypatch, capsys):
     )
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     with pytest.raises(SystemExit):
+        with pytest.raises(SystemExit):
         duplicate_check.check_duplicates()
     assert "**Duplicate package identities:** 1" in capsys.readouterr().out
 
@@ -76,7 +77,7 @@ def test_archive_and_huggingface_mirrors_are_expected(tmp_path, monkeypatch, cap
     duplicate_check.check_duplicates()
     output = capsys.readouterr().out
     assert "**Expected Archive.org ↔ Hugging Face mirrors:** 1" in output
-    assert "**Possible title/version duplicates:** 0" in output
+    assert "**Duplicate package identities:** 0" in output
 
 
 def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
@@ -97,7 +98,7 @@ def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
     )
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     duplicate_check.check_duplicates()
-    assert "**Possible title/version duplicates:** 1" in capsys.readouterr().out
+    assert "**Duplicate package identities:** 1" in capsys.readouterr().out
 
 
 def test_ignores_unified_ps5_catalog(tmp_path, monkeypatch):
