@@ -103,6 +103,7 @@ jobs:
             echo "updated=true" >> "$GITHUB_OUTPUT"
 
             python tools/catalog_diff.py >> "$GITHUB_STEP_SUMMARY"
+            git add -A -- new-registrations.json
 
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
