@@ -106,31 +106,17 @@ function buildCategoryFilters() {
 function buildPlatformFilters() {
   const container = document.getElementById("platformFilters");
 
-  if (state.category !== "games") {
-    container.innerHTML = "";
-    return;
-  }
-
-  const platforms = new Set(
-    state.records
-      .filter(record => record.category === "games")
-      .map(record => record.platform)
-  );
-
-  container.innerHTML = ["all", "PS4", "PS5"]
-    .filter(platform => platform === "all" || platforms.has(platform))
-    .map(platform =>
-      '<button data-platform="' + platform + '">' +
-      escapeHtml(platform === "all" ? "All Platforms" : platform) +
-      '</button>'
-    ).join("");
+  container.innerHTML = ["PS4", "PS5"].map(platform =>
+    '<button data-platform="' + platform + '">' + platform + '</button>'
+  ).join("");
 
   container.querySelectorAll("[data-platform]").forEach(button => {
+    button.classList.toggle("active", button.dataset.platform === state.platform);
     button.addEventListener("click", () => {
-      container.querySelectorAll("[data-platform]").forEach(b => b.classList.remove("active"));
-      button.classList.add("active");
       state.platform = state.platform === button.dataset.platform ? "all" : button.dataset.platform;
-      container.querySelectorAll("[data-platform]").forEach(b => b.classList.toggle("active", b.dataset.platform === state.platform));
+      container.querySelectorAll("[data-platform]").forEach(b =>
+        b.classList.toggle("active", b.dataset.platform === state.platform)
+      );
       render();
     });
   });
