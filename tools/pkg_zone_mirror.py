@@ -28,18 +28,18 @@ SESSION.headers.update({
 })
 
 def fetch(url, stream=False):
-    last_error = None
-    for attempt in range(3):
+    attempt = 0
+    delay = 2
+
+    while True:
+        attempt += 1
         try:
             response = SESSION.get(url, timeout=(15, 90), stream=stream)
             response.raise_for_status()
             return response
         except requests.RequestException as exc:
-            last_error = exc
-            print(f"Request failed ({attempt + 1}/3): {url} -> {exc}")
-            if attempt < 2:
-                time.sleep(2 * (attempt + 1))
-    raise RuntimeError(f"Unable to fetch {url}: {last_error}")
+            print(f"Request failed (attempt {attempt}, retrying in {delay}s): {url} -> {exc}")
+            time.sleep(delay)
 
 def extract_card(article):
     link = article.select_one('a[href*="/details/"]')
