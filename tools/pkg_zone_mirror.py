@@ -1,10 +1,10 @@
 #!/usr/bin/env python3
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 import json
 import os
 import re
 import tempfile
+import time
 
 import requests
 from bs4 import BeautifulSoup
@@ -16,16 +16,17 @@ CATEGORIES = [
     "Utility", "Emulator", "Game", "Homebrew", "Update",
     "Media", "DLC", "Retail PKG", "Fake PKG", "Dev Menu",
 ]
-ALIASES = {
-    "utility": "Utility", "utilities": "Utility", "store": "Utility",
-    "emulator": "Emulator", "emulators": "Emulator",
-    "game": "Game", "games": "Game", "hb game": "Game", "homebrew game": "Game",
-    "homebrew": "Homebrew", "homebrews": "Homebrew",
-    "update": "Update", "updates": "Update", "patch": "Update", "patches": "Update",
-    "media": "Media", "dlc": "DLC",
-    "retail pkg": "Retail PKG", "retail": "Retail PKG",
-    "fake pkg": "Fake PKG", "fake": "Fake PKG",
-    "dev menu": "Dev Menu", "devmenu": "Dev Menu",
+CATEGORY_SLUGS = {
+    "Utility": "utility",
+    "Emulator": "emulator",
+    "Game": "game",
+    "Homebrew": "hb",
+    "Update": "update",
+    "Media": "media",
+    "DLC": "dlc",
+    "Retail PKG": "retail",
+    "Fake PKG": "fake",
+    "Dev Menu": "devmenu",
 }
 
 SESSION = requests.Session()
@@ -39,17 +40,21 @@ SESSION.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
 })
 
-def norm(value):
-    if not value:
-        return None
-    return ALIASES.get(" ".join(value.strip().lower().replace("_", " ").split()))
-
 def fetch(url):
-    response = SESSION.get(url, timeout=30)
-    response.raise_for_status()
-    return response.text
+    last_error = None
+    for attempt in range(3):
+        try:
+            response = SESSION.get(url, timeout=(15, 90))
+            response.raise_for_status()
+            return response.text
+        except requests.RequestException as exc:
+            last_error = exc
+            print(f"Request failed ({attempt + 1}/3): {url} -> {exc}")
+            if attempt < 2:
+                time.sleep(2 * (attempt + 1))
+    raise RuntimeError(f"Unable to fetch {url}: {last_error}")
 
-def extract_card(article):
+def extract_card(article, category):
     link = article.select_one('a[href*="/details/"]')
     if not link:
         return None
@@ -62,85 +67,56 @@ def extract_card(article):
     title = title_node.get_text(" ", strip=True) if title_node else ""
     author = author_node.get_text(" ", strip=True) if author_node else ""
     version = version_node.get_text(" ", strip=True) if version_node else ""
-    version = re.sub(r"\\s+", " ", version).strip()
     return {
         "id": match.group(1),
         "name": title,
         "author": author,
-        "version": version.lstrip("vV").strip(),
-        "details": f"{BASE_URL}/details/{match.group(1)}",
+        "version": re.sub(r"\s+", " ", version).strip().lstrip("vV").strip(),
+        "category": category,
+        "source": "PKG-Zone",
+        "package": f"{BASE_URL}/details/{match.group(1)}",
     }
 
-def collect_listing():
+def collect_category(category):
+    slug = CATEGORY_SLUGS[category]
     records = {}
     max_pages = int(os.environ.get("PKG_ZONE_MAX_PAGES", "20"))
     for page in range(1, max_pages + 1):
-        url = f"{BASE_URL}/?page={page}"
+        url = f"{BASE_URL}/?category={slug}&page={page}"
         html = fetch(url)
         soup = BeautifulSoup(html, "html.parser")
         articles = soup.select("article.pkg")
         if not articles:
-            print(f"Listing page {page}: no package cards; stopping.")
+            print(f"{category}: page {page}: no package cards; stopping.")
             break
         added = 0
         for article in articles:
-            record = extract_card(article)
+            record = extract_card(article, category)
             if record and record["id"] not in records:
                 records[record["id"]] = record
                 added += 1
-        print(f"Listing page {page}: {len(articles)} cards, {added} new")
+        print(f"{category}: page {page}: {len(articles)} cards, {added} new")
         if added == 0:
             break
-    if not records:
-        raise RuntimeError("PKG-Zone listing returned no package cards.")
-    print(f"Listing: {len(records)} unique packages")
     return list(records.values())
 
-def enrich(record):
-    try:
-        html = fetch(record["details"])
-        soup = BeautifulSoup(html, "html.parser")
-        text = soup.get_text(" ", strip=True)
-        match = re.search(r"\\bCategory\\s+([A-Za-z][A-Za-z ]{1,40}?)(?=\\s+(?:Downloads|Ratings|Updated|Download for))", text)
-        category = norm(match.group(1)) if match else None
-        if not category:
-            match = re.search(r"\\bCategory\\s+([A-Za-z][A-Za-z ]{1,40})", text)
-            category = norm(match.group(1)) if match else None
-        if not category:
-            return None, f"{record['id']}: category not recognized"
-        record["category"] = category
-        record["source"] = "PKG-Zone"
-        record["package"] = record["details"]
-        record.pop("details", None)
-        return record, None
-    except Exception as exc:
-        return None, f"{record['id']}: {exc}"
-
 def load():
-    records = collect_listing()
-    workers = int(os.environ.get("PKG_ZONE_WORKERS", "12"))
     grouped = {category: [] for category in CATEGORIES}
-    skipped = []
-    with ThreadPoolExecutor(max_workers=workers) as executor:
-        futures = [executor.submit(enrich, record) for record in records]
-        for future in as_completed(futures):
-            record, error = future.result()
-            if record:
-                grouped[record["category"]].append(record)
-            elif error:
-                skipped.append(error)
+    seen = set()
     for category in CATEGORIES:
-        grouped[category].sort(key=lambda item: (item.get("name", "").lower(), item.get("id", "")))
+        for record in collect_category(category):
+            if record["id"] in seen:
+                continue
+            seen.add(record["id"])
+            grouped[category].append(record)
+
+    for category in CATEGORIES:
+        grouped[category].sort(key=lambda item: (item["name"].lower(), item["id"]))
         print(f"  {category}: {len(grouped[category])}")
-    if skipped:
-        print(f"Skipped: {len(skipped)} records")
-        for item in skipped[:20]:
-            print(f"  {item}")
-        if len(skipped) > 20:
-            print(f"  ... {len(skipped) - 20} more")
+
     total = sum(len(items) for items in grouped.values())
     if total == 0:
-        raise RuntimeError("PKG-Zone enrichment produced 0 categorized records.")
+        raise RuntimeError("PKG-Zone catalog produced 0 categorized records.")
     print(f"Catalog: {total} categorized records")
     return grouped
 
@@ -157,13 +133,13 @@ def write(grouped, root):
                 },
                 ensure_ascii=False,
                 indent=2,
-            ) + "\\n",
+            ) + "\n",
             encoding="utf-8",
         )
     (root / "README.md").write_text(
-        "# PS-Applications\\n\\n"
+        "# PS-Applications\n\n"
         "Catalog metadata mirrored from PKG-Zone's public catalog pages. "
-        "Contains metadata and package/detail URLs, not copied package binaries.\\n",
+        "Contains metadata and package/detail URLs, not copied package binaries.\n",
         encoding="utf-8",
     )
 
