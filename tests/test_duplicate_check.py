@@ -107,9 +107,15 @@ def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
     assert "**Duplicate package identities:** 1" in capsys.readouterr().out
 
 
-def test_ignores_unified_ps5_catalog(tmp_path, monkeypatch):
+def test_detects_duplicate_across_ps5_catalogs(tmp_path, monkeypatch):
     record = {"https://example.test/game.pkg": {"title_id": "PPSA12345", "version": "1.00"}}
-    (tmp_path / "ps5" / "ps5.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
-    (tmp_path / "ps5" / "ps5-games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
+    (tmp_path / "ps5").mkdir(parents=True, exist_ok=True)
+    (tmp_path / "ps5" / "ps5-games.json").write_text(
+        json.dumps({"DATA": record}), encoding="utf-8"
+    )
+    (tmp_path / "ps5" / "ps5-apps.json").write_text(
+        json.dumps({"DATA": record}), encoding="utf-8"
+    )
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
-    duplicate_check.check_duplicates()
+    with pytest.raises(SystemExit):
+        duplicate_check.check_duplicates()
