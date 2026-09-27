@@ -8739,7 +8739,7 @@
       "size": 24921702400,
       "min_fw": "5.80.128",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tacoma%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
       "title_id": "CUSA11366",
@@ -8750,7 +8750,7 @@
       "size": 1599275008,
       "min_fw": "5.00.128",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Taiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20%5BJP%5D%20%5BEN%5D%20%5B1.28%5D.pkg?download=true": {
       "title_id": "CUSA07515",
@@ -8761,7 +8761,7 @@
       "size": 1552482304,
       "min_fw": "5.00.128",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tales%20from%20the%20Borderlands%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.07%5D.pkg?download=true": {
       "title_id": "CUSA00870",
@@ -8772,7 +8772,7 @@
       "size": 9244311552,
       "min_fw": "1.117",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tearaway%20Unfolded%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
       "title_id": "CUSA00562",
@@ -8783,7 +8783,7 @@
       "size": 6738477056,
       "min_fw": "7.80",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Teenage%20Mutant%20Ninja%20Turtles%20Shredder%27s%20Revenge%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg?download=true": {
       "title_id": "CUSA30991",
@@ -8794,7 +8794,7 @@
       "size": 803274752,
       "min_fw": "7.80",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Terraria%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.35%5D.pkg?download=true": {
       "title_id": "CUSA00740",
@@ -8805,7 +8805,7 @@
       "size": 328073216,
       "min_fw": "9.00.128",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tetris%20Effect%20Connected%20-%20%5BEU%5D%20%5BEN%5D%20%5B2.02%5D.pkg?download=true": {
       "title_id": "CUSA13643",
@@ -8816,7 +8816,7 @@
       "size": 5513347072,
       "min_fw": "9.00.128",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Artful%20Escape%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.02%5D.pkg?download=true": {
       "title_id": "CUSA30113",
@@ -8827,7 +8827,7 @@
       "size": 6574505984,
       "min_fw": "8.80.128",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Binding%20of%20Isaac%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.16%5D.pkg?download=true": {
       "title_id": "CUSA00792",
@@ -8838,7 +8838,7 @@
       "size": 920453120,
       "min_fw": "9.00.128",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Bug%20Butcher%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg?download=true": {
       "title_id": "CUSA04995",
@@ -8849,7 +8849,7 @@
       "size": 274202624,
       "min_fw": "4.80",
       "cover_url": null,
-      "category": "gd"
+      "category": "games"
     }
   }
 }
