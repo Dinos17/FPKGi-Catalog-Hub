@@ -11,7 +11,6 @@ import duplicate_check  # noqa: E402
 
 @pytest.fixture(autouse=True)
 def catalog_dirs(tmp_path):
-    (tmp_path / "ps5").mkdir()
 
 
 def test_detects_exact_duplicate_urls(tmp_path, monkeypatch):
