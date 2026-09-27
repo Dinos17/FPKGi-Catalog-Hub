@@ -95,23 +95,11 @@ def parse_title_id(name):
     return match.group(1).upper() if match else None
 
 
-def load_metadata_overrides():
-    with CONFIG_PATH.open("r", encoding="utf-8") as file:
-        config = json.load(file)
-
-    overrides = config.get("metadata_overrides", {})
-    if not isinstance(overrides, dict):
-        raise ValueError('"metadata_overrides" must be a JSON object')
-
-    return overrides
-
-
 def fetch_external_database_entries():
     print("\nFetching external package database")
     files, database_url = fetch_database_files()
 
     entries = {}
-    overrides = load_metadata_overrides()
     scanned = 0
     skipped = 0
 
@@ -141,19 +129,9 @@ def fetch_external_database_entries():
             "cover_url": None,
         }
 
-        override = overrides.get(metadata["title_id"], {})
-        if override:
-            if not isinstance(override, dict):
-                raise ValueError(
-                    f'Metadata override for {metadata["title_id"]} must be an object'
-                )
-            metadata.update(override)
-
         try:
             pkg_metadata = extract_metadata(url, size)
             metadata.update(pkg_metadata)
-            if override:
-                metadata.update(override)
             print(
                 f"  PKG metadata: {filename} | "
                 f"{pkg_metadata.get('title_id', 'no-title-id')} | "
