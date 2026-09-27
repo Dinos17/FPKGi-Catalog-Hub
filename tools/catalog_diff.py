@@ -52,18 +52,15 @@ for filename in files:
     changed_total += len(changed)
     changed_files.append((filename, added, removed, changed))
 
-    try:
-        for pkg_url in sorted(added):
-            metadata = new_data.get(pkg_url)
-            if not isinstance(metadata, dict):
-                metadata = {}
-            new_records[pkg_url] = {"url": pkg_url, **metadata}
-    except UnboundLocalError:
-        pass
+    for pkg_url in sorted(added):
+        metadata = new_data.get(pkg_url)
+        if not isinstance(metadata, dict):
+            metadata = {}
+        new_records[pkg_url] = {"url": pkg_url, **metadata}
 
 if new_records:
     NEW_REGISTRATIONS_PATH.write_text(
-        json.dumps({"DATA": new_records}, indent=2, ensure_ascii=False) + "\\n",
+        json.dumps({"DATA": new_records}, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 else:
