@@ -29,7 +29,6 @@ def test_title_version_duplicate_fails(tmp_path, monkeypatch, capsys):
     )
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     with pytest.raises(SystemExit):
-        with pytest.raises(SystemExit):
         duplicate_check.check_duplicates()
     assert "**Duplicate package identities:** 1" in capsys.readouterr().out
 
@@ -97,7 +96,8 @@ def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
         encoding="utf-8",
     )
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
-    duplicate_check.check_duplicates()
+    with pytest.raises(SystemExit):
+        duplicate_check.check_duplicates()
     assert "**Duplicate package identities:** 1" in capsys.readouterr().out
 
 
