@@ -18,7 +18,7 @@ def test_detects_exact_duplicate_urls(tmp_path, monkeypatch):
         duplicate_check.check_duplicates()
 
 
-def test_title_version_duplicate_is_warning_only(tmp_path, monkeypatch, capsys):
+def test_title_version_duplicate_fails(tmp_path, monkeypatch, capsys):
     (tmp_path / "games.json").write_text(
         json.dumps({"DATA": {"https://example.test/a.pkg": {"title_id": "CUSA12345", "version": "1.00"}}}),
         encoding="utf-8",
@@ -78,7 +78,7 @@ def test_archive_and_huggingface_mirrors_are_expected(tmp_path, monkeypatch, cap
     assert "**Possible title/version duplicates:** 0" in output
 
 
-def test_different_urls_with_same_identity_remain_warning(tmp_path, monkeypatch, capsys):
+def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
     (tmp_path / "games.json").write_text(
         json.dumps({
             "DATA": {
