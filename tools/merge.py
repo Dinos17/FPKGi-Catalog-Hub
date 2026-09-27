@@ -299,8 +299,6 @@ def merge_category(category, urls, release_entries, excluded_urls=None):
 
     output_path = catalog_output_path(category)
 
-    # If an upstream source failed and the resulting catalog shrank sharply,
-    # preserve the published catalog instead of publishing a partial merge.
     if failed_sources and output_path.exists() and merged:
         try:
             with output_path.open("r", encoding="utf-8") as file:
@@ -333,9 +331,6 @@ def merge_category(category, urls, release_entries, excluded_urls=None):
             print(f"Preserved existing catalog: {output_path}")
             return len(existing_entries)
 
-    # If every configured source completed successfully and produced no
-    # entries, an empty catalog is intentional and must be publishable.
-    # Preserve a non-empty catalog only when at least one source failed.
     if not merged and failed_sources and output_path.exists():
         try:
             with output_path.open("r", encoding="utf-8") as file:
@@ -390,8 +385,6 @@ def main():
     try:
         dataset_entries = fetch_external_database_entries()
     except Exception as exc:
-        # The external database is supplemental. A transient outage must not
-        # prevent the other configured sources and release assets from merging.
         print(f"WARNING: External package database unavailable: {exc}")
         print("Continuing without external database entries.")
         dataset_entries = {}
@@ -422,9 +415,6 @@ def main():
         }
         ps5_output_path = catalog_output_path(f"ps5-{category}", ps5=True)
 
-        # Never replace an existing non-empty PS5 catalog with an empty
-        # release result. This protects published PS5 data from transient
-        # GitHub API failures or missing release assets.
         if not ps5_entries and ps5_output_path.exists():
             try:
                 with ps5_output_path.open("r", encoding="utf-8") as file:
@@ -466,7 +456,7 @@ def main():
             f"Entries: {len(ps5_output['DATA'])}"
         )
 
-    ps5_output_path = catalog_output_path("ps5.json", ps5=True)
+    ps5_output_path = catalog_output_path("ps5", ps5=True)
     ps5_entries = {}
     for category, category_entries in ps5_release_entries.items():
         for pkg_url, metadata in category_entries.items():
@@ -474,7 +464,6 @@ def main():
                 continue
             if is_ps5_entry(metadata):
                 ps5_entries.setdefault(pkg_url, metadata)
-
 
     for pkg_url, metadata in dataset_entries.items():
         if is_ps5_entry(metadata) and pkg_url not in exclusions.get("games", set()):
