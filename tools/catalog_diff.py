@@ -90,11 +90,7 @@ for filename, added, removed, changed in changed_files:
     if changed:
         parts.append(f"{len(changed)} modified")
 
-    if repo:
-        file_link = f"{server_url}/{repo}/blob/main/{filename}"
-        print(f"- [{filename}]({file_link}) — " + ", ".join(parts))
-    else:
-        print(f"- {filename} — " + ", ".join(parts))
+    print(f"- {filename} — " + ", ".join(parts))
 
 print()
 print("**Record changes:**")
