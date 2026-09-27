@@ -1,0 +1,29 @@
+name: Mirror PS-Applications to Hugging Face
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "30 3 * * *"
+
+concurrency:
+  group: ps-applications-mirror
+  cancel-in-progress: false
+
+jobs:
+  mirror:
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+      - name: Setup Python
+        uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97
+        with:
+          python-version: "3.12"
+      - name: Install Dependencies
+        run: python -m pip install --disable-pip-version-check requests huggingface_hub
+      - name: Mirror PKG-Zone Metadata
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: python tools/pkg_zone_mirror.py
