@@ -1,9 +1,3 @@
 {
-  "url": "https://huggingface.co/datasets/dinos17/FPKGi-Packages",
-  "metadata_overrides": {
-    "PPSA01615": {
-      "name": "Netflix",
-      "category": "apps"
-    }
-  }
+  "url": "https://huggingface.co/datasets/dinos17/FPKGi-Packages"
 }
