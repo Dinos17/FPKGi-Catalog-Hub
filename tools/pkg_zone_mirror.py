@@ -19,7 +19,18 @@ def norm(v):
     return ALIASES.get(" ".join(v.strip().lower().replace("_"," ").split()))
 
 def download(path):
-    with requests.get(STORE_DB_URL,timeout=120,stream=True) as r:
+    headers={
+        "User-Agent":"StoreHAX/GL",
+        "Accept":"*/*",
+        "Referer":"https://pkg-zone.com/",
+    }
+    with requests.get(STORE_DB_URL,headers=headers,timeout=120,stream=True) as r:
+        if r.status_code == 403:
+            raise RuntimeError(
+                "PKG-Zone denied the store.db request (HTTP 403). "
+                "The Store client uses User-Agent StoreHAX/GL; if this still fails, "
+                "the endpoint is blocking non-Store clients."
+            )
         r.raise_for_status()
         with path.open("wb") as f:
             for chunk in r.iter_content(1024*1024):
