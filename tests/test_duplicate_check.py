@@ -28,8 +28,9 @@ def test_title_version_duplicate_fails(tmp_path, monkeypatch, capsys):
         encoding="utf-8",
     )
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
-    duplicate_check.check_duplicates()
-    assert "**Possible title/version duplicates:** 1" in capsys.readouterr().out
+    with pytest.raises(SystemExit):
+        duplicate_check.check_duplicates()
+    assert "**Duplicate package identities:** 1" in capsys.readouterr().out
 
 
 def test_url_encoding_variants_are_not_flagged_as_suspicious(tmp_path, monkeypatch, capsys):
@@ -52,7 +53,7 @@ def test_url_encoding_variants_are_not_flagged_as_suspicious(tmp_path, monkeypat
     duplicate_check.check_duplicates()
     output = capsys.readouterr().out
     assert "**Exact duplicate package URLs:** 0" in output
-    assert "**Possible title/version duplicates:** 0" in output
+    assert "**Duplicate package identities:** 0" in output
 
 
 def test_archive_and_huggingface_mirrors_are_expected(tmp_path, monkeypatch, capsys):
