@@ -57,7 +57,25 @@
     </style>
     <style>.pagination{display:flex;justify-content:center;align-items:center;gap:6px;margin:30px 0 55px;min-height:40px}.page-btn{min-width:38px;height:38px;padding:0 11px;background:#121820;border-color:#273241;color:#9eabbc}.page-btn:hover:not(:disabled),.page-btn.active{background:#1c3857;border-color:#4f8fdc;color:#d9ebff}.page-btn:disabled{opacity:.3;cursor:not-allowed}.page-gap{color:#667386;padding:0 3px}</style>
 <style>
-.details{margin-top:8px}.details[hidden]{display:none}.back-btn{margin-bottom:18px;background:transparent;border-color:#303b4b;color:#c6d0de}.detail-hero{position:relative;min-height:360px;border:1px solid #273241;border-radius:24px;overflow:hidden;background:radial-gradient(circle at 75% 20%,rgba(79,143,220,.22),transparent 34%),linear-gradient(135deg,#18202c,#0e131a 65%);box-shadow:0 24px 70px rgba(0,0,0,.3)}.detail-glow{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,11,16,.94),rgba(8,11,16,.72) 48%,rgba(8,11,16,.18))}.detail-content{position:relative;max-width:760px;padding:58px 52px}.detail-platform{display:inline-block;padding:6px 10px;border:1px solid #40516a;border-radius:8px;background:#111823;color:#cfe2f7;font-size:.72rem;font-weight:800;letter-spacing:.08em}.detail-content h2{font-size:clamp(2rem,5vw,4rem);line-height:1.04;letter-spacing:-.045em;margin:20px 0 14px}.detail-subtitle{color:#aab6c6;font-size:.95rem}.detail-description{color:#d2d8e0;font-size:1.03rem;line-height:1.75;max-width:680px;margin-top:28px}.detail-info{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.detail-info div{padding:18px;border:1px solid #222d3a;border-radius:15px;background:#111720}.detail-info span{display:block;color:#718096;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}.detail-info strong{font-size:.92rem;color:#dce3ec;word-break:break-word}.card{cursor:pointer}.card:focus-visible{outline:2px solid #4f8fdc;outline-offset:3px}@media(max-width:700px){.detail-content{padding:38px 25px}.detail-hero{min-height:420px}.detail-info{grid-template-columns:1fr 1fr}}
+.details{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:34px;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.details[hidden]{display:none}
+.detail-modal{position:relative;width:min(980px,94vw);max-height:90vh;overflow:auto;border:1px solid #303b4b;border-radius:10px;background:#14181f;box-shadow:0 30px 100px rgba(0,0,0,.65)}
+.detail-close{position:absolute;z-index:3;top:16px;right:16px;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(15,18,23,.78);color:#fff;font-size:1.5rem;line-height:38px}
+.detail-close:hover{background:#fff;color:#111;transform:none}
+.detail-hero{position:relative;min-height:430px;display:flex;align-items:flex-end;overflow:hidden;background:radial-gradient(circle at 78% 18%,rgba(79,143,220,.25),transparent 34%),linear-gradient(135deg,#202936,#0d1117 68%)}
+.detail-glow{position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,11,15,.98) 0%,rgba(9,11,15,.82) 48%,rgba(9,11,15,.2) 100%),linear-gradient(0deg,#14181f 0%,transparent 45%)}
+.detail-content{position:relative;max-width:720px;padding:52px 52px 44px}
+.detail-platform{display:inline-block;padding:6px 10px;border:1px solid #40516a;border-radius:5px;background:#111823;color:#cfe2f7;font-size:.72rem;font-weight:800;letter-spacing:.08em}
+.detail-content h2{font-size:clamp(2.2rem,5vw,4.2rem);line-height:1.02;letter-spacing:-.045em;margin:18px 0 12px}
+.detail-subtitle{color:#b8c2cf;font-size:.92rem}
+.detail-description{color:#d7dce3;font-size:1rem;line-height:1.7;max-width:650px;margin-top:22px}
+.detail-info{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#303640}
+.detail-info div{padding:17px 20px;background:#171b22}
+.detail-info span{display:block;color:#737e8e;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
+.detail-info strong{font-size:.9rem;color:#e1e6ed;word-break:break-word}
+.card{cursor:pointer}
+.card:focus-visible{outline:2px solid #4f8fdc;outline-offset:3px}
+@media(max-width:700px){.details{padding:12px}.detail-modal{width:100%;max-height:94vh}.detail-content{padding:40px 25px 30px}.detail-hero{min-height:400px}.detail-info{grid-template-columns:1fr 1fr}}
 </style>
 </head>
 <body>
@@ -215,7 +233,8 @@ function openDetails(record) {
   state.selected = record;
   const game = record.data;
   const details = document.getElementById("details");
-  details.innerHTML = '<button class="back-btn" id="backToCatalog">← Back to catalog</button>' +
+  details.innerHTML = '<div class="detail-modal" role="dialog" aria-modal="true" aria-label="' + escapeHtml(game.name || "Game details") + '">' +
+    '<button class="detail-close" id="detailClose" aria-label="Close">×</button>' +
     '<div class="detail-hero"><div class="detail-glow"></div><div class="detail-content">' +
     '<span class="detail-platform">' + escapeHtml(record.platform) + '</span>' +
     '<h2>' + escapeHtml(game.name || "Unknown title") + '</h2>' +
@@ -225,24 +244,21 @@ function openDetails(record) {
     '<div class="detail-info"><div><span>Title ID</span><strong>' + escapeHtml(game.title_id || "—") + '</strong></div>' +
     '<div><span>Region</span><strong>' + escapeHtml(game.region || "—") + '</strong></div>' +
     '<div><span>Version</span><strong>' + escapeHtml(game.version || "—") + '</strong></div>' +
-    '<div><span>Size</span><strong>' + (Number.isFinite(Number(game.size)) && Number(game.size) > 0 ? (Number(game.size) / 1073741824).toFixed(1) + " GB" : "Size unavailable") + '</strong></div></div>';
-  document.getElementById("results").hidden = true;
-  document.getElementById("pagination").hidden = true;
+    '<div><span>Size</span><strong>' + (Number.isFinite(Number(game.size)) && Number(game.size) > 0 ? (Number(game.size) / 1073741824).toFixed(1) + " GB" : "Size unavailable") + '</strong></div></div></div>';
   details.hidden = false;
-  document.querySelector(".meta").hidden = true;
-  document.querySelector("header").hidden = true;
-  window.scrollTo({ top: 0, behavior: "smooth" });
-  document.getElementById("backToCatalog").addEventListener("click", closeDetails);
+  document.getElementById("detailClose").addEventListener("click", closeDetails);
+  details.addEventListener("click", event => { if (event.target === details) closeDetails(); }, { once:true });
+  document.addEventListener("keydown", handleDetailEscape);
+}
+
+function handleDetailEscape(event) {
+  if (event.key === "Escape" && state.selected) closeDetails();
 }
 
 function closeDetails() {
   state.selected = null;
   document.getElementById("details").hidden = true;
-  document.getElementById("results").hidden = false;
-  document.getElementById("pagination").hidden = false;
-  document.querySelector(".meta").hidden = false;
-  document.querySelector("header").hidden = false;
-  window.scrollTo({ top: 0, behavior: "smooth" });
+  document.removeEventListener("keydown", handleDetailEscape);
 }
 
 function renderPagination(pageCount) {
