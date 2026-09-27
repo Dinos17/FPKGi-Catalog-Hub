@@ -14,10 +14,9 @@ def catalog_path(root, filename):
     path = Path(filename)
     if len(path.parts) > 1:
         return root / path
-    if filename.startswith("ps5-") or filename == "ps5.json" or filename in {"ps1.json", "ps2.json", "psp.json"}:
+    if filename.startswith("ps5-") or filename in {"ps1.json", "ps2.json", "psp.json"}:
         return root / PS5_DIR / filename
     return root / PS4_DIR / filename
-
 
 
 def expected_catalogs(root):
@@ -27,7 +26,7 @@ def expected_catalogs(root):
     if not isinstance(categories, dict) or not categories:
         raise ValueError("Source configuration must be a non-empty JSON object")
 
-    files = ["ps5/ps5.json"]
+    files = []
     legacy_categories = {"ps1", "ps2", "psp"}
     for category in categories:
         validate_category_name(category)
