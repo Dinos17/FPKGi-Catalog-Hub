@@ -9,17 +9,20 @@ EXCLUDED = {"ps5.json"}
 
 def load_catalogs():
     catalogs = {}
-    for path in sorted(ROOT.glob("*.json")):
-        if path.name in EXCLUDED or path.name == "new-registrations.json":
+    for platform_dir in (ROOT / "ps4", ROOT / "ps5"):
+        if not platform_dir.is_dir():
+            continue
+        for path in sorted(platform_dir.glob("*.json")):
+            if path.name in EXCLUDED or path.name == "new-registrations.json":
             continue
         try:
-            data = json.loads(path.read_text(encoding="utf-8"))
-        except json.JSONDecodeError as exc:
-            raise ValueError(f"{path.name}: invalid JSON: {exc}") from exc
-        entries = data.get("DATA") if isinstance(data, dict) else None
-        if not isinstance(entries, dict):
-            continue
-        catalogs[path.name] = entries
+                data = json.loads(path.read_text(encoding="utf-8"))
+            except json.JSONDecodeError as exc:
+                raise ValueError(f"{path}: invalid JSON: {exc}") from exc
+            entries = data.get("DATA") if isinstance(data, dict) else None
+            if not isinstance(entries, dict):
+                continue
+            catalogs[path.relative_to(ROOT).as_posix()] = entries
     return catalogs
 
 
