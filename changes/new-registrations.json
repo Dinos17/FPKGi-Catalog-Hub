@@ -1,3 +1,27 @@
 {
-  "DATA": {}
+  "DATA": {
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true",
+      "title_id": "CUSA01015",
+      "region": null,
+      "name": "YouTube",
+      "version": "01.00",
+      "release": null,
+      "size": 151650304,
+      "min_fw": "5.05",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/PS5_PPSA01615_v6.00.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/PS5_PPSA01615_v6.00.pkg?download=true",
+      "title_id": "PPSA01615",
+      "region": null,
+      "name": "Netflix",
+      "version": null,
+      "release": null,
+      "size": 93847552,
+      "min_fw": null,
+      "cover_url": null
+    }
+  }
 }
