@@ -48,6 +48,11 @@ jobs:
           }
 
           for path in sorted(Path("ps4").glob("*.json")) + sorted(Path("ps5").glob("*.json")):
+              # ps5.json is the unified PS5 catalog, generated as the union of
+              # the ps5-* category catalogs. Loading both would display every
+              # PS5 package twice in the dashboard.
+              if path.parent.name == "ps5" and path.name == "ps5.json":
+                  continue
               if path.name == "new-registrations.json":
                   continue
 
