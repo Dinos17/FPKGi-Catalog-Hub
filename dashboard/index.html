@@ -135,10 +135,96 @@ function platformForFile(file) {
 function normalize(value) {
   return String(value ?? "")
     .normalize("NFKD")
-    .replace(/[\p{P}\p{S}]+/gu, " ")
-    .replace(/\s+/g, " ")
+    .replace(/[\\u0300-\\u036f]/g, "")
+    .replace(/[\\p{P}\\p{S}]+/gu, " ")
+    .replace(/\\s+/g, " ")
     .toLowerCase()
     .trim();
+}
+
+function levenshtein(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i];
+    for (let j = 1; j <= b.length; j++) {
+      curr[j] = Math.min(
+        curr[j - 1] + 1,
+        prev[j] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+
+  return prev[b.length];
+}
+
+function tokenSimilarity(queryToken, textToken) {
+  if (!queryToken || !textToken) return 0;
+  if (textToken === queryToken) return 1;
+  if (textToken.startsWith(queryToken)) return 0.92;
+  if (textToken.includes(queryToken)) return 0.78;
+
+  const maxDistance = queryToken.length <= 4 ? 1 : queryToken.length <= 7 ? 2 : 3;
+  const distance = levenshtein(queryToken, textToken);
+  if (distance > maxDistance) return 0;
+
+  return Math.max(0.45, 1 - distance / Math.max(queryToken.length, textToken.length));
+}
+
+function searchScore(game, query) {
+  if (!query) return 0;
+
+  const name = normalize(game.name);
+  const titleId = normalize(game.title_id);
+  const region = normalize(game.region);
+  const version = normalize(game.version);
+  const queryText = normalize(query);
+  const queryTokens = queryText.split(" ").filter(Boolean);
+
+  if (!queryTokens.length) return 0;
+
+  const fields = [
+    { text: name, weight: 1.00 },
+    { text: titleId, weight: 0.92 },
+    { text: region, weight: 0.35 },
+    { text: version, weight: 0.30 }
+  ];
+
+  let best = 0;
+
+  for (const field of fields) {
+    if (!field.text) continue;
+
+    if (field.text === queryText) best = Math.max(best, 1000 * field.weight);
+    if (field.text.startsWith(queryText)) best = Math.max(best, 850 * field.weight);
+    if (field.text.includes(queryText)) best = Math.max(best, 700 * field.weight);
+
+    const textTokens = field.text.split(" ").filter(Boolean);
+    const tokenScores = queryTokens.map(qToken => {
+      let tokenBest = 0;
+      for (const textToken of textTokens) {
+        tokenBest = Math.max(tokenBest, tokenSimilarity(qToken, textToken));
+      }
+      return tokenBest;
+    });
+
+    const average = tokenScores.reduce((sum, value) => sum + value, 0) / tokenScores.length;
+    const coverage = tokenScores.filter(value => value > 0).length / tokenScores.length;
+
+    if (coverage === 1) {
+      best = Math.max(best, 620 * field.weight * average + 120);
+    } else if (coverage >= 0.5) {
+      best = Math.max(best, 360 * field.weight * average);
+    }
+  }
+
+  return best;
 }
 
 function buildCategoryFilters() {
@@ -184,14 +270,18 @@ function buildPlatformFilters() {
 function render() {
   const q = normalize(state.query);
 
-  const matches = state.records.filter(record => {
-    if (state.category !== "all" && record.category !== state.category) return false;
-    if (state.platform !== "all" && record.platform !== state.platform) return false;
-
-    const game = record.data;
-    const text = normalize([game.name, game.title_id, game.region, game.version].join(" "));
-    return !q || text.includes(q);
-  });
+  const matches = state.records
+    .map(record => ({
+      record,
+      score: searchScore(record.data, q)
+    }))
+    .filter(item => {
+      if (state.category !== "all" && item.record.category !== state.category) return false;
+      if (state.platform !== "all" && item.record.platform !== state.platform) return false;
+      return !q || item.score > 0;
+    })
+    .sort((a, b) => b.score - a.score || normalize(a.record.data.name).localeCompare(normalize(b.record.data.name)))
+    .map(item => item.record);
 
   document.getElementById("count").textContent =
     matches.length.toLocaleString() + (state.category === "all" ? " items" : " " + (categoryLabels[state.category] || "items"));
