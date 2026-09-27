@@ -90,25 +90,6 @@ def check_duplicates():
     if summary_path:
         Path(summary_path).write_text(report, encoding="utf-8")
     if exact_duplicates:
-        print("#### Exact duplicates")
-        for url, files in sorted(exact_duplicates.items()):
-            print(f"- {url}")
-            print("  - Found in: " + ", ".join(sorted(files)))
-        print("")
-    if suspicious_duplicates:
-        print("#### Possible title/version duplicates")
-        for (is_ps5, title_id, version), records in sorted(suspicious_duplicates.items()):
-            platform = "PS5" if is_ps5 else "PS4"
-            print(f"- {platform} {title_id} v{version}")
-            for filename, url in records:
-                print(f"  - {filename} — {url}")
-        print("")
-    if not exact_duplicates and not suspicious_duplicates:
-        print("### No duplicate registrations detected.")
-    elif not exact_duplicates:
-        print("### No exact duplicate package URLs detected.")
-        print("Possible title/version duplicates are warnings only.")
-    if exact_duplicates:
         raise SystemExit(1)
 
 if __name__ == "__main__":
