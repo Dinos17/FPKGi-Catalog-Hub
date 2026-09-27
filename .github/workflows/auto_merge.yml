@@ -71,24 +71,17 @@ jobs:
       - name: Check for Catalog Changes
         id: changes
         run: |
-          python - <<'PY'
-          import json
-          import subprocess
+          # Rebuild new-registrations.json from the current catalog diff only.
+          # Remove any previous snapshot first so a no-change run cannot leave
+          # stale registrations behind.
+          rm -f new-registrations.json
 
-          with open("config/sources.json", "r", encoding="utf-8") as file:
-              categories = json.load(file)
+          git add -A -- '*.json'
 
-          files = ["ps5.json"]
-          for category in categories:
-              files.extend(
-                  (f"{category}.json", f"ps5-{category}.json")
-              )
+          python tools/catalog_diff.py >> "$GITHUB_STEP_SUMMARY"
 
-          subprocess.run(
-              ["git", "add", "-A", "--", "*.json"],
-              check=True,
-          )
-          PY
+          # catalog_diff.py may create new-registrations.json when new records exist.
+          git add -A -- new-registrations.json
 
           if git diff --cached --quiet; then
             echo "updated=false" >> "$GITHUB_OUTPUT"
@@ -101,9 +94,6 @@ jobs:
             echo "No catalog records or catalog files changed." >> "$GITHUB_STEP_SUMMARY"
           else
             echo "updated=true" >> "$GITHUB_OUTPUT"
-
-            python tools/catalog_diff.py >> "$GITHUB_STEP_SUMMARY"
-            git add -A -- new-registrations.json
 
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
