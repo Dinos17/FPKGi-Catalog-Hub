@@ -15,8 +15,7 @@
     .search { margin:30px auto 18px; max-width:760px; }
     input { width:100%; padding:17px 20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); color:var(--text); font-size:1.05rem; outline:none; }
     input:focus { border-color:var(--accent); }
-    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }\n    .category-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; max-width:900px; margin:30px auto 18px; }\n    .category-filters button { min-height:64px; border-radius:14px; font-size:1rem; font-weight:700; }
-    .platform-filters { margin-bottom:32px; }
+    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }\n    .platform-filters { margin-bottom:32px; }
     button { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 16px; border-radius:999px; cursor:pointer; }
     button:hover, button.active { background:var(--panel2); border-color:var(--accent); color:var(--accent); }
     .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); margin-bottom:14px; }
@@ -35,7 +34,7 @@
       <h1>FPKGi Catalog Hub</h1>
       <p>Search and browse the catalog.</p>
       <div class="search"><input id="search" type="search" placeholder="Search the catalog..." autocomplete="off"></div>
-      <div id="categoryFilters" class="category-filters"></div>
+      <div id="categoryFilters" class="filters"></div>
       <div id="platformFilters" class="filters platform-filters"></div>
     </header>
 
@@ -99,8 +98,6 @@ function buildCategoryFilters() {
       container.querySelectorAll("[data-category]").forEach(b => b.classList.remove("active"));
       button.classList.add("active");
       state.category = button.dataset.category;
-      state.platform = "all";
-      buildPlatformFilters();
       render();
     });
   });
@@ -128,13 +125,12 @@ function buildPlatformFilters() {
       '</button>'
     ).join("");
 
-  container.querySelector('[data-platform="all"]').classList.add("active");
-
   container.querySelectorAll("[data-platform]").forEach(button => {
     button.addEventListener("click", () => {
       container.querySelectorAll("[data-platform]").forEach(b => b.classList.remove("active"));
       button.classList.add("active");
-      state.platform = button.dataset.platform;
+      state.platform = state.platform === button.dataset.platform ? "all" : button.dataset.platform;
+      container.querySelectorAll("[data-platform]").forEach(b => b.classList.toggle("active", b.dataset.platform === state.platform));
       render();
     });
   });
@@ -145,7 +141,7 @@ function render() {
 
   const matches = state.records.filter(record => {
     if (state.category !== "all" && record.category !== state.category) return false;
-    if (state.category === "games" && state.platform !== "all" && record.platform !== state.platform) return false;
+    if (state.platform !== "all" && record.platform !== state.platform) return false;
 
     const game = record.data;
     const text = normalize([game.name, game.title_id, game.region, game.version].join(" "));
