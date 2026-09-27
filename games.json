@@ -8817,6 +8817,72 @@
       "min_fw": "9.00.128",
       "cover_url": null,
       "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tetris%20Effect%20Connected%20-%20%5BEU%5D%20%5BEN%5D%20%5B2.02%5D.pkg?download=true": {
+      "title_id": "CUSA13643",
+      "region": null,
+      "name": "Tetris® Effect: Connected",
+      "version": "01.00",
+      "release": null,
+      "size": 5513347072,
+      "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Amazing%20Spider-Man%202%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.00%5D.pkg?download=true": {
+      "title_id": "CUSA00239",
+      "region": null,
+      "name": "The Amazing Spider-Man 2™",
+      "version": "01.00",
+      "release": null,
+      "size": 8599371776,
+      "min_fw": "1.80",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Artful%20Escape%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.02%5D.pkg?download=true": {
+      "title_id": "CUSA30113",
+      "region": null,
+      "name": "The Artful Escape",
+      "version": "01.00",
+      "release": null,
+      "size": 6574505984,
+      "min_fw": "8.80.128",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Awesome%20Adventures%20of%20Captain%20Spirit%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.00%5D.pkg?download=true": {
+      "title_id": "CUSA09376",
+      "region": null,
+      "name": "The Awesome Adventures of Captain Spirit",
+      "version": "01.00",
+      "release": null,
+      "size": 3149463552,
+      "min_fw": "5.00.128",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Binding%20of%20Isaac%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.16%5D.pkg?download=true": {
+      "title_id": "CUSA00792",
+      "region": null,
+      "name": "The Binding of Isaac",
+      "version": "01.00",
+      "release": null,
+      "size": 920453120,
+      "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "gd"
+    },
+    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Bug%20Butcher%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg?download=true": {
+      "title_id": "CUSA04995",
+      "region": null,
+      "name": "The Bug Butcher",
+      "version": "01.00",
+      "release": null,
+      "size": 274202624,
+      "min_fw": "4.80",
+      "cover_url": null,
+      "category": "gd"
     }
   }
 }
