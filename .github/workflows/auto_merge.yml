@@ -76,7 +76,7 @@ jobs:
           # stale registrations behind.
           rm -f new-registrations.json
 
-          git add -A -- '*.json'
+          git add -A -- '*.json' ':!new-registrations.json'
 
           python tools/catalog_diff.py >> "$GITHUB_STEP_SUMMARY"
 
