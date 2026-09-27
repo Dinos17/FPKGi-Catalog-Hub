@@ -223,6 +223,12 @@ def validate_entries(entries, source_name):
     return valid
 
 
+def is_ps5_entry(metadata):
+    """Return True when metadata identifies a PS5 package."""
+    title_id = metadata.get("title_id") if isinstance(metadata, dict) else None
+    return isinstance(title_id, str) and title_id.upper().startswith("PPSA")
+
+
 def merge_category(category, urls, release_entries, excluded_urls=None):
     merged = {}
     excluded_urls = excluded_urls or set()
@@ -276,6 +282,8 @@ def merge_category(category, urls, release_entries, excluded_urls=None):
     release_duplicates = 0
 
     for pkg_url, metadata in release_entries.items():
+        if is_ps5_entry(metadata):
+            continue
         if pkg_url in merged:
             release_duplicates += 1
             continue
@@ -392,14 +400,25 @@ def main():
         merge_category(
             category,
             urls,
-            {**release_entries.get(category, {}), **(dataset_entries if category == "games" else {})},
+            {
+                pkg_url: metadata
+                for pkg_url, metadata in {
+                    **release_entries.get(category, {}),
+                    **(dataset_entries if category == "games" else {}),
+                }.items()
+                if not is_ps5_entry(metadata)
+            },
             exclusions.get(category, set()),
         )
 
         ps5_entries = {
             pkg_url: metadata
-            for pkg_url, metadata in ps5_release_entries.get(category, {}).items()
-            if pkg_url not in exclusions.get(category, set())
+            for pkg_url, metadata in {
+                **ps5_release_entries.get(category, {}),
+                **(dataset_entries if category == "games" else {}),
+            }.items()
+            if is_ps5_entry(metadata)
+            and pkg_url not in exclusions.get(category, set())
         }
         ps5_output_path = catalog_output_path(f"ps5-{category}", ps5=True)
 
@@ -453,6 +472,12 @@ def main():
         for pkg_url, metadata in category_entries.items():
             if pkg_url in exclusions.get(category, set()):
                 continue
+            if is_ps5_entry(metadata):
+                ps5_entries.setdefault(pkg_url, metadata)
+
+
+    for pkg_url, metadata in dataset_entries.items():
+        if is_ps5_entry(metadata) and pkg_url not in exclusions.get("games", set()):
             ps5_entries.setdefault(pkg_url, metadata)
 
     if not ps5_entries and ps5_output_path.exists():
