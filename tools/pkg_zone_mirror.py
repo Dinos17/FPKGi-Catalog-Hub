@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 from pathlib import Path
-import json
 import os
 import re
 import tempfile
@@ -15,6 +14,7 @@ HF_REPO = "dinos17/PS-Applications"
 BASE_URL = "https://pkg-zone.com"
 CATEGORY = "Homebrew"
 CATEGORY_SLUG = "hb"
+CONSOLE = "ps4"
 
 SESSION = requests.Session()
 SESSION.headers.update({
@@ -56,11 +56,23 @@ def extract_card(article):
         "detail_url": urljoin(BASE_URL, link.get("href", "")),
     }
 
-def extract_package_url(detail_url):
-    response = fetch(detail_url)
+def extract_category(soup):
+    text = soup.get_text(" ", strip=True)
+    match = re.search(
+        r"\bCategory\s+(.+?)(?=\s+Downloads\b|\s+Ratings\b|\s+Updated\b)",
+        text,
+        re.I,
+    )
+    return match.group(1).strip().lower() if match else ""
+
+def extract_package_url(record):
+    response = fetch(record["detail_url"])
     soup = BeautifulSoup(response.text, "html.parser")
 
-    candidates = []
+    candidates = [
+        f"{BASE_URL}/download/{CONSOLE}/{record['id']}/latest",
+    ]
+
     for anchor in soup.find_all("a", href=True):
         href = urljoin(BASE_URL, anchor["href"])
         text = anchor.get_text(" ", strip=True).lower()
@@ -75,9 +87,8 @@ def extract_package_url(detail_url):
         if ".pkg" in href.lower():
             return href
 
-    # Some releases expose a download endpoint without ".pkg" in the URL.
     for href in candidates:
-        if "/download" in href.lower():
+        if "/download/" in href.lower():
             return href
 
     return None
@@ -87,7 +98,9 @@ def collect_records():
     max_pages = int(os.environ.get("PKG_ZONE_MAX_PAGES", "20"))
 
     for page in range(1, max_pages + 1):
-        url = f"{BASE_URL}/?category={CATEGORY_SLUG}&page={page}"
+        # The category query intermittently returns HTTP 500.
+        # Use the stable paginated listing and classify entries from detail pages.
+        url = f"{BASE_URL}/?page={page}"
         response = fetch(url)
         soup = BeautifulSoup(response.text, "html.parser")
         articles = soup.select("article.pkg")
@@ -99,18 +112,35 @@ def collect_records():
         added = 0
         for article in articles:
             record = extract_card(article)
-            if record and record["id"] not in records:
-                records[record["id"]] = record
-                added += 1
+            if not record or record["id"] in records:
+                continue
+
+            try:
+                detail = fetch(record["detail_url"])
+                soup_detail = BeautifulSoup(detail.text, "html.parser")
+                category = extract_category(soup_detail)
+            except Exception as exc:
+                print(f"SKIP {record['id']}: detail lookup failed: {exc}")
+                continue
+
+            if not category.startswith(CATEGORY_SLUG):
+                continue
+
+            record["category"] = category
+            records[record["id"]] = record
+            added += 1
 
         print(f"{CATEGORY}: page {page}: {len(articles)} cards, {added} new")
-        if added == 0:
-            break
+
+        if added == 0 and page > 1:
+            # Do not stop immediately: a page may contain no homebrew entries
+            # while later pages still do.
+            continue
 
     return list(records.values())
 
 def download_package(record, destination):
-    package_url = extract_package_url(record["detail_url"])
+    package_url = extract_package_url(record)
     if not package_url:
         print(f"SKIP {record['id']}: no public direct package download found")
         return None
@@ -149,7 +179,6 @@ def remove_old_catalog_jsons(api):
             )
             print(f"Removed old metadata file: {path}")
         except Exception as exc:
-            # The file may not exist yet; that is harmless.
             print(f"Metadata cleanup skipped for {path}: {exc}")
 
 def upload_packages(files):
@@ -195,9 +224,7 @@ def main():
                 downloaded.append(path)
 
         if not downloaded:
-            raise RuntimeError(
-                "No publicly downloadable Homebrew PKG files were found."
-            )
+            raise RuntimeError("No publicly downloadable Homebrew PKG files were found.")
 
         upload_packages(downloaded)
 
