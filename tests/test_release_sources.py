@@ -64,6 +64,39 @@ def test_asset_to_entry_uses_filename_fallback_when_metadata_fails(monkeypatch):
     assert metadata["cover_url"] == "https://example.com/cover.png"
 
 
+def test_asset_to_entry_warns_on_filename_pkg_metadata_mismatch(monkeypatch, capsys):
+    monkeypatch.setattr(
+        release_sources,
+        "extract_metadata",
+        lambda _url, _size: {
+            "title_id": "CUSA01015",
+            "version": "1.00",
+            "name": "YouTube",
+        },
+    )
+
+    result = release_sources.asset_to_entry(
+        {
+            "name": "PS4_CUSA01116_v2.32.pkg",
+            "browser_download_url": "https://example.com/youtube.pkg",
+            "size": 123,
+        },
+        {},
+        "apps",
+    )
+
+    assert result[1]["title_id"] == "CUSA01015"
+    assert result[1]["version"] == "1.00"
+
+    output = capsys.readouterr().out
+    assert "Filename/PKG Title ID mismatch" in output
+    assert "filename=CUSA01116" in output
+    assert "PARAM.SFO=CUSA01015" in output
+    assert "Filename/PKG version mismatch" in output
+    assert "filename=2.32" in output
+    assert "PARAM.SFO=1.00" in output
+
+
 def test_asset_to_entry_supports_ps5_title_id_filename_fallback(monkeypatch):
     monkeypatch.setattr(
         release_sources,
