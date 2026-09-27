@@ -26,7 +26,7 @@ CATEGORY_SLUGS = {
     "DLC": "dlc",
     "Retail PKG": "retail",
     "Fake PKG": "fake",
-    "Dev Menu": "devmenu",
+    "Dev Menu": "dev+menu",
 }
 
 SESSION = requests.Session()
