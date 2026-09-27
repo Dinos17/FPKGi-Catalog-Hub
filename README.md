@@ -104,17 +104,17 @@ Inside `config.json`, find the `CONTENT_URLS` section.
 
 ```json
     "CONTENT_URLS": {
-      "PS1": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/ps1.json",
-      "PS2": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/ps2.json",
-      "PSP": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/psp.json",
-      "games": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/games.json",
-      "apps": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/apps.json",
+      "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps1.json",
+      "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps2.json",
+      "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/psp.json",
+      "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/games.json",
+      "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/apps.json",
       "updates": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/updates.json",
-      "DLC": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/dlc.json",
-      "demos": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/demos.json",
-      "homebrew": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/homebrew.json",
-      "emulators": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/emulators.json",
-      "themes": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/themes.json"
+      "DLC": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/dlc.json",
+      "demos": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/demos.json",
+      "homebrew": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/homebrew.json",
+      "emulators": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/emulators.json",
+      "themes": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/themes.json"
     }
   }
 }
