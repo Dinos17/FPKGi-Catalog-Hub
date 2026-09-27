@@ -84,3 +84,47 @@ def resolve_title(title_id):
     except requests.RequestException as exc:
         print(f"  WARNING: Title lookup failed for {title_id}: {exc}")
         return None
+
+
+def _extract_category(html):
+    match = re.search(
+        r"Category\s*</[^>]+>\s*([^<]+)",
+        html,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if not match:
+        return None
+    return unescape(" ".join(match.group(1).split())).strip() or None
+
+
+def resolve_category(title_id):
+    if not isinstance(title_id, str):
+        return None
+
+    title_id = title_id.strip().upper()
+    if not re.fullmatch(r"(?:CUSA|PPSA)\d{5}", title_id):
+        return None
+
+    config = _load_config()
+    template = config.get("category_url")
+    if not isinstance(template, str) or not template.strip():
+        return None
+
+    url = template.format(title_id=title_id)
+    if not _valid_url(url):
+        raise ValueError(f"Invalid title category URL: {url}")
+
+    try:
+        response = requests.get(
+            url,
+            headers=HEADERS,
+            timeout=TIMEOUT,
+            allow_redirects=True,
+        )
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return _extract_category(response.text)
+    except requests.RequestException as exc:
+        print(f"  WARNING: Category lookup failed for {title_id}: {exc}")
+        return None
