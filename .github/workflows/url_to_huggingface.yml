@@ -28,9 +28,18 @@ jobs:
           set -euo pipefail
 
           echo "Downloading source file..."
-          curl --silent --show-error --fail --location \
+          curl_error="$(mktemp)"
+
+          if ! curl --silent --show-error --fail --location \
             --retry 3 --retry-all-errors --retry-delay 2 \
-            --remote-header-name --remote-name "$SOURCE_URL"
+            --remote-header-name --remote-name "$SOURCE_URL" 2>"$curl_error"; then
+            echo "Download failed after all retries:"
+            cat "$curl_error"
+            rm -f "$curl_error"
+            exit 1
+          fi
+
+          rm -f "$curl_error"
 
           source_file="$(find . -maxdepth 1 -type f -printf '%f\n' | head -n 1)"
           if [ -z "$source_file" ]; then
