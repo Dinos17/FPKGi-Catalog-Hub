@@ -27,20 +27,21 @@ SESSION.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
 })
 
-def fetch(url, stream=False):
-    attempt = 0
+def fetch(url, stream=False, retries=10):
     delay = 2
 
-    while True:
-        attempt += 1
+    for attempt in range(1, retries + 1):
         try:
             response = SESSION.get(url, timeout=(15, 90), stream=stream)
             response.raise_for_status()
             return response
         except requests.RequestException as exc:
-            print(f"Request failed (attempt {attempt}, retrying in {delay}s): {url} -> {exc}")
+            if attempt == retries:
+                print(f"Request failed after {retries} attempts: {url} -> {exc}")
+                return None
+            print(f"Request failed (attempt {attempt}/{retries}, retrying in {delay}s): {url} -> {exc}")
             time.sleep(delay)
-
+            delay = min(delay * 2, 30)
 def extract_card(article):
     link = article.select_one('a[href*="/details/"]')
     if not link:
@@ -67,6 +68,8 @@ def extract_category(soup):
 
 def extract_package_url(record):
     response = fetch(record["detail_url"])
+    if response is None:
+        return None
     soup = BeautifulSoup(response.text, "html.parser")
 
     candidates = [
@@ -95,33 +98,39 @@ def extract_package_url(record):
 
 def collect_records():
     records = {}
-    max_pages = int(os.environ.get("PKG_ZONE_MAX_PAGES", "20"))
+    page = 1
 
-    for page in range(1, max_pages + 1):
-        # The category query intermittently returns HTTP 500.
-        # Use the stable paginated listing and classify entries from detail pages.
+    while True:
         url = f"{BASE_URL}/?page={page}"
         response = fetch(url)
+        if response is None:
+            print(f"{CATEGORY}: page {page}: failed after retries; moving to next page.")
+            page += 1
+            continue
+
         soup = BeautifulSoup(response.text, "html.parser")
         articles = soup.select("article.pkg")
 
         if not articles:
-            print(f"{CATEGORY}: page {page}: no package cards; stopping.")
+            print(f"{CATEGORY}: page {page}: no package cards; reached end of catalog.")
             break
 
+        page_ids = set()
         added = 0
+
         for article in articles:
             record = extract_card(article)
-            if not record or record["id"] in records:
+            if not record or record["id"] in records or record["id"] in page_ids:
+                continue
+            page_ids.add(record["id"])
+
+            detail = fetch(record["detail_url"])
+            if detail is None:
+                print(f"RETRY LATER {record['id']}: detail page unavailable")
                 continue
 
-            try:
-                detail = fetch(record["detail_url"])
-                soup_detail = BeautifulSoup(detail.text, "html.parser")
-                category = extract_category(soup_detail)
-            except Exception as exc:
-                print(f"SKIP {record['id']}: detail lookup failed: {exc}")
-                continue
+            soup_detail = BeautifulSoup(detail.text, "html.parser")
+            category = extract_category(soup_detail)
 
             if not category.startswith(CATEGORY_SLUG):
                 continue
@@ -132,10 +141,15 @@ def collect_records():
 
         print(f"{CATEGORY}: page {page}: {len(articles)} cards, {added} new")
 
-        if added == 0 and page > 1:
-            # Do not stop immediately: a page may contain no homebrew entries
-            # while later pages still do.
-            continue
+        # A repeated page means pagination has ended even if the site still
+        # returns HTML/cards instead of an empty page.
+        if page > 1 and all(record["id"] in records for record in (
+            extract_card(article) for article in articles if extract_card(article)
+        )):
+            print(f"{CATEGORY}: page {page}: no new package IDs; reached end of catalog.")
+            break
+
+        page += 1
 
     return list(records.values())
 
@@ -151,6 +165,9 @@ def download_package(record, destination):
 
     print(f"Downloading {record['id']}: {package_url}")
     response = fetch(package_url, stream=True)
+    if response is None:
+        print(f"SKIP {record['id']}: package download failed after retries")
+        return None
 
     with path.open("wb") as output:
         for chunk in response.iter_content(chunk_size=1024 * 1024):
