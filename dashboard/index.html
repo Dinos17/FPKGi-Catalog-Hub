@@ -292,29 +292,14 @@ document.getElementById("search").addEventListener("input", event => {
   render();
 });
 
-fetch("catalog-manifest.json")
+fetch("catalog-data.json")
   .then(response => {
-    if (!response.ok) throw new Error("catalog-manifest.json returned " + response.status);
+    if (!response.ok) throw new Error("catalog-data.json returned " + response.status);
     return response.json();
   })
-  .then(files => Promise.all(
-    files.map(file =>
-      fetch(file)
-        .then(response => {
-          if (!response.ok) throw new Error(file + " returned " + response.status);
-          return response.json();
-        })
-        .then(catalog =>
-          Object.values(catalog.DATA || {}).map(game => ({
-            data: game,
-            category: categoryForFile(file),
-            platform: platformForFile(file)
-          }))
-        )
-    )
-  ))
-  .then(groups => {
-    state.records = groups.flat();
+  .then(records => {
+    state.records = Array.isArray(records) ? records : [];
+    if (!state.records.length) throw new Error("Catalog data contains 0 records.");
     buildCategoryFilters();
     buildPlatformFilters();
     document.getElementById("status").textContent = "Catalog loaded";
