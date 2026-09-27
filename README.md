@@ -388,7 +388,7 @@ Only packages that are legally redistributable should be hosted through this mec
 
 ## External package database
 
-The external package database is configured separately from the normal JSON catalog sources.
+The project can use a separate external package database in addition to the normal JSON catalog sources.
 
 Its URL is stored in:
 
@@ -396,15 +396,17 @@ Its URL is stored in:
 config/external_database.json
 ```
 
-For example:
+The current configuration points to:
 
-```json
-{
-  "url": "https://huggingface.co/datasets/dinos17/FPKGi-Packages"
-}
+```text
+https://huggingface.co/datasets/dinos17/FPKGi-Packages
 ```
 
 The merger reads this URL at runtime. The database location is not hardcoded in the Python loader, so the configured external database can be changed without modifying the merger code.
+
+The external database is currently used to add package entries to the **games** catalog. Its package files are discovered through the Hugging Face dataset API and their metadata is inspected when possible.
+
+The external database is **supplemental**, not the only source of catalog data. If the external database is temporarily unavailable, the merger logs a warning and continues with the configured JSON sources and GitHub Release assets. This prevents a temporary database outage from stopping the entire catalog update.
 
 `config/sources.json` remains reserved for external FPKGi JSON catalog sources.
 
