@@ -135,9 +135,9 @@ function platformForFile(file) {
 function normalize(value) {
   return String(value ?? "")
     .normalize("NFKD")
-    .replace(/[\\u0300-\\u036f]/g, "")
-    .replace(/[\\p{P}\\p{S}]+/gu, " ")
-    .replace(/\\s+/g, " ")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[\p{P}\p{S}]+/gu, " ")
+    .replace(/\s+/g, " ")
     .toLowerCase()
     .trim();
 }
