@@ -447,6 +447,18 @@ fetch("catalog-data.json")
   })
   .then(records => {
     state.records = Array.isArray(records) ? records : [];
+
+    // A package URL is the catalog record identity. The unified PS5 catalog
+    // and category catalogs may legitimately contain the same URL, so the
+    // dashboard must never render that package twice.
+    const uniqueRecords = new Map();
+    for (const record of state.records) {
+      const url = record && record.data && record.data.url;
+      const key = url || JSON.stringify(record && record.data || record);
+      if (!uniqueRecords.has(key)) uniqueRecords.set(key, record);
+    }
+    state.records = [...uniqueRecords.values()];
+
     if (!state.records.length) throw new Error("Catalog data contains 0 records.");
     createSearchIndex();
     buildCategoryFilters();
