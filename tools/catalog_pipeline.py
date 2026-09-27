@@ -14,7 +14,7 @@ def catalog_path(root, filename):
     path = Path(filename)
     if len(path.parts) > 1:
         return root / path
-    if filename.startswith("ps5-") or filename in {"ps1.json", "ps2.json", "psp.json"}:
+    if filename.startswith("ps5-"):
         return root / PS5_DIR / filename
     return root / PS4_DIR / filename
 
@@ -31,7 +31,7 @@ def expected_catalogs(root):
     for category in categories:
         validate_category_name(category)
         if category in legacy_categories:
-            files.append(f"ps5/{category}.json")
+            files.append(f"ps4/{category}.json")
         else:
             files.extend((f"ps4/{category}.json", f"ps5/ps5-{category}.json"))
     return files
