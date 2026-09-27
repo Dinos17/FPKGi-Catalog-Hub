@@ -1,0 +1,69 @@
+name: Upload URL to Hugging Face
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "Direct URL of a file you are authorized to upload"
+        required: true
+        type: string
+      destination_path:
+        description: "Path and filename in the Hugging Face repository"
+        required: true
+        type: string
+      hf_repo:
+        description: "Hugging Face repository, for example dinos17/FPKGi-Packages"
+        required: false
+        default: "dinos17/FPKGi-Packages"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-24.04
+
+    steps:
+      - name: Download source file
+        env:
+          SOURCE_URL: ${{ inputs.source_url }}
+        run: |
+          set -euo pipefail
+          curl --fail --location --retry 3 --retry-all-errors --output source_file "$SOURCE_URL"
+          test -s source_file
+          ls -lh source_file
+
+      - name: Upload to Hugging Face
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO: ${{ inputs.hf_repo }}
+          DESTINATION_PATH: ${{ inputs.destination_path }}
+        run: |
+          set -euo pipefail
+
+          if [ -z "$HF_TOKEN" ]; then
+            echo "HF_TOKEN repository secret is not configured."
+            exit 1
+          fi
+
+          python -m pip install --disable-pip-version-check huggingface_hub
+
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi
+
+          token = os.environ["HF_TOKEN"]
+          repo_id = os.environ["HF_REPO"]
+          path_in_repo = os.environ["DESTINATION_PATH"]
+
+          HfApi(token=token).upload_file(
+              path_or_fileobj="source_file",
+              path_in_repo=path_in_repo,
+              repo_id=repo_id,
+              repo_type="dataset",
+              commit_message=f"Upload {path_in_repo}",
+          )
+
+          print(f"Uploaded {path_in_repo} to {repo_id}")
+          PY
