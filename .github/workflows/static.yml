@@ -35,15 +35,53 @@ jobs:
         uses: actions/configure-pages@v5
       - name: Prepare dashboard data
         run: |
-          cp -- *.json dashboard/
           python - <<'PY'
           import json
           from pathlib import Path
-          files = sorted(p.name for p in Path(".").glob("*.json"))
-          Path("dashboard/catalog-manifest.json").write_text(
-              json.dumps(files, indent=2),
+
+          catalogs = []
+          total = 0
+
+          category_labels = {
+              "games", "apps", "dlc", "demos", "emulators",
+              "homebrew", "themes", "updates", "ps1", "ps2", "psp"
+          }
+
+          for path in sorted(Path(".").glob("*.json")):
+              if path.name == "new-registrations.json":
+                  continue
+
+              name = path.stem.lower()
+              if name.startswith("ps5-"):
+                  category = name[4:] if name[4:] in category_labels else "other"
+              else:
+                  category = name if name in category_labels else "other"
+
+              platform = "PS5" if name.startswith("ps5") else (
+                  "PS1" if name == "ps1" else
+                  "PS2" if name == "ps2" else
+                  "PSP" if name == "psp" else
+                  "PS4"
+              )
+
+              data = json.loads(path.read_text(encoding="utf-8")).get("DATA", {})
+              for game in data.values():
+                  if isinstance(game, dict):
+                      catalogs.append({
+                          "data": game,
+                          "category": category,
+                          "platform": platform
+                      })
+                      total += 1
+
+          Path("dashboard/catalog-data.json").write_text(
+              json.dumps(catalogs, ensure_ascii=False, separators=(",", ":")),
               encoding="utf-8"
           )
+
+          print(f"Dashboard records: {total}")
+          if total == 0:
+              raise SystemExit("Dashboard data generation produced 0 records.")
           PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
