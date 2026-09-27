@@ -48,7 +48,7 @@ def check_duplicates():
         print("#### Exact duplicates")
         for url, files in sorted(exact_duplicates.items()):
             print(f"- {url}")
-            print(f"  - Found in: {", ".join(sorted(files))}")
+            print("  - Found in: " + ", ".join(sorted(files)))
         print("")
     if suspicious_duplicates:
         print("#### Possible title/version duplicates")
