@@ -9,11 +9,16 @@ sys.path.insert(0, str(TOOLS_DIR))
 import duplicate_check  # noqa: E402
 
 
+@pytest.fixture(autouse=True)
+def catalog_dirs(tmp_path):
+    (tmp_path / "ps5").mkdir()
+
+
 def test_detects_exact_duplicate_urls(tmp_path, monkeypatch):
     (tmp_path / "ps4").mkdir()
     record = {"https://example.test/game.pkg": {"title_id": "CUSA12345", "version": "1.00"}}
-    (tmp_path / "games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
-    (tmp_path / "apps.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
+    (tmp_path / "ps4" / "games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
+    (tmp_path / "ps4" / "apps.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     with pytest.raises(SystemExit):
         duplicate_check.check_duplicates()
@@ -109,7 +114,7 @@ def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
 def test_ignores_unified_ps5_catalog(tmp_path, monkeypatch):
     (tmp_path / "ps5").mkdir()
     record = {"https://example.test/game.pkg": {"title_id": "PPSA12345", "version": "1.00"}}
-    (tmp_path / "ps5.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
-    (tmp_path / "ps5-games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
+    (tmp_path / "ps5" / "ps5.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
+    (tmp_path / "ps5" / "ps5-games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     duplicate_check.check_duplicates()
