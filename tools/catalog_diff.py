@@ -1,5 +1,9 @@
 import json
+import os
 import subprocess
+from pathlib import Path
+
+NEW_REGISTRATIONS_PATH = Path("new-registrations.json")
 from pathlib import Path
 
 files = subprocess.check_output(
@@ -11,6 +15,7 @@ added_total = 0
 removed_total = 0
 changed_total = 0
 changed_files = []
+new_records = {}
 
 for filename in files:
     path = Path(filename)
@@ -47,7 +52,22 @@ for filename in files:
     changed_total += len(changed)
     changed_files.append((filename, added, removed, changed))
 
-import os
+    try:
+        for pkg_url in sorted(added):
+            metadata = new_data.get(pkg_url)
+            if not isinstance(metadata, dict):
+                metadata = {}
+            new_records[pkg_url] = {"url": pkg_url, **metadata}
+    except UnboundLocalError:
+        pass
+
+if new_records:
+    NEW_REGISTRATIONS_PATH.write_text(
+        json.dumps({"DATA": new_records}, indent=2, ensure_ascii=False) + "\\n",
+        encoding="utf-8",
+    )
+else:
+    NEW_REGISTRATIONS_PATH.unlink(missing_ok=True)
 
 repo = os.environ.get("GITHUB_REPOSITORY", "")
 server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
@@ -85,6 +105,11 @@ print(f"- 🆕 New records: **{added_total}**")
 print(f"- 🗑️ Removed records: **{removed_total}**")
 print(f"- 🔄 Modified records: **{changed_total}**")
 print()
+
+if new_records and repo:
+    registrations_link = f"{server_url}/{repo}/blob/main/{NEW_REGISTRATIONS_PATH.as_posix()}"
+    print(f"📄 [View JSON with only the new registrations]({registrations_link})")
+    print()
 
 if added_total:
     print("<details>")
