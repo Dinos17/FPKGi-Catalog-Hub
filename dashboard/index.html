@@ -15,7 +15,7 @@
     .search { margin:30px auto 18px; max-width:760px; }
     input { width:100%; padding:17px 20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); color:var(--text); font-size:1.05rem; outline:none; }
     input:focus { border-color:var(--accent); }
-    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }\n    .category-filters { display:grid; grid-template-columns:repeat(auto-fit,minmax(130px,1fr)); gap:12px; max-width:900px; margin:30px auto 18px; }\n    .category-filters button { min-height:64px; border-radius:14px; font-size:1rem; font-weight:700; }
     .platform-filters { margin-bottom:32px; }
     button { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 16px; border-radius:999px; cursor:pointer; }
     button:hover, button.active { background:var(--panel2); border-color:var(--accent); color:var(--accent); }
@@ -35,7 +35,7 @@
       <h1>FPKGi Catalog Hub</h1>
       <p>Search and browse the catalog.</p>
       <div class="search"><input id="search" type="search" placeholder="Search the catalog..." autocomplete="off"></div>
-      <div id="categoryFilters" class="filters"></div>
+      <div id="categoryFilters" class="category-filters"></div>
       <div id="platformFilters" class="filters platform-filters"></div>
     </header>
 
