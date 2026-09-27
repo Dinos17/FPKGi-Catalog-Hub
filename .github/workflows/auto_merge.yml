@@ -80,8 +80,8 @@ jobs:
 
           python tools/catalog_diff.py >> "$GITHUB_STEP_SUMMARY"
 
-          # catalog_diff.py may create new-registrations.json when new records exist.
-          git add -A -- new-registrations.json
+          # catalog_diff.py may create change snapshots when records change.
+          git add -A -- new-registrations.json removed-registrations.json modified-registrations.json
 
           if git diff --cached --quiet; then
             echo "updated=false" >> "$GITHUB_OUTPUT"
