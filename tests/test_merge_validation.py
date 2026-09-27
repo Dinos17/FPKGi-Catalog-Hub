@@ -67,6 +67,65 @@ def test_validate_source_url_accepts_approved_hosts(url):
     assert validate_source_url(url) == url
 
 
+def test_load_exclusions_accepts_category_url_lists(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    config_path = tmp_path / "exclusions.json"
+    exclusions = {
+        "homebrew": ["https://example.com/blocked.pkg"],
+    }
+    config_path.write_text(json.dumps(exclusions), encoding="utf-8")
+    monkeypatch.setattr(merge, "EXCLUSIONS_PATH", config_path)
+
+    assert merge.load_exclusions() == {
+        "homebrew": {"https://example.com/blocked.pkg"},
+    }
+
+
+def test_load_exclusions_rejects_invalid_configuration(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    config_path = tmp_path / "exclusions.json"
+    config_path.write_text(
+        json.dumps({"homebrew": "https://example.com/blocked.pkg"}),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(merge, "EXCLUSIONS_PATH", config_path)
+
+    with pytest.raises(ValueError, match="(?i)exclusion configuration"):
+        merge.load_exclusions()
+
+
+def test_merge_category_excludes_configured_package_urls(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    output_path = tmp_path / "homebrew.json"
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(
+        merge,
+        "fetch_source",
+        lambda _url: {
+            "https://example.com/keep.pkg": {"name": "Keep"},
+            "https://example.com/block.pkg": {"name": "Block"},
+        },
+    )
+
+    result = merge.merge_category(
+        "homebrew",
+        ["https://example.com/source.json"],
+        {},
+        {"https://example.com/block.pkg"},
+    )
+
+    assert result == 1
+    assert json.loads(output_path.read_text(encoding="utf-8")) == {
+        "DATA": {"https://example.com/keep.pkg": {"name": "Keep"}}
+    }
+
+
 def test_load_sources_accepts_valid_configuration(tmp_path, monkeypatch):
     import json
     import merge
