@@ -15,7 +15,6 @@ def catalog_dirs(tmp_path):
 
 
 def test_detects_exact_duplicate_urls(tmp_path, monkeypatch):
-    (tmp_path / "ps4").mkdir()
     record = {"https://example.test/game.pkg": {"title_id": "CUSA12345", "version": "1.00"}}
     (tmp_path / "ps4" / "games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
     (tmp_path / "ps4" / "apps.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
@@ -26,11 +25,11 @@ def test_detects_exact_duplicate_urls(tmp_path, monkeypatch):
 
 def test_title_version_duplicate_fails(tmp_path, monkeypatch, capsys):
     (tmp_path / "ps4").mkdir()
-    (tmp_path / "games.json").write_text(
+    (tmp_path / "ps4" / "games.json").write_text(
         json.dumps({"DATA": {"https://example.test/a.pkg": {"title_id": "CUSA12345", "version": "1.00"}}}),
         encoding="utf-8",
     )
-    (tmp_path / "apps.json").write_text(
+    (tmp_path / "ps4" / "apps.json").write_text(
         json.dumps({"DATA": {"https://example.test/b.pkg": {"title_id": "CUSA12345", "version": "1.00"}}}),
         encoding="utf-8",
     )
