@@ -7,7 +7,7 @@ NEW_REGISTRATIONS_PATH = Path("new-registrations.json")
 from pathlib import Path
 
 files = subprocess.check_output(
-    ["git", "diff", "--cached", "--name-only", "--", "*.json"],
+    ["git", "diff", "--cached", "--name-only", "--", "*.json", "**/*.json"],
     text=True,
 ).splitlines()
 
