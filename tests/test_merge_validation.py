@@ -20,7 +20,7 @@ from merge import (  # noqa: E402
         None,
         [],
         {"games": "https://example.com/source.json"},
-        {"games": ["" ]},
+        {"games": [""]},
         {"games": ["ftp://example.com/source.json"]},
         {"games": [None]},
         {"": ["https://example.com/source.json"]},
@@ -72,9 +72,7 @@ def test_load_exclusions_accepts_category_url_lists(tmp_path, monkeypatch):
     import merge
 
     config_path = tmp_path / "exclusions.json"
-    exclusions = {
-        "homebrew": ["https://example.com/blocked.pkg"],
-    }
+    exclusions = {"homebrew": ["https://example.com/blocked.pkg"]}
     config_path.write_text(json.dumps(exclusions), encoding="utf-8")
     monkeypatch.setattr(merge, "EXCLUSIONS_PATH", config_path)
 
@@ -159,16 +157,10 @@ def test_validate_entry_accepts_valid_entry():
 
 @pytest.mark.parametrize(
     "url",
-    [
-        "",
-        None,
-        "ftp://example.com/game.pkg",
-        "example.com/game.pkg",
-    ],
+    ["", None, "ftp://example.com/game.pkg", "example.com/game.pkg"],
 )
 def test_validate_entry_rejects_invalid_package_url(url):
     errors, warnings = validate_entry(url, {"name": "Example Game"})
-
     assert errors
     assert any("package URL" in error for error in errors)
     assert warnings == []
@@ -176,19 +168,13 @@ def test_validate_entry_rejects_invalid_package_url(url):
 
 @pytest.mark.parametrize(
     "metadata",
-    [
-        None,
-        [],
-        "not-an-object",
-        {"name": object()},
-    ],
+    [None, [], "not-an-object", {"name": object()}],
 )
 def test_validate_entry_rejects_non_json_metadata_types(metadata):
     errors, warnings = validate_entry(
         "https://example.com/game.pkg",
         metadata,
     )
-
     assert errors
     assert warnings == []
 
@@ -198,7 +184,6 @@ def test_validate_entry_rejects_invalid_title_id():
         "https://example.com/game.pkg",
         {"name": "Example Game", "title_id": "NOT-A-TITLE-ID"},
     )
-
     assert any("invalid title_id" in error for error in errors)
     assert warnings == []
 
@@ -208,7 +193,6 @@ def test_validate_entry_rejects_invalid_size():
         "https://example.com/game.pkg",
         {"name": "Example Game", "size": 0},
     )
-
     assert any("invalid size" in error for error in errors)
     assert warnings == []
 
@@ -218,7 +202,6 @@ def test_validate_entry_rejects_invalid_version():
         "https://example.com/game.pkg",
         {"name": "Example Game", "version": "v1"},
     )
-
     assert any("invalid version" in error for error in errors)
     assert warnings == []
 
@@ -228,7 +211,6 @@ def test_validate_entry_warns_when_name_is_missing():
         "https://example.com/game.pkg",
         {"title_id": "CUSA12345"},
     )
-
     assert errors == []
     assert any("missing name" in warning for warning in warnings)
 
@@ -239,9 +221,7 @@ def test_validate_entries_keeps_valid_entries_and_rejects_errors():
             "name": "Valid Game",
             "title_id": "CUSA12345",
         },
-        "ftp://example.com/rejected.pkg": {
-            "name": "Rejected Game",
-        },
+        "ftp://example.com/rejected.pkg": {"name": "Rejected Game"},
         "https://example.com/warned.pkg": {
             "name": "Warned Game",
             "version": "invalid",
@@ -249,10 +229,7 @@ def test_validate_entries_keeps_valid_entries_and_rejects_errors():
     }
 
     result = validate_entries(entries, "test source")
-
-    assert set(result) == {
-        "https://example.com/valid.pkg",
-    }
+    assert set(result) == {"https://example.com/valid.pkg"}
 
 
 def test_validate_entries_preserves_metadata_values():
@@ -268,7 +245,6 @@ def test_validate_entries_preserves_metadata_values():
         {"https://example.com/game.pkg": metadata},
         "test source",
     )
-
     assert result["https://example.com/game.pkg"] == metadata
 
 
@@ -279,15 +255,10 @@ def test_merge_category_preserves_existing_catalog_when_source_fails(
     output_path.parent.mkdir(parents=True, exist_ok=True)
     existing = {
         "DATA": {
-            "https://example.com/existing.pkg": {
-                "name": "Existing Game",
-            }
+            "https://example.com/existing.pkg": {"name": "Existing Game"}
         }
     }
-    output_path.write_text(
-        __import__("json").dumps(existing),
-        encoding="utf-8",
-    )
+    output_path.write_text(__import__("json").dumps(existing), encoding="utf-8")
 
     monkeypatch.setattr("merge.OUTPUT_DIR", tmp_path)
 
@@ -312,9 +283,7 @@ def test_merge_category_allows_intentional_empty_result_when_sources_succeed(
 
     output_path = tmp_path / "ps4" / "games.json"
     existing = {
-        "DATA": {
-            "https://example.com/stale.pkg": {"name": "Stale Game"}
-        }
+        "DATA": {"https://example.com/stale.pkg": {"name": "Stale Game"}}
     }
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(existing), encoding="utf-8")
@@ -326,6 +295,8 @@ def test_merge_category_allows_intentional_empty_result_when_sources_succeed(
 
     assert result == 0
     assert json.loads(output_path.read_text(encoding="utf-8")) == {"DATA": {}}
+
+
 def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     tmp_path, monkeypatch
 ):
@@ -347,11 +318,7 @@ def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     output_path.write_text(json.dumps(existing), encoding="utf-8")
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr(
-        merge,
-        "load_sources",
-        lambda: {"games": []},
-    )
+    monkeypatch.setattr(merge, "load_sources", lambda: {"games": []})
     monkeypatch.setattr(
         merge,
         "fetch_release_entries",
@@ -364,7 +331,6 @@ def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     )
 
     merge.main()
-
     assert json.loads(output_path.read_text(encoding="utf-8")) == existing
 
 
@@ -383,6 +349,7 @@ def test_merge_category_preserves_catalog_on_sharp_shrink_after_source_failure(
             for index in range(10)
         }
     }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(existing), encoding="utf-8")
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
@@ -390,11 +357,7 @@ def test_merge_category_preserves_catalog_on_sharp_shrink_after_source_failure(
     def source(url):
         if "failed" in url:
             raise RuntimeError("temporary upstream failure")
-        return {
-            "https://example.com/new.pkg": {
-                "name": "New Game",
-            }
-        }
+        return {"https://example.com/new.pkg": {"name": "New Game"}}
 
     monkeypatch.setattr(merge, "fetch_source", source)
 
@@ -417,7 +380,7 @@ def test_merge_category_allows_shrink_when_sources_succeed(
     import json
     import merge
 
-    output_path = tmp_path / "games.json"
+    output_path = tmp_path / "ps4" / "games.json"
     existing = {
         "DATA": {
             f"https://example.com/existing-{index}.pkg": {
@@ -426,6 +389,7 @@ def test_merge_category_allows_shrink_when_sources_succeed(
             for index in range(10)
         }
     }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(existing), encoding="utf-8")
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
@@ -433,9 +397,7 @@ def test_merge_category_allows_shrink_when_sources_succeed(
         merge,
         "fetch_source",
         lambda _url: {
-            "https://example.com/new.pkg": {
-                "name": "New Game",
-            }
+            "https://example.com/new.pkg": {"name": "New Game"}
         },
     )
 
@@ -447,11 +409,7 @@ def test_merge_category_allows_shrink_when_sources_succeed(
 
     assert result == 1
     assert json.loads(output_path.read_text(encoding="utf-8")) == {
-        "DATA": {
-            "https://example.com/new.pkg": {
-                "name": "New Game",
-            }
-        }
+        "DATA": {"https://example.com/new.pkg": {"name": "New Game"}}
     }
 
 
@@ -461,7 +419,7 @@ def test_merge_category_treats_all_invalid_source_as_failure(
     import json
     import merge
 
-    output_path = tmp_path / "games.json"
+    output_path = tmp_path / "ps4" / "games.json"
     existing = {
         "DATA": {
             f"https://example.com/existing-{index}.pkg": {
@@ -470,6 +428,7 @@ def test_merge_category_treats_all_invalid_source_as_failure(
             for index in range(10)
         }
     }
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     output_path.write_text(json.dumps(existing), encoding="utf-8")
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
@@ -524,12 +483,12 @@ def test_main_preserves_existing_unified_ps5_catalog_when_release_result_is_empt
     monkeypatch.setattr(
         merge,
         "merge_category",
-        lambda category, urls, release_entries: 0,
+        lambda category, urls, release_entries, excluded_urls=None: 0,
     )
 
     merge.main()
-
     assert json.loads(output_path.read_text(encoding="utf-8")) == existing
+
 
 def test_main_continues_when_external_database_is_unavailable(
     tmp_path, monkeypatch
@@ -538,11 +497,7 @@ def test_main_continues_when_external_database_is_unavailable(
     import merge
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
-    monkeypatch.setattr(
-        merge,
-        "load_sources",
-        lambda: {"games": []},
-    )
+    monkeypatch.setattr(merge, "load_sources", lambda: {"games": []})
     monkeypatch.setattr(
         merge,
         "fetch_release_entries",
@@ -556,7 +511,7 @@ def test_main_continues_when_external_database_is_unavailable(
     monkeypatch.setattr(
         merge,
         "merge_category",
-        lambda category, urls, release_entries: 0,
+        lambda category, urls, release_entries, excluded_urls=None: 0,
     )
 
     merge.main()
