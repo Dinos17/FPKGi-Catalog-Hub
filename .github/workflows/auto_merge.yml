@@ -71,21 +71,15 @@ jobs:
       - name: Check for Catalog Changes
         id: changes
         run: |
-          # Rebuild new-registrations.json from the current catalog diff only.
-          # Remove any previous snapshot first so a no-change run cannot leave
-          # stale registrations behind.
-          rm -f new-registrations.json
-
-          git add -A -- '*.json' ':!new-registrations.json'
+          # Rebuild all three change snapshots from the current catalog diff.
+          # The snapshots live separately from the generated catalogs and are
+          # always rewritten so they represent only this run's changes.
+          git add -A -- '*.json' ':!changes/*.json'
 
           python tools/catalog_diff.py >> "$GITHUB_STEP_SUMMARY"
 
-          # Stage whichever change snapshots were actually generated.
-          for snapshot in new-registrations.json removed-registrations.json modified-registrations.json; do
-            if [ -f "$snapshot" ]; then
-              git add -A -- "$snapshot"
-            fi
-          done
+          # Stage all three snapshots, including changes from non-empty to empty.
+          git add -A -- changes/new-registrations.json changes/removed-registrations.json changes/modified-registrations.json
 
           if git diff --cached --quiet; then
             echo "updated=false" >> "$GITHUB_OUTPUT"
