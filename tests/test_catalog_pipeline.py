@@ -81,7 +81,8 @@ def test_apply_removes_only_catalogs_recorded_in_manifest(tmp_path):
     root.mkdir()
 
     write_catalogs(root, {"games": []})
-    stale = root / "legacy-category.json"
+    stale = catalog_pipeline.catalog_path(root, "legacy-category.json")
+    stale.parent.mkdir(parents=True, exist_ok=True)
     stale.write_text(json.dumps({"DATA": {"stale": {}}}), encoding="utf-8")
     unrelated = root / "project-data.json"
     unrelated.write_text(json.dumps({"keep": True}), encoding="utf-8")
