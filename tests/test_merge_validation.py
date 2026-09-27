@@ -297,25 +297,11 @@ def test_merge_category_allows_intentional_empty_result_when_sources_succeed(
     assert json.loads(output_path.read_text(encoding="utf-8")) == {"DATA": {}}
 
 
-def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
-    tmp_path, monkeypatch
-):
+def test_main_does_not_create_unified_ps5_catalog(tmp_path, monkeypatch):
     import json
     import merge
 
-    output_path = tmp_path / "ps5" / "ps5-games.json"
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    existing = {
-        "DATA": {
-            "https://github.com/example/PS5-game.pkg": {
-                "name": "Existing PS5 Game",
-                "title_id": "PPSA12345",
-                "size": 123,
-                "version": "1.0",
-            }
-        }
-    }
-    output_path.write_text(json.dumps(existing), encoding="utf-8")
+    unified_path = tmp_path / "ps5" / "ps5.json"
 
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
     monkeypatch.setattr(merge, "load_sources", lambda: {"games": []})
@@ -324,6 +310,7 @@ def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
         "fetch_release_entries",
         lambda: ({}, {"games": {}}),
     )
+    monkeypatch.setattr(merge, "fetch_external_database_entries", lambda: {})
     monkeypatch.setattr(
         merge,
         "merge_category",
@@ -331,7 +318,11 @@ def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     )
 
     merge.main()
-    assert json.loads(output_path.read_text(encoding="utf-8")) == existing
+
+    assert not unified_path.exists()
+    assert json.loads(
+        (tmp_path / "ps5" / "ps5-games.json").read_text(encoding="utf-8")
+    ) == {"DATA": {}}
 
 
 def test_merge_category_preserves_catalog_on_sharp_shrink_after_source_failure(
