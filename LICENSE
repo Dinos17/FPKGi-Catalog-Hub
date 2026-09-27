@@ -1,97 +1,86 @@
-# FPKGi Catalog Hub Code License 1.0
+# FPKGi Catalog Hub License
 
 Copyright © 2026 Dinos17. All rights reserved.
 
-## 1. Scope
+This repository is my work unless something is clearly from a third party.
 
-This license applies only to the original software, source code, scripts, documentation, configuration, automation, and other original creative materials contained in this repository that are authored or owned by Dinos17 ("Original Materials").
+## What this covers
 
-This license does not grant any rights to third-party software, libraries, data, metadata, package information, trademarks, logos, images, or other content that may be included in, referenced by, or obtained through this repository. Third-party materials remain subject to their respective rights and licenses.
+This license applies to the original code, scripts, tools, workflows, configuration, documentation, and other files that I created for FPKGi Catalog Hub.
 
-The generated FPKGi catalog files are governed separately by `CATALOG-LICENSE.md`.
+The generated catalog files have their own terms in CATALOG-LICENSE.md.
 
-## 2. Limited Permission
+Anything that belongs to someone else is still theirs. This includes third-party software, libraries, package information, metadata, trademarks, logos, images, and other content that may appear in or be referenced by this project.
 
-Subject to compliance with this license, Dinos17 grants you a limited, non-exclusive, non-transferable, revocable permission to access and use the Original Materials solely for personal, educational, research, or other non-commercial purposes directly related to operating, evaluating, or generating FPKGi catalog data for use with the FPKGi application.
+## What you can do
 
-This permission does not transfer ownership of the Original Materials to you.
+You can view, download, clone, and use this repository for personal, educational, research, and other non-commercial purposes.
 
-## 3. Restrictions
+You can use the project for its intended purpose, including generating or working with FPKGi catalog data.
 
-Except where expressly permitted by this license or required by applicable law, you may not:
+This does not give you ownership of my work.
 
-* copy or reproduce the Original Materials for reuse in another project;
-* modify, adapt, translate, or create derivative works from the Original Materials;
-* redistribute, republish, rehost, sublicense, sell, rent, lease, or otherwise make the Original Materials available as a separate software project;
-* incorporate the Original Materials into another software project, product, service, or distribution;
-* publish a modified or substantially similar version of the Original Materials;
-* remove, obscure, or alter copyright, attribution, or license notices contained in the Original Materials;
-* use the Original Materials for commercial purposes without prior written permission from Dinos17;
-* represent the Original Materials, or a modified version of them, as your own work; or
-* grant or purport to grant third parties rights in the Original Materials that you do not have.
+## What you cannot do
 
-For clarity, this license does not grant permission to create, maintain, or distribute a derivative or modified version of the project's Python merger or automation software.
+Unless I give you permission in writing, you may not:
 
-## 4. GitHub Platform Operations
+- copy this project's code or tools into another project;
+- modify or create a derivative version of the project's code;
+- publish a modified or substantially copied version of the project;
+- redistribute, rehost, sell, sublicense, or package the original project as your own;
+- use the project's code for a commercial product or service;
+- remove or change copyright or license notices;
+- claim my work as your own; or
+- give other people permissions that you do not have.
 
-This license does not attempt to restrict technical functions that GitHub makes available for public repositories, including viewing, downloading, cloning, or forking where those actions are supported by GitHub's platform.
+This specifically includes the Python merger, catalog-generation tools, automation, and other software used to build the catalogs.
 
-The availability of such a technical function does not, by itself, grant permission under this license to reuse, modify, redistribute, repackage, or commercially exploit the Original Materials.
+## GitHub features
 
-Nothing in this license overrides GitHub's Terms of Service or other applicable platform terms.
+GitHub may provide features such as viewing, downloading, cloning, and forking this public repository.
 
-## 5. Copyright and Ownership
+Those are features provided by GitHub and do not mean that I have given you permission to reuse, modify, redistribute, or commercially use my code.
 
-Dinos17 retains all copyright and other rights in the Original Materials except for the limited permissions expressly granted by this license.
+Nothing here overrides GitHub's own terms.
 
-No ownership interest is transferred by providing access to this repository.
+## Third-party content
 
-Third-party rights are expressly reserved and are not claimed by Dinos17 through this license.
+I am not claiming ownership of third-party content just because it is included in, referenced by, or collected by this project.
 
-## 6. Contributions
+Third-party content remains subject to its own licenses, terms, copyrights, and other rights.
 
-Unless a separate written agreement states otherwise, no contribution to this repository should be interpreted as granting rights broader than those applicable to the contributed material.
+## Contributions
 
-Contributors must have the necessary rights to submit material to the repository.
+If you contribute something to this repository, you must have the right to contribute it.
 
-## 7. Termination
+Unless we agree otherwise in writing, your contribution does not automatically change the license of the rest of the project.
 
-The permissions granted by this license automatically terminate if you materially breach its terms.
+## Termination
 
-Upon termination, you must cease the use of the Original Materials that is not otherwise authorized by applicable law or a separate written permission from Dinos17.
+If you break the terms of this license, the permissions given to you by this license end.
 
-Termination does not affect rights or obligations that arose before termination.
+You must stop using the parts of my work that are covered by this license unless you have another valid permission to use them.
 
-## 8. No Warranty
+## No warranty
 
-THE ORIGINAL MATERIALS ARE PROVIDED "AS IS" AND "AS AVAILABLE", WITHOUT WARRANTIES OF ANY KIND, EXPRESS OR IMPLIED, TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW.
+This project is provided "as is" and "as available".
 
-Dinos17 DISCLAIMS WARRANTIES INCLUDING, TO THE MAXIMUM EXTENT PERMITTED BY LAW, WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE, TITLE, AND NON-INFRINGEMENT.
+I do not guarantee that it will always work, stay available, contain accurate information, or remain compatible with future versions of FPKGi or other software.
 
-## 9. Limitation of Liability
+To the maximum extent allowed by law, I am not responsible for damage, data loss, loss of profits, or other problems caused by using this project.
 
-TO THE MAXIMUM EXTENT PERMITTED BY APPLICABLE LAW, DINOS17 SHALL NOT BE LIABLE FOR ANY INDIRECT, INCIDENTAL, SPECIAL, CONSEQUENTIAL, EXEMPLARY, OR PUNITIVE DAMAGES, OR FOR ANY LOSS OF DATA, PROFITS, REVENUE, OR BUSINESS ARISING FROM OR RELATING TO THE USE OF THE ORIGINAL MATERIALS.
+## Trademarks
 
-Nothing in this license excludes or limits liability that cannot lawfully be excluded or limited.
+This license does not give permission to use my name, logos, or trademarks, or any third-party trademarks, except where necessary to accurately describe the project or its compatibility.
 
-## 10. No Trademark License
+## Extra permission
 
-This license does not grant permission to use the names, logos, trademarks, service marks, or other identifying marks of Dinos17 or third parties, except as necessary to accurately describe the software or its intended compatibility.
+If you want to do something that this license does not allow, you can ask me for permission.
 
-## 11. Separate Permission
-
-Dinos17 may grant additional permissions in writing.
-
-Any additional permission must be explicit and applies only to the scope stated in that permission.
-
-## 12. Governing Law
-
-This license is intended to be interpreted under applicable copyright and other applicable laws.
-
-No governing-law or jurisdiction clause is specified by this license. Such a clause may be added by the copyright holder following appropriate legal advice.
+I may grant additional permission in writing for a specific use.
 
 ---
 
 **Copyright © 2026 Dinos17. All rights reserved.**
 
-For permission requests concerning the Original Materials, contact the repository owner through the contact method provided on the project's GitHub profile or repository.
+For permission requests, contact me through the project's GitHub profile or repository.
