@@ -463,57 +463,6 @@ def main():
             f"Entries: {len(ps5_output['DATA'])}"
         )
 
-    ps5_output_path = catalog_output_path("ps5", ps5=True)
-    ps5_entries = {}
-    for category, category_entries in ps5_release_entries.items():
-        for pkg_url, metadata in category_entries.items():
-            if pkg_url in exclusions.get(category, set()):
-                continue
-            if is_ps5_entry(metadata):
-                ps5_entries.setdefault(pkg_url, metadata)
-
-    for category, category_entries in sources.items():
-        for pkg_url, metadata in dataset_entries.items():
-            if (
-                metadata.get("category", "games") == category
-                and is_ps5_entry(metadata)
-                and pkg_url not in exclusions.get(category, set())
-            ):
-                ps5_entries.setdefault(pkg_url, metadata)
-
-    if not ps5_entries and ps5_output_path.exists():
-        try:
-            with ps5_output_path.open("r", encoding="utf-8") as file:
-                existing_ps5_output = json.load(file)
-        except (OSError, json.JSONDecodeError) as exc:
-            raise RuntimeError(
-                f"Cannot safely preserve existing PS5 catalog "
-                f"{ps5_output_path}: {exc}"
-            ) from exc
-        existing_ps5_entries = (
-            existing_ps5_output.get("DATA")
-            if isinstance(existing_ps5_output, dict)
-            else None
-        )
-        if not isinstance(existing_ps5_entries, dict):
-            raise RuntimeError(
-                f"Cannot safely preserve existing PS5 catalog "
-                f"{ps5_output_path}: missing valid \"DATA\" object"
-            )
-        if existing_ps5_entries:
-            print(
-                f"WARNING: Refusing to replace non-empty unified PS5 catalog "
-                f"with 0 entries: {ps5_output_path}"
-            )
-            print(f"Preserved existing PS5 entries: {len(existing_ps5_entries)}")
-            print("\nMerge completed.")
-            return
-
-    with ps5_output_path.open("w", encoding="utf-8") as file:
-        json.dump({"DATA": ps5_entries}, file, indent=2, ensure_ascii=False)
-        file.write("\n")
-    print(f"Unified PS5 catalog: {ps5_output_path} | Entries: {len(ps5_entries)}")
-
     print("\nMerge completed.")
 
 
