@@ -16,12 +16,12 @@
     input { width:100%; padding:17px 20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); color:var(--text); font-size:1.05rem; outline:none; }
     input:focus { border-color:var(--accent); }
     .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }\n    .platform-filters { margin-bottom:32px; }
-    button { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 16px; border-radius:999px; cursor:pointer; }
-    button:hover, button.active { background:var(--panel2); border-color:var(--accent); color:var(--accent); }
-    .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); margin-bottom:14px; }
+    button { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:9px 15px; border-radius:999px; cursor:pointer; font:inherit; transition:background .18s,border-color .18s,color .18s,transform .18s; }
+    button:hover { transform:translateY(-1px); }\n    button:hover, button.active { background:var(--panel2); border-color:var(--accent); color:var(--accent); }
+    .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); margin-bottom:16px; padding:0 2px; font-size:.9rem; }
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
-    .card { position:relative; background:rgba(21,25,34,.9); border:1px solid var(--border); border-radius:16px; padding:18px; min-height:130px; }
-    .platform { position:absolute; top:12px; right:12px; padding:4px 7px; border:1px solid var(--border); border-radius:7px; background:#202733; color:#fff; font-size:.68rem; font-weight:800; letter-spacing:.04em; }
+    .card { position:relative; background:linear-gradient(145deg,rgba(27,32,43,.96),rgba(18,22,30,.96)); border:1px solid var(--border); border-radius:16px; padding:18px; min-height:130px; box-shadow:0 8px 24px rgba(0,0,0,.16); transition:transform .18s,border-color .18s,box-shadow .18s; }\n    .card:hover { transform:translateY(-2px); border-color:#3a4558; box-shadow:0 12px 30px rgba(0,0,0,.24); }
+    .platform { position:absolute; top:12px; right:12px; padding:4px 8px; border:1px solid var(--border); border-radius:7px; background:#202733; color:#fff; font-size:.68rem; font-weight:800; letter-spacing:.04em; }
     .card h2 { margin:0 70px 10px 0; font-size:1.05rem; }
     .card p { margin:5px 0; color:var(--muted); font-size:.9rem; }
     .empty { text-align:center; color:var(--muted); padding:50px 10px; }
@@ -32,9 +32,9 @@
   <main class="wrap">
     <header>
       <h1>FPKGi Catalog Hub</h1>
-      <p>Search and browse the catalog.</p>
+      <p>Search and browse the FPKGi catalog.</p>
       <div class="search"><input id="search" type="search" placeholder="Search the catalog..." autocomplete="off"></div>
-      <div id="categoryFilters" class="filters"></div>
+      <div id="categoryFilters" class="filters category-filters"></div>
       <div id="platformFilters" class="filters platform-filters"></div>
     </header>
 
