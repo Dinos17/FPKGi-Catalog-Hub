@@ -336,7 +336,15 @@ def main():
 
     sources = load_sources()
     release_entries, ps5_release_entries = fetch_release_entries()
-    dataset_entries = fetch_external_database_entries()
+
+    try:
+        dataset_entries = fetch_external_database_entries()
+    except Exception as exc:
+        # The external database is supplemental. A transient outage must not
+        # prevent the other configured sources and release assets from merging.
+        print(f"WARNING: External package database unavailable: {exc}")
+        print("Continuing without external database entries.")
+        dataset_entries = {}
 
     for category, urls in sources.items():
         merge_category(
