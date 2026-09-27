@@ -107,6 +107,7 @@ Inside `config.json`, find the `CONTENT_URLS` section.
       "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps1.json",
       "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps2.json",
       "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/psp.json",
+      "PS4": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json",
       "PS5": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5.json",
       "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json",
       "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/apps.json",
