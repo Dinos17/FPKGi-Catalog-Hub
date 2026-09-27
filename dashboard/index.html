@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>FPKGi Catalog Hub</title>
+  <style>
+    :root { color-scheme: dark; --bg:#0b0d10; --panel:#151922; --panel2:#1b202b; --text:#f4f6f8; --muted:#9aa4b2; --accent:#5eead4; --border:#2a3140; }
+    * { box-sizing:border-box; }
+    body { margin:0; font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:linear-gradient(180deg,#0b0d10 0%,#10141b 100%); color:var(--text); }
+    .wrap { max-width:1100px; margin:auto; padding:48px 20px 64px; }
+    header { text-align:center; margin-bottom:34px; }
+    h1 { margin:0 0 10px; font-size:clamp(2rem,5vw,3.4rem); letter-spacing:-.04em; }
+    header p { margin:0; color:var(--muted); }
+    .search { margin:30px auto 18px; max-width:760px; }
+    input { width:100%; padding:17px 20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); color:var(--text); font-size:1.05rem; outline:none; }
+    input:focus { border-color:var(--accent); }
+    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:32px; }
+    button { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 16px; border-radius:999px; cursor:pointer; }
+    button:hover, button.active { background:var(--panel2); border-color:var(--accent); color:var(--accent); }
+    .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); margin-bottom:14px; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
+    .card { background:rgba(21,25,34,.9); border:1px solid var(--border); border-radius:16px; padding:18px; min-height:130px; }
+    .card h2 { margin:0 0 10px; font-size:1.05rem; }
+    .card p { margin:5px 0; color:var(--muted); font-size:.9rem; }
+    .badge { display:inline-block; margin:5px 5px 0 0; padding:4px 8px; border-radius:999px; background:#202733; color:#c8d0da; font-size:.75rem; }
+    .empty { text-align:center; color:var(--muted); padding:50px 10px; }
+    .error { color:#fca5a5; text-align:center; padding:30px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <header>
+      <h1>FPKGi Catalog Hub</h1>
+      <p>Search and browse the catalog.</p>
+      <div class="search"><input id="search" type="search" placeholder="Search games or Title ID..." autocomplete="off"></div>
+      <div class="filters">
+        <button class="active" data-filter="all">All</button>
+        <button data-filter="single">Single Player</button>
+        <button data-filter="local">Local Multiplayer</button>
+        <button data-filter="online">Online Multiplayer</button>
+      </div>
+    </header>
+
+    <section>
+      <div class="meta"><span id="count">Loading…</span><span id="status"></span></div>
+      <div id="results" class="grid"></div>
+    </section>
+  </main>
+
+<script>
+const state = { games: [], filter: "all", query: "" };
+
+function normalize(value) {
+  return String(value ?? "").toLowerCase().trim();
+}
+
+function render() {
+  const q = normalize(state.query);
+  const matches = state.games.filter(game => {
+    const text = normalize([game.name, game.title_id, game.region].join(" "));
+    if (q && !text.includes(q)) return false;
+
+    // Multiplayer metadata will be wired in a later step.
+    // Until then, filters intentionally show no false claims.
+    if (state.filter !== "all") return false;
+    return true;
+  });
+
+  document.getElementById("count").textContent =
+    matches.length.toLocaleString() + " games";
+
+  const results = document.getElementById("results");
+  if (!matches.length) {
+    results.innerHTML = '<div class="empty">No games found.</div>';
+    return;
+  }
+
+  results.innerHTML = matches.slice(0, 100).map(game => {
+    const size = Number(game.size);
+    const sizeText = Number.isFinite(size) && size > 0
+      ? (size / 1073741824).toFixed(1) + " GB"
+      : "Size unavailable";
+
+    return `
+      <article class="card">
+        <h2>${escapeHtml(game.name || "Unknown title")}</h2>
+        <p>${escapeHtml(game.title_id || "No Title ID")}</p>
+        <p>${escapeHtml(game.region || "Region unknown")} · ${escapeHtml(game.version || "Version unknown")}</p>
+        <p>${sizeText}</p>
+      </article>`;
+  }).join("");
+}
+
+function escapeHtml(value) {
+  return String(value).replace(/[&<>"']/g, ch => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
+  }[ch]));
+}
+
+document.getElementById("search").addEventListener("input", event => {
+  state.query = event.target.value;
+  render();
+});
+
+document.querySelectorAll("[data-filter]").forEach(button => {
+  button.addEventListener("click", () => {
+    document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
+    button.classList.add("active");
+    state.filter = button.dataset.filter;
+    render();
+  });
+});
+
+fetch("../games.json")
+  .then(response => {
+    if (!response.ok) throw new Error("games.json returned " + response.status);
+    return response.json();
+  })
+  .then(catalog => {
+    state.games = Object.values(catalog.DATA || {});
+    document.getElementById("status").textContent = "Catalog loaded";
+    render();
+  })
+  .catch(error => {
+    document.getElementById("count").textContent = "Catalog unavailable";
+    document.getElementById("status").textContent = "";
+    document.getElementById("results").innerHTML =
+      '<div class="error">Could not load games.json.<br>' + escapeHtml(error.message) + '</div>';
+  });
+</script>
+</body>
+</html>
