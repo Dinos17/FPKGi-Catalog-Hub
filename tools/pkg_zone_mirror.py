@@ -19,23 +19,31 @@ def norm(v):
     return ALIASES.get(" ".join(v.strip().lower().replace("_"," ").split()))
 
 def download(path):
-    headers={
-        "User-Agent":"StoreHAX/GL",
-        "Accept":"*/*",
-        "Referer":"https://pkg-zone.com/",
-    }
-    with requests.get(STORE_DB_URL,headers=headers,timeout=120,stream=True) as r:
-        if r.status_code == 403:
-            raise RuntimeError(
-                "PKG-Zone denied the store.db request (HTTP 403). "
-                "The Store client uses User-Agent StoreHAX/GL; if this still fails, "
-                "the endpoint is blocking non-Store clients."
-            )
-        r.raise_for_status()
-        with path.open("wb") as f:
-            for chunk in r.iter_content(1024*1024):
-                if chunk: f.write(chunk)
-
+    user_agents = [
+        os.environ.get("PKG_ZONE_USER_AGENT", "StoreHAX/GL-0x00000000"),
+        "StoreHAX/GL-0x00000000",
+        "StoreHAX/GL",
+    ]
+    for user_agent in dict.fromkeys(user_agents):
+        headers = {
+            "User-Agent": user_agent,
+            "Accept": "*/*",
+            "Referer": "https://pkg-zone.com/",
+        }
+        with requests.get(STORE_DB_URL, headers=headers, timeout=120, stream=True) as r:
+            if r.status_code == 200:
+                with path.open("wb") as f:
+                    for chunk in r.iter_content(1024 * 1024):
+                        if chunk:
+                            f.write(chunk)
+                print(f"Downloaded store.db with User-Agent: {user_agent}")
+                return
+            print(f"store.db request returned HTTP {r.status_code} with User-Agent: {user_agent}")
+    raise RuntimeError(
+        "PKG-Zone denied all store.db requests (HTTP 403). "
+        "The Store client formats its User-Agent as StoreHAX/GL-0x<SDK_VERSION>. "
+        "The endpoint may require a valid Store client SDK version or may block GitHub Actions."
+    )
 def load(db):
     con=sqlite3.connect(db); con.row_factory=sqlite3.Row
     try:
