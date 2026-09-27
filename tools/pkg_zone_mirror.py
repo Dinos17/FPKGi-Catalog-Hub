@@ -134,6 +134,24 @@ def download_package(record, destination):
     print(f"Downloaded {filename}: {path.stat().st_size} bytes")
     return path
 
+def remove_old_catalog_jsons(api):
+    for category in (
+        "Utility", "Emulator", "Game", "Homebrew", "Update",
+        "Media", "DLC", "Retail PKG", "Fake PKG", "Dev Menu",
+    ):
+        path = f"{category}/catalog.json"
+        try:
+            api.delete_file(
+                path_in_repo=path,
+                repo_id=HF_REPO,
+                repo_type="dataset",
+                commit_message=f"Remove metadata catalog {path}",
+            )
+            print(f"Removed old metadata file: {path}")
+        except Exception as exc:
+            # The file may not exist yet; that is harmless.
+            print(f"Metadata cleanup skipped for {path}: {exc}")
+
 def upload_packages(files):
     token = os.environ.get("HF_TOKEN")
     if not token:
@@ -146,6 +164,7 @@ def upload_packages(files):
         exist_ok=True,
         private=False,
     )
+    remove_old_catalog_jsons(api)
 
     for path in files:
         api.upload_file(
