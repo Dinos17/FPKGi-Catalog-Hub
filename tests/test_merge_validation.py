@@ -329,7 +329,8 @@ def test_main_preserves_existing_ps5_catalog_when_release_result_is_empty(
     import json
     import merge
 
-    output_path = tmp_path / "ps5-games.json"
+    output_path = tmp_path / "ps5" / "ps5-games.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     existing = {
         "DATA": {
             "https://github.com/example/PS5-game.pkg": {
@@ -496,7 +497,8 @@ def test_main_preserves_existing_unified_ps5_catalog_when_release_result_is_empt
     import json
     import merge
 
-    output_path = tmp_path / "ps5.json"
+    output_path = tmp_path / "ps5" / "ps5.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     existing = {
         "DATA": {
             "https://github.com/example/PS5-app.pkg": {
