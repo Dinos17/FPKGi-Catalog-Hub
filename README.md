@@ -104,31 +104,40 @@ Inside `config.json`, find the `CONTENT_URLS` section.
 
 ```json
     "CONTENT_URLS": {
-      "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps1.json",
-      "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps2.json",
-      "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/psp.json",
-      "PS4": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json",
-      "PS5": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5.json",
-      "PS5-GAMES": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-games.json",
-      "PS5-APPS": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-apps.json",
-      "PS5-DLC": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-dlc.json",
-      "PS5-DEMOS": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-demos.json",
-      "PS5-EMULATORS": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-emulators.json",
-      "PS5-HOMEBREW": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-homebrew.json",
-      "PS5-PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-ps1.json",
-      "PS5-PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-ps2.json",
-      "PS5-PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-psp.json",
-      "PS5-THEMES": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-themes.json",
-      "PS5-UPDATES": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5-updates.json",
-      "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/games.json",
-      "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/apps.json",
+      "PS1": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/ps1.json",
+      "PS2": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/ps2.json",
+      "PSP": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/psp.json",
+      "games": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/games.json",
+      "apps": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/apps.json",
       "updates": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/updates.json",
-      "DLC": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/dlc.json",
-      "demos": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/demos.json",
-      "homebrew": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/homebrew.json",
-      "emulators": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/emulators.json",
-      "themes": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/themes.json"
+      "DLC": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/dlc.json",
+      "demos": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/demos.json",
+      "homebrew": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/homebrew.json",
+      "emulators": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/emulators.json",
+      "themes": "https://raw.githubusercontent.com/Dinos17/fpkgi-merged/main/themes.json"
     }
+  }
+}
+```
+
+### PS5
+
+```json
+    "CONTENT_URLS": {
+      "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps1.json",
+      "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps2.json",
+      "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/psp.json",
+      "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-games.json",
+      "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-apps.json",
+      "updates": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-updates.json",
+      "DLC": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-dlc.json",
+      "demos": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-demos.json",
+      "homebrew": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-homebrew.json",
+      "emulators": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-emulators.json",
+      "themes": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5-themes.json"
+    }
+  }
+}
 ```
 
 **Important:** Replace only the `CONTENT_URLS` section itself. Do **not** replace or delete the closing braces for the surrounding `PREFERENCES` and root objects.
