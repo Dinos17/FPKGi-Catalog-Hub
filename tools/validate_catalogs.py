@@ -36,7 +36,6 @@ def validate_catalog(path):
 def main():
     sources = load_sources()
     paths = []
-    category_paths = {}
     legacy_categories = {"ps1", "ps2", "psp"}
 
     for category in sources:
@@ -46,7 +45,6 @@ def main():
         paths.append(ROOT / "ps4" / f"{category}.json")
         ps5_path = ROOT / "ps5" / f"ps5-{category}.json"
         paths.append(ps5_path)
-        category_paths[category] = ps5_path
 
     missing = [path for path in paths if not path.exists()]
     if missing:
@@ -56,8 +54,6 @@ def main():
 
     for path in paths:
         validate_catalog(path)
-
-
 
 
 if __name__ == "__main__":
