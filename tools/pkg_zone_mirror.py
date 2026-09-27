@@ -5,6 +5,7 @@ import os
 import re
 import tempfile
 import time
+from urllib.parse import urljoin
 
 import requests
 from bs4 import BeautifulSoup
@@ -12,22 +13,8 @@ from huggingface_hub import HfApi
 
 HF_REPO = "dinos17/PS-Applications"
 BASE_URL = "https://pkg-zone.com"
-CATEGORIES = [
-    "Utility", "Emulator", "Game", "Homebrew", "Update",
-    "Media", "DLC", "Retail PKG", "Fake PKG", "Dev Menu",
-]
-CATEGORY_SLUGS = {
-    "Utility": "utility",
-    "Emulator": "emulator",
-    "Game": "game",
-    "Homebrew": "hb",
-    "Update": "update",
-    "Media": "media",
-    "DLC": "dlc",
-    "Retail PKG": "pkg",
-    "Fake PKG": "fpkg",
-    "Dev Menu": "dev+menu",
-}
+CATEGORY = "Homebrew"
+CATEGORY_SLUG = "hb"
 
 SESSION = requests.Session()
 SESSION.headers.update({
@@ -40,13 +27,13 @@ SESSION.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
 })
 
-def fetch(url):
+def fetch(url, stream=False):
     last_error = None
     for attempt in range(3):
         try:
-            response = SESSION.get(url, timeout=(15, 90))
+            response = SESSION.get(url, timeout=(15, 90), stream=stream)
             response.raise_for_status()
-            return response.text
+            return response
         except requests.RequestException as exc:
             last_error = exc
             print(f"Request failed ({attempt + 1}/3): {url} -> {exc}")
@@ -54,7 +41,7 @@ def fetch(url):
                 time.sleep(2 * (attempt + 1))
     raise RuntimeError(f"Unable to fetch {url}: {last_error}")
 
-def extract_card(article, category):
+def extract_card(article):
     link = article.select_one('a[href*="/details/"]')
     if not link:
         return None
@@ -62,108 +49,140 @@ def extract_card(article, category):
     if not match:
         return None
     title_node = article.select_one(".title.font-bold")
-    author_node = article.select_one(".text-gray-300")
-    version_node = article.select_one(".number")
-    title = title_node.get_text(" ", strip=True) if title_node else ""
-    author = author_node.get_text(" ", strip=True) if author_node else ""
-    version = version_node.get_text(" ", strip=True) if version_node else ""
+    title = title_node.get_text(" ", strip=True) if title_node else match.group(1)
     return {
         "id": match.group(1),
         "name": title,
-        "author": author,
-        "version": re.sub(r"\s+", " ", version).strip().lstrip("vV").strip(),
-        "category": category,
-        "source": "PKG-Zone",
-        "package": f"{BASE_URL}/details/{match.group(1)}",
+        "detail_url": urljoin(BASE_URL, link.get("href", "")),
     }
 
-def collect_category(category):
-    slug = CATEGORY_SLUGS[category]
+def extract_package_url(detail_url):
+    response = fetch(detail_url)
+    soup = BeautifulSoup(response.text, "html.parser")
+
+    candidates = []
+    for anchor in soup.find_all("a", href=True):
+        href = urljoin(BASE_URL, anchor["href"])
+        text = anchor.get_text(" ", strip=True).lower()
+        lower = href.lower()
+
+        if ".pkg" in lower or "download" in text:
+            if "login" in text or "login" in lower:
+                continue
+            candidates.append(href)
+
+    for href in candidates:
+        if ".pkg" in href.lower():
+            return href
+
+    # Some releases expose a download endpoint without ".pkg" in the URL.
+    for href in candidates:
+        if "/download" in href.lower():
+            return href
+
+    return None
+
+def collect_records():
     records = {}
     max_pages = int(os.environ.get("PKG_ZONE_MAX_PAGES", "20"))
+
     for page in range(1, max_pages + 1):
-        url = f"{BASE_URL}/?category={slug}&page={page}"
-        html = fetch(url)
-        soup = BeautifulSoup(html, "html.parser")
+        url = f"{BASE_URL}/?category={CATEGORY_SLUG}&page={page}"
+        response = fetch(url)
+        soup = BeautifulSoup(response.text, "html.parser")
         articles = soup.select("article.pkg")
+
         if not articles:
-            print(f"{category}: page {page}: no package cards; stopping.")
+            print(f"{CATEGORY}: page {page}: no package cards; stopping.")
             break
+
         added = 0
         for article in articles:
-            record = extract_card(article, category)
+            record = extract_card(article)
             if record and record["id"] not in records:
                 records[record["id"]] = record
                 added += 1
-        print(f"{category}: page {page}: {len(articles)} cards, {added} new")
+
+        print(f"{CATEGORY}: page {page}: {len(articles)} cards, {added} new")
         if added == 0:
             break
+
     return list(records.values())
 
-def load():
-    grouped = {category: [] for category in CATEGORIES}
-    seen = set()
-    for category in CATEGORIES:
-        for record in collect_category(category):
-            if record["id"] in seen:
-                continue
-            seen.add(record["id"])
-            grouped[category].append(record)
+def download_package(record, destination):
+    package_url = extract_package_url(record["detail_url"])
+    if not package_url:
+        print(f"SKIP {record['id']}: no public direct package download found")
+        return None
 
-    for category in CATEGORIES:
-        grouped[category].sort(key=lambda item: (item["name"].lower(), item["id"]))
-        print(f"  {category}: {len(grouped[category])}")
+    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", record["name"]).strip("._")
+    filename = f"{safe_name or record['id']}_{record['id']}.pkg"
+    path = destination / filename
 
-    total = sum(len(items) for items in grouped.values())
-    if total == 0:
-        raise RuntimeError("PKG-Zone catalog produced 0 categorized records.")
-    print(f"Catalog: {total} categorized records")
-    return grouped
+    print(f"Downloading {record['id']}: {package_url}")
+    response = fetch(package_url, stream=True)
 
-def write(grouped, root):
-    for category in CATEGORIES:
-        directory = root / category
-        directory.mkdir(parents=True, exist_ok=True)
-        (directory / "catalog.json").write_text(
-            json.dumps(
-                {
-                    "source": f"{BASE_URL}/",
-                    "category": category,
-                    "records": grouped[category],
-                },
-                ensure_ascii=False,
-                indent=2,
-            ) + "\n",
-            encoding="utf-8",
-        )
-    (root / "README.md").write_text(
-        "# PS-Applications\n\n"
-        "Catalog metadata mirrored from PKG-Zone's public catalog pages. "
-        "Contains metadata and package/detail URLs, not copied package binaries.\n",
-        encoding="utf-8",
-    )
+    with path.open("wb") as output:
+        for chunk in response.iter_content(chunk_size=1024 * 1024):
+            if chunk:
+                output.write(chunk)
 
-def upload(root):
+    if path.stat().st_size == 0:
+        path.unlink(missing_ok=True)
+        raise RuntimeError(f"Downloaded empty package for {record['id']}")
+
+    print(f"Downloaded {filename}: {path.stat().st_size} bytes")
+    return path
+
+def upload_packages(files):
     token = os.environ.get("HF_TOKEN")
     if not token:
         raise RuntimeError("HF_TOKEN is not set")
+
     api = HfApi(token=token)
-    api.create_repo(repo_id=HF_REPO, repo_type="dataset", exist_ok=True, private=False)
-    api.upload_folder(
+    api.create_repo(
         repo_id=HF_REPO,
         repo_type="dataset",
-        folder_path=str(root),
-        path_in_repo=".",
-        commit_message="Update PS-Applications catalog",
+        exist_ok=True,
+        private=False,
     )
 
+    for path in files:
+        api.upload_file(
+            path_or_fileobj=str(path),
+            path_in_repo=f"{CATEGORY}/{path.name}",
+            repo_id=HF_REPO,
+            repo_type="dataset",
+            commit_message=f"Add homebrew package {path.name}",
+        )
+        print(f"Uploaded: {CATEGORY}/{path.name}")
+
 def main():
+    records = collect_records()
+    if not records:
+        raise RuntimeError("PKG-Zone Homebrew catalog produced 0 records.")
+
     with tempfile.TemporaryDirectory() as temp:
-        root = Path(temp) / "dataset"
-        grouped = load()
-        write(grouped, root)
-        upload(root)
-        print(f"Uploaded to {HF_REPO}")
+        package_dir = Path(temp)
+        downloaded = []
+
+        for record in records:
+            try:
+                path = download_package(record, package_dir)
+            except Exception as exc:
+                print(f"SKIP {record['id']}: download failed: {exc}")
+                continue
+            if path:
+                downloaded.append(path)
+
+        if not downloaded:
+            raise RuntimeError(
+                "No publicly downloadable Homebrew PKG files were found."
+            )
+
+        upload_packages(downloaded)
+
+    print(f"Uploaded {len(downloaded)} actual PKG files to {HF_REPO}/{CATEGORY}/")
 
 if __name__ == "__main__":
     main()
