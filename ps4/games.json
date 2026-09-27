@@ -8730,16 +8730,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01073.png"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/PS5_PPSA01615_v6.00.pkg?download=true": {
-      "title_id": "PPSA01615",
-      "region": null,
-      "name": "PS5_PPSA01615_v6.00.pkg",
-      "version": null,
-      "release": null,
-      "size": 93847552,
-      "min_fw": null,
-      "cover_url": null
-    },
     "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/THE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
       "title_id": "CUSA11736",
       "region": null,
