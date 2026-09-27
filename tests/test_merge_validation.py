@@ -102,7 +102,8 @@ def test_merge_category_excludes_configured_package_urls(tmp_path, monkeypatch):
     import json
     import merge
 
-    output_path = tmp_path / "homebrew.json"
+    output_path = tmp_path / "ps4" / "homebrew.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
     monkeypatch.setattr(
         merge,
@@ -274,7 +275,8 @@ def test_validate_entries_preserves_metadata_values():
 def test_merge_category_preserves_existing_catalog_when_source_fails(
     tmp_path, monkeypatch
 ):
-    output_path = tmp_path / "games.json"
+    output_path = tmp_path / "ps4" / "games.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
     existing = {
         "DATA": {
             "https://example.com/existing.pkg": {
