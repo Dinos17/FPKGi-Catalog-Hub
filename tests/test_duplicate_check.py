@@ -19,7 +19,7 @@ def test_title_version_duplicate_is_warning_only(tmp_path, monkeypatch, capsys):
     (tmp_path / "apps.json").write_text(json.dumps({"DATA": {"https://example.test/b.pkg": {"title_id": "CUSA12345", "version": "1.00"}}}), encoding="utf-8")
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     duplicate_check.check_duplicates()
-    assert "Possible title/version duplicates: 1" in capsys.readouterr().out
+    assert "**Possible title/version duplicates:** 1" in capsys.readouterr().out
 
 def test_ignores_unified_ps5_catalog(tmp_path, monkeypatch):
     record = {"https://example.test/game.pkg": {"title_id": "PPSA12345", "version": "1.00"}}
