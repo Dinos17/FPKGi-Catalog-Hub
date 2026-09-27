@@ -31,7 +31,7 @@ for filename in files:
 
     try:
         new_data = json.loads(path.read_text(encoding="utf-8")).get("DATA", {})
-    except (json.JSONDecodeError, AttributeError):
+    except (FileNotFoundError, json.JSONDecodeError, AttributeError):
         new_data = {}
 
     old_keys = set(old_data)
@@ -121,7 +121,7 @@ if added_total:
             new_data = json.loads(
                 Path(filename).read_text(encoding="utf-8")
             ).get("DATA", {})
-        except (json.JSONDecodeError, AttributeError):
+        except (FileNotFoundError, json.JSONDecodeError, AttributeError):
             new_data = {}
 
         print(f"### {filename}")
