@@ -55,6 +55,9 @@
       @media(max-width:650px) { header { padding-top:35px; } .toolbar { padding:13px; } .grid { grid-template-columns:1fr; } .statusbar { flex-direction:column; align-items:flex-start; } }
     </style>
     <style>.pagination{display:flex;justify-content:center;align-items:center;gap:6px;margin:30px 0 55px;min-height:40px}.page-btn{min-width:38px;height:38px;padding:0 11px;background:#121820;border-color:#273241;color:#9eabbc}.page-btn:hover:not(:disabled),.page-btn.active{background:#1c3857;border-color:#4f8fdc;color:#d9ebff}.page-btn:disabled{opacity:.3;cursor:not-allowed}.page-gap{color:#667386;padding:0 3px}</style>
+<style>
+.details{margin-top:8px}.details[hidden]{display:none}.back-btn{margin-bottom:18px;background:transparent;border-color:#303b4b;color:#c6d0de}.detail-hero{position:relative;min-height:360px;border:1px solid #273241;border-radius:24px;overflow:hidden;background:radial-gradient(circle at 75% 20%,rgba(79,143,220,.22),transparent 34%),linear-gradient(135deg,#18202c,#0e131a 65%);box-shadow:0 24px 70px rgba(0,0,0,.3)}.detail-glow{position:absolute;inset:0;background:linear-gradient(90deg,rgba(8,11,16,.94),rgba(8,11,16,.72) 48%,rgba(8,11,16,.18))}.detail-content{position:relative;max-width:760px;padding:58px 52px}.detail-platform{display:inline-block;padding:6px 10px;border:1px solid #40516a;border-radius:8px;background:#111823;color:#cfe2f7;font-size:.72rem;font-weight:800;letter-spacing:.08em}.detail-content h2{font-size:clamp(2rem,5vw,4rem);line-height:1.04;letter-spacing:-.045em;margin:20px 0 14px}.detail-subtitle{color:#aab6c6;font-size:.95rem}.detail-description{color:#d2d8e0;font-size:1.03rem;line-height:1.75;max-width:680px;margin-top:28px}.detail-info{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:14px}.detail-info div{padding:18px;border:1px solid #222d3a;border-radius:15px;background:#111720}.detail-info span{display:block;color:#718096;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:7px}.detail-info strong{font-size:.92rem;color:#dce3ec;word-break:break-word}.card{cursor:pointer}.card:focus-visible{outline:2px solid #4f8fdc;outline-offset:3px}@media(max-width:700px){.detail-content{padding:38px 25px}.detail-hero{min-height:420px}.detail-info{grid-template-columns:1fr 1fr}}
+</style>
 </head>
 <body>
   <main class="wrap">
@@ -70,11 +73,12 @@
       <div class="meta"><span id="count">Loading…</span><span id="status"></span></div>
       <div id="results" class="grid"></div>
       <div id="pagination" class="pagination" aria-label="Catalog pages"></div>
+      <section id="details" class="details" hidden></section>
     </section>
   </main>
 
 <script>
-const state = { records: [], category: "all", platform: "all", query: "", page: 1, pageSize: 48 };
+const state = { records: [], category: "all", platform: "all", query: "", page: 1, pageSize: 48, selected: null };
 
 const categoryLabels = {
   all: "All",
@@ -183,7 +187,7 @@ function render() {
       : "Size unavailable";
 
     return `
-      <article class="card">
+      <article class="card" data-index="${state.records.indexOf(record)}" tabindex="0" role="button">
         <span class="platform">${escapeHtml(record.platform)}</span>
         <h2>${escapeHtml(game.name || "Unknown title")}</h2>
         <p>${escapeHtml(game.title_id || "No Title ID")}</p>
@@ -192,7 +196,52 @@ function render() {
       </article>`;
   }).join("");
 
+  results.querySelectorAll(".card").forEach(card => {
+    const record = state.records[Number(card.dataset.index)];
+    card.addEventListener("click", () => openDetails(record));
+    card.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        openDetails(record);
+      }
+    });
+  });
+
   renderPagination(Math.ceil(matches.length / state.pageSize));
+}
+
+function openDetails(record) {
+  state.selected = record;
+  const game = record.data;
+  const details = document.getElementById("details");
+  details.innerHTML = '<button class="back-btn" id="backToCatalog">← Back to catalog</button>' +
+    '<div class="detail-hero"><div class="detail-glow"></div><div class="detail-content">' +
+    '<span class="detail-platform">' + escapeHtml(record.platform) + '</span>' +
+    '<h2>' + escapeHtml(game.name || "Unknown title") + '</h2>' +
+    '<p class="detail-subtitle">' + escapeHtml(game.title_id || "No Title ID") + ' · ' + escapeHtml(game.region || "Region unknown") + ' · ' + escapeHtml(game.version || "Version unknown") + '</p>' +
+    '<p class="detail-description">' + escapeHtml(game.description || game.desc || "No description is available for this title yet.") + '</p>' +
+    '</div></div>' +
+    '<div class="detail-info"><div><span>Title ID</span><strong>' + escapeHtml(game.title_id || "—") + '</strong></div>' +
+    '<div><span>Region</span><strong>' + escapeHtml(game.region || "—") + '</strong></div>' +
+    '<div><span>Version</span><strong>' + escapeHtml(game.version || "—") + '</strong></div>' +
+    '<div><span>Size</span><strong>' + (Number.isFinite(Number(game.size)) && Number(game.size) > 0 ? (Number(game.size) / 1073741824).toFixed(1) + " GB" : "Size unavailable") + '</strong></div></div>';
+  document.getElementById("results").hidden = true;
+  document.getElementById("pagination").hidden = true;
+  details.hidden = false;
+  document.querySelector(".meta").hidden = true;
+  document.querySelector("header").hidden = true;
+  window.scrollTo({ top: 0, behavior: "smooth" });
+  document.getElementById("backToCatalog").addEventListener("click", closeDetails);
+}
+
+function closeDetails() {
+  state.selected = null;
+  document.getElementById("details").hidden = true;
+  document.getElementById("results").hidden = false;
+  document.getElementById("pagination").hidden = false;
+  document.querySelector(".meta").hidden = false;
+  document.querySelector("header").hidden = false;
+  window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
 function renderPagination(pageCount) {
