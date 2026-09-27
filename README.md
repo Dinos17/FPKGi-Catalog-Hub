@@ -104,9 +104,9 @@ Inside `config.json`, find the `CONTENT_URLS` section.
 
 ```json
     "CONTENT_URLS": {
-      "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps1.json",
-      "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps2.json",
-      "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/psp.json",
+      "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/ps1.json",
+      "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/ps2.json",
+      "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/psp.json",
       "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/games.json",
       "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/apps.json",
       "updates": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/updates.json",
@@ -124,9 +124,9 @@ Inside `config.json`, find the `CONTENT_URLS` section.
 
 ```json
     "CONTENT_URLS": {
-      "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps1.json",
-      "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps2.json",
-      "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/psp.json",
+      "PS1": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/ps1.json",
+      "PS2": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/ps2.json",
+      "PSP": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/psp.json",
       "games": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-games.json",
       "apps": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-apps.json",
       "updates": "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-updates.json",
@@ -240,9 +240,9 @@ The generated catalogs are available directly from the repository's `main` branc
 | 🧪 Demos | `ps4/demos.json` |
 | 🕹️ Emulators | `ps4/emulators.json` |
 | 🎨 Themes | `ps4/themes.json` |
-| 💿 PS1 | `ps5/ps1.json` |
-| 💿 PS2 | `ps5/ps2.json` |
-| 🎮 PSP | `ps5/psp.json` |
+| 💿 PS1 | `ps4/ps1.json` |
+| 💿 PS2 | `ps4/ps2.json` |
+| 🎮 PSP | `ps4/psp.json` |
 | 🔄 Updates | `ps4/updates.json` |
 
 ### PS5-only catalogs
@@ -275,9 +275,9 @@ I've also listed the raw URLs here so you don't have to open each file manually:
 - **Demos:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps4/demos.json
 - **Emulators:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps4/emulators.json
 - **Themes:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps4/themes.json
-- **PS1:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5/ps1.json
-- **PS2:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5/ps2.json
-- **PSP:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps5/psp.json
+- **PS1:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps4/ps1.json
+- **PS2:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps4/ps2.json
+- **PSP:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps4/psp.json
 - **Updates:** https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/ps4/updates.json
 
 ### PS5-only raw URLs
@@ -496,19 +496,21 @@ FPKGi-Catalog-Hub/
 │
 ├── requirements.txt
 │
-├── apps.json
-├── demos.json
-├── dlc.json
-├── emulators.json
-├── games.json
-├── homebrew.json
-├── ps1.json
-├── ps2.json
-├── psp.json
-├── themes.json
-├── updates.json
+├── ps4/
+│   ├── apps.json
+│   ├── demos.json
+│   ├── dlc.json
+│   ├── emulators.json
+│   ├── games.json
+│   ├── homebrew.json
+│   ├── ps1.json
+│   ├── ps2.json
+│   ├── psp.json
+│   ├── themes.json
+│   └── updates.json
 │
-├── ps5-*.json  (per-category PS5 release catalogs)
+├── ps5/
+│   └── ps5-*.json  (per-category PS5 release catalogs)
 │
 ├── LICENSE
 ├── CATALOG-LICENSE.md
