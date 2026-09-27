@@ -164,10 +164,47 @@ def asset_to_entry(asset, release, category, cover_urls=None):
     try:
         pkg_metadata = extract_metadata(download_url, size)
         metadata.update(pkg_metadata)
+
+        filename_title_match = TITLE_ID_RE.search(name)
+        filename_version_match = VERSION_RE.search(name)
+        filename_title_id = (
+            filename_title_match.group(1).upper()
+            if filename_title_match
+            else None
+        )
+        filename_version = (
+            filename_version_match.group(1)
+            if filename_version_match
+            else None
+        )
+
+        pkg_title_id = pkg_metadata.get("title_id")
+        pkg_version = pkg_metadata.get("version")
+
+        if (
+            filename_title_id
+            and pkg_title_id
+            and filename_title_id != str(pkg_title_id).upper()
+        ):
+            print(
+                f"  WARNING: Filename/PKG Title ID mismatch: {name} | "
+                f"filename={filename_title_id} | PARAM.SFO={pkg_title_id}"
+            )
+
+        if (
+            filename_version
+            and pkg_version
+            and filename_version != str(pkg_version)
+        ):
+            print(
+                f"  WARNING: Filename/PKG version mismatch: {name} | "
+                f"filename={filename_version} | PARAM.SFO={pkg_version}"
+            )
+
         print(
             f"  PKG metadata: {name} | "
-            f"{pkg_metadata.get('title_id', 'no-title-id')} | "
-            f"{pkg_metadata.get('version', 'no-version')}"
+            f"{pkg_title_id or 'no-title-id'} | "
+            f"{pkg_version or 'no-version'}"
         )
     except Exception as exc:
         print(f"  WARNING: Could not inspect {name}: {exc}")
