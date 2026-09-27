@@ -15,16 +15,16 @@
     .search { margin:30px auto 18px; max-width:760px; }
     input { width:100%; padding:17px 20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); color:var(--text); font-size:1.05rem; outline:none; }
     input:focus { border-color:var(--accent); }
-    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:32px; }
+    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+    .platform-filters { margin-bottom:32px; }
     button { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:10px 16px; border-radius:999px; cursor:pointer; }
     button:hover, button.active { background:var(--panel2); border-color:var(--accent); color:var(--accent); }
     .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); margin-bottom:14px; }
     .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
     .card { position:relative; background:rgba(21,25,34,.9); border:1px solid var(--border); border-radius:16px; padding:18px; min-height:130px; }
     .platform { position:absolute; top:12px; right:12px; padding:4px 7px; border:1px solid var(--border); border-radius:7px; background:#202733; color:#fff; font-size:.68rem; font-weight:800; letter-spacing:.04em; }
-    .card h2 { margin:0 0 10px; font-size:1.05rem; }
+    .card h2 { margin:0 70px 10px 0; font-size:1.05rem; }
     .card p { margin:5px 0; color:var(--muted); font-size:.9rem; }
-    .badge { display:inline-block; margin:5px 5px 0 0; padding:4px 8px; border-radius:999px; background:#202733; color:#c8d0da; font-size:.75rem; }
     .empty { text-align:center; color:var(--muted); padding:50px 10px; }
     .error { color:#fca5a5; text-align:center; padding:30px; }
   </style>
@@ -34,13 +34,9 @@
     <header>
       <h1>FPKGi Catalog Hub</h1>
       <p>Search and browse the catalog.</p>
-      <div class="search"><input id="search" type="search" placeholder="Search games or Title ID..." autocomplete="off"></div>
-      <div class="filters">
-        <button class="active" data-filter="all">All</button>
-        <button data-filter="single">Single Player</button>
-        <button data-filter="local">Local Multiplayer</button>
-        <button data-filter="online">Online Multiplayer</button>
-      </div>
+      <div class="search"><input id="search" type="search" placeholder="Search the catalog..." autocomplete="off"></div>
+      <div id="categoryFilters" class="filters"></div>
+      <div id="platformFilters" class="filters platform-filters"></div>
     </header>
 
     <section>
@@ -50,7 +46,31 @@
   </main>
 
 <script>
-const state = { games: [], filter: "all", query: "" };
+const state = { records: [], category: "all", platform: "all", query: "" };
+
+const categoryLabels = {
+  all: "All",
+  games: "Games",
+  apps: "Apps",
+  dlc: "DLC",
+  demos: "Demos",
+  emulators: "Emulators",
+  homebrew: "Homebrew",
+  themes: "Themes",
+  updates: "Updates",
+  ps1: "PS1",
+  ps2: "PS2",
+  psp: "PSP"
+};
+
+function categoryForFile(file) {
+  const name = file.toLowerCase().replace(/\.json$/, "");
+  if (name.startsWith("ps5-")) {
+    const base = name.slice(4);
+    return categoryLabels[base] ? base : "other";
+  }
+  return categoryLabels[name] ? name : "other";
+}
 
 function platformForFile(file) {
   const name = file.toLowerCase();
@@ -65,28 +85,86 @@ function normalize(value) {
   return String(value ?? "").toLowerCase().trim();
 }
 
-function render() {
-  const q = normalize(state.query);
-  const matches = state.games.filter(game => {
-    const text = normalize([game.name, game.title_id, game.region].join(" "));
-    if (q && !text.includes(q)) return false;
+function buildCategoryFilters() {
+  const available = new Set(["all", ...state.records.map(record => record.category)]);
+  const container = document.getElementById("categoryFilters");
+  container.innerHTML = Object.entries(categoryLabels)
+    .filter(([key]) => available.has(key))
+    .map(([key, label]) =>
+      '<button data-category="' + key + '">' + escapeHtml(label) + '</button>'
+    ).join("");
 
-    // Multiplayer metadata will be wired in a later step.
-    // Until then, filters intentionally show no false claims.
-    if (state.filter !== "all") return false;
-    return true;
+  container.querySelector('[data-category="all"]').classList.add("active");
+
+  container.querySelectorAll("[data-category]").forEach(button => {
+    button.addEventListener("click", () => {
+      container.querySelectorAll("[data-category]").forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+      state.category = button.dataset.category;
+      state.platform = "all";
+      buildPlatformFilters();
+      render();
+    });
   });
+}
 
-  document.getElementById("count").textContent =
-    matches.length.toLocaleString() + " games";
+function buildPlatformFilters() {
+  const container = document.getElementById("platformFilters");
 
-  const results = document.getElementById("results");
-  if (!matches.length) {
-    results.innerHTML = '<div class="empty">No games found.</div>';
+  if (state.category !== "games") {
+    container.innerHTML = "";
     return;
   }
 
-  results.innerHTML = matches.slice(0, 100).map(game => {
+  const platforms = new Set(
+    state.records
+      .filter(record => record.category === "games")
+      .map(record => record.platform)
+  );
+
+  container.innerHTML = ["all", "PS4", "PS5"]
+    .filter(platform => platform === "all" || platforms.has(platform))
+    .map(platform =>
+      '<button data-platform="' + platform + '">' +
+      escapeHtml(platform === "all" ? "All Platforms" : platform) +
+      '</button>'
+    ).join("");
+
+  container.querySelector('[data-platform="all"]').classList.add("active");
+
+  container.querySelectorAll("[data-platform]").forEach(button => {
+    button.addEventListener("click", () => {
+      container.querySelectorAll("[data-platform]").forEach(b => b.classList.remove("active"));
+      button.classList.add("active");
+      state.platform = button.dataset.platform;
+      render();
+    });
+  });
+}
+
+function render() {
+  const q = normalize(state.query);
+
+  const matches = state.records.filter(record => {
+    if (state.category !== "all" && record.category !== state.category) return false;
+    if (state.category === "games" && state.platform !== "all" && record.platform !== state.platform) return false;
+
+    const game = record.data;
+    const text = normalize([game.name, game.title_id, game.region, game.version].join(" "));
+    return !q || text.includes(q);
+  });
+
+  document.getElementById("count").textContent =
+    matches.length.toLocaleString() + (state.category === "all" ? " items" : " " + (categoryLabels[state.category] || "items"));
+
+  const results = document.getElementById("results");
+  if (!matches.length) {
+    results.innerHTML = '<div class="empty">No items found.</div>';
+    return;
+  }
+
+  results.innerHTML = matches.slice(0, 100).map(record => {
+    const game = record.data;
     const size = Number(game.size);
     const sizeText = Number.isFinite(size) && size > 0
       ? (size / 1073741824).toFixed(1) + " GB"
@@ -94,7 +172,7 @@ function render() {
 
     return `
       <article class="card">
-        <span class="platform">${escapeHtml(game.platform)}</span>
+        <span class="platform">${escapeHtml(record.platform)}</span>
         <h2>${escapeHtml(game.name || "Unknown title")}</h2>
         <p>${escapeHtml(game.title_id || "No Title ID")}</p>
         <p>${escapeHtml(game.region || "Region unknown")} · ${escapeHtml(game.version || "Version unknown")}</p>
@@ -114,15 +192,6 @@ document.getElementById("search").addEventListener("input", event => {
   render();
 });
 
-document.querySelectorAll("[data-filter]").forEach(button => {
-  button.addEventListener("click", () => {
-    document.querySelectorAll("[data-filter]").forEach(b => b.classList.remove("active"));
-    button.classList.add("active");
-    state.filter = button.dataset.filter;
-    render();
-  });
-});
-
 fetch("catalog-manifest.json")
   .then(response => {
     if (!response.ok) throw new Error("catalog-manifest.json returned " + response.status);
@@ -137,14 +206,17 @@ fetch("catalog-manifest.json")
         })
         .then(catalog =>
           Object.values(catalog.DATA || {}).map(game => ({
-            ...game,
+            data: game,
+            category: categoryForFile(file),
             platform: platformForFile(file)
           }))
         )
     )
   ))
   .then(groups => {
-    state.games = groups.flat();
+    state.records = groups.flat();
+    buildCategoryFilters();
+    buildPlatformFilters();
     document.getElementById("status").textContent = "Catalog loaded";
     render();
   })
@@ -153,6 +225,7 @@ fetch("catalog-manifest.json")
     document.getElementById("status").textContent = "";
     document.getElementById("results").innerHTML =
       '<div class="error">Could not load the catalog.<br>' + escapeHtml(error.message) + '</div>';
-  });</script>
+  });
+</script>
 </body>
 </html>
