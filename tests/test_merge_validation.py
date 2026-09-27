@@ -466,3 +466,33 @@ def test_main_preserves_existing_unified_ps5_catalog_when_release_result_is_empt
     merge.main()
 
     assert json.loads(output_path.read_text(encoding="utf-8")) == existing
+
+def test_main_continues_when_external_database_is_unavailable(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(
+        merge,
+        "load_sources",
+        lambda: {"games": []},
+    )
+    monkeypatch.setattr(
+        merge,
+        "fetch_release_entries",
+        lambda: ({}, {"games": {}}),
+    )
+    monkeypatch.setattr(
+        merge,
+        "fetch_external_database_entries",
+        lambda: (_ for _ in ()).throw(RuntimeError("temporary HF outage")),
+    )
+    monkeypatch.setattr(
+        merge,
+        "merge_category",
+        lambda category, urls, release_entries: 0,
+    )
+
+    merge.main()
