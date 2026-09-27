@@ -1,23 +1,42 @@
 import json
+import re
+import sqlite3
+import tempfile
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
+
+import requests
 
 from title_resolver import resolve_category
 
 
 ROOT = Path(__file__).resolve().parent.parent
-MAX_WORKERS = 16
+FALLBACK_WORKERS = 8
+FALLBACK_TIMEOUT = 15
 
 CATEGORY_MAP = {
-    "game": "games", "games": "games",
-    "application": "apps", "applications": "apps", "app": "apps", "apps": "apps",
-    "media": "apps", "utility": "apps", "utilities": "apps",
-    "dlc": "dlc", "addon": "dlc", "add-on": "dlc",
-    "demo": "demos", "demos": "demos",
-    "emulator": "emulators", "emulators": "emulators",
-    "theme": "themes", "themes": "themes",
+    "game": "games",
+    "games": "games",
+    "application": "apps",
+    "applications": "apps",
+    "app": "apps",
+    "apps": "apps",
+    "media": "apps",
+    "utility": "apps",
+    "utilities": "apps",
+    "dlc": "dlc",
+    "addon": "dlc",
+    "add-on": "dlc",
+    "demo": "demos",
+    "demos": "demos",
+    "emulator": "emulators",
+    "emulators": "emulators",
+    "theme": "themes",
+    "themes": "themes",
     "homebrew": "homebrew",
-    "update": "updates", "updates": "updates",
+    "update": "updates",
+    "updates": "updates",
+    "patch": "updates",
 }
 
 
@@ -40,23 +59,101 @@ def expected_catalog(platform, category):
     return ROOT / "ps4" / f"{category}.json"
 
 
-def resolve_categories(title_ids):
+def load_store_database():
+    config_path = ROOT / "config" / "title_database.json"
+    config = json.loads(config_path.read_text(encoding="utf-8"))
+    url = config.get("store_db_url")
+    if not isinstance(url, str) or not url.strip():
+        raise ValueError("title_database.json must define store_db_url")
+
+    print(f"Catalog audit: downloading PKG-Zone database once from {url}")
+
+    response = requests.get(
+        url,
+        headers={"User-Agent": "FPKGi-Catalog-Hub/1.0"},
+        timeout=60,
+        allow_redirects=True,
+    )
+    response.raise_for_status()
+
+    temp = tempfile.NamedTemporaryFile(prefix="pkg-zone-", suffix=".db", delete=False)
+    temp.write(response.content)
+    temp.close()
+    return Path(temp.name)
+
+
+def resolve_from_store_db(db_path, title_ids):
     results = {}
 
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = {
-            executor.submit(resolve_category, title_id): title_id
-            for title_id in sorted(title_ids)
-        }
+    connection = sqlite3.connect(db_path)
+    try:
+        cursor = connection.execute(
+            "SELECT package, apptype FROM homebrews "
+            "WHERE package IS NOT NULL AND apptype IS NOT NULL"
+        )
 
+        for package, apptype in cursor:
+            if not isinstance(package, str):
+                continue
+
+            category = normalize(apptype)
+            if category is None:
+                continue
+
+            ids = re.findall(r"(?i)\\b(?:CUSA|PPSA)\\d{5}\\b", package)
+            for title_id in ids:
+                title_id = title_id.upper()
+                if title_id in title_ids and title_id not in results:
+                    results[title_id] = category
+    finally:
+        connection.close()
+
+    return results
+
+
+def resolve_fallback(title_ids):
+    results = {}
+    if not title_ids:
+        return results
+
+    print(
+        f"Catalog audit: {len(title_ids)} title IDs were not found in the "
+        f"PKG-Zone database; using page lookup fallback with {FALLBACK_WORKERS} workers"
+    )
+
+    def lookup(title_id):
+        try:
+            return title_id, normalize(resolve_category(title_id))
+        except Exception as exc:
+            print(f"WARNING: Category fallback failed for {title_id}: {exc}")
+            return title_id, None
+
+    with ThreadPoolExecutor(max_workers=FALLBACK_WORKERS) as executor:
+        futures = [executor.submit(lookup, title_id) for title_id in sorted(title_ids)]
         for future in as_completed(futures):
-            title_id = futures[future]
-            try:
-                results[title_id] = normalize(future.result())
-            except Exception as exc:
-                print(f"WARNING: Category audit failed for {title_id}: {exc}")
-                results[title_id] = None
+            title_id, category = future.result()
+            results[title_id] = category
 
+    return results
+
+
+def resolve_categories(title_ids):
+    db_path = load_store_database()
+    try:
+        results = resolve_from_store_db(db_path, title_ids)
+    finally:
+        try:
+            db_path.unlink()
+        except OSError:
+            pass
+
+    unresolved = set(title_ids) - set(results)
+    if unresolved:
+        results.update(resolve_fallback(unresolved))
+
+    print(
+        f"Catalog audit: resolved {len(results)} / {len(title_ids)} unique title IDs"
+    )
     return results
 
 
@@ -101,7 +198,7 @@ def audit_catalogs():
     title_ids = {item[5] for item in records}
     print(
         f"Catalog audit: scanning {scanned} records | "
-        f"resolving {len(title_ids)} unique title IDs with {MAX_WORKERS} workers"
+        f"resolving {len(title_ids)} unique title IDs from one database"
     )
 
     resolved_categories = resolve_categories(title_ids)
