@@ -95,6 +95,32 @@ def parse_title_id(name):
     return match.group(1).upper() if match else None
 
 
+PKG_CATEGORY_MAP = {
+    "gd": "games",
+    "gda": "games",
+    "gdc": "games",
+    "gdd": "games",
+    "gdl": "games",
+    "gdp": "games",
+    "gds": "games",
+    "gdt": "games",
+    "gdu": "games",
+    "gdx": "games",
+    "gapp": "apps",
+    "gtheme": "themes",
+    "gpatch": "updates",
+    "gup": "updates",
+    "gaddon": "dlc",
+    "gdc": "dlc",
+}
+
+
+def normalize_category(value):
+    if not isinstance(value, str):
+        return None
+    return PKG_CATEGORY_MAP.get(value.lower(), value.lower())
+
+
 def fetch_external_database_entries():
     print("\nFetching external package database")
     files, database_url = fetch_database_files()
@@ -132,6 +158,7 @@ def fetch_external_database_entries():
         try:
             pkg_metadata = extract_metadata(url, size)
             metadata.update(pkg_metadata)
+            metadata["category"] = normalize_category(metadata.get("category"))
             print(
                 f"  PKG metadata: {filename} | "
                 f"{pkg_metadata.get('title_id', 'no-title-id')} | "
