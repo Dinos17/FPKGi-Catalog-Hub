@@ -46,7 +46,6 @@ def audit_catalogs():
         paths.extend((platform, path) for path in sorted(platform_dir.glob("*.json")))
 
     for platform, path in paths:
-        for path in sorted(platform_dir.glob("*.json")):
             if path.name == "new-registrations.json":
                 continue
 
