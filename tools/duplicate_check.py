@@ -106,7 +106,7 @@ def build_report(
         f"**Unique package URLs:** {unique_urls}",
         f"**Exact duplicate package URLs:** {len(exact_duplicates)}",
         f"**Expected Archive.org ↔ Hugging Face mirrors:** {len(expected_mirrors)}",
-        f"**Duplicate package identities:** {len(suspicious_duplicates)}",
+        f"**Duplicate package identities:** {len(duplicate_identities)}",
         "",
     ]
 
@@ -127,9 +127,9 @@ def build_report(
                 lines.append(f"  - `{filename}` — {url}")
         lines.append("")
 
-    if suspicious_duplicates:
+    if duplicate_identities:
         lines.extend(["#### ❌ Duplicate package identities", ""])
-        for (is_ps5, title_id, version), records in sorted(suspicious_duplicates.items()):
+        for (is_ps5, title_id, version), records in sorted(duplicate_identities.items()):
             platform = "PS5" if is_ps5 else "PS4"
             lines.append(f"- **{platform} {title_id} v{version}**")
             for filename, url in records:
@@ -178,13 +178,13 @@ def check_duplicates():
     exact_duplicates = {
         url: files for url, files in by_url.items() if len(files) > 1
     }
-    expected_mirrors, suspicious_duplicates = classify_identity_duplicates(by_identity)
+    expected_mirrors, duplicate_identities = classify_identity_duplicates(by_identity)
 
     report = build_report(
         catalogs,
         exact_duplicates,
         expected_mirrors,
-        suspicious_duplicates,
+        duplicate_identities,
     )
     print(report, end="")
 
