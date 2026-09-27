@@ -4,7 +4,8 @@ import subprocess
 from pathlib import Path
 
 NEW_REGISTRATIONS_PATH = Path("new-registrations.json")
-from pathlib import Path
+REMOVED_REGISTRATIONS_PATH = Path("removed-registrations.json")
+MODIFIED_REGISTRATIONS_PATH = Path("modified-registrations.json")
 
 files = subprocess.check_output(
     ["git", "diff", "--cached", "--name-only", "--", "*.json", "**/*.json"],
@@ -16,6 +17,8 @@ removed_total = 0
 changed_total = 0
 changed_files = []
 new_records = {}
+removed_records = {}
+modified_records = {}
 
 for filename in files:
     path = Path(filename)
@@ -58,13 +61,37 @@ for filename in files:
             metadata = {}
         new_records[pkg_url] = {"url": pkg_url, **metadata}
 
-if new_records:
-    NEW_REGISTRATIONS_PATH.write_text(
-        json.dumps({"DATA": new_records}, indent=2, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
-else:
-    NEW_REGISTRATIONS_PATH.unlink(missing_ok=True)
+    for pkg_url in sorted(removed):
+        metadata = old_data.get(pkg_url)
+        if not isinstance(metadata, dict):
+            metadata = {}
+        removed_records[pkg_url] = {"url": pkg_url, **metadata}
+
+    for pkg_url in sorted(changed):
+        old_metadata = old_data.get(pkg_url)
+        new_metadata = new_data.get(pkg_url)
+        if not isinstance(old_metadata, dict):
+            old_metadata = {}
+        if not isinstance(new_metadata, dict):
+            new_metadata = {}
+        modified_records[pkg_url] = {
+            "url": pkg_url,
+            "old": old_metadata,
+            "new": new_metadata,
+        }
+
+for output_path, records in (
+    (NEW_REGISTRATIONS_PATH, new_records),
+    (REMOVED_REGISTRATIONS_PATH, removed_records),
+    (MODIFIED_REGISTRATIONS_PATH, modified_records),
+):
+    if records:
+        output_path.write_text(
+            json.dumps({"DATA": records}, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+    else:
+        output_path.unlink(missing_ok=True)
 
 repo = os.environ.get("GITHUB_REPOSITORY", "")
 server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
@@ -90,7 +117,24 @@ for filename, added, removed, changed in changed_files:
     if changed:
         parts.append(f"{len(changed)} modified")
 
-    print(f"- {filename} — " + ", ".join(parts))
+    links = []
+    if added and repo:
+        links.append(
+            f"[new registrations]({server_url}/{repo}/blob/main/{NEW_REGISTRATIONS_PATH.as_posix()})"
+        )
+    if removed and repo:
+        links.append(
+            f"[removed registrations]({server_url}/{repo}/blob/main/{REMOVED_REGISTRATIONS_PATH.as_posix()})"
+        )
+    if changed and repo:
+        links.append(
+            f"[modified registrations]({server_url}/{repo}/blob/main/{MODIFIED_REGISTRATIONS_PATH.as_posix()})"
+        )
+
+    suffix = f" — {', '.join(parts)}"
+    if links:
+        suffix += f" — {' | '.join(links)}"
+    print(f"- {filename}" + suffix)
 
 print()
 print("**Record changes:**")
