@@ -14,7 +14,8 @@ def write_catalogs(root, categories):
         json.dumps(categories), encoding="utf-8"
     )
     for filename in catalog_pipeline.expected_catalogs(root):
-        (root / filename).write_text(
+        catalog_pipeline.catalog_path(root, filename).parent.mkdir(parents=True, exist_ok=True)
+        catalog_pipeline.catalog_path(root, filename).write_text(
             json.dumps({"DATA": {"https://example.com/a.pkg": {"name": filename}}}),
             encoding="utf-8",
         )
@@ -28,17 +29,17 @@ def test_prepare_and_apply_catalog_artifact_round_trip(tmp_path):
     write_catalogs(root, {"games": [], "apps": []})
     catalog_pipeline.prepare_catalog_artifact(root, artifact)
 
-    assert sorted(p.name for p in artifact.glob("*.json")) == sorted(
+    assert sorted(p.name for p in artifact.rglob("*.json")) == sorted(
         catalog_pipeline.expected_catalogs(root)
     )
 
-    for path in root.glob("*.json"):
+    for path in (root / "ps4").glob("*.json"):
         path.write_text(json.dumps({"DATA": {}}), encoding="utf-8")
 
     catalog_pipeline.apply_catalog_artifact(root, artifact)
 
     for filename in catalog_pipeline.expected_catalogs(root):
-        assert (root / filename).read_text(encoding="utf-8") == (
+        assert catalog_pipeline.catalog_path(root, filename).read_text(encoding="utf-8") == (
             artifact / filename
         ).read_text(encoding="utf-8")
 
@@ -48,7 +49,7 @@ def test_prepare_fails_when_expected_catalog_is_missing(tmp_path):
     artifact = tmp_path / "artifact"
     root.mkdir()
     write_catalogs(root, {"games": []})
-    (root / "games.json").unlink()
+    catalog_pipeline.catalog_path(root, "games.json").unlink()
 
     try:
         catalog_pipeline.prepare_catalog_artifact(root, artifact)
