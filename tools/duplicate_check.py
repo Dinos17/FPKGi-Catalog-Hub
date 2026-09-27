@@ -20,6 +20,51 @@ def load_catalogs():
         catalogs[path.name] = entries
     return catalogs
 
+def build_report(catalogs, exact_duplicates, suspicious_duplicates):
+    lines = [
+        "### FPKGi Duplication Check",
+        "",
+        f"**Catalogs scanned:** {len(catalogs)}",
+        f"**Unique package URLs:** {sum(len(entries) for entries in catalogs.values())}",
+        f"**Exact duplicate package URLs:** {len(exact_duplicates)}",
+        f"**Possible title/version duplicates:** {len(suspicious_duplicates)}",
+        "",
+    ]
+
+    if exact_duplicates:
+        lines.extend(["#### ❌ Exact duplicates", ""])
+        for url, files in sorted(exact_duplicates.items()):
+            lines.append(f"- `{url}`")
+            lines.append("  - Found in: " + ", ".join(sorted(files)))
+        lines.append("")
+
+    if suspicious_duplicates:
+        lines.extend(["#### ⚠️ Possible title/version duplicates", ""])
+        for (is_ps5, title_id, version), records in sorted(suspicious_duplicates.items()):
+            platform = "PS5" if is_ps5 else "PS4"
+            lines.append(f"- **{platform} {title_id} v{version}**")
+            for filename, url in records:
+                lines.append(f"  - `{filename}` — {url}")
+        lines.append("")
+
+    if exact_duplicates:
+        lines.extend([
+            "### ❌ Result: Exact duplicate package URLs detected.",
+            "",
+            "The workflow failed so these duplicates can be reviewed before changing the catalogs.",
+        ])
+    elif suspicious_duplicates:
+        lines.extend([
+            "### ⚠️ Result: No exact duplicate package URLs detected.",
+            "",
+            "Possible title/version duplicates are warnings only.",
+        ])
+    else:
+        lines.append("### ✅ Result: No duplicate registrations detected.")
+
+    return "\n".join(lines) + "\n"
+
+
 def check_duplicates():
     catalogs = load_catalogs()
     by_url = defaultdict(list)
@@ -37,13 +82,13 @@ def check_duplicates():
             by_identity[identity].append((filename, pkg_url))
     exact_duplicates = {url: files for url, files in by_url.items() if len(files) > 1}
     suspicious_duplicates = {identity: records for identity, records in by_identity.items() if len({url for _, url in records}) > 1}
-    print("### FPKGi Duplicate Check")
-    print("")
-    print(f"Catalogs scanned: {len(catalogs)}")
-    print(f"Unique package URLs: {len(by_url)}")
-    print(f"Exact duplicate package URLs: {len(exact_duplicates)}")
-    print(f"Possible title/version duplicates: {len(suspicious_duplicates)}")
-    print("")
+    report = build_report(catalogs, exact_duplicates, suspicious_duplicates)
+    print(report, end="")
+
+    import os
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        Path(summary_path).write_text(report, encoding="utf-8")
     if exact_duplicates:
         print("#### Exact duplicates")
         for url, files in sorted(exact_duplicates.items()):
