@@ -128,16 +128,20 @@ fetch("catalog-manifest.json")
     if (!response.ok) throw new Error("catalog-manifest.json returned " + response.status);
     return response.json();
   })
-  .then(files => Promise.all(files.map(file =>
-    fetch(file)
-      .then(response => {
-        if (!response.ok) throw new Error(file + " returned " + response.status);
-        return response.json();
-      })
-      .then(catalog => Object.values(catalog.DATA || {}).map(game => ({
-        ...game,
-        platform: platformForFile(file)
-      })))
+  .then(files => Promise.all(
+    files.map(file =>
+      fetch(file)
+        .then(response => {
+          if (!response.ok) throw new Error(file + " returned " + response.status);
+          return response.json();
+        })
+        .then(catalog =>
+          Object.values(catalog.DATA || {}).map(game => ({
+            ...game,
+            platform: platformForFile(file)
+          }))
+        )
+    )
   ))
   .then(groups => {
     state.games = groups.flat();
@@ -149,7 +153,6 @@ fetch("catalog-manifest.json")
     document.getElementById("status").textContent = "";
     document.getElementById("results").innerHTML =
       '<div class="error">Could not load the catalog.<br>' + escapeHtml(error.message) + '</div>';
-  });
-</script>
+  });</script>
 </body>
 </html>
