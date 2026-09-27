@@ -57,7 +57,7 @@ def is_expected_mirror(url_a, url_b):
 
 def classify_identity_duplicates(by_identity):
     expected_mirrors = {}
-    suspicious = {}
+    duplicates = {}
 
     for identity, records in by_identity.items():
         unique_normalized = {}
@@ -78,16 +78,16 @@ def classify_identity_duplicates(by_identity):
         if all_expected_mirrors:
             expected_mirrors[identity] = records
         else:
-            suspicious[identity] = records
+            duplicates[identity] = records
 
-    return expected_mirrors, suspicious
+    return expected_mirrors, duplicates
 
 
 def build_report(
     catalogs,
     exact_duplicates,
     expected_mirrors,
-    suspicious_duplicates,
+    duplicate_identities,
 ):
     total_registrations = sum(len(entries) for entries in catalogs.values())
     unique_urls = len(
@@ -106,7 +106,7 @@ def build_report(
         f"**Unique package URLs:** {unique_urls}",
         f"**Exact duplicate package URLs:** {len(exact_duplicates)}",
         f"**Expected Archive.org ↔ Hugging Face mirrors:** {len(expected_mirrors)}",
-        f"**Possible title/version duplicates:** {len(suspicious_duplicates)}",
+        f"**Duplicate package identities:** {len(suspicious_duplicates)}",
         "",
     ]
 
@@ -128,7 +128,7 @@ def build_report(
         lines.append("")
 
     if suspicious_duplicates:
-        lines.extend(["#### ⚠️ Possible title/version duplicates", ""])
+        lines.extend(["#### ❌ Duplicate package identities", ""])
         for (is_ps5, title_id, version), records in sorted(suspicious_duplicates.items()):
             platform = "PS5" if is_ps5 else "PS4"
             lines.append(f"- **{platform} {title_id} v{version}**")
@@ -144,9 +144,9 @@ def build_report(
         ])
     elif suspicious_duplicates:
         lines.extend([
-            "### ⚠️ Result: No exact duplicate package URLs detected.",
+            "### ❌ Result: Duplicate package identities detected.",
             "",
-            "Expected mirrors are informational. Possible title/version duplicates are warnings only.",
+            "The workflow failed so these duplicate registrations can be reviewed before changing the catalogs.",
         ])
     else:
         lines.append("### ✅ Result: No duplicate registrations detected.")
@@ -194,7 +194,7 @@ def check_duplicates():
     if summary_path:
         Path(summary_path).write_text(report, encoding="utf-8")
 
-    if exact_duplicates:
+    if exact_duplicates or duplicate_identities:
         raise SystemExit(1)
 
 
