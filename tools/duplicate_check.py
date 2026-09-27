@@ -56,6 +56,7 @@ def is_expected_mirror(url_a, url_b):
 
 
 def classify_identity_duplicates(by_identity):
+    """Treat multiple distinct URLs for the same platform/title ID/version as duplicates, except approved mirrors."""
     expected_mirrors = {}
     duplicates = {}
 
