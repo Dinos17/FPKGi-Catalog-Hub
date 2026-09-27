@@ -29,9 +29,9 @@ def test_prepare_and_apply_catalog_artifact_round_trip(tmp_path):
     write_catalogs(root, {"games": [], "apps": []})
     catalog_pipeline.prepare_catalog_artifact(root, artifact)
 
-    assert sorted(p.name for p in artifact.rglob("*.json")) == sorted(
-        catalog_pipeline.expected_catalogs(root)
-    )
+    assert sorted(
+        p.relative_to(artifact).as_posix() for p in artifact.rglob("*.json")
+    ) == sorted(catalog_pipeline.expected_catalogs(root))
 
     for path in (root / "ps4").glob("*.json"):
         path.write_text(json.dumps({"DATA": {}}), encoding="utf-8")
@@ -65,7 +65,7 @@ def test_apply_fails_when_expected_artifact_is_missing(tmp_path):
     root.mkdir()
     write_catalogs(root, {"games": []})
     catalog_pipeline.prepare_catalog_artifact(root, artifact)
-    (artifact / "ps5-games.json").unlink()
+    catalog_pipeline.catalog_path(artifact, "ps5-games.json").unlink()
 
     try:
         catalog_pipeline.apply_catalog_artifact(root, artifact)
