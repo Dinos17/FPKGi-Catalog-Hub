@@ -68,12 +68,12 @@ def validate_ps5_catalogs(ps5_entries, ps5_category_entries):
 
 def main():
     sources = load_sources()
-    paths = [ROOT / "ps5.json"]
+    paths = [ROOT / "ps5" / "ps5.json"]
     category_paths = {}
 
     for category in sources:
-        paths.append(ROOT / f"{category}.json")
-        ps5_path = ROOT / f"ps5-{category}.json"
+        paths.append(ROOT / "ps4" / f"{category}.json")
+        ps5_path = ROOT / "ps5" / f"ps5-{category}.json"
         paths.append(ps5_path)
         category_paths[category] = ps5_path
 
@@ -86,7 +86,7 @@ def main():
     for path in paths:
         validate_catalog(path)
 
-    ps5_entries = read_catalog(ROOT / "ps5.json")
+    ps5_entries = read_catalog(ROOT / "ps5" / "ps5.json")
     ps5_category_entries = {
         category: read_catalog(path)
         for category, path in category_paths.items()
