@@ -3,12 +3,13 @@ import os
 import subprocess
 from pathlib import Path
 
-NEW_REGISTRATIONS_PATH = Path("new-registrations.json")
-REMOVED_REGISTRATIONS_PATH = Path("removed-registrations.json")
-MODIFIED_REGISTRATIONS_PATH = Path("modified-registrations.json")
+CHANGES_DIR = Path("changes")
+NEW_REGISTRATIONS_PATH = CHANGES_DIR / "new-registrations.json"
+REMOVED_REGISTRATIONS_PATH = CHANGES_DIR / "removed-registrations.json"
+MODIFIED_REGISTRATIONS_PATH = CHANGES_DIR / "modified-registrations.json"
 
 files = subprocess.check_output(
-    ["git", "diff", "--cached", "--name-only", "--", "*.json", "**/*.json"],
+    ["git", "diff", "--cached", "--name-only", "--", "*.json", "**/*.json", ":!changes/*.json"],
     text=True,
 ).splitlines()
 
@@ -91,7 +92,11 @@ for output_path, records in (
             encoding="utf-8",
         )
     else:
-        output_path.unlink(missing_ok=True)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+        output_path.write_text(
+            json.dumps({"DATA": {}}, indent=2) + "\n",
+            encoding="utf-8",
+        )
 
 repo = os.environ.get("GITHUB_REPOSITORY", "")
 server_url = os.environ.get("GITHUB_SERVER_URL", "https://github.com")
