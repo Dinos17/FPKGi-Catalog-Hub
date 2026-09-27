@@ -27,7 +27,10 @@ jobs:
         run: |
           set -euo pipefail
 
-          curl --fail --location --retry 3 --retry-all-errors --remote-header-name --remote-name "$SOURCE_URL"
+          echo "Downloading source file..."
+          curl --silent --show-error --fail --location \
+            --retry 3 --retry-all-errors --retry-delay 2 \
+            --remote-header-name --remote-name "$SOURCE_URL"
 
           source_file="$(find . -maxdepth 1 -type f -printf '%f\n' | head -n 1)"
           if [ -z "$source_file" ]; then
@@ -37,7 +40,7 @@ jobs:
 
           test -s "$source_file"
           echo "SOURCE_FILE=$source_file" >> "$GITHUB_ENV"
-          echo "Detected filename: $source_file"
+          echo "Downloaded: $source_file"
           ls -lh "$source_file"
 
       - name: Upload to Hugging Face
