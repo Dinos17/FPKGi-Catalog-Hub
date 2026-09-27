@@ -463,7 +463,7 @@ That means different versions, regions, or packages can still coexist when they 
 
 The duplicate-check workflow scans the individual catalog files for repeated package URLs and also reports possible same-title/version duplicates for manual review.
 
-**Note:** `ps5.json` is intentionally excluded from this duplicate scan because it is the unified PS5 catalog generated as the exact union of the `ps5-*.json` category catalogs. The same package URL can therefore legitimately appear in both `ps5.json` and a PS5 category file; treating that as a duplicate would produce false positives. The `ps5.json` union relationship is validated separately by `validate_catalogs.py`.
+The duplicate-check workflow scans all generated catalog files. A package URL should appear in only one category catalog unless it is an approved mirror.
 
 ---
 
@@ -502,7 +502,6 @@ FPKGi-Catalog-Hub/
 ├── emulators.json
 ├── games.json
 ├── homebrew.json
-├── ps5.json
 ├── ps1.json
 ├── ps2.json
 ├── psp.json
