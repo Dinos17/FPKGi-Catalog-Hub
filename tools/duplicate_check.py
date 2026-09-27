@@ -4,8 +4,6 @@ from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
-EXCLUDED = {"ps5.json"}
-
 
 def load_catalogs():
     catalogs = {}
@@ -13,7 +11,7 @@ def load_catalogs():
         if not platform_dir.is_dir():
             continue
         for path in sorted(platform_dir.glob("*.json")):
-            if path.name in EXCLUDED or path.name == "new-registrations.json":
+            if path.name == "new-registrations.json":
                 continue
             try:
                 data = json.loads(path.read_text(encoding="utf-8"))
