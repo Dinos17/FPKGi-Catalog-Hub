@@ -14,12 +14,8 @@ from external_database import fetch_external_database_entries
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
 EXCLUSIONS_PATH = Path(__file__).resolve().parent.parent / "config" / "exclusions.json"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent
-PS4_OUTPUT_DIR = OUTPUT_DIR / "ps4"
-PS5_OUTPUT_DIR = OUTPUT_DIR / "ps5"
-
-
 def catalog_output_path(category, ps5=False):
-    directory = PS5_OUTPUT_DIR if ps5 else PS4_OUTPUT_DIR
+    directory = OUTPUT_DIR / ("ps5" if ps5 else "ps4")
     directory.mkdir(parents=True, exist_ok=True)
     return directory / f"{category}.json"
 
