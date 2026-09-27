@@ -1,10 +1,13 @@
 import json
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
 from title_resolver import resolve_category
 
 
 ROOT = Path(__file__).resolve().parent.parent
+MAX_WORKERS = 16
+
 CATEGORY_MAP = {
     "game": "games", "games": "games",
     "application": "apps", "applications": "apps", "app": "apps", "apps": "apps",
@@ -37,76 +40,115 @@ def expected_catalog(platform, category):
     return ROOT / "ps4" / f"{category}.json"
 
 
+def resolve_categories(title_ids):
+    results = {}
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = {
+            executor.submit(resolve_category, title_id): title_id
+            for title_id in sorted(title_ids)
+        }
+
+        for future in as_completed(futures):
+            title_id = futures[future]
+            try:
+                results[title_id] = normalize(future.result())
+            except Exception as exc:
+                print(f"WARNING: Category audit failed for {title_id}: {exc}")
+                results[title_id] = None
+
+    return results
+
+
 def audit_catalogs():
     moved = []
     scanned = 0
+    records = []
 
     paths = []
     for platform_dir, platform in ((ROOT / "ps4", "PS4"), (ROOT / "ps5", "PS5")):
         paths.extend((platform, path) for path in sorted(platform_dir.glob("*.json")))
 
     for platform, path in paths:
-            if path.name == "new-registrations.json":
+        if path.name == "new-registrations.json":
+            continue
+
+        category = catalog_category(path)
+        if category not in {
+            "games", "apps", "dlc", "demos", "emulators",
+            "homebrew", "themes", "updates", "ps1", "ps2", "psp"
+        }:
+            continue
+
+        data = json.loads(path.read_text(encoding="utf-8"))
+        entries = data.get("DATA", {})
+        if not isinstance(entries, dict):
+            raise ValueError(f"{path}: DATA must be an object")
+
+        for url, record in entries.items():
+            scanned += 1
+            if not isinstance(record, dict):
                 continue
 
-            category = catalog_category(path)
-            if category not in {
-                "games", "apps", "dlc", "demos", "emulators",
-                "homebrew", "themes", "updates", "ps1", "ps2", "psp"
-            }:
+            title_id = record.get("title_id")
+            if not isinstance(title_id, str):
                 continue
 
-            data = json.loads(path.read_text(encoding="utf-8"))
-            entries = data.get("DATA", {})
-            if not isinstance(entries, dict):
-                raise ValueError(f"{path}: DATA must be an object")
+            title_id = title_id.strip().upper()
+            if title_id:
+                records.append((platform, path, category, url, record, title_id))
 
-            for url, record in list(entries.items()):
-                scanned += 1
-                if not isinstance(record, dict):
-                    continue
+    title_ids = {item[5] for item in records}
+    print(
+        f"Catalog audit: scanning {scanned} records | "
+        f"resolving {len(title_ids)} unique title IDs with {MAX_WORKERS} workers"
+    )
 
-                title_id = record.get("title_id")
-                if not isinstance(title_id, str):
-                    continue
+    resolved_categories = resolve_categories(title_ids)
 
-                resolved = normalize(resolve_category(title_id))
-                if resolved is None or resolved in {"ps1", "ps2", "psp"}:
-                    continue
+    for platform, path, category, url, record, title_id in records:
+        resolved = resolved_categories.get(title_id)
+        if resolved is None or resolved in {"ps1", "ps2", "psp"}:
+            continue
 
-                current_category = category
-                if current_category == resolved:
-                    continue
+        if category == resolved:
+            continue
 
-                destination = expected_catalog(platform, resolved)
-                destination_data = (
-                    json.loads(destination.read_text(encoding="utf-8"))
-                    if destination.exists()
-                    else {"DATA": {}}
-                )
-                destination_entries = destination_data.setdefault("DATA", {})
+        destination = expected_catalog(platform, resolved)
+        destination_data = (
+            json.loads(destination.read_text(encoding="utf-8"))
+            if destination.exists()
+            else {"DATA": {}}
+        )
+        destination_entries = destination_data.setdefault("DATA", {})
 
-                if url not in destination_entries:
-                    destination_entries[url] = record
-                del entries[url]
+        record["category"] = resolved
+        if url not in destination_entries:
+            destination_entries[url] = record
 
-                moved.append((platform, title_id, current_category, resolved, record.get("name", url)))
-                print(
-                    f"Reclassified {platform} {title_id}: "
-                    f"{current_category} -> {resolved} | {record.get('name', url)}"
-                )
+        source_data = json.loads(path.read_text(encoding="utf-8"))
+        source_entries = source_data.setdefault("DATA", {})
+        source_entries.pop(url, None)
 
-                destination.write_text(
-                    json.dumps(destination_data, indent=2, ensure_ascii=False) + "\n",
-                    encoding="utf-8",
-                )
+        destination.write_text(
+            json.dumps(destination_data, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
+        path.write_text(
+            json.dumps(source_data, indent=2, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
 
-            path.write_text(
-                json.dumps(data, indent=2, ensure_ascii=False) + "\n",
-                encoding="utf-8",
-            )
+        moved.append((platform, title_id, category, resolved, record.get("name", url)))
+        print(
+            f"Reclassified {platform} {title_id}: "
+            f"{category} -> {resolved} | {record.get('name', url)}"
+        )
 
-    print(f"Catalog audit: scanned {scanned} records | reclassified {len(moved)}")
+    print(
+        f"Catalog audit: scanned {scanned} records | "
+        f"reclassified {len(moved)}"
+    )
     return moved
 
 
