@@ -98,16 +98,29 @@ def extract_package_url(record):
 
 def collect_records():
     records = {}
+    failed_pages = []
+    failed_details = []
     page = 1
+    consecutive_page_failures = 0
 
     while True:
         url = f"{BASE_URL}/?page={page}"
         response = fetch(url)
+
         if response is None:
-            print(f"{CATEGORY}: page {page}: failed after retries; moving to next page.")
+            failed_pages.append(page)
+            consecutive_page_failures += 1
+            print(
+                f"{CATEGORY}: page {page}: unavailable after retries "
+                f"(consecutive failures: {consecutive_page_failures}); continuing."
+            )
+            if consecutive_page_failures >= 3:
+                print(f"{CATEGORY}: three consecutive page failures; ending initial scan.")
+                break
             page += 1
             continue
 
+        consecutive_page_failures = 0
         soup = BeautifulSoup(response.text, "html.parser")
         articles = soup.select("article.pkg")
 
@@ -115,8 +128,8 @@ def collect_records():
             print(f"{CATEGORY}: page {page}: no package cards; reached end of catalog.")
             break
 
-        page_ids = set()
         added = 0
+        page_ids = set()
 
         for article in articles:
             record = extract_card(article)
@@ -126,6 +139,7 @@ def collect_records():
 
             detail = fetch(record["detail_url"])
             if detail is None:
+                failed_details.append(record)
                 print(f"RETRY LATER {record['id']}: detail page unavailable")
                 continue
 
@@ -140,16 +154,43 @@ def collect_records():
             added += 1
 
         print(f"{CATEGORY}: page {page}: {len(articles)} cards, {added} new")
-
-        # A repeated page means pagination has ended even if the site still
-        # returns HTML/cards instead of an empty page.
-        if page > 1 and all(record["id"] in records for record in (
-            extract_card(article) for article in articles if extract_card(article)
-        )):
-            print(f"{CATEGORY}: page {page}: no new package IDs; reached end of catalog.")
-            break
-
         page += 1
+
+    # Retry pages that failed during the main scan once more before finishing.
+    for retry_page in list(dict.fromkeys(failed_pages)):
+        response = fetch(f"{BASE_URL}/?page={retry_page}", retries=10)
+        if response is None:
+            print(f"FINAL SKIP: page {retry_page} still unavailable.")
+            continue
+
+        soup = BeautifulSoup(response.text, "html.parser")
+        for article in soup.select("article.pkg"):
+            record = extract_card(article)
+            if not record or record["id"] in records:
+                continue
+
+            detail = fetch(record["detail_url"], retries=10)
+            if detail is None:
+                failed_details.append(record)
+                continue
+
+            category = extract_category(BeautifulSoup(detail.text, "html.parser"))
+            if category.startswith(CATEGORY_SLUG):
+                record["category"] = category
+                records[record["id"]] = record
+
+    # Retry detail pages that were temporarily unavailable.
+    for record in list(dict.fromkeys(item["id"] for item in failed_details)):
+        original = next(item for item in failed_details if item["id"] == record)
+        detail = fetch(original["detail_url"], retries=10)
+        if detail is None:
+            print(f"FINAL SKIP: {record} detail page still unavailable.")
+            continue
+
+        category = extract_category(BeautifulSoup(detail.text, "html.parser"))
+        if category.startswith(CATEGORY_SLUG):
+            original["category"] = category
+            records[record] = original
 
     return list(records.values())
 
