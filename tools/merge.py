@@ -389,6 +389,13 @@ def main():
         print("Continuing without external database entries.")
         dataset_entries = {}
 
+    def external_entries_for_category(category):
+        return {
+            pkg_url: metadata
+            for pkg_url, metadata in dataset_entries.items()
+            if metadata.get("category", "games") == category
+        }
+
     for category, urls in sources.items():
         merge_category(
             category,
@@ -397,7 +404,7 @@ def main():
                 pkg_url: metadata
                 for pkg_url, metadata in {
                     **release_entries.get(category, {}),
-                    **(dataset_entries if category == "games" else {}),
+                    **external_entries_for_category(category),
                 }.items()
                 if not is_ps5_entry(metadata)
             },
@@ -408,7 +415,7 @@ def main():
             pkg_url: metadata
             for pkg_url, metadata in {
                 **ps5_release_entries.get(category, {}),
-                **(dataset_entries if category == "games" else {}),
+                **external_entries_for_category(category),
             }.items()
             if is_ps5_entry(metadata)
             and pkg_url not in exclusions.get(category, set())
@@ -465,9 +472,14 @@ def main():
             if is_ps5_entry(metadata):
                 ps5_entries.setdefault(pkg_url, metadata)
 
-    for pkg_url, metadata in dataset_entries.items():
-        if is_ps5_entry(metadata) and pkg_url not in exclusions.get("games", set()):
-            ps5_entries.setdefault(pkg_url, metadata)
+    for category, category_entries in sources.items():
+        for pkg_url, metadata in dataset_entries.items():
+            if (
+                metadata.get("category", "games") == category
+                and is_ps5_entry(metadata)
+                and pkg_url not in exclusions.get(category, set())
+            ):
+                ps5_entries.setdefault(pkg_url, metadata)
 
     if not ps5_entries and ps5_output_path.exists():
         try:
