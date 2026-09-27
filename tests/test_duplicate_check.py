@@ -10,6 +10,7 @@ import duplicate_check  # noqa: E402
 
 
 def test_detects_exact_duplicate_urls(tmp_path, monkeypatch):
+    (tmp_path / "ps4").mkdir()
     record = {"https://example.test/game.pkg": {"title_id": "CUSA12345", "version": "1.00"}}
     (tmp_path / "games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
     (tmp_path / "apps.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
@@ -19,6 +20,7 @@ def test_detects_exact_duplicate_urls(tmp_path, monkeypatch):
 
 
 def test_title_version_duplicate_fails(tmp_path, monkeypatch, capsys):
+    (tmp_path / "ps4").mkdir()
     (tmp_path / "games.json").write_text(
         json.dumps({"DATA": {"https://example.test/a.pkg": {"title_id": "CUSA12345", "version": "1.00"}}}),
         encoding="utf-8",
@@ -34,6 +36,7 @@ def test_title_version_duplicate_fails(tmp_path, monkeypatch, capsys):
 
 
 def test_url_encoding_variants_are_not_flagged_as_suspicious(tmp_path, monkeypatch, capsys):
+    (tmp_path / "ps4").mkdir()
     (tmp_path / "games.json").write_text(
         json.dumps({
             "DATA": {
@@ -57,6 +60,7 @@ def test_url_encoding_variants_are_not_flagged_as_suspicious(tmp_path, monkeypat
 
 
 def test_archive_and_huggingface_mirrors_are_expected(tmp_path, monkeypatch, capsys):
+    (tmp_path / "ps4").mkdir()
     (tmp_path / "games.json").write_text(
         json.dumps({
             "DATA": {
@@ -80,6 +84,7 @@ def test_archive_and_huggingface_mirrors_are_expected(tmp_path, monkeypatch, cap
 
 
 def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
+    (tmp_path / "ps4").mkdir()
     (tmp_path / "games.json").write_text(
         json.dumps({
             "DATA": {
@@ -102,6 +107,7 @@ def test_different_urls_with_same_identity_fail(tmp_path, monkeypatch, capsys):
 
 
 def test_ignores_unified_ps5_catalog(tmp_path, monkeypatch):
+    (tmp_path / "ps5").mkdir()
     record = {"https://example.test/game.pkg": {"title_id": "PPSA12345", "version": "1.00"}}
     (tmp_path / "ps5.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
     (tmp_path / "ps5-games.json").write_text(json.dumps({"DATA": record}), encoding="utf-8")
