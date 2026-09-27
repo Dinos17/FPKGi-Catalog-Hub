@@ -1,94 +1,193 @@
 #!/usr/bin/env python3
+from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
-import json, os, sqlite3, tempfile
+import json
+import os
+import re
+import tempfile
+
 import requests
+from bs4 import BeautifulSoup
 from huggingface_hub import HfApi
 
-STORE_DB_URL="https://api.pkg-zone.com/store.db"
-HF_REPO="dinos17/PS-Applications"
-CATEGORIES=["Utility","Emulator","Game","Homebrew","Update","Media","DLC","Retail PKG","Fake PKG","Dev Menu"]
-ALIASES={
-"utility":"Utility","utilities":"Utility","emulator":"Emulator","emulators":"Emulator",
-"game":"Game","games":"Game","homebrew":"Homebrew","homebrews":"Homebrew",
-"update":"Update","updates":"Update","patch":"Update","patches":"Update",
-"media":"Media","dlc":"DLC","retail pkg":"Retail PKG","retail":"Retail PKG",
-"fake pkg":"Fake PKG","fake":"Fake PKG","dev menu":"Dev Menu","devmenu":"Dev Menu"}
+HF_REPO = "dinos17/PS-Applications"
+BASE_URL = "https://pkg-zone.com"
+CATEGORIES = [
+    "Utility", "Emulator", "Game", "Homebrew", "Update",
+    "Media", "DLC", "Retail PKG", "Fake PKG", "Dev Menu",
+]
+ALIASES = {
+    "utility": "Utility", "utilities": "Utility", "store": "Utility",
+    "emulator": "Emulator", "emulators": "Emulator",
+    "game": "Game", "games": "Game", "hb game": "Game", "homebrew game": "Game",
+    "homebrew": "Homebrew", "homebrews": "Homebrew",
+    "update": "Update", "updates": "Update", "patch": "Update", "patches": "Update",
+    "media": "Media", "dlc": "DLC",
+    "retail pkg": "Retail PKG", "retail": "Retail PKG",
+    "fake pkg": "Fake PKG", "fake": "Fake PKG",
+    "dev menu": "Dev Menu", "devmenu": "Dev Menu",
+}
 
-def norm(v):
-    if not v: return None
-    return ALIASES.get(" ".join(v.strip().lower().replace("_"," ").split()))
+SESSION = requests.Session()
+SESSION.headers.update({
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/153.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+})
 
-def download(path):
-    user_agents = [
-        os.environ.get("PKG_ZONE_USER_AGENT", "StoreHAX/GL-0x00000000"),
-        "StoreHAX/GL-0x00000000",
-        "StoreHAX/GL",
-    ]
-    for user_agent in dict.fromkeys(user_agents):
-        headers = {
-            "User-Agent": user_agent,
-            "Accept": "*/*",
-            "Referer": "https://pkg-zone.com/",
-        }
-        with requests.get(STORE_DB_URL, headers=headers, timeout=120, stream=True) as r:
-            if r.status_code == 200:
-                with path.open("wb") as f:
-                    for chunk in r.iter_content(1024 * 1024):
-                        if chunk:
-                            f.write(chunk)
-                print(f"Downloaded store.db with User-Agent: {user_agent}")
-                return
-            print(f"store.db request returned HTTP {r.status_code} with User-Agent: {user_agent}")
-    raise RuntimeError(
-        "PKG-Zone denied all store.db requests (HTTP 403). "
-        "The Store client formats its User-Agent as StoreHAX/GL-0x<SDK_VERSION>. "
-        "The endpoint may require a valid Store client SDK version or may block GitHub Actions."
-    )
-def load(db):
-    con=sqlite3.connect(db); con.row_factory=sqlite3.Row
+def norm(value):
+    if not value:
+        return None
+    return ALIASES.get(" ".join(value.strip().lower().replace("_", " ").split()))
+
+def fetch(url):
+    response = SESSION.get(url, timeout=30)
+    response.raise_for_status()
+    return response.text
+
+def extract_card(article):
+    link = article.select_one('a[href*="/details/"]')
+    if not link:
+        return None
+    match = re.search(r"/details/([^/?#]+)", link.get("href", ""))
+    if not match:
+        return None
+    title_node = article.select_one(".title.font-bold")
+    author_node = article.select_one(".text-gray-300")
+    version_node = article.select_one(".number")
+    title = title_node.get_text(" ", strip=True) if title_node else ""
+    author = author_node.get_text(" ", strip=True) if author_node else ""
+    version = version_node.get_text(" ", strip=True) if version_node else ""
+    version = re.sub(r"\\s+", " ", version).strip()
+    return {
+        "id": match.group(1),
+        "name": title,
+        "author": author,
+        "version": version.lstrip("vV").strip(),
+        "details": f"{BASE_URL}/details/{match.group(1)}",
+    }
+
+def collect_listing():
+    records = {}
+    max_pages = int(os.environ.get("PKG_ZONE_MAX_PAGES", "20"))
+    for page in range(1, max_pages + 1):
+        url = f"{BASE_URL}/?page={page}"
+        html = fetch(url)
+        soup = BeautifulSoup(html, "html.parser")
+        articles = soup.select("article.pkg")
+        if not articles:
+            print(f"Listing page {page}: no package cards; stopping.")
+            break
+        added = 0
+        for article in articles:
+            record = extract_card(article)
+            if record and record["id"] not in records:
+                records[record["id"]] = record
+                added += 1
+        print(f"Listing page {page}: {len(articles)} cards, {added} new")
+        if added == 0:
+            break
+    if not records:
+        raise RuntimeError("PKG-Zone listing returned no package cards.")
+    print(f"Listing: {len(records)} unique packages")
+    return list(records.values())
+
+def enrich(record):
     try:
-        cols={r[1] for r in con.execute("PRAGMA table_info(homebrews)")}
-        required={"id","name","package","version","apptype"}
-        missing=required-cols
-        if missing: raise RuntimeError(f"homebrews missing columns: {sorted(missing)}")
-        rows=con.execute("""SELECT id,name,package,version,apptype,desc,image,Size,Author,pv,releaseddate,
-                            number_of_downloads,github,video,twitter,md5
-                            FROM homebrews WHERE apptype IS NOT NULL
-                            ORDER BY name COLLATE NOCASE, version""").fetchall()
-        grouped={c:[] for c in CATEGORIES}; skipped=0
-        for row in rows:
-            category=norm(row["apptype"])
-            if not category: skipped+=1; continue
-            record={k:row[k] for k in row.keys() if row[k] not in (None,"")}
-            record["category"]=category; record["source"]="PKG-Zone"
-            grouped[category].append(record)
-        print(f"DB: {len(rows)} rows, {sum(map(len,grouped.values()))} categorized, {skipped} skipped")
-        for c in CATEGORIES: print(f"  {c}: {len(grouped[c])}")
-        return grouped
-    finally: con.close()
+        html = fetch(record["details"])
+        soup = BeautifulSoup(html, "html.parser")
+        text = soup.get_text(" ", strip=True)
+        match = re.search(r"\\bCategory\\s+([A-Za-z][A-Za-z ]{1,40}?)(?=\\s+(?:Downloads|Ratings|Updated|Download for))", text)
+        category = norm(match.group(1)) if match else None
+        if not category:
+            match = re.search(r"\\bCategory\\s+([A-Za-z][A-Za-z ]{1,40})", text)
+            category = norm(match.group(1)) if match else None
+        if not category:
+            return None, f"{record['id']}: category not recognized"
+        record["category"] = category
+        record["source"] = "PKG-Zone"
+        record["package"] = record["details"]
+        record.pop("details", None)
+        return record, None
+    except Exception as exc:
+        return None, f"{record['id']}: {exc}"
 
-def write(grouped,root):
-    for c in CATEGORIES:
-        d=root/c; d.mkdir(parents=True,exist_ok=True)
-        (d/"catalog.json").write_text(json.dumps({
-            "source":"https://pkg-zone.com/","category":c,"records":grouped[c]
-        },ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
-    (root/"README.md").write_text(
-        "# PS-Applications\n\nCatalog metadata mirrored from PKG-Zone's public store database. "
-        "Contains metadata and package URLs, not copied package binaries.\n",encoding="utf-8")
+def load():
+    records = collect_listing()
+    workers = int(os.environ.get("PKG_ZONE_WORKERS", "12"))
+    grouped = {category: [] for category in CATEGORIES}
+    skipped = []
+    with ThreadPoolExecutor(max_workers=workers) as executor:
+        futures = [executor.submit(enrich, record) for record in records]
+        for future in as_completed(futures):
+            record, error = future.result()
+            if record:
+                grouped[record["category"]].append(record)
+            elif error:
+                skipped.append(error)
+    for category in CATEGORIES:
+        grouped[category].sort(key=lambda item: (item.get("name", "").lower(), item.get("id", "")))
+        print(f"  {category}: {len(grouped[category])}")
+    if skipped:
+        print(f"Skipped: {len(skipped)} records")
+        for item in skipped[:20]:
+            print(f"  {item}")
+        if len(skipped) > 20:
+            print(f"  ... {len(skipped) - 20} more")
+    total = sum(len(items) for items in grouped.values())
+    if total == 0:
+        raise RuntimeError("PKG-Zone enrichment produced 0 categorized records.")
+    print(f"Catalog: {total} categorized records")
+    return grouped
+
+def write(grouped, root):
+    for category in CATEGORIES:
+        directory = root / category
+        directory.mkdir(parents=True, exist_ok=True)
+        (directory / "catalog.json").write_text(
+            json.dumps(
+                {
+                    "source": f"{BASE_URL}/",
+                    "category": category,
+                    "records": grouped[category],
+                },
+                ensure_ascii=False,
+                indent=2,
+            ) + "\\n",
+            encoding="utf-8",
+        )
+    (root / "README.md").write_text(
+        "# PS-Applications\\n\\n"
+        "Catalog metadata mirrored from PKG-Zone's public catalog pages. "
+        "Contains metadata and package/detail URLs, not copied package binaries.\\n",
+        encoding="utf-8",
+    )
 
 def upload(root):
-    token=os.environ.get("HF_TOKEN")
-    if not token: raise RuntimeError("HF_TOKEN is not set")
-    api=HfApi(token=token)
-    api.create_repo(repo_id=HF_REPO,repo_type="dataset",exist_ok=True,private=False)
-    api.upload_folder(repo_id=HF_REPO,repo_type="dataset",folder_path=str(root),
-                      path_in_repo=".",commit_message="Update PS-Applications catalog")
+    token = os.environ.get("HF_TOKEN")
+    if not token:
+        raise RuntimeError("HF_TOKEN is not set")
+    api = HfApi(token=token)
+    api.create_repo(repo_id=HF_REPO, repo_type="dataset", exist_ok=True, private=False)
+    api.upload_folder(
+        repo_id=HF_REPO,
+        repo_type="dataset",
+        folder_path=str(root),
+        path_in_repo=".",
+        commit_message="Update PS-Applications catalog",
+    )
 
 def main():
-    with tempfile.TemporaryDirectory() as t:
-        db=Path(t)/"store.db"; out=Path(t)/"dataset"; download(db)
-        grouped=load(db); write(grouped,out); upload(out)
+    with tempfile.TemporaryDirectory() as temp:
+        root = Path(temp) / "dataset"
+        grouped = load()
+        write(grouped, root)
+        upload(root)
         print(f"Uploaded to {HF_REPO}")
 
-if __name__=="__main__": main()
+if __name__ == "__main__":
+    main()
