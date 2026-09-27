@@ -133,7 +133,12 @@ function platformForFile(file) {
 }
 
 function normalize(value) {
-  return String(value ?? "").toLowerCase().trim();
+  return String(value ?? "")
+    .normalize("NFKD")
+    .replace(/[\p{P}\p{S}]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .trim();
 }
 
 function buildCategoryFilters() {
