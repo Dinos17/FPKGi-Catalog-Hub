@@ -6,6 +6,7 @@ from urllib.parse import quote, urlsplit
 import requests
 
 from pkg_metadata import extract_metadata
+from title_resolver import resolve_title
 
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "external_database.json"
@@ -166,6 +167,13 @@ def fetch_external_database_entries():
             )
         except Exception as exc:
             print(f"  WARNING: Could not inspect {filename}: {exc}")
+
+        title_id = metadata.get("title_id")
+        if metadata.get("name") == filename and title_id:
+            resolved_name = resolve_title(title_id)
+            if resolved_name:
+                metadata["name"] = resolved_name
+                print(f"  Title lookup: {title_id} -> {resolved_name}")
 
         entries[url] = metadata
 
