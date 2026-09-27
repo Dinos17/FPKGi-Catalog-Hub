@@ -86,10 +86,8 @@ function normalize(value) {
 }
 
 function buildCategoryFilters() {
-  const available = new Set(["all", ...state.records.map(record => record.category)]);
   const container = document.getElementById("categoryFilters");
   container.innerHTML = Object.entries(categoryLabels)
-    .filter(([key]) => available.has(key))
     .map(([key, label]) =>
       '<button data-category="' + key + '">' + escapeHtml(label) + '</button>'
     ).join("");
