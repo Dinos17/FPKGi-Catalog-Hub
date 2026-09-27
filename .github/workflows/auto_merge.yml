@@ -33,6 +33,10 @@ jobs:
         run: |
           python tools/merge.py
 
+      - name: Audit and Reclassify All Catalogs
+        run: |
+          python tools/catalog_audit.py
+
       - name: Validate Generated Catalogs
         run: |
           python tools/validate_catalogs.py
