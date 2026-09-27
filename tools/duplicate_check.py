@@ -1,9 +1,11 @@
 import json
 from collections import defaultdict
 from pathlib import Path
+from urllib.parse import unquote, urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 EXCLUDED = {"ps5.json"}
+
 
 def load_catalogs():
     catalogs = {}
@@ -20,22 +22,109 @@ def load_catalogs():
         catalogs[path.name] = entries
     return catalogs
 
-def build_report(catalogs, exact_duplicates, suspicious_duplicates):
+
+def normalize_package_url(url):
+    """Normalize URL encoding in the path without changing query semantics."""
+    parts = urlsplit(url)
+    return parts._replace(
+        scheme=parts.scheme.lower(),
+        netloc=parts.netloc.lower(),
+        path=unquote(parts.path),
+    ).geturl()
+
+
+def is_expected_mirror(url_a, url_b):
+    """Return True for matching Archive.org and Hugging Face package mirrors."""
+    a = urlsplit(url_a)
+    b = urlsplit(url_b)
+
+    def host_is(host, domain):
+        host = host.lower().split(":", 1)[0]
+        return host == domain or host.endswith("." + domain)
+
+    archive_a = host_is(a.netloc, "archive.org")
+    archive_b = host_is(b.netloc, "archive.org")
+    hf_a = host_is(a.netloc, "huggingface.co")
+    hf_b = host_is(b.netloc, "huggingface.co")
+
+    if not ((archive_a and hf_b) or (archive_b and hf_a)):
+        return False
+
+    filename_a = unquote(a.path).rsplit("/", 1)[-1]
+    filename_b = unquote(b.path).rsplit("/", 1)[-1]
+    return filename_a == filename_b
+
+
+def classify_identity_duplicates(by_identity):
+    expected_mirrors = {}
+    suspicious = {}
+
+    for identity, records in by_identity.items():
+        unique_normalized = {}
+        for filename, url in records:
+            unique_normalized.setdefault(normalize_package_url(url), []).append(
+                (filename, url)
+            )
+
+        if len(unique_normalized) <= 1:
+            continue
+
+        urls = list(unique_normalized)
+        all_expected_mirrors = (
+            len(urls) == 2
+            and is_expected_mirror(urls[0], urls[1])
+        )
+
+        if all_expected_mirrors:
+            expected_mirrors[identity] = records
+        else:
+            suspicious[identity] = records
+
+    return expected_mirrors, suspicious
+
+
+def build_report(
+    catalogs,
+    exact_duplicates,
+    expected_mirrors,
+    suspicious_duplicates,
+):
+    total_registrations = sum(len(entries) for entries in catalogs.values())
+    unique_urls = len(
+        {
+            url
+            for entries in catalogs.values()
+            for url in entries
+        }
+    )
+
     lines = [
         "### FPKGi Duplication Check",
         "",
         f"**Catalogs scanned:** {len(catalogs)}",
-        f"**Unique package URLs:** {sum(len(entries) for entries in catalogs.values())}",
+        f"**Package registrations:** {total_registrations}",
+        f"**Unique package URLs:** {unique_urls}",
         f"**Exact duplicate package URLs:** {len(exact_duplicates)}",
+        f"**Expected Archive.org ↔ Hugging Face mirrors:** {len(expected_mirrors)}",
         f"**Possible title/version duplicates:** {len(suspicious_duplicates)}",
         "",
     ]
 
     if exact_duplicates:
         lines.extend(["#### ❌ Exact duplicates", ""])
-        for url, files in sorted(exact_duplicates.items()):
+        for url, records in sorted(exact_duplicates.items()):
             lines.append(f"- `{url}`")
-            lines.append("  - Found in: " + ", ".join(sorted(files)))
+            for filename in sorted(records):
+                lines.append(f"  - Found in: {filename}")
+        lines.append("")
+
+    if expected_mirrors:
+        lines.extend(["#### ℹ️ Expected Archive.org ↔ Hugging Face mirrors", ""])
+        for (is_ps5, title_id, version), records in sorted(expected_mirrors.items()):
+            platform = "PS5" if is_ps5 else "PS4"
+            lines.append(f"- **{platform} {title_id} v{version}**")
+            for filename, url in records:
+                lines.append(f"  - `{filename}` — {url}")
         lines.append("")
 
     if suspicious_duplicates:
@@ -57,7 +146,7 @@ def build_report(catalogs, exact_duplicates, suspicious_duplicates):
         lines.extend([
             "### ⚠️ Result: No exact duplicate package URLs detected.",
             "",
-            "Possible title/version duplicates are warnings only.",
+            "Expected mirrors are informational. Possible title/version duplicates are warnings only.",
         ])
     else:
         lines.append("### ✅ Result: No duplicate registrations detected.")
@@ -69,6 +158,7 @@ def check_duplicates():
     catalogs = load_catalogs()
     by_url = defaultdict(list)
     by_identity = defaultdict(list)
+
     for filename, entries in catalogs.items():
         for pkg_url, metadata in entries.items():
             by_url[pkg_url].append(filename)
@@ -78,19 +168,35 @@ def check_duplicates():
             version = metadata.get("version")
             if not title_id or not version:
                 continue
-            identity = (filename.startswith("ps5-"), str(title_id).upper(), str(version))
+            identity = (
+                filename.startswith("ps5-"),
+                str(title_id).upper(),
+                str(version),
+            )
             by_identity[identity].append((filename, pkg_url))
-    exact_duplicates = {url: files for url, files in by_url.items() if len(files) > 1}
-    suspicious_duplicates = {identity: records for identity, records in by_identity.items() if len({url for _, url in records}) > 1}
-    report = build_report(catalogs, exact_duplicates, suspicious_duplicates)
+
+    exact_duplicates = {
+        url: files for url, files in by_url.items() if len(files) > 1
+    }
+    expected_mirrors, suspicious_duplicates = classify_identity_duplicates(by_identity)
+
+    report = build_report(
+        catalogs,
+        exact_duplicates,
+        expected_mirrors,
+        suspicious_duplicates,
+    )
     print(report, end="")
 
     import os
+
     summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
     if summary_path:
         Path(summary_path).write_text(report, encoding="utf-8")
+
     if exact_duplicates:
         raise SystemExit(1)
+
 
 if __name__ == "__main__":
     check_duplicates()
