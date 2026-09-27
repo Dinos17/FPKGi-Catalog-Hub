@@ -7,10 +7,6 @@ on:
         description: "Direct URL of a file you are authorized to upload"
         required: true
         type: string
-      destination_path:
-        description: "Path and filename in the Hugging Face repository"
-        required: true
-        type: string
       hf_repo:
         description: "Hugging Face repository, for example dinos17/FPKGi-Packages"
         required: false
@@ -30,15 +26,24 @@ jobs:
           SOURCE_URL: ${{ inputs.source_url }}
         run: |
           set -euo pipefail
-          curl --fail --location --retry 3 --retry-all-errors --output source_file "$SOURCE_URL"
-          test -s source_file
-          ls -lh source_file
+
+          curl --fail --location --retry 3 --retry-all-errors --remote-header-name --remote-name "$SOURCE_URL"
+
+          source_file="$(find . -maxdepth 1 -type f -printf '%f\n' | head -n 1)"
+          if [ -z "$source_file" ]; then
+            echo "Could not determine the downloaded filename."
+            exit 1
+          fi
+
+          test -s "$source_file"
+          echo "SOURCE_FILE=$source_file" >> "$GITHUB_ENV"
+          echo "Detected filename: $source_file"
+          ls -lh "$source_file"
 
       - name: Upload to Hugging Face
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO: ${{ inputs.hf_repo }}
-          DESTINATION_PATH: ${{ inputs.destination_path }}
         run: |
           set -euo pipefail
 
@@ -51,14 +56,16 @@ jobs:
 
           python - <<'PY'
           import os
+          from pathlib import Path
           from huggingface_hub import HfApi
 
           token = os.environ["HF_TOKEN"]
           repo_id = os.environ["HF_REPO"]
-          path_in_repo = os.environ["DESTINATION_PATH"]
+          source_file = Path(os.environ["SOURCE_FILE"])
+          path_in_repo = source_file.name
 
           HfApi(token=token).upload_file(
-              path_or_fileobj="source_file",
+              path_or_fileobj=str(source_file),
               path_in_repo=path_in_repo,
               repo_id=repo_id,
               repo_type="dataset",
