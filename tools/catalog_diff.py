@@ -143,9 +143,16 @@ for filename, added, removed, changed in changed_files:
 
 print()
 print("**Record changes:**")
-print(f"- 🆕 New records: **{added_total}**")
-print(f"- 🗑️ Removed records: **{removed_total}**")
-print(f"- 🔄 Modified records: **{changed_total}**")
+if repo:
+    new_link = f"[new JSON]({server_url}/{repo}/blob/main/{NEW_REGISTRATIONS_PATH.as_posix()})"
+    removed_link = f"[removed JSON]({server_url}/{repo}/blob/main/{REMOVED_REGISTRATIONS_PATH.as_posix()})"
+    modified_link = f"[modified JSON]({server_url}/{repo}/blob/main/{MODIFIED_REGISTRATIONS_PATH.as_posix()})"
+else:
+    new_link = removed_link = modified_link = ""
+
+print(f"- 🆕 New records: **{added_total}** — {new_link}".rstrip(" —"))
+print(f"- 🗑️ Removed records: **{removed_total}** — {removed_link}".rstrip(" —"))
+print(f"- 🔄 Modified records: **{changed_total}** — {modified_link}".rstrip(" —"))
 print()
 
 if new_records and repo:
