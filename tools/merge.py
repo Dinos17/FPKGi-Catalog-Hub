@@ -12,6 +12,7 @@ from external_database import fetch_external_database_entries
 
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
+EXCLUSIONS_PATH = Path(__file__).resolve().parent.parent / "config" / "exclusions.json"
 OUTPUT_DIR = Path(__file__).resolve().parent.parent
 TIMEOUT = 60
 MIN_CATALOG_RETENTION_RATIO = 0.5
@@ -73,6 +74,37 @@ def load_sources():
                 ) from exc
 
     return sources
+
+
+def load_exclusions():
+    if not EXCLUSIONS_PATH.exists():
+        return {}
+
+    with EXCLUSIONS_PATH.open("r", encoding="utf-8") as file:
+        exclusions = json.load(file)
+
+    if not isinstance(exclusions, dict):
+        raise ValueError("Exclusion configuration must be a JSON object")
+
+    for category, urls in exclusions.items():
+        try:
+            validate_category_name(category)
+        except ValueError as exc:
+            raise ValueError(
+                f"Invalid exclusion configuration category {category!r}: {exc}"
+            ) from exc
+        if not isinstance(urls, list):
+            raise ValueError(
+                f"Exclusion configuration category '{category}' must be a list"
+            )
+        for url in urls:
+            if not isinstance(url, str) or not url.strip():
+                raise ValueError(
+                    f"Exclusion configuration category '{category}' "
+                    "contains an invalid package URL"
+                )
+
+    return {category: set(urls) for category, urls in exclusions.items()}
 
 
 def fetch_source(url):
@@ -186,8 +218,9 @@ def validate_entries(entries, source_name):
     return valid
 
 
-def merge_category(category, urls, release_entries):
+def merge_category(category, urls, release_entries, excluded_urls=None):
     merged = {}
+    excluded_urls = excluded_urls or set()
     total_source_entries = 0
     failed_sources = 0
 
@@ -212,6 +245,9 @@ def merge_category(category, urls, release_entries):
             duplicates = 0
 
             for pkg_url, metadata in entries.items():
+                if pkg_url in excluded_urls:
+                    print(f"Excluded package registration: {pkg_url}")
+                    continue
                 if pkg_url in merged:
                     duplicates += 1
                     continue
@@ -335,6 +371,7 @@ def main():
     print("=================")
 
     sources = load_sources()
+    exclusions = load_exclusions()
     release_entries, ps5_release_entries = fetch_release_entries()
 
     try:
@@ -351,9 +388,14 @@ def main():
             category,
             urls,
             {**release_entries.get(category, {}), **(dataset_entries if category == "games" else {})},
+            exclusions.get(category, set()),
         )
 
-        ps5_entries = ps5_release_entries.get(category, {})
+        ps5_entries = {
+            pkg_url: metadata
+            for pkg_url, metadata in ps5_release_entries.get(category, {}).items()
+            if pkg_url not in exclusions.get(category, set())
+        }
         ps5_output_path = OUTPUT_DIR / f"ps5-{category}.json"
 
         # Never replace an existing non-empty PS5 catalog with an empty
@@ -402,8 +444,10 @@ def main():
 
     ps5_output_path = OUTPUT_DIR / "ps5.json"
     ps5_entries = {}
-    for category_entries in ps5_release_entries.values():
+    for category, category_entries in ps5_release_entries.items():
         for pkg_url, metadata in category_entries.items():
+            if pkg_url in exclusions.get(category, set()):
+                continue
             ps5_entries.setdefault(pkg_url, metadata)
 
     if not ps5_entries and ps5_output_path.exists():
