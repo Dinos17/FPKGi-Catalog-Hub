@@ -154,30 +154,104 @@ function createSearchIndex() {
     {
       includeScore: true,
       ignoreLocation: true,
-      threshold: 0.38,
-      distance: 100,
+      threshold: 0.34,
+      distance: 80,
       minMatchCharLength: 1,
       findAllMatches: true,
       ignoreFieldNorm: false,
       keys: [
-        { name: "name", weight: 0.65 },
-        { name: "title_id", weight: 0.25 },
-        { name: "region", weight: 0.05 },
-        { name: "version", weight: 0.05 }
+        { name: "name", weight: 0.75 },
+        { name: "title_id", weight: 0.20 },
+        { name: "region", weight: 0.03 },
+        { name: "version", weight: 0.02 }
       ],
       getFn: (object, path) => normalize(object[path])
     }
   );
 }
 
+function editDistance(a, b) {
+  if (a === b) return 0;
+  if (!a.length) return b.length;
+  if (!b.length) return a.length;
+  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
+  for (let i = 1; i <= a.length; i++) {
+    const curr = [i];
+    for (let j = 1; j <= b.length; j++) {
+      curr[j] = Math.min(
+        curr[j - 1] + 1,
+        prev[j] + 1,
+        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
+      );
+    }
+    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
+  }
+  return prev[b.length];
+}
+
+function tokenMatchScore(queryToken, textToken) {
+  if (queryToken === textToken) return 1;
+  if (textToken.startsWith(queryToken)) return 0.92;
+  if (textToken.includes(queryToken)) return 0.82;
+  const maxDistance = queryToken.length <= 3 ? 1 : queryToken.length <= 6 ? 2 : 3;
+  const distance = editDistance(queryToken, textToken);
+  if (distance > maxDistance) return 0;
+  return Math.max(0.45, 1 - distance / Math.max(queryToken.length, textToken.length));
+}
+
+function nameTokenCoverage(query, name) {
+  const queryTokens = normalize(query).split(" ").filter(Boolean);
+  const nameTokens = normalize(name).split(" ").filter(Boolean);
+  if (!queryTokens.length || !nameTokens.length) return 0;
+
+  let total = 0;
+  for (const queryToken of queryTokens) {
+    let best = 0;
+    for (const nameToken of nameTokens) {
+      best = Math.max(best, tokenMatchScore(queryToken, nameToken));
+    }
+    total += best;
+  }
+  return total / queryTokens.length;
+}
+
 function getSearchMatches(query) {
-  if (!query) return state.records;
+  const normalizedQuery = normalize(query);
+  if (!normalizedQuery) return state.records;
 
   if (!searchIndex) createSearchIndex();
 
-  return searchIndex.search(query)
-    .sort((a, b) => (a.score ?? 1) - (b.score ?? 1))
-    .map(result => state.records[result.item.__recordIndex]);
+  const exact = state.records.filter(record => {
+    const name = normalize(record.data.name);
+    const titleId = normalize(record.data.title_id);
+    return name.includes(normalizedQuery) || titleId.includes(normalizedQuery);
+  });
+
+  if (exact.length) {
+    return exact.sort((a, b) =>
+      normalize(a.data.name).localeCompare(normalize(b.data.name))
+    );
+  }
+
+  const tokens = normalizedQuery.split(" ").filter(Boolean);
+  const results = searchIndex.search(normalizedQuery);
+
+  return results
+    .map(result => {
+      const record = state.records[result.item.__recordIndex];
+      const coverage = nameTokenCoverage(normalizedQuery, record.data.name);
+      return { record, fuseScore: result.score ?? 1, coverage };
+    })
+    .filter(item => {
+      if (tokens.length === 1) return item.coverage >= 0.58;
+      return item.coverage >= 0.68;
+    })
+    .sort((a, b) =>
+      b.coverage - a.coverage ||
+      a.fuseScore - b.fuseScore ||
+      normalize(a.record.data.name).localeCompare(normalize(b.record.data.name))
+    )
+    .map(item => item.record);
 }
 
 function buildCategoryFilters() {
