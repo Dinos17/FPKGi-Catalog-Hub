@@ -112,7 +112,7 @@ document.querySelectorAll("[data-filter]").forEach(button => {
   });
 });
 
-fetch("../games.json")
+fetch("games.json")
   .then(response => {
     if (!response.ok) throw new Error("games.json returned " + response.status);
     return response.json();
