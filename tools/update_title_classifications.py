@@ -16,7 +16,10 @@ import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 
-SOURCE_URL = "https://r.jina.ai/https://www.psdevwiki.com/ps4/Game_Titles/db"
+SOURCE_URLS = [
+    "https://r.jina.ai/https://www.psdevwiki.com/ps4/Game_Titles/db",
+    "https://r.jina.ai/http://www.psdevwiki.com/ps4/Game_Titles/db",
+]
 TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
 
 
@@ -55,104 +58,73 @@ class TableParser(HTMLParser):
 
 
 def fetch_source() -> str:
-    request = urllib.request.Request(
-        SOURCE_URL,
-        headers={
-            "User-Agent": "Mozilla/5.0 (compatible; FPKGi-Catalog-Hub/1.0)",
-            "Accept": "text/plain, text/markdown",
-        },
-    )
-    with urllib.request.urlopen(request, timeout=60) as response:
-        text = response.read().decode("utf-8", errors="replace")
-    if not text.strip():
-        raise RuntimeError("PS4 Developer Wiki proxy returned no title database content.")
-    return text
+    last_error: Exception | None = None
 
+    for source_url in SOURCE_URLS:
+        try:
+            request = urllib.request.Request(
+                source_url,
+                headers={
+                    "User-Agent": "Mozilla/5.0 (compatible; FPKGi-Catalog-Hub/1.0)",
+                    "Accept": "text/plain, text/markdown, text/html",
+                },
+            )
+            with urllib.request.urlopen(request, timeout=60) as response:
+                text = response.read().decode("utf-8", errors="replace")
 
+            if not text.strip():
+                raise RuntimeError("proxy returned an empty response")
+
+            # Do not accept a proxy error/landing page as the database.
+            if "CUSA00112" not in text and "CUSA01116" not in text:
+                raise RuntimeError("response does not contain PS4 Title ID data")
+
+            print(f"Fetched PS4 title database from {source_url}")
+            return text
+        except Exception as exc:
+            last_error = exc
+            print(f"Source failed: {source_url}: {exc}")
+
+    raise RuntimeError(f"Unable to fetch PS4 title database: {last_error}")
 def build_database(source: str) -> dict[str, dict[str, str]]:
     parser = TableParser()
     parser.feed(source)
 
     database: dict[str, dict[str, str]] = {}
 
-    # First accept rows parsed from real HTML.
-    rows = list(parser.rows)
-    for row in rows:
-        if len(row) < 4:
-            continue
-        title_id, concept_id, name, type_code = [cell.strip() for cell in row[:4]]
+    def add_row(title_id: str, name: str, type_code: str) -> None:
         title_id = title_id.upper()
         type_code = type_code.upper()
         if TITLE_ID_RE.fullmatch(title_id) and type_code in {"GAME", "APPLICATION"}:
             database[title_id] = {
-                "name": name,
+                "name": name.strip(),
                 "type": type_code,
                 "source": "psdevwiki",
             }
 
-    # r.jina.ai returns the Developer Wiki table as plain/Markdown text.
-    # Parse the complete row directly instead of depending on Markdown
-    # pipe placement.
-    row_re = re.compile(
-        r"^\s*\|?\s*([A-Z]{4}\d{5})\s*\|\s*([^|]+?)"
-        r"\s*\|\s*(.*?)\s*\|\s*(GAME|APPLICATION)"
-        r"\s*\|?\s*$",
-        re.IGNORECASE,
-    )
+    for row in parser.rows:
+        if len(row) >= 4:
+            add_row(row[0], row[2], row[3])
 
+    # The proxy currently returns rows like:
+    # CUSA01116  | 205453 | YouTube | APPLICATION
+    # Split on pipes and locate the four logical columns without relying
+    # on leading/trailing Markdown pipes.
     for line in source.splitlines():
-        match = row_re.match(line)
-        if not match:
+        if "|" not in line:
             continue
 
-        title_id, concept_id, name, type_code = match.groups()
-        title_id = title_id.upper()
-        type_code = type_code.upper()
+        cells = [cell.strip() for cell in line.split("|")]
+        if len(cells) < 4:
+            continue
 
-        database[title_id] = {
-            "name": name.strip(),
-            "type": type_code,
-            "source": "psdevwiki",
-        }
+        title_match = re.search(r"([A-Z]{4}\d{5})", cells[0], re.IGNORECASE)
+        type_match = re.search(r"\b(GAME|APPLICATION)\b", cells[-1], re.IGNORECASE)
+
+        if not title_match or not type_match:
+            continue
+
+        add_row(title_match.group(1), cells[2], type_match.group(1))
 
     return dict(sorted(database.items()))
 
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--output",
-        default="config/title_classifications.json",
-        help="Output JSON path",
-    )
-    args = parser.parse_args()
-
-    source = fetch_source()
-    database = build_database(source)
-
-    if not database:
-        raise RuntimeError("No Title ID records were parsed from the source.")
-
-    output = Path(args.output)
-    output.parent.mkdir(parents=True, exist_ok=True)
-    output.write_text(
-        json.dumps(
-            {
-                "source": SOURCE_URL,
-                "source_description": "PS4 Master List by Zecoxao obtained from PS5 System Software 13.20",
-                "records": database,
-            },
-            indent=2,
-            ensure_ascii=False,
-        )
-        + "\n",
-        encoding="utf-8",
-    )
-
-    print(f"Parsed {len(database)} PS4 Title ID classifications.")
-    print(f"Wrote {output}")
-    return 0
-
-
-if __name__ == "__main__":
-    raise SystemExit(main())
