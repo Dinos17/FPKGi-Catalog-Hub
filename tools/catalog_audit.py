@@ -2,6 +2,7 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
+from external_database import fetch_external_database_entries
 from title_resolver import resolve_category
 
 
@@ -66,6 +67,31 @@ def expected_catalog(platform, category):
     if platform == "PS5":
         return ROOT / "ps5" / f"ps5-{category}.json"
     return ROOT / "ps4" / f"{category}.json"
+
+
+def resolve_external_categories():
+    """Build title-ID category hints from the configured external databases."""
+    try:
+        entries = fetch_external_database_entries()
+    except Exception as exc:
+        print(f"WARNING: External database category lookup failed: {exc}")
+        return {}
+
+    categories = {}
+    for metadata in entries.values():
+        title_id = metadata.get("title_id")
+        category = normalize(metadata.get("category"))
+        if not isinstance(title_id, str) or not category:
+            continue
+
+        title_id = title_id.strip().upper()
+        categories.setdefault(title_id, set()).add(category)
+
+    return {
+        title_id: next(iter(values))
+        for title_id, values in categories.items()
+        if len(values) == 1
+    }
 
 
 def resolve_categories(title_ids):
@@ -142,13 +168,21 @@ def audit_catalogs():
         f"resolving {len(title_ids)} unique title IDs"
     )
 
+    external_categories = resolve_external_categories()
     resolved_categories = resolve_categories(title_ids)
 
     for platform, path, category, url, record, title_id in records:
         # Preserve an explicit package/catalog category. Title-ID resolution is
         # only a fallback for records that do not already carry one. A DLC,
         # update, demo, or application can share a title ID with its base game.
-        resolved = normalize(record.get("category")) or resolved_categories.get(title_id)
+        # Existing catalogs may predate the current external database layout.
+        # Use the configured databases as the strongest fallback so packages
+        # already misplaced in games.json can be moved to their real category.
+        resolved = (
+            normalize(record.get("category"))
+            or external_categories.get(title_id)
+            or resolved_categories.get(title_id)
+        )
         if resolved is None or resolved in {"ps1", "ps2", "psp"}:
             continue
 
