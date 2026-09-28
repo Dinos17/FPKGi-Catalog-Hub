@@ -8730,28 +8730,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01073.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
-      "title_id": "CUSA01116",
-      "region": null,
-      "name": "YouTube",
-      "version": "02.39",
-      "release": null,
-      "size": 128974848,
-      "min_fw": "17.00.128",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true": {
-      "title_id": "CUSA01116",
-      "region": null,
-      "name": "YouTube",
-      "version": "01.00",
-      "release": null,
-      "size": 151650304,
-      "min_fw": "5.05",
-      "cover_url": null,
-      "category": "games"
-    },
     "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/THE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
       "title_id": "CUSA11736",
       "region": null,
@@ -8870,6 +8848,17 @@
       "release": null,
       "size": 274202624,
       "min_fw": "4.80",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true": {
+      "title_id": "CUSA01116",
+      "region": null,
+      "name": "YouTube",
+      "version": "01.00",
+      "release": null,
+      "size": 151650304,
+      "min_fw": "5.05",
       "cover_url": null,
       "category": "games"
     },

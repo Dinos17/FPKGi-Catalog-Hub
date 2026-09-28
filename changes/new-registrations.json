@@ -1,7 +1,7 @@
 {
   "DATA": {
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
-      "url": "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true",
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FEP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FEP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true",
       "title_id": "CUSA01116",
       "region": null,
       "name": "YouTube",
@@ -10,10 +10,10 @@
       "size": 128974848,
       "min_fw": "17.00.128",
       "cover_url": null,
-      "category": "games"
+      "category": "apps"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true": {
-      "url": "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true",
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true",
       "title_id": "CUSA01116",
       "region": null,
       "name": "YouTube",
@@ -23,6 +23,30 @@
       "min_fw": "5.05",
       "cover_url": null,
       "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS5_PPSA01615_v6.00.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS5_PPSA01615_v6.00.pkg?download=true",
+      "title_id": "PPSA01615",
+      "region": null,
+      "name": "Netflix",
+      "version": null,
+      "release": null,
+      "size": 93847552,
+      "min_fw": null,
+      "cover_url": null,
+      "category": "apps"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS5_PPSA01615_v6.00.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS5_PPSA01615_v6.00.pkg?download=true",
+      "title_id": "PPSA01615",
+      "region": null,
+      "name": "Netflix",
+      "version": null,
+      "release": null,
+      "size": 93847552,
+      "min_fw": null,
+      "cover_url": null,
+      "category": "apps"
     }
   }
 }
