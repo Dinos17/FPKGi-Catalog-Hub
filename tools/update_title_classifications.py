@@ -128,3 +128,29 @@ def build_database(source: str) -> dict[str, dict[str, str]]:
 
     return dict(sorted(database.items()))
 
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.parse_args()
+
+    source = fetch_source()
+    database = build_database(source)
+
+    output_path = Path(__file__).resolve().parent.parent / "config" / "title_classifications.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output = {
+        "source": "psdevwiki",
+        "records": database,
+    }
+    output_path.write_text(
+        json.dumps(output, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+    print(f"Parsed {len(database)} PS4 Title ID classifications.")
+    print(f"Output: {output_path}")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
