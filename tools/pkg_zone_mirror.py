@@ -126,7 +126,7 @@ def collect_records():
                 f"(consecutive failures: {consecutive_page_failures}); continuing."
             )
             if consecutive_page_failures >= 3:
-                print(f"{CATEGORY}: three consecutive page failures; ending initial scan.")
+                print(f"PKG-Zone: three consecutive page failures; ending initial scan.")
                 break
             page += 1
             continue
@@ -136,7 +136,7 @@ def collect_records():
         articles = soup.select("article.pkg")
 
         if not articles:
-            print(f"{CATEGORY}: page {page}: no package cards; reached end of catalog.")
+            print(f"PKG-Zone: page {page}: no package cards; reached end of catalog.")
             break
 
         added = 0
@@ -167,7 +167,7 @@ def collect_records():
             records[record["id"]] = record
             added += 1
 
-        print(f"{CATEGORY}: page {page}: {len(articles)} cards, {added} new")
+        print(f"PKG-Zone: page {page}: {len(articles)} cards, {added} new")
         page += 1
 
     # Retry pages that failed during the main scan once more before finishing.
