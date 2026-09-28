@@ -128,3 +128,39 @@ def test_parse_title_id():
     assert external_database.parse_title_id("GAME [CUSA12345].pkg") == "CUSA12345"
     assert external_database.parse_title_id("GAME [PPSA54321].pkg") == "PPSA54321"
     assert external_database.parse_title_id("GAME.pkg") is None
+
+
+def test_scan_database_resolved_app_overrides_generic_games(monkeypatch):
+    monkeypatch.setattr(
+        external_database,
+        "fetch_database_files",
+        lambda url: [{"path": "PS4_CUSA01116.pkg", "size": 123}],
+    )
+    monkeypatch.setattr(
+        external_database,
+        "extract_metadata",
+        lambda url, size: {
+            "title_id": "CUSA01116",
+            "region": "EU",
+            "name": "YouTube",
+            "version": "1.00",
+            "release": None,
+            "size": size,
+            "min_fw": "5.00",
+            "cover_url": None,
+            "category": "games",
+        },
+    )
+    monkeypatch.setattr(external_database, "resolve_category", lambda title_id: "apps")
+
+    entries, scanned, skipped = external_database._scan_database(
+        {
+            "name": "PS-Games-Dataset",
+            "url": "https://huggingface.co/datasets/example/games",
+        }
+    )
+
+    assert scanned == 1
+    assert skipped == 0
+    assert len(entries) == 1
+    assert next(iter(entries.values()))["category"] == "apps"
