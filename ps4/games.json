@@ -8851,17 +8851,6 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true": {
-      "title_id": "CUSA01116",
-      "region": null,
-      "name": "YouTube",
-      "version": "01.00",
-      "release": null,
-      "size": 151650304,
-      "min_fw": "5.05",
-      "cover_url": null,
-      "category": "games"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-r/Rock%20Band%204%20Expansion%20Pack%201.pkg": {
       "title_id": "CUSA02084",
       "region": "USA",

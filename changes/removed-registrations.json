@@ -1,19 +1,7 @@
 {
   "DATA": {
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
-      "url": "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true",
-      "title_id": "CUSA01116",
-      "region": null,
-      "name": "YouTube",
-      "version": "02.39",
-      "release": null,
-      "size": 128974848,
-      "min_fw": "17.00.128",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true": {
-      "url": "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true",
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true",
       "title_id": "CUSA01116",
       "region": null,
       "name": "YouTube",
@@ -34,7 +22,7 @@
       "size": 93847552,
       "min_fw": null,
       "cover_url": null,
-      "category": "games"
+      "category": "apps"
     }
   }
 }

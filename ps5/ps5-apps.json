@@ -10,17 +10,6 @@
       "min_fw": null,
       "cover_url": null,
       "category": "apps"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS5_PPSA01615_v6.00.pkg?download=true": {
-      "title_id": "PPSA01615",
-      "region": null,
-      "name": "Netflix",
-      "version": null,
-      "release": null,
-      "size": 93847552,
-      "min_fw": null,
-      "cover_url": null,
-      "category": "apps"
     }
   }
 }
