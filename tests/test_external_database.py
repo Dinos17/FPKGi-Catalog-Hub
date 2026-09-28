@@ -95,8 +95,17 @@ def test_load_database_urls_rejects_duplicate_urls(tmp_path, monkeypatch):
         external_database.load_database_urls()
 
 
-def test_normalize_category_maps_gdc_to_dlc():
-    assert external_database.normalize_category("gdc") == "dlc"
+def test_normalize_category_maps_non_game_categories():
+    assert external_database.normalize_category("gd") == "games"
+    assert external_database.normalize_category("gda") == "apps"
+    assert external_database.normalize_category("gdc") == "apps"
+    assert external_database.normalize_category("gdd") == "apps"
+    assert external_database.normalize_category("gde") == "apps"
+    assert external_database.normalize_category("gdg") == "apps"
+    assert external_database.normalize_category("gdk") == "apps"
+    assert external_database.normalize_category("gdl") == "apps"
+    assert external_database.normalize_category("ac") == "dlc"
+    assert external_database.normalize_category("gp") == "updates"
 
 
 def test_hugging_face_dataset_parts_accepts_configured_database():
