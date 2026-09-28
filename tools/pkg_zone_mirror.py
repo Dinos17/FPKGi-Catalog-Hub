@@ -38,7 +38,7 @@ SESSION.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
 })
 
-def fetch(url, stream=False, retries=3):
+def fetch(url, stream=False, retries=30):
     delay = 2
 
     for attempt in range(1, retries + 1):
@@ -180,7 +180,7 @@ def collect_records():
 
     # Retry pages that failed during the main scan once more before finishing.
     for retry_page in list(dict.fromkeys(failed_pages)):
-        response = fetch(f"{BASE_URL}/?page={retry_page}", retries=1)
+        response = fetch(f"{BASE_URL}/?page={retry_page}", retries=30)
         if response is None:
             print(f"FINAL SKIP: page {retry_page} still unavailable.")
             continue
@@ -191,7 +191,7 @@ def collect_records():
             if not record or record["id"] in records:
                 continue
 
-            detail = fetch(record["detail_url"], retries=1)
+            detail = fetch(record["detail_url"], retries=30)
             if detail is None:
                 failed_details.append(record)
                 continue
