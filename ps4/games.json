@@ -8730,7 +8730,18 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01073.png"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
+      "title_id": "CUSA01116",
+      "region": null,
+      "name": "YouTube",
+      "version": "02.39",
+      "release": null,
+      "size": 128974848,
+      "min_fw": "17.00.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/PS4_CUSA01116_v2.32.pkg?download=true": {
       "title_id": "CUSA01015",
       "region": null,
       "name": "YouTube",
@@ -8741,7 +8752,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/THE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/THE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
       "title_id": "CUSA11736",
       "region": null,
       "name": "THE QUIET MAN",
@@ -8752,7 +8763,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tacoma%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tacoma%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
       "title_id": "CUSA11366",
       "region": null,
       "name": "Tacoma",
@@ -8763,7 +8774,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Taiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20%5BJP%5D%20%5BEN%5D%20%5B1.28%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Taiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20%5BJP%5D%20%5BEN%5D%20%5B1.28%5D.pkg?download=true": {
       "title_id": "CUSA07515",
       "region": null,
       "name": "Taiko No Tatsujin – Drum Session",
@@ -8774,7 +8785,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tales%20from%20the%20Borderlands%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.07%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tales%20from%20the%20Borderlands%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.07%5D.pkg?download=true": {
       "title_id": "CUSA00870",
       "region": null,
       "name": "Tales from the Borderlands",
@@ -8785,7 +8796,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tearaway%20Unfolded%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tearaway%20Unfolded%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
       "title_id": "CUSA00562",
       "region": null,
       "name": "Tearaway™ Unfolded",
@@ -8796,7 +8807,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Teenage%20Mutant%20Ninja%20Turtles%20Shredder%27s%20Revenge%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Teenage%20Mutant%20Ninja%20Turtles%20Shredder%27s%20Revenge%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg?download=true": {
       "title_id": "CUSA30991",
       "region": null,
       "name": "Teenage Mutant Ninja Turtles: Shredder's Revenge",
@@ -8807,7 +8818,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Terraria%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.35%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Terraria%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.35%5D.pkg?download=true": {
       "title_id": "CUSA00740",
       "region": null,
       "name": "Terraria",
@@ -8818,7 +8829,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/Tetris%20Effect%20Connected%20-%20%5BEU%5D%20%5BEN%5D%20%5B2.02%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tetris%20Effect%20Connected%20-%20%5BEU%5D%20%5BEN%5D%20%5B2.02%5D.pkg?download=true": {
       "title_id": "CUSA13643",
       "region": null,
       "name": "Tetris® Effect: Connected",
@@ -8829,7 +8840,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Artful%20Escape%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.02%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/The%20Artful%20Escape%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.02%5D.pkg?download=true": {
       "title_id": "CUSA30113",
       "region": null,
       "name": "The Artful Escape",
@@ -8840,7 +8851,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Binding%20of%20Isaac%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.16%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/The%20Binding%20of%20Isaac%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.16%5D.pkg?download=true": {
       "title_id": "CUSA00792",
       "region": null,
       "name": "The Binding of Isaac",
@@ -8851,7 +8862,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/FPKGi-Packages/resolve/main/The%20Bug%20Butcher%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/The%20Bug%20Butcher%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg?download=true": {
       "title_id": "CUSA04995",
       "region": null,
       "name": "The Bug Butcher",
