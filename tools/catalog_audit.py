@@ -145,7 +145,10 @@ def audit_catalogs():
     resolved_categories = resolve_categories(title_ids)
 
     for platform, path, category, url, record, title_id in records:
-        resolved = resolved_categories.get(title_id)
+        # Preserve an explicit package/catalog category. Title-ID resolution is
+        # only a fallback for records that do not already carry one. A DLC,
+        # update, demo, or application can share a title ID with its base game.
+        resolved = normalize(record.get("category")) or resolved_categories.get(title_id)
         if resolved is None or resolved in {"ps1", "ps2", "psp"}:
             continue
 
