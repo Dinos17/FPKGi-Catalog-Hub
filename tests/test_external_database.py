@@ -14,7 +14,14 @@ def test_load_database_url_reads_json_config(tmp_path, monkeypatch):
     config_path = tmp_path / "external_database.json"
     config_path.write_text(
         json.dumps(
-            {"url": "https://huggingface.co/datasets/example/packages"}
+            {
+                "datasets": [
+                    {
+                        "name": "Example",
+                        "url": "https://huggingface.co/datasets/example/packages",
+                    }
+                ]
+            }
         ),
         encoding="utf-8",
     )
