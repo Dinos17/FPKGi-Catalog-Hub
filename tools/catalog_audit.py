@@ -31,6 +31,21 @@ CATEGORY_MAP = {
     "update": "updates",
     "updates": "updates",
     "patch": "updates",
+    "gd": "games",
+    "gda": "games",
+    "gdc": "games",
+    "gdd": "games",
+    "gdl": "games",
+    "gdp": "games",
+    "gds": "games",
+    "gdt": "games",
+    "gdu": "games",
+    "gdx": "games",
+    "gapp": "apps",
+    "gtheme": "themes",
+    "gpatch": "updates",
+    "gup": "updates",
+    "gaddon": "dlc",
 }
 
 
