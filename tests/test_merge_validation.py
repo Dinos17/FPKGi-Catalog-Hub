@@ -481,6 +481,48 @@ def test_main_preserves_existing_unified_ps5_catalog_when_release_result_is_empt
     assert json.loads(output_path.read_text(encoding="utf-8")) == existing
 
 
+def test_main_keeps_external_apps_out_of_games_catalog(tmp_path, monkeypatch):
+    import merge
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(merge, "load_sources", lambda: {"games": [], "apps": []})
+    monkeypatch.setattr(
+        merge,
+        "fetch_release_entries",
+        lambda: ({}, {"games": {}, "apps": {}}),
+    )
+    monkeypatch.setattr(
+        merge,
+        "fetch_external_database_entries",
+        lambda: {
+            "https://example.com/app.pkg": {
+                "name": "Example App",
+                "title_id": "CUSA12345",
+                "category": "apps",
+            },
+            "https://example.com/game.pkg": {
+                "name": "Example Game",
+                "title_id": "CUSA54321",
+                "category": "games",
+            },
+        },
+    )
+
+    captured = {}
+
+    def capture(category, urls, release_entries, excluded_urls=None):
+        captured[category] = release_entries
+        return 0
+
+    monkeypatch.setattr(merge, "merge_category", capture)
+
+    merge.main()
+
+    assert "https://example.com/app.pkg" not in captured["games"]
+    assert "https://example.com/game.pkg" in captured["games"]
+    assert "https://example.com/app.pkg" in captured["apps"]
+
+
 def test_main_continues_when_external_database_is_unavailable(
     tmp_path, monkeypatch
 ):
