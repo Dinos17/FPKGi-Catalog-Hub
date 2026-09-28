@@ -2,7 +2,8 @@ import json
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
-from external_database import fetch_external_database_entries
+from external_database import fetch_external_database_entries, normalize_category
+from pkg_metadata import extract_metadata
 from title_resolver import resolve_category
 
 
@@ -100,6 +101,7 @@ def resolve_external_categories():
 
 
 CACHE_PATH = ROOT / "config" / "title_api_cache.json"
+PKG_CACHE_PATH = ROOT / "config" / "pkg_category_cache.json"
 CLASSIFICATION_PATH = ROOT / "config" / "title_classifications.json"
 
 
@@ -114,6 +116,45 @@ def _load_classifications():
     records = data.get("records") if isinstance(data, dict) else None
     return records if isinstance(records, dict) else {}
 
+
+def _load_pkg_cache():
+    if not PKG_CACHE_PATH.exists():
+        return {}
+    try:
+        data = json.loads(PKG_CACHE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"WARNING: Could not load PKG category cache: {exc}")
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _save_pkg_cache(cache):
+    PKG_CACHE_PATH.write_text(
+        json.dumps(cache, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
+def _resolve_pkg_category(url, record, cache):
+    if url in cache:
+        return normalize(cache[url])
+
+    size = record.get("size")
+    if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
+        return None
+
+    try:
+        metadata = extract_metadata(url, size)
+    except Exception as exc:
+        cache[url] = None
+        print(f"  PKG category lookup failed: {record.get('name', url)}: {exc}")
+        return None
+
+    category = normalize(metadata.get("category"))
+    cache[url] = category
+    if category:
+        print(f"  PKG category lookup: {record.get('title_id', 'unknown')} -> {category} | {record.get('name', url)}")
+    return category
 
 def _load_title_cache():
     if not CACHE_PATH.exists():
@@ -216,6 +257,7 @@ def audit_catalogs():
 
     external_url_categories, external_categories = resolve_external_categories()
     resolved_categories = resolve_categories(title_ids)
+    pkg_cache = _load_pkg_cache()
 
     for platform, path, category, url, record, title_id in records:
         # Preserve an explicit package/catalog category. Title-ID resolution is
@@ -251,6 +293,10 @@ def audit_catalogs():
                 if exact_external_category == "games" and resolved_category
                 else exact_external_category or resolved_category or external_category or record_category
             )
+        if resolved is None and category == "games":
+            # Fall back to the actual package PARAM.SFO. CATEGORY is package-specific.
+            resolved = _resolve_pkg_category(url, record, pkg_cache)
+
         if resolved is None or resolved in {"ps1", "ps2", "psp"}:
             continue
 
@@ -287,6 +333,8 @@ def audit_catalogs():
             f"Reclassified {platform} {title_id}: "
             f"{category} -> {resolved} | {record.get('name', url)}"
         )
+
+    _save_pkg_cache(pkg_cache)
 
     print(
         f"Catalog audit: scanned {scanned} records | "
