@@ -38,7 +38,7 @@ SESSION.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
 })
 
-def fetch(url, stream=False, retries=10):
+def fetch(url, stream=False, retries=3):
     delay = 2
 
     for attempt in range(1, retries + 1):
