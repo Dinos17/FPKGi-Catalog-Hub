@@ -38,21 +38,21 @@ SESSION.headers.update({
     "Accept-Language": "en-US,en;q=0.9",
 })
 
-def fetch(url, stream=False, retries=30):
-    delay = 2
-
-    for attempt in range(1, retries + 1):
+def fetch(url, stream=False, retries=None):
+    """Fetch a URL with unlimited immediate retries by default."""
+    attempt = 0
+    while True:
+        attempt += 1
         try:
-            response = SESSION.get(url, timeout=(15, 90), stream=stream)
+            response = SESSION.get(url, timeout=(5, 90), stream=stream)
             response.raise_for_status()
             return response
         except requests.RequestException as exc:
-            if attempt == retries:
+            if retries is not None and attempt >= retries:
                 print(f"Request failed after {retries} attempts: {url} -> {exc}")
                 return None
-            print(f"Request failed (attempt {attempt}/{retries}, retrying in {delay}s): {url} -> {exc}")
-            time.sleep(delay)
-            delay = min(delay * 2, 30)
+            print(f"Request failed (attempt {attempt}, retrying immediately): {url} -> {exc}")
+
 def extract_card(article):
     link = article.select_one('a[href*="/details/"]')
     if not link:
@@ -79,7 +79,6 @@ def extract_category(soup):
         return ""
 
     raw = match.group(1).strip().lower()
-    # PKG-Zone may expose multiple labels such as "hb game".
     for category in sorted(CATEGORY_FOLDERS, key=len, reverse=True):
         if re.search(rf"(?<![a-z]){re.escape(category)}(?![a-z])", raw):
             return category
@@ -213,9 +212,8 @@ def collect_records():
         print(f"PKG-Zone: page {page}: {len(articles)} cards, {added} new")
         page += 1
 
-    # Retry pages that failed during the main scan once more before finishing.
     for retry_page in list(dict.fromkeys(failed_pages)):
-        response = fetch(f"{BASE_URL}/?page={retry_page}", retries=30)
+        response = fetch(f"{BASE_URL}/?page={retry_page}")
         if response is None:
             print(f"FINAL SKIP: page {retry_page} still unavailable.")
             continue
@@ -226,7 +224,7 @@ def collect_records():
             if not record or record["id"] in records:
                 continue
 
-            detail = fetch(record["detail_url"], retries=30)
+            detail = fetch(record["detail_url"])
             if detail is None:
                 failed_details.append(record)
                 continue
@@ -241,21 +239,22 @@ def collect_records():
                 record["playable_version"] = playable_version
                 records[record["id"]] = record
 
-    # Retry each temporarily unavailable detail page once, without another
-    # 10-attempt retry loop. A dead detail page must not stall the whole scan.
-    for record in list(dict.fromkeys(item["id"] for item in failed_details)):
-        original = next(item for item in failed_details if item["id"] == record)
-        detail = fetch(original["detail_url"], retries=1)
+    for record_id in list(dict.fromkeys(item["id"] for item in failed_details)):
+        original = next(item for item in failed_details if item["id"] == record_id)
+        detail = fetch(original["detail_url"])
         if detail is None:
-            print(f"FINAL SKIP: {record} detail page still unavailable.")
+            print(f"FINAL SKIP: {record_id} detail page still unavailable.")
             continue
 
-        category = extract_category(BeautifulSoup(detail.text, "html.parser"))
+        soup_detail = BeautifulSoup(detail.text, "html.parser")
+        category = extract_category(soup_detail)
+        playable_version = extract_playable_version(soup_detail)
         folder = CATEGORY_FOLDERS.get(category)
-        if folder:
+        if folder and is_plus_playable(playable_version):
             original["category"] = category
             original["folder"] = folder
-            records[record] = original
+            original["playable_version"] = playable_version
+            records[record_id] = original
 
     return list(records.values())
 
