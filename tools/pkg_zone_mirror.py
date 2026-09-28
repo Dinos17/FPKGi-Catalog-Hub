@@ -12,7 +12,8 @@ from huggingface_hub import HfApi
 
 HF_REPO = "dinos17/PS-Applications"
 BASE_URL = "https://pkg-zone.com"
-CONSOLE = "ps4"
+CONSOLE = os.environ.get("CONSOLE", "ps4").lower()
+CONSOLE_FOLDER = CONSOLE.upper()
 
 CATEGORY_FOLDERS = {
     "utility": "Utility",
@@ -264,8 +265,9 @@ def download_package(record, destination):
         print(f"SKIP {record['id']}: no public direct package download found")
         return None
 
-    safe_name = re.sub(r"[^A-Za-z0-9._-]+", "_", record["name"]).strip("._")
-    filename = f"{safe_name or record['id']}_{record['id']}.pkg"
+    safe_name = re.sub(r"[^A-Za-z0-9._ -]+", "_", str(record["name"] or "")).strip(" ._-")
+    safe_name = re.sub(r"\\s+", " ", safe_name).strip()
+    filename = f"{safe_name or record['id']}.pkg"
     path = destination / filename
 
     print(f"Downloading {record['id']}: {package_url}")
@@ -291,7 +293,7 @@ def remove_old_catalog_jsons(api):
         "Utility", "Emulator", "Game", "Homebrew", "Update",
         "Media", "DLC", "Retail PKG", "Fake PKG", "Dev Menu",
     ):
-        path = f"{category}/catalog.json"
+        path = f"{CONSOLE_FOLDER}/{category}/catalog.json"
         try:
             api.delete_file(
                 path_in_repo=path,
@@ -318,7 +320,7 @@ def upload_packages(files):
     remove_old_catalog_jsons(api)
 
     for path, folder in files:
-        repo_path = f"{folder}/{path.name}"
+        repo_path = f"{CONSOLE_FOLDER}/{folder}/{path.name}"
 
         try:
             api.get_paths_info(
@@ -363,7 +365,7 @@ def main():
 
         upload_packages(downloaded)
 
-    print(f"Uploaded {len(downloaded)} actual public PKG files to {HF_REPO}/")
+    print(f"Processed {len(downloaded)} public PKG files for {CONSOLE_FOLDER}.")
 
 if __name__ == "__main__":
     main()
