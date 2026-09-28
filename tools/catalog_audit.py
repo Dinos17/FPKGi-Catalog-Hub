@@ -157,11 +157,15 @@ def _resolve_pkg_category(url, record, cache):
     try:
         metadata = extract_metadata(url, size)
     except Exception as exc:
-        cache[url] = None
         print(f"  PKG category lookup failed: {record.get('name', url)}: {exc}")
         return None
 
     category = normalize(metadata.get("category"))
+    if category not in {
+        "games", "apps", "dlc", "demos", "emulators",
+        "homebrew", "themes", "updates"
+    }:
+        return None
     cache[url] = category
     if category:
         print(f"  PKG category lookup: {record.get('title_id', 'unknown')} -> {category} | {record.get('name', url)}")
