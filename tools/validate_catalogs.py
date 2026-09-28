@@ -40,7 +40,7 @@ def main():
 
     for category in sources:
         if category in legacy_categories:
-            paths.append(ROOT / "ps5" / f"{category}.json")
+            paths.append(ROOT / "ps4" / f"{category}.json")
             continue
         paths.append(ROOT / "ps4" / f"{category}.json")
         ps5_path = ROOT / "ps5" / f"ps5-{category}.json"
