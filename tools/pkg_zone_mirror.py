@@ -85,6 +85,32 @@ def extract_category(soup):
             return category
     return raw
 
+def extract_playable_version(soup):
+    """Return the latest PS4 release's Playable Version from the Releases table."""
+    for table in soup.find_all("table"):
+        headers = [cell.get_text(" ", strip=True).lower() for cell in table.find_all("th")]
+        if not headers or "playable version" not in headers:
+            continue
+
+        console_idx = headers.index("console") if "console" in headers else None
+        playable_idx = headers.index("playable version")
+
+        for row in table.find_all("tr")[1:]:
+            cells = row.find_all(["td", "th"])
+            values = [cell.get_text(" ", strip=True) for cell in cells]
+            if playable_idx >= len(values):
+                continue
+            if console_idx is not None and console_idx < len(values):
+                if values[console_idx].strip().lower() != "ps4":
+                    continue
+            return values[playable_idx].strip()
+
+    return ""
+
+def is_plus_playable(playable_version):
+    """Accept only PKG-Zone Playable Version values that explicitly contain +."""
+    return "+" in playable_version
+
 def extract_package_url(record):
     response = fetch(record["detail_url"])
     if response is None:
@@ -164,6 +190,14 @@ def collect_records():
 
             soup_detail = BeautifulSoup(detail.text, "html.parser")
             category = extract_category(soup_detail)
+            playable_version = extract_playable_version(soup_detail)
+
+            if not is_plus_playable(playable_version):
+                print(
+                    f"SKIP {record['id']}: PS4 Playable Version is "
+                    f"{playable_version or 'missing'}, not X+"
+                )
+                continue
 
             folder = CATEGORY_FOLDERS.get(category)
             if not folder:
@@ -172,6 +206,7 @@ def collect_records():
 
             record["category"] = category
             record["folder"] = folder
+            record["playable_version"] = playable_version
             records[record["id"]] = record
             added += 1
 
@@ -196,11 +231,14 @@ def collect_records():
                 failed_details.append(record)
                 continue
 
-            category = extract_category(BeautifulSoup(detail.text, "html.parser"))
+            soup_detail = BeautifulSoup(detail.text, "html.parser")
+            category = extract_category(soup_detail)
+            playable_version = extract_playable_version(soup_detail)
             folder = CATEGORY_FOLDERS.get(category)
-            if folder:
+            if folder and is_plus_playable(playable_version):
                 record["category"] = category
                 record["folder"] = folder
+                record["playable_version"] = playable_version
                 records[record["id"]] = record
 
     # Retry each temporarily unavailable detail page once, without another
