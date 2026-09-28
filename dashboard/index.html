@@ -465,9 +465,9 @@ async function loadCatalogsLive() {
     const platform = platformForFile(file.split("/").pop());
     const entries = data && typeof data.DATA === "object" ? data.DATA : {};
 
-    for (const game of Object.values(entries)) {
+    for (const [url, game] of Object.entries(entries)) {
       if (game && typeof game === "object") {
-        records.push({ data: game, category, platform });
+        records.push({ url, data: game, category, platform });
       }
     }
   }
@@ -483,8 +483,7 @@ loadCatalogsLive()
     // must never render the same package twice.
     const uniqueRecords = new Map();
     for (const record of state.records) {
-      const url = record && record.data && record.data.url;
-      const key = url || JSON.stringify(record && record.data || record);
+      const key = record && record.url || JSON.stringify(record && record.data || record);
       if (!uniqueRecords.has(key)) uniqueRecords.set(key, record);
     }
     state.records = [...uniqueRecords.values()];
