@@ -100,6 +100,19 @@ def resolve_external_categories():
 
 
 CACHE_PATH = ROOT / "config" / "title_api_cache.json"
+CLASSIFICATION_PATH = ROOT / "config" / "title_classifications.json"
+
+
+def _load_classifications():
+    if not CLASSIFICATION_PATH.exists():
+        return {}
+    try:
+        data = json.loads(CLASSIFICATION_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"WARNING: Could not load title classifications: {exc}")
+        return {}
+    records = data.get("records") if isinstance(data, dict) else None
+    return records if isinstance(records, dict) else {}
 
 
 def _load_title_cache():
@@ -124,13 +137,27 @@ def resolve_categories(title_ids):
     if not title_ids:
         return {}
 
+    classifications = _load_classifications()
     cache = _load_title_cache()
-    results = {title_id: cache[title_id] for title_id in title_ids if title_id in cache}
+    results = {}
+    for title_id in title_ids:
+        classification = classifications.get(title_id)
+        if isinstance(classification, dict):
+            type_code = str(classification.get("type", "")).upper()
+            if type_code == "GAME":
+                results[title_id] = "games"
+            elif type_code == "APPLICATION":
+                results[title_id] = "apps"
+    results.update({
+        title_id: cache[title_id]
+        for title_id in title_ids
+        if title_id not in results and title_id in cache
+    })
     pending = sorted(set(title_ids) - set(results))
 
     print(
         f"Catalog audit: resolving {len(title_ids)} unique title IDs "
-        f"({len(results)} cached, {len(pending)} live) with {FALLBACK_WORKERS} workers"
+        f"({len(results)} classified/cached, {len(pending)} live) with {FALLBACK_WORKERS} workers"
     )
 
     def lookup(title_id):
