@@ -34,7 +34,7 @@ CATEGORY_MAP = {
     "patch": "updates",
     "gd": "games",
     "gda": "games",
-    "gdc": "games",
+    "gdc": "dlc",
     "gdd": "games",
     "gdl": "games",
     "gdp": "games",
