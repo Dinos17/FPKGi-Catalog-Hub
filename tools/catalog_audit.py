@@ -178,11 +178,20 @@ def audit_catalogs():
         # Existing catalogs may predate the current external database layout.
         # Use the configured databases as the strongest fallback so packages
         # already misplaced in games.json can be moved to their real category.
-        resolved = (
-            normalize(record.get("category"))
-            or external_categories.get(title_id)
-            or resolved_categories.get(title_id)
-        )
+        record_category = normalize(record.get("category"))
+        external_category = external_categories.get(title_id)
+        resolved_category = resolved_categories.get(title_id)
+
+        # A generic games classification is not authoritative. External
+        # databases are used to correct packages such as applications that
+        # were previously registered in games.json. Specific classifications
+        # such as DLC, updates, demos, themes, and homebrew remain authoritative
+        # because those packages can legitimately share a title ID with a base
+        # game.
+        if record_category and record_category != "games":
+            resolved = record_category
+        else:
+            resolved = external_category or resolved_category or record_category
         if resolved is None or resolved in {"ps1", "ps2", "psp"}:
             continue
 
