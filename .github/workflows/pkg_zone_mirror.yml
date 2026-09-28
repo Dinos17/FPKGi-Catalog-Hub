@@ -31,4 +31,4 @@ jobs:
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           CONSOLE: ${{ matrix.console }}
-        run: python tools/pkg_zone_mirror.py
+        run: python tools/pkg_zone_collector.py
