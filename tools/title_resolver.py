@@ -144,4 +144,26 @@ def resolve_category(title_id):
         data = _sony_tmdb(title_id)
         return data.get("category") if data else None
 
-    return None
+    config = _load_config()
+    template = config.get("ps5_url")
+    if not isinstance(template, str) or not template.strip():
+        return None
+
+    url = template.format(title_id=title_id)
+    if not _valid_url(url):
+        raise ValueError(f"Invalid title database URL: {url}")
+
+    try:
+        response = requests.get(
+            url,
+            headers=HEADERS,
+            timeout=TIMEOUT,
+            allow_redirects=True,
+        )
+        if response.status_code == 404:
+            return None
+        response.raise_for_status()
+        return _extract_category(response.text)
+    except requests.RequestException as exc:
+        print(f"  WARNING: Category lookup failed for {title_id}: {exc}")
+        return None
