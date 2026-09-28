@@ -90,3 +90,56 @@ def test_audit_keeps_specific_category_when_external_title_id_is_generic_game(
     assert json.loads((ps4 / "dlc.json").read_text(encoding="utf-8"))["DATA"][
         "https://example.com/dlc.pkg"
     ]["category"] == "dlc"
+
+
+def test_audit_uses_title_lookup_to_correct_generic_game_package(
+    tmp_path, monkeypatch
+):
+    ps4 = tmp_path / "ps4"
+    ps5 = tmp_path / "ps5"
+    ps4.mkdir()
+    ps5.mkdir()
+
+    url = "https://example.com/youtube.pkg"
+    (ps4 / "games.json").write_text(
+        json.dumps(
+            {
+                "DATA": {
+                    url: {
+                        "name": "YouTube",
+                        "title_id": "CUSA01116",
+                        "category": "games",
+                    }
+                }
+            }
+        ),
+        encoding="utf-8",
+    )
+    (ps4 / "apps.json").write_text(json.dumps({"DATA": {}}), encoding="utf-8")
+
+    monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        catalog_audit,
+        "fetch_external_database_entries",
+        lambda: {
+            url: {
+                "name": "YouTube",
+                "title_id": "CUSA01116",
+                "category": "games",
+            }
+        },
+    )
+    monkeypatch.setattr(
+        catalog_audit,
+        "resolve_categories",
+        lambda title_ids: {"CUSA01116": "apps"},
+    )
+
+    moved = catalog_audit.audit_catalogs()
+
+    assert len(moved) == 1
+    assert moved[0][1:] == ("CUSA01116", "games", "apps", "YouTube")
+    assert json.loads((ps4 / "games.json").read_text(encoding="utf-8")) == {"DATA": {}}
+    assert json.loads((ps4 / "apps.json").read_text(encoding="utf-8"))["DATA"][url][
+        "category"
+    ] == "apps"
