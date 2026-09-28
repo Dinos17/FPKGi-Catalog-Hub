@@ -12,9 +12,20 @@ from huggingface_hub import HfApi
 
 HF_REPO = "dinos17/PS-Applications"
 BASE_URL = "https://pkg-zone.com"
-CATEGORY = "Homebrew"
-CATEGORY_SLUG = "hb"
 CONSOLE = "ps4"
+
+CATEGORY_FOLDERS = {
+    "utility": "Utility",
+    "emulator": "Emulator",
+    "game": "Game",
+    "homebrew": "Homebrew",
+    "update": "Update",
+    "media": "Media",
+    "dlc": "DLC",
+    "retail pkg": "Retail PKG",
+    "fake pkg": "Fake PKG",
+    "dev menu": "Dev Menu",
+}
 
 SESSION = requests.Session()
 SESSION.headers.update({
@@ -146,10 +157,13 @@ def collect_records():
             soup_detail = BeautifulSoup(detail.text, "html.parser")
             category = extract_category(soup_detail)
 
-            if not category.startswith(CATEGORY_SLUG):
+            folder = CATEGORY_FOLDERS.get(category)
+            if not folder:
+                print(f"SKIP {record['id']}: unsupported PKG-Zone category {category or 'unknown'}")
                 continue
 
             record["category"] = category
+            record["folder"] = folder
             records[record["id"]] = record
             added += 1
 
@@ -175,8 +189,10 @@ def collect_records():
                 continue
 
             category = extract_category(BeautifulSoup(detail.text, "html.parser"))
-            if category.startswith(CATEGORY_SLUG):
+            folder = CATEGORY_FOLDERS.get(category)
+            if folder:
                 record["category"] = category
+                record["folder"] = folder
                 records[record["id"]] = record
 
     # Retry detail pages that were temporarily unavailable.
@@ -188,8 +204,10 @@ def collect_records():
             continue
 
         category = extract_category(BeautifulSoup(detail.text, "html.parser"))
-        if category.startswith(CATEGORY_SLUG):
+        folder = CATEGORY_FOLDERS.get(category)
+        if folder:
             original["category"] = category
+            original["folder"] = folder
             records[record] = original
 
     return list(records.values())
@@ -253,20 +271,20 @@ def upload_packages(files):
     )
     remove_old_catalog_jsons(api)
 
-    for path in files:
+    for path, folder in files:
         api.upload_file(
             path_or_fileobj=str(path),
-            path_in_repo=f"{CATEGORY}/{path.name}",
+            path_in_repo=f"{folder}/{path.name}",
             repo_id=HF_REPO,
             repo_type="dataset",
-            commit_message=f"Add homebrew package {path.name}",
+            commit_message=f"Add public package {path.name}",
         )
-        print(f"Uploaded: {CATEGORY}/{path.name}")
+        print(f"Uploaded: {folder}/{path.name}")
 
 def main():
     records = collect_records()
     if not records:
-        raise RuntimeError("PKG-Zone Homebrew catalog produced 0 records.")
+        raise RuntimeError("PKG-Zone catalog produced 0 supported records.")
 
     with tempfile.TemporaryDirectory() as temp:
         package_dir = Path(temp)
@@ -279,14 +297,14 @@ def main():
                 print(f"SKIP {record['id']}: download failed: {exc}")
                 continue
             if path:
-                downloaded.append(path)
+                downloaded.append((path, record["folder"]))
 
         if not downloaded:
-            raise RuntimeError("No publicly downloadable Homebrew PKG files were found.")
+            raise RuntimeError("No publicly downloadable PKG files were found.")
 
         upload_packages(downloaded)
 
-    print(f"Uploaded {len(downloaded)} actual PKG files to {HF_REPO}/{CATEGORY}/")
+    print(f"Uploaded {len(downloaded)} actual public PKG files to {HF_REPO}/")
 
 if __name__ == "__main__":
     main()
