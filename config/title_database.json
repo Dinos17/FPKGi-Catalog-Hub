@@ -1,5 +1,4 @@
 {
   "ps4_url": "https://orbispatches.com/ps4/{title_id}",
-  "ps5_url": "https://prosperopatches.com/{title_id}",
-  "category_url": "https://pkg-zone.com/details/{title_id}"
+  "ps5_url": "https://prosperopatches.com/{title_id}"
 }
