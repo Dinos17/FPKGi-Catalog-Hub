@@ -203,10 +203,11 @@ def collect_records():
                 record["folder"] = folder
                 records[record["id"]] = record
 
-    # Retry detail pages that were temporarily unavailable.
+    # Retry each temporarily unavailable detail page once, without another
+    # 10-attempt retry loop. A dead detail page must not stall the whole scan.
     for record in list(dict.fromkeys(item["id"] for item in failed_details)):
         original = next(item for item in failed_details if item["id"] == record)
-        detail = fetch(original["detail_url"], retries=10)
+        detail = fetch(original["detail_url"], retries=1)
         if detail is None:
             print(f"FINAL SKIP: {record} detail page still unavailable.")
             continue
