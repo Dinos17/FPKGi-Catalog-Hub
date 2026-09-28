@@ -14,7 +14,7 @@ def test_load_database_url_reads_json_config(tmp_path, monkeypatch):
     config_path = tmp_path / "external_database.json"
     config_path.write_text(
         json.dumps(
-            {"url": "https://huggingface.co/datasets/example/packages"}
+            {"datasets": [{"name": "one", "url": "https://huggingface.co/datasets/example/packages"}]}
         ),
         encoding="utf-8",
     )
@@ -33,7 +33,10 @@ def test_load_database_url_reads_json_config(tmp_path, monkeypatch):
         [],
         {},
         {"url": ""},
-        {"url": None},
+        {"datasets": []},
+        {"datasets": [{}]},
+        {"datasets": [{"url": ""}]},
+        {"datasets": [{"url": None}]},
         {"url": "http://huggingface.co/datasets/example/packages"},
         {"url": "https://user:pass@huggingface.co/datasets/example/packages"},
         {"url": "https://huggingface.co:443/datasets/example/packages"},
