@@ -440,13 +440,44 @@ document.getElementById("search").addEventListener("input", event => {
   render();
 });
 
-fetch("catalog-data.json")
-  .then(response => {
-    if (!response.ok) throw new Error("catalog-data.json returned " + response.status);
-    return response.json();
-  })
+const REPO_RAW = "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/";
+
+const catalogFiles = [
+  "ps4/games.json", "ps4/apps.json", "ps4/updates.json", "ps4/dlc.json",
+  "ps4/demos.json", "ps4/homebrew.json", "ps4/emulators.json", "ps4/themes.json",
+  "ps4/ps1.json", "ps4/ps2.json", "ps4/psp.json",
+  "ps5/ps5-games.json", "ps5/ps5-apps.json", "ps5/ps5-updates.json",
+  "ps5/ps5-dlc.json", "ps5/ps5-demos.json", "ps5/ps5-homebrew.json",
+  "ps5/ps5-emulators.json", "ps5/ps5-themes.json",
+  "ps5/ps1.json", "ps5/ps2.json", "ps5/psp.json"
+];
+
+async function loadCatalogsLive() {
+  const responses = await Promise.all(catalogFiles.map(async file => {
+    const response = await fetch(REPO_RAW + file + "?t=" + Date.now(), { cache: "no-store" });
+    if (!response.ok) throw new Error(file + " returned " + response.status);
+    return { file, data: await response.json() };
+  }));
+
+  const records = [];
+  for (const { file, data } of responses) {
+    const category = categoryForFile(file.split("/").pop());
+    const platform = platformForFile(file.split("/").pop());
+    const entries = data && typeof data.DATA === "object" ? data.DATA : {};
+
+    for (const game of Object.values(entries)) {
+      if (game && typeof game === "object") {
+        records.push({ data: game, category, platform });
+      }
+    }
+  }
+
+  return records;
+}
+
+loadCatalogsLive()
   .then(records => {
-    state.records = Array.isArray(records) ? records : [];
+    state.records = records;
 
     // A package URL is the catalog record identity, so the dashboard
     // must never render the same package twice.
@@ -462,14 +493,14 @@ fetch("catalog-data.json")
     createSearchIndex();
     buildCategoryFilters();
     buildPlatformFilters();
-    document.getElementById("status").textContent = "Catalog loaded";
+    document.getElementById("status").textContent = "Live catalog loaded";
     render();
   })
   .catch(error => {
     document.getElementById("count").textContent = "Catalog unavailable";
     document.getElementById("status").textContent = "";
     document.getElementById("results").innerHTML =
-      '<div class="error">Could not load the catalog.<br>' + escapeHtml(error.message) + '</div>';
+      '<div class="error">Could not load the live catalog.<br>' + escapeHtml(error.message) + '</div>';
   });
 </script>
 </body>
