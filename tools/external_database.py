@@ -17,16 +17,9 @@ API_HEADERS = {
 }
 
 
-def load_database_url():
-    with CONFIG_PATH.open("r", encoding="utf-8") as file:
-        config = json.load(file)
-
-    if not isinstance(config, dict):
-        raise ValueError("External database configuration must be a JSON object")
-
-    url = config.get("url")
+def _validate_database_url(url):
     if not isinstance(url, str) or not url.strip():
-        raise ValueError('External database configuration must contain a non-empty "url"')
+        raise ValueError("External database URL must be a non-empty string")
 
     url = url.strip()
     parsed = urlsplit(url)
@@ -41,6 +34,44 @@ def load_database_url():
         raise ValueError("External database URL must contain a hostname")
 
     return url.rstrip("/")
+
+
+def load_database_urls():
+    with CONFIG_PATH.open("r", encoding="utf-8") as file:
+        config = json.load(file)
+
+    if not isinstance(config, dict):
+        raise ValueError("External database configuration must be a JSON object")
+
+    datasets = config.get("datasets")
+    if not isinstance(datasets, list) or not datasets:
+        raise ValueError('External database configuration must contain a non-empty "datasets" list')
+
+    result = []
+    seen = set()
+
+    for index, dataset in enumerate(datasets, start=1):
+        if not isinstance(dataset, dict):
+            raise ValueError(f"External database entry #{index} must be an object")
+
+        url = _validate_database_url(dataset.get("url"))
+        name = dataset.get("name")
+        if not isinstance(name, str) or not name.strip():
+            name = urlsplit(url).path.rstrip("/").split("/")[-1]
+
+        if url in seen:
+            raise ValueError(f"Duplicate external database URL: {url}")
+
+        seen.add(url)
+        result.append({"name": name.strip(), "url": url})
+
+    return result
+
+
+def load_database_url():
+    """Backward-compatible single-database accessor for callers/tests."""
+    databases = load_database_urls()
+    return databases[0]["url"]
 
 
 def _hugging_face_dataset_parts(database_url):
@@ -63,8 +94,7 @@ def _hugging_face_dataset_parts(database_url):
     return parts[1], parts[2]
 
 
-def fetch_database_files():
-    database_url = load_database_url()
+def fetch_database_files(database_url):
     owner, dataset = _hugging_face_dataset_parts(database_url)
     api_url = f"https://huggingface.co/api/datasets/{owner}/{dataset}/tree/main"
 
@@ -78,7 +108,7 @@ def fetch_database_files():
     data = response.json()
     if not isinstance(data, list):
         raise ValueError("External database API did not return a file list")
-    return data, database_url
+    return data
 
 
 def package_url(database_url, path):
@@ -99,7 +129,6 @@ def parse_title_id(name):
 PKG_CATEGORY_MAP = {
     "gd": "games",
     "gda": "games",
-    "gdc": "games",
     "gdd": "games",
     "gdl": "games",
     "gdp": "games",
@@ -153,9 +182,43 @@ def normalize_external_category(value):
     return EXTERNAL_CATEGORY_MAP.get(value.strip().lower())
 
 
-def fetch_external_database_entries():
-    print("\nFetching external package database")
-    files, database_url = fetch_database_files()
+def category_hint_from_path(path, database_name):
+    parts = [part for part in path.split("/") if part]
+    path_map = {
+        "game": "games",
+        "games": "games",
+        "application": "apps",
+        "applications": "apps",
+        "utility": "apps",
+        "utilities": "apps",
+        "media": "apps",
+        "emulator": "emulators",
+        "emulators": "emulators",
+        "homebrew": "homebrew",
+        "update": "updates",
+        "updates": "updates",
+        "dlc": "dlc",
+        "demo": "demos",
+        "demos": "demos",
+        "theme": "themes",
+        "themes": "themes",
+    }
+
+    for part in parts:
+        category = path_map.get(part.strip().lower())
+        if category:
+            return category
+
+    if database_name.strip().lower() == "ps-games-dataset":
+        return "games"
+
+    return None
+
+
+def _scan_database(database):
+    database_name = database["name"]
+    database_url = database["url"]
+    files = fetch_database_files(database_url)
 
     entries = {}
     scanned = 0
@@ -168,13 +231,14 @@ def fetch_external_database_entries():
         if not isinstance(path, str) or not path.lower().endswith(".pkg"):
             continue
         if not isinstance(size, int) or isinstance(size, bool) or size <= 0:
-            print(f"  WARNING: Skipping database file with invalid size: {path}")
+            print(f"  WARNING: Skipping {database_name} file with invalid size: {path}")
             skipped += 1
             continue
 
         scanned += 1
         url = package_url(database_url, path)
         filename = path.rsplit("/", 1)[-1]
+        path_category = category_hint_from_path(path, database_name)
 
         metadata = {
             "title_id": parse_title_id(filename),
@@ -192,36 +256,82 @@ def fetch_external_database_entries():
             metadata.update(pkg_metadata)
             metadata["category"] = normalize_category(metadata.get("category"))
             print(
-                f"  PKG metadata: {filename} | "
+                f"  PKG metadata: {database_name} | {filename} | "
                 f"{pkg_metadata.get('title_id', 'no-title-id')} | "
                 f"{pkg_metadata.get('version', 'no-version')}"
             )
         except Exception as exc:
-            print(f"  WARNING: Could not inspect {filename}: {exc}")
+            print(f"  WARNING: Could not inspect {database_name}/{filename}: {exc}")
 
-        title_id = metadata.get("title_id")
-        lookup_title_id = title_id or parse_title_id(filename)
+        metadata_category = normalize_external_category(metadata.get("category"))
+        if metadata_category:
+            metadata["category"] = metadata_category
+        elif path_category:
+            metadata["category"] = path_category
 
-        if metadata.get("name") == filename and lookup_title_id:
-            resolved_name = resolve_title(lookup_title_id)
+        title_id = metadata.get("title_id") or parse_title_id(filename)
+
+        if metadata.get("name") == filename and title_id:
+            resolved_name = resolve_title(title_id)
             if resolved_name:
                 metadata["name"] = resolved_name
-                print(f"  Title lookup: {lookup_title_id} -> {resolved_name}")
+                print(f"  Title lookup: {title_id} -> {resolved_name}")
 
-        if lookup_title_id:
-            external_category = normalize_external_category(
-                resolve_category(lookup_title_id)
+        if not metadata.get("category") and title_id:
+            resolved_category = normalize_external_category(resolve_category(title_id))
+            if resolved_category:
+                metadata["category"] = resolved_category
+                print(f"  Category lookup: {title_id} -> {resolved_category}")
+
+        if not metadata.get("category"):
+            print(
+                f"  WARNING: Could not determine category for "
+                f"{database_name}/{filename}; skipping"
             )
-            if external_category:
-                metadata["category"] = external_category
-                print(
-                    f"  Category lookup: {lookup_title_id} -> {external_category}"
-                )
+            skipped += 1
+            continue
 
         entries[url] = metadata
 
+    return entries, scanned, skipped
+
+
+def fetch_external_database_entries():
+    print("\nFetching external package databases")
+
+    databases = load_database_urls()
+    entries = {}
+    total_scanned = 0
+    total_skipped = 0
+    failed = 0
+
+    for database in databases:
+        print(f"\nDatabase: {database['name']} -> {database['url']}")
+        try:
+            database_entries, scanned, skipped = _scan_database(database)
+        except Exception as exc:
+            failed += 1
+            print(f"  WARNING: Database unavailable: {exc}")
+            print("  Continuing with the remaining external databases.")
+            continue
+
+        total_scanned += scanned
+        total_skipped += skipped
+
+        for url, metadata in database_entries.items():
+            if url in entries:
+                print(f"  WARNING: Duplicate package URL across databases: {url}")
+                continue
+            entries[url] = metadata
+
+        print(
+            f"  Database result: {scanned} PKG files scanned | "
+            f"{len(database_entries)} entries | {skipped} skipped"
+        )
+
     print(
-        f"External package database: {scanned} PKG files scanned | "
-        f"{len(entries)} entries | {skipped} skipped"
+        f"External package databases: {total_scanned} PKG files scanned | "
+        f"{len(entries)} entries | {total_skipped} skipped | "
+        f"{failed} database failures"
     )
     return entries
