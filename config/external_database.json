@@ -1,3 +1,12 @@
 {
-  "url": "https://huggingface.co/datasets/dinos17/FPKGi-Packages"
+  "datasets": [
+    {
+      "name": "PS-Games-Dataset",
+      "url": "https://huggingface.co/datasets/dinos17/PS-Games-Dataset"
+    },
+    {
+      "name": "PS-Applications",
+      "url": "https://huggingface.co/datasets/dinos17/PS-Applications"
+    }
+  ]
 }
