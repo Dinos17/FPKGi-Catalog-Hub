@@ -277,11 +277,13 @@ def _scan_database(database):
                 metadata["name"] = resolved_name
                 print(f"  Title lookup: {title_id} -> {resolved_name}")
 
-        if not metadata.get("category") and title_id:
+        if title_id:
             resolved_category = normalize_external_category(resolve_category(title_id))
             if resolved_category:
-                metadata["category"] = resolved_category
-                print(f"  Category lookup: {title_id} -> {resolved_category}")
+                current_category = normalize_external_category(metadata.get("category"))
+                if not current_category or current_category == "games":
+                    metadata["category"] = resolved_category
+                    print(f"  Category lookup: {title_id} -> {resolved_category}")
 
         if not metadata.get("category"):
             print(
