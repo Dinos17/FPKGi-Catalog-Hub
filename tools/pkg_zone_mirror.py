@@ -318,14 +318,27 @@ def upload_packages(files):
     remove_old_catalog_jsons(api)
 
     for path, folder in files:
+        repo_path = f"{folder}/{path.name}"
+
+        try:
+            api.get_paths_info(
+                repo_id=HF_REPO,
+                paths=[repo_path],
+                repo_type="dataset",
+            )
+            print(f"ALREADY EXISTS: {repo_path} — skipping upload")
+            continue
+        except Exception:
+            pass
+
         api.upload_file(
             path_or_fileobj=str(path),
-            path_in_repo=f"{folder}/{path.name}",
+            path_in_repo=repo_path,
             repo_id=HF_REPO,
             repo_type="dataset",
             commit_message=f"Add public package {path.name}",
         )
-        print(f"Uploaded: {folder}/{path.name}")
+        print(f"Uploaded: {repo_path}")
 
 def main():
     records = collect_records()
