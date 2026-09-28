@@ -1,4 +1,4 @@
-name: Mirror public Homebrew PKGs to Hugging Face
+name: Mirror public PKG-Zone packages to Hugging Face
 
 on:
   workflow_dispatch:
@@ -23,7 +23,7 @@ jobs:
           python-version: "3.12"
       - name: Install Dependencies
         run: python -m pip install --disable-pip-version-check requests beautifulsoup4 huggingface_hub
-      - name: Mirror public Homebrew PKG files
+      - name: Mirror public PKG-Zone package files
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: python tools/pkg_zone_mirror.py
