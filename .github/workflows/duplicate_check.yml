@@ -8,6 +8,7 @@ on:
       - "ps5/**/*.json"
       - "changes/*.json"
       - "tools/duplicate_check.py"
+      - "tools/external_database.py"
       - ".github/workflows/duplicate_check.yml"
 
 concurrency:
