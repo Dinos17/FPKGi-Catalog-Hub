@@ -134,7 +134,48 @@ def test_package_url_uses_configured_database():
 def test_parse_title_id():
     assert external_database.parse_title_id("GAME [CUSA12345].pkg") == "CUSA12345"
     assert external_database.parse_title_id("GAME [PPSA54321].pkg") == "PPSA54321"
+    assert external_database.parse_title_id("Homebrew [LAPY10020].pkg") == "LAPY10020"
+    assert external_database.parse_title_id("Homebrew [BREW00090].pkg") == "BREW00090"
     assert external_database.parse_title_id("GAME.pkg") is None
+
+
+def test_scan_database_prefers_filename_title_id_over_generic_pkg_metadata(monkeypatch):
+    monkeypatch.setattr(
+        external_database,
+        "fetch_database_files",
+        lambda url: [
+            {"path": "Homebrew/A_GameMaker_Studio_Game_NPXS29129.pkg", "size": 123}
+        ],
+    )
+    monkeypatch.setattr(
+        external_database,
+        "extract_metadata",
+        lambda url, size: {
+            "title_id": "NPXS39041",
+            "region": None,
+            "name": "Store",
+            "version": "01.00",
+            "release": None,
+            "size": size,
+            "min_fw": None,
+            "cover_url": None,
+            "category": "homebrew",
+        },
+    )
+    monkeypatch.setattr(external_database, "resolve_category", lambda title_id: None)
+    monkeypatch.setattr(external_database, "resolve_title", lambda title_id: None)
+
+    entries, scanned, skipped = external_database._scan_database(
+        {
+            "name": "PS-Applications",
+            "url": "https://huggingface.co/datasets/example/apps",
+        }
+    )
+
+    assert scanned == 1
+    assert skipped == 0
+    entry = next(iter(entries.values()))
+    assert entry["title_id"] == "NPXS29129"
 
 
 def test_scan_database_resolved_app_overrides_generic_games(monkeypatch):
