@@ -119,7 +119,7 @@ def package_url(database_url, path):
 
 def parse_title_id(name):
     match = re.search(
-        r"(?<![A-Z0-9])((?:CUSA|PPSA)\d{5})(?!\d)",
+        r"(?<![A-Z0-9])([A-Z]{4}\d{5})(?!\d)",
         name,
         re.IGNORECASE,
     )
@@ -240,8 +240,9 @@ def _scan_database(database):
         filename = path.rsplit("/", 1)[-1]
         path_category = category_hint_from_path(path, database_name)
 
+        filename_title_id = parse_title_id(filename)
         metadata = {
-            "title_id": parse_title_id(filename),
+            "title_id": filename_title_id,
             "region": None,
             "name": filename,
             "version": None,
@@ -269,7 +270,13 @@ def _scan_database(database):
         elif path_category:
             metadata["category"] = path_category
 
-        title_id = metadata.get("title_id") or parse_title_id(filename)
+        # Prefer the title ID encoded in the filename. External PKG metadata can
+        # be generic or stale (for example, Store metadata embedded in a
+        # homebrew package), while the dataset filename identifies the
+        # registration being scanned.
+        title_id = filename_title_id or metadata.get("title_id")
+        if title_id:
+            metadata["title_id"] = title_id
 
         if metadata.get("name") == filename and title_id:
             resolved_name = resolve_title(title_id)
