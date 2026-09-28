@@ -386,27 +386,26 @@ Only packages that are legally redistributable should be hosted through this mec
 
 ---
 
-## External package database
+## External package databases
 
-The project can use a separate external package database in addition to the normal JSON catalog sources.
+The project can use separate external package databases in addition to the normal JSON catalog sources.
 
-Its URL is stored in:
+Their configuration is stored in:
 
 ```text
 config/external_database.json
 ```
 
-The current configuration points to:
+The current configuration uses two Hugging Face datasets:
 
-```text
-https://huggingface.co/datasets/dinos17/FPKGi-Packages
-```
+- **PS-Games-Dataset:** `https://huggingface.co/datasets/dinos17/PS-Games-Dataset`
+- **PS-Applications:** `https://huggingface.co/datasets/dinos17/PS-Applications`
 
-The merger reads this URL at runtime. The database location is not hardcoded in the Python loader, so the configured external database can be changed without modifying the merger code.
+The merger reads these database URLs at runtime. The database locations are not hardcoded in the Python loader, so the configured external databases can be changed without modifying the merger code.
 
-The external database is currently used to add package entries to the **games** catalog. Its package files are discovered through the Hugging Face dataset API and their metadata is inspected when possible.
+External databases are **supplemental**, not the only source of catalog data. Package metadata and database/path information are used to determine the appropriate catalog category. Packages whose category cannot be determined are skipped rather than silently being placed in the games catalog.
 
-The external database is **supplemental**, not the only source of catalog data. If the external database is temporarily unavailable, the merger logs a warning and continues with the configured JSON sources and GitHub Release assets. This prevents a temporary database outage from stopping the entire catalog update.
+If one external database is temporarily unavailable, the merger logs a warning and continues with the remaining external databases, configured JSON sources, and GitHub Release assets. This prevents a temporary database outage from stopping the entire catalog update.
 
 `config/sources.json` remains reserved for external FPKGi JSON catalog sources.
 
@@ -480,18 +479,30 @@ FPKGi-Catalog-Hub/
 │
 ├── config/
 │   ├── sources.json
-│   └── external_database.json
+│   ├── external_database.json
+│   ├── exclusions.json
+│   ├── title_database.json
+│   └── generated_catalogs.json
 │
 ├── tools/
 │   ├── merge.py
 │   ├── pkg_metadata.py
+│   ├── external_database.py
+│   ├── title_resolver.py
+│   ├── catalog_audit.py
+│   ├── catalog_pipeline.py
+│   ├── catalog_names.py
+│   ├── duplicate_check.py
 │   ├── release_sources.py
 │   ├── validate_catalogs.py
 │   └── catalog_diff.py
 │
 ├── tests/
 │   ├── test_merge_validation.py
+│   ├── test_external_database.py
 │   ├── test_pkg_metadata.py
+│   ├── test_duplicate_check.py
+│   ├── test_catalog_pipeline.py
 │   └── test_release_sources.py
 │
 ├── requirements.txt
