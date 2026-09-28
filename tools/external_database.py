@@ -297,7 +297,6 @@ def _scan_database(database):
             skipped += 1
             continue
 
-        metadata["_external_database"] = database_name
         entries[url] = metadata
 
     return entries, scanned, skipped
