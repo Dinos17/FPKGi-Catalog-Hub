@@ -160,6 +160,16 @@
       "min_fw": "5.05+",
       "cover_url": "https://i.imgur.com/dsEft5s.png"
     },
+    "https://eu1.akirabox.com/uploads/users/EBnkmW8P3R0y/coQXzKo3hyCVmYJQrde-PS4_Lapys_River_Raid.VR_v1.00.pkg": {
+      "title_id": "LAPY10020",
+      "region": "USA",
+      "name": "Lapy's River Raid VR",
+      "version": "1.00",
+      "release": "17-02-2025",
+      "size": 48234496,
+      "min_fw": "5.05+",
+      "cover_url": "https://i.imgur.com/nNx8nWP.png"
+    },
     "https://eu1.akirabox.com/uploads/users/EBnkmW8P3R0y/coXaEx8RB3qgBuF9kde-PS4_LAPY_Game_Collection_v1.00.pkg": {
       "title_id": "LAPY10012",
       "region": "USA",
@@ -169,6 +179,26 @@
       "size": 191889408,
       "min_fw": "5.05+",
       "cover_url": "https://i.imgur.com/Ru3lrYK.png"
+    },
+    "https://eu1.akirabox.com/uploads/users/EBnkmW8P3R0y/coHHMRwYx6377yyxQde-PS4_Sonic.Time.Twisted_v1.1.2.1.pkg": {
+      "title_id": "OVBD00001",
+      "region": "USA",
+      "name": "Sonic Time Twisted",
+      "version": "1.1.2.1",
+      "release": "17-02-2025",
+      "size": 165675008,
+      "min_fw": "5.05+",
+      "cover_url": "https://i.imgur.com/ZgTWvb6.png"
+    },
+    "https://eu1.akirabox.com/uploads/users/EBnkmW8P3R0y/couvRtPs0J7GHsM9Zde-PS4_Sonic_SMS_Remake2_v2.9.2.pkg": {
+      "title_id": "SMSR00002",
+      "region": "USA",
+      "name": "Sonic SMS Remake 2",
+      "version": "2.9.2",
+      "release": "17-02-2025",
+      "size": 65011712,
+      "min_fw": "5.05+",
+      "cover_url": "https://i.imgur.com/EGVw0ss.png"
     },
     "https://eu1.akirabox.com/uploads/users/EBnkmW8P3R0y/coOAzMOJFW2Vnl73Kde-PS4_Portable_Final_Burn_Neo_v6.7.pkg": {
       "title_id": "PFBN00001",
