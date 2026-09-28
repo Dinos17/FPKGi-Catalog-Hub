@@ -57,7 +57,7 @@ class TableParser(HTMLParser):
             self.current_cell.append(data)
 
 
-def fetch_source() -> str:
+def fetch_source() -> str | None:
     last_error: Exception | None = None
 
     for source_url in SOURCE_URLS:
@@ -85,7 +85,8 @@ def fetch_source() -> str:
             last_error = exc
             print(f"Source failed: {source_url}: {exc}")
 
-    raise RuntimeError(f"Unable to fetch PS4 title database: {last_error}")
+    print(f"PS4 title database unavailable; keeping existing classification database if present: {last_error}")
+    return None
 def build_database(source: str) -> dict[str, dict[str, str]]:
     parser = TableParser()
     parser.feed(source)
@@ -135,9 +136,16 @@ def main() -> int:
     parser.parse_args()
 
     source = fetch_source()
-    database = build_database(source)
 
     output_path = Path(__file__).resolve().parent.parent / "config" / "title_classifications.json"
+    if source is None:
+        if output_path.exists():
+            print(f"Keeping existing title classifications: {output_path}")
+        else:
+            print("No existing title classification database; continuing without one.")
+        return 0
+
+    database = build_database(source)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     output = {
         "source": "psdevwiki",
