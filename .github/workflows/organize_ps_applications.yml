@@ -1,0 +1,47 @@
+name: Organize PS Applications Dataset
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  organize:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Move applications into Media
+        env:
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+        run: |
+          set -euo pipefail
+          test -n "$HF_TOKEN"
+          python -m pip install --disable-pip-version-check huggingface_hub
+          python - <<'PY'
+          import os
+          from huggingface_hub import HfApi, CommitOperationCopy, CommitOperationDelete
+
+          api = HfApi(token=os.environ["HF_TOKEN"])
+          repo = "dinos17/PS-Applications"
+          files = [
+              "EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg",
+              "PS4_CUSA01116_v2.32.pkg",
+              "PS5_PPSA01615_v6.00.pkg",
+          ]
+
+          operations = []
+          for path in files:
+              operations.append(CommitOperationCopy(
+                  src_path_in_repo=path,
+                  path_in_repo=f"Media/{path}",
+              ))
+              operations.append(CommitOperationDelete(path_in_repo=path))
+
+          api.create_commit(
+              repo_id=repo,
+              repo_type="dataset",
+              operations=operations,
+              commit_message="Organize applications into Media folder",
+          )
+          print("Moved 3 application packages into Media/.")
+          PY
