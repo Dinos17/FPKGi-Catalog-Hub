@@ -420,7 +420,9 @@ def main():
             if is_ps5_entry(metadata)
             and pkg_url not in exclusions.get(category, set())
         }
-        ps5_output_path = catalog_output_path(f"ps5-{category}", ps5=True)
+        legacy_category = category in {"ps1", "ps2", "psp"}
+        ps5_catalog_name = category if legacy_category else f"ps5-{category}"
+        ps5_output_path = catalog_output_path(ps5_catalog_name, ps5=True)
 
         if not ps5_entries and ps5_output_path.exists():
             try:
