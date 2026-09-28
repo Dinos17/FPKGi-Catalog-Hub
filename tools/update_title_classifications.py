@@ -1,161 +1,118 @@
 #!/usr/bin/env python3
-"""Build a normalized PS4 Title ID classification database from PS4 Developer Wiki.
-
-The source provides Title ID, English name, and broad GAME/APPLICATION type.
-This tool intentionally does not guess more specific categories such as media,
-utility, emulator, or homebrew. Those require a more specific source or a
-human classification.
-"""
+"""Build the local PS4 Title ID classification database from GitHub-hosted JSON sources."""
 
 from __future__ import annotations
 
 import argparse
 import json
-import re
 import urllib.request
-from html.parser import HTMLParser
 from pathlib import Path
 
 SOURCE_URLS = [
-    "https://r.jina.ai/https://www.psdevwiki.com/ps4/Game_Titles/db",
-    "https://r.jina.ai/http://www.psdevwiki.com/ps4/Game_Titles/db",
+    ("applications", "https://raw.githubusercontent.com/ohhsodead/arisen-studio-database/main/PS4/applications.json"),
+    ("homebrew", "https://raw.githubusercontent.com/ohhsodead/arisen-studio-database/main/PS4/homebrew.json"),
 ]
-TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
 
 
-class TableParser(HTMLParser):
-    def __init__(self) -> None:
-        super().__init__()
-        self.in_row = False
-        self.in_cell = False
-        self.rows: list[list[str]] = []
-        self.current_row: list[str] = []
-        self.current_cell: list[str] = []
-
-    def handle_starttag(self, tag: str, attrs) -> None:
-        tag = tag.lower()
-        if tag == "tr":
-            self.in_row = True
-            self.current_row = []
-        elif tag in {"td", "th"} and self.in_row:
-            self.in_cell = True
-            self.current_cell = []
-
-    def handle_endtag(self, tag: str) -> None:
-        tag = tag.lower()
-        if tag in {"td", "th"} and self.in_cell:
-            value = " ".join("".join(self.current_cell).split())
-            self.current_row.append(value)
-            self.in_cell = False
-        elif tag == "tr" and self.in_row:
-            if self.current_row:
-                self.rows.append(self.current_row)
-            self.in_row = False
-
-    def handle_data(self, data: str) -> None:
-        if self.in_cell:
-            self.current_cell.append(data)
+def fetch_json(url: str):
+    request = urllib.request.Request(
+        url,
+        headers={"User-Agent": "FPKGi-Catalog-Hub/1.0", "Accept": "application/json"},
+    )
+    with urllib.request.urlopen(request, timeout=60) as response:
+        return json.loads(response.read().decode("utf-8"))
 
 
-def fetch_source() -> str | None:
-    last_error: Exception | None = None
+def normalize_title_id(value):
+    if not isinstance(value, str):
+        return None
+    value = value.strip().upper()
+    if len(value) != 9 or not value[:4].isalpha() or not value[4:].isdigit():
+        return None
+    return value
 
-    for source_url in SOURCE_URLS:
-        try:
-            request = urllib.request.Request(
-                source_url,
-                headers={
-                    "User-Agent": "Mozilla/5.0 (compatible; FPKGi-Catalog-Hub/1.0)",
-                    "Accept": "text/plain, text/markdown, text/html",
-                },
-            )
-            with urllib.request.urlopen(request, timeout=60) as response:
-                text = response.read().decode("utf-8", errors="replace")
 
-            if not text.strip():
-                raise RuntimeError("proxy returned an empty response")
+def build_database(sources):
+    database = {}
 
-            # Do not accept a proxy error/landing page as the database.
-            if "CUSA00112" not in text and "CUSA01116" not in text:
-                raise RuntimeError("response does not contain PS4 Title ID data")
+    # Load homebrew first; applications take precedence for overlapping IDs.
+    for source_name, payload in sources:
+        if not isinstance(payload, dict):
+            continue
 
-            print(f"Fetched PS4 title database from {source_url}")
-            return text
-        except Exception as exc:
-            last_error = exc
-            print(f"Source failed: {source_url}: {exc}")
+        for record in payload.get("Mods", []):
+            if not isinstance(record, dict):
+                continue
 
-    print(f"PS4 title database unavailable; keeping existing classification database if present: {last_error}")
-    return None
-def build_database(source: str) -> dict[str, dict[str, str]]:
-    parser = TableParser()
-    parser.feed(source)
+            title_id = normalize_title_id(record.get("TitleId"))
+            if not title_id:
+                continue
 
-    database: dict[str, dict[str, str]] = {}
+            category_id = str(record.get("CategoryId") or "").strip().lower()
+            category = "apps" if source_name == "applications" else "homebrew"
+            subcategory = None
 
-    def add_row(title_id: str, name: str, type_code: str) -> None:
-        title_id = title_id.upper()
-        type_code = type_code.upper()
-        if TITLE_ID_RE.fullmatch(title_id) and type_code in {"GAME", "APPLICATION"}:
+            if source_name == "homebrew":
+                if category_id in {"emu", "emulator"}:
+                    category = "emulators"
+                    subcategory = "emulator"
+                elif category_id == "media":
+                    category = "apps"
+                    subcategory = "media"
+                elif category_id in {"util", "utili", "utility"}:
+                    subcategory = "utility"
+                elif category_id:
+                    subcategory = category_id
+
             database[title_id] = {
-                "name": name.strip(),
-                "type": type_code,
-                "source": "psdevwiki",
+                "name": str(record.get("Name") or "").strip(),
+                "type": "APPLICATION" if category == "apps" else category.upper(),
+                "category": category,
+                "subcategory": subcategory,
+                "source": f"arisen-studio-database:{source_name}",
             }
 
-    for row in parser.rows:
-        if len(row) >= 4:
-            add_row(row[0], row[2], row[3])
-
-    # The proxy currently returns rows like:
-    # CUSA01116  | 205453 | YouTube | APPLICATION
-    # Split on pipes and locate the four logical columns without relying
-    # on leading/trailing Markdown pipes.
-    for line in source.splitlines():
-        if "|" not in line:
-            continue
-
-        cells = [cell.strip() for cell in line.split("|")]
-        if len(cells) < 4:
-            continue
-
-        title_match = re.search(r"([A-Z]{4}\d{5})", cells[0], re.IGNORECASE)
-        type_match = re.search(r"\b(GAME|APPLICATION)\b", cells[-1], re.IGNORECASE)
-
-        if not title_match or not type_match:
-            continue
-
-        add_row(title_match.group(1), cells[2], type_match.group(1))
-
     return dict(sorted(database.items()))
-
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.parse_args()
 
-    source = fetch_source()
+    sources = []
+    failures = []
+
+    for source_name, source_url in SOURCE_URLS:
+        try:
+            sources.append((source_name, fetch_json(source_url)))
+            print(f"Fetched {source_name} classification database")
+        except Exception as exc:
+            failures.append(f"{source_name}: {exc}")
+            print(f"Source failed: {source_url}: {exc}")
 
     output_path = Path(__file__).resolve().parent.parent / "config" / "title_classifications.json"
-    if source is None:
+
+    if not sources:
         if output_path.exists():
-            print(f"Keeping existing title classifications: {output_path}")
+            print(f"Classification sources unavailable; keeping existing database: {output_path}")
         else:
-            print("No existing title classification database; continuing without one.")
+            print("No classification source available and no existing database; continuing without one.")
         return 0
 
-    database = build_database(source)
+    database = build_database(sources)
     output_path.parent.mkdir(parents=True, exist_ok=True)
-    output = {
-        "source": "psdevwiki",
-        "records": database,
-    }
     output_path.write_text(
-        json.dumps(output, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        json.dumps({
+            "source": "arisen-studio-database",
+            "source_urls": [url for _, url in SOURCE_URLS],
+            "records": database,
+        }, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
         encoding="utf-8",
     )
+
     print(f"Parsed {len(database)} PS4 Title ID classifications.")
+    for failure in failures:
+        print(f"Classification source warning: {failure}")
     print(f"Output: {output_path}")
     return 0
 
