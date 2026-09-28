@@ -322,7 +322,27 @@ def fetch_external_database_entries():
 
         for url, metadata in database_entries.items():
             if url in entries:
-                print(f"  WARNING: Duplicate package URL across databases: {url}")
+                existing_category = normalize_external_category(
+                    entries[url].get("category")
+                )
+                new_category = normalize_external_category(metadata.get("category"))
+
+                # The applications database is authoritative when the same
+                # package URL also appears in the games database. This prevents
+                # an application duplicated across the two datasets from being
+                # locked into games simply because PS-Games-Dataset was scanned
+                # first.
+                if (
+                    database["name"].strip().lower() == "ps-applications"
+                    and new_category == "apps"
+                    and existing_category == "games"
+                ):
+                    entries[url] = metadata
+                    print(
+                        f"  INFO: Application database overrides game category: {url}"
+                    )
+                else:
+                    print(f"  WARNING: Duplicate package URL across databases: {url}")
                 continue
             entries[url] = metadata
 
