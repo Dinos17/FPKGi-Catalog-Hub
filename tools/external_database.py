@@ -286,7 +286,10 @@ def _scan_database(database):
                 print(f"  Title lookup: {title_id} -> {resolved_name}")
 
         if title_id:
-            resolved_category = normalize_external_category(resolve_category(title_id))\n            if not resolved_category:\n                resolved_category = normalize_category(resolve_category(title_id))
+            sony_category = resolve_category(title_id)
+            resolved_category = normalize_external_category(sony_category)
+            if not resolved_category:
+                resolved_category = normalize_category(sony_category)
             if resolved_category:
                 current_category = normalize_external_category(metadata.get("category"))
                 if not current_category or current_category == "games":
