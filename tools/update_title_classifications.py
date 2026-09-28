@@ -73,51 +73,44 @@ def build_database(source: str) -> dict[str, dict[str, str]]:
     parser = TableParser()
     parser.feed(source)
 
-    rows = list(parser.rows)
-
-    # r.jina.ai normally returns Markdown/plain text rather than the original HTML.
-    # Accept both pipe-table rows with and without leading/trailing pipes.
-    if not rows:
-        for line in source.splitlines():
-            line = line.strip()
-            if "|" not in line:
-                continue
-
-            cells = [cell.strip() for cell in line.strip("|").split("|")]
-            if len(cells) < 4:
-                continue
-            if cells[0].upper() in {"TITLE_ID", "TITLE ID"}:
-                continue
-            if all(set(cell) <= {"-", ":", " "} for cell in cells[:4]):
-                continue
-
-            # The Developer Wiki table is:
-            # title_id | concept_id | concept_name_en | concept_type_code
-            # Keep the first four fields and tolerate Markdown formatting.
-            title_id_match = re.search(r"\\b([A-Z]{4}\\d{5})\\b", cells[0], re.IGNORECASE)
-            type_match = re.search(r"\\b(GAME|APPLICATION)\\b\\s*$", cells[3], re.IGNORECASE)
-            if title_id_match and type_match:
-                cells[0] = title_id_match.group(1)
-                cells[3] = type_match.group(1)
-                rows.append(cells[:4])
-
     database: dict[str, dict[str, str]] = {}
 
+    # First accept rows parsed from real HTML.
+    rows = list(parser.rows)
     for row in rows:
         if len(row) < 4:
             continue
-
         title_id, concept_id, name, type_code = [cell.strip() for cell in row[:4]]
         title_id = title_id.upper()
         type_code = type_code.upper()
+        if TITLE_ID_RE.fullmatch(title_id) and type_code in {"GAME", "APPLICATION"}:
+            database[title_id] = {
+                "name": name,
+                "type": type_code,
+                "source": "psdevwiki",
+            }
 
-        if not TITLE_ID_RE.fullmatch(title_id):
+    # r.jina.ai returns the Developer Wiki table as plain/Markdown text.
+    # Parse the complete row directly instead of depending on Markdown
+    # pipe placement.
+    row_re = re.compile(
+        r"^\\s*\\|?\\s*([A-Z]{4}\\d{5})\\s*\\|\\s*([^|]+?)"
+        r"\\s*\\|\\s*(.*?)\\s*\\|\\s*(GAME|APPLICATION)"
+        r"\\s*\\|?\\s*$",
+        re.IGNORECASE,
+    )
+
+    for line in source.splitlines():
+        match = row_re.match(line)
+        if not match:
             continue
-        if type_code not in {"GAME", "APPLICATION"}:
-            continue
+
+        title_id, concept_id, name, type_code = match.groups()
+        title_id = title_id.upper()
+        type_code = type_code.upper()
 
         database[title_id] = {
-            "name": name,
+            "name": name.strip(),
             "type": type_code,
             "source": "psdevwiki",
         }
