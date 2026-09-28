@@ -70,28 +70,33 @@ def expected_catalog(platform, category):
 
 
 def resolve_external_categories():
-    """Build title-ID category hints from the configured external databases."""
+    """Build exact-URL and title-ID category hints from external databases."""
     try:
         entries = fetch_external_database_entries()
     except Exception as exc:
         print(f"WARNING: External database category lookup failed: {exc}")
-        return {}
+        return {}, {}
 
-    categories = {}
-    for metadata in entries.values():
-        title_id = metadata.get("title_id")
+    url_categories = {}
+    title_categories = {}
+    for url, metadata in entries.items():
         category = normalize(metadata.get("category"))
-        if not isinstance(title_id, str) or not category:
+        if not category:
             continue
 
-        title_id = title_id.strip().upper()
-        categories.setdefault(title_id, set()).add(category)
+        url_categories[url] = category
 
-    return {
+        title_id = metadata.get("title_id")
+        if isinstance(title_id, str) and title_id.strip():
+            title_id = title_id.strip().upper()
+            title_categories.setdefault(title_id, set()).add(category)
+
+    unique_title_categories = {
         title_id: next(iter(values))
-        for title_id, values in categories.items()
+        for title_id, values in title_categories.items()
         if len(values) == 1
     }
+    return url_categories, unique_title_categories
 
 
 def resolve_categories(title_ids):
@@ -168,7 +173,7 @@ def audit_catalogs():
         f"resolving {len(title_ids)} unique title IDs"
     )
 
-    external_categories = resolve_external_categories()
+    external_url_categories, external_categories = resolve_external_categories()
     resolved_categories = resolve_categories(title_ids)
 
     for platform, path, category, url, record, title_id in records:
@@ -180,6 +185,7 @@ def audit_catalogs():
         # already misplaced in games.json can be moved to their real category.
         record_category = normalize(record.get("category"))
         external_category = external_categories.get(title_id)
+        exact_external_category = external_url_categories.get(url)
         resolved_category = resolved_categories.get(title_id)
 
         # A generic games classification is not authoritative. External
@@ -191,7 +197,14 @@ def audit_catalogs():
         if record_category and record_category != "games":
             resolved = record_category
         else:
-            resolved = external_category or resolved_category or record_category
+            # Exact package-URL classification is strongest. If it is only
+            # generic "games", a title lookup may still correct a known
+            # application such as YouTube or Netflix.
+            resolved = (
+                resolved_category
+                if exact_external_category == "games" and resolved_category
+                else exact_external_category or resolved_category or external_category or record_category
+            )
         if resolved is None or resolved in {"ps1", "ps2", "psp"}:
             continue
 
