@@ -151,6 +151,14 @@ def normalize_category(value):
     return PKG_CATEGORY_MAP.get(value.lower(), value.lower())
 
 
+# Known PlayStation applications that are currently hosted in the games dataset.
+# Keep these explicit until the upstream dataset classification is corrected.
+TITLE_ID_CATEGORY_OVERRIDES = {
+    "CUSA01116": "apps",  # YouTube
+    "PPSA01615": "apps",  # Netflix
+}
+
+
 EXTERNAL_CATEGORY_MAP = {
     "game": "games",
     "games": "games",
@@ -291,6 +299,11 @@ def _scan_database(database):
                 if not current_category or current_category == "games":
                     metadata["category"] = resolved_category
                     print(f"  Category lookup: {title_id} -> {resolved_category}")
+
+        override_category = TITLE_ID_CATEGORY_OVERRIDES.get(title_id)
+        if override_category:
+            metadata["category"] = override_category
+            print(f"  Category override: {title_id} -> {override_category}")
 
         if not metadata.get("category"):
             print(
