@@ -94,9 +94,9 @@ def build_database(source: str) -> dict[str, dict[str, str]]:
     # Parse the complete row directly instead of depending on Markdown
     # pipe placement.
     row_re = re.compile(
-        r"^\\s*\\|?\\s*([A-Z]{4}\\d{5})\\s*\\|\\s*([^|]+?)"
-        r"\\s*\\|\\s*(.*?)\\s*\\|\\s*(GAME|APPLICATION)"
-        r"\\s*\\|?\\s*$",
+        r"^\s*\|?\s*([A-Z]{4}\d{5})\s*\|\s*([^|]+?)"
+        r"\s*\|\s*(.*?)\s*\|\s*(GAME|APPLICATION)"
+        r"\s*\|?\s*$",
         re.IGNORECASE,
     )
 
