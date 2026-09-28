@@ -155,32 +155,17 @@ def resolve_categories(title_ids):
     })
     pending = sorted(set(title_ids) - set(results))
 
+    # Unknown IDs stay unresolved for human classification. Never guess games
+    # and never fall back to unreliable per-title network lookups.
     print(
-        f"Catalog audit: resolving {len(title_ids)} unique title IDs "
-        f"({len(results)} classified/cached, {len(pending)} live) with {FALLBACK_WORKERS} workers"
+        f"Catalog audit: classified {len(results)} / {len(title_ids)} unique title IDs; "
+        f"{len(pending)} need human classification"
     )
-
-    def lookup(title_id):
-        try:
-            return title_id, normalize(resolve_category(title_id))
-        except Exception as exc:
-            print(f"WARNING: Category lookup failed for {title_id}: {exc}")
-            return title_id, None
-
-    with ThreadPoolExecutor(max_workers=FALLBACK_WORKERS) as executor:
-        futures = [executor.submit(lookup, title_id) for title_id in pending]
-        for future in as_completed(futures):
-            title_id, category = future.result()
-            results[title_id] = category
-            if category is not None:
-                cache[title_id] = category
-
-    if pending:
+    if cache:
         _save_title_cache(cache)
 
     print(
-        f"Catalog audit: resolved {sum(value is not None for value in results.values())} "
-        f"/ {len(title_ids)} unique title IDs"
+        f"Catalog audit: resolved {len(results)} / {len(title_ids)} unique title IDs"
     )
     return results
 
