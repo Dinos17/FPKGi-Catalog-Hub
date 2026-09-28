@@ -16,7 +16,7 @@ import urllib.request
 from html.parser import HTMLParser
 from pathlib import Path
 
-SOURCE_URL = "https://www.psdevwiki.com/ps4/Game_Titles/db"
+SOURCE_URL = "https://www.psdevwiki.com/ps4/api.php?action=parse&page=Game_Titles/db&prop=text&format=json"
 TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
 
 
@@ -57,10 +57,14 @@ class TableParser(HTMLParser):
 def fetch_source() -> str:
     request = urllib.request.Request(
         SOURCE_URL,
-        headers={"User-Agent": "FPKGi-Catalog-Hub/1.0"},
+        headers={"User-Agent": "Mozilla/5.0 (compatible; FPKGi-Catalog-Hub/1.0)", "Accept": "application/json"},
     )
-    with urllib.request.urlopen(request, timeout=30) as response:
-        return response.read().decode("utf-8", errors="replace")
+    with urllib.request.urlopen(request, timeout=60) as response:
+        payload = json.loads(response.read().decode("utf-8", errors="replace"))
+    html = payload.get("parse", {}).get("text", {}).get("*")
+    if not isinstance(html, str) or not html.strip():
+        raise RuntimeError("PS4 Developer Wiki API returned no parsed table HTML.")
+    return html
 
 
 def build_database(html: str) -> dict[str, dict[str, str]]:
