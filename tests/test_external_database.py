@@ -48,6 +48,50 @@ def test_load_database_url_rejects_invalid_config(tmp_path, monkeypatch, config)
         external_database.load_database_url()
 
 
+def test_load_database_urls_reads_multiple_datasets(tmp_path, monkeypatch):
+    config_path = tmp_path / "external_database.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {"name": "PS-Games-Dataset", "url": "https://huggingface.co/datasets/example/games"},
+                    {"name": "PS-Applications", "url": "https://huggingface.co/datasets/example/apps"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(external_database, "CONFIG_PATH", config_path)
+
+    assert external_database.load_database_urls() == [
+        {"name": "PS-Games-Dataset", "url": "https://huggingface.co/datasets/example/games"},
+        {"name": "PS-Applications", "url": "https://huggingface.co/datasets/example/apps"},
+    ]
+
+
+def test_load_database_urls_rejects_duplicate_urls(tmp_path, monkeypatch):
+    config_path = tmp_path / "external_database.json"
+    config_path.write_text(
+        json.dumps(
+            {
+                "datasets": [
+                    {"name": "one", "url": "https://huggingface.co/datasets/example/games"},
+                    {"name": "two", "url": "https://huggingface.co/datasets/example/games"},
+                ]
+            }
+        ),
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(external_database, "CONFIG_PATH", config_path)
+
+    with pytest.raises(ValueError, match="Duplicate external database URL"):
+        external_database.load_database_urls()
+
+
+def test_normalize_category_maps_gdc_to_dlc():
+    assert external_database.normalize_category("gdc") == "dlc"
+
+
 def test_hugging_face_dataset_parts_accepts_configured_database():
     assert external_database._hugging_face_dataset_parts(
         "https://huggingface.co/datasets/dinos17/FPKGi-Packages"
