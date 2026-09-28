@@ -390,10 +390,13 @@ def main():
         dataset_entries = {}
 
     def external_entries_for_category(category):
+        # External entries must already have an explicit, normalized category.
+        # Never default an unknown external package to games: doing so can leak
+        # applications and other package types into ps4/games.json.
         return {
             pkg_url: metadata
             for pkg_url, metadata in dataset_entries.items()
-            if metadata.get("category", "games") == category
+            if metadata.get("category") == category
         }
 
     for category, urls in sources.items():
