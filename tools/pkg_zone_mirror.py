@@ -75,7 +75,15 @@ def extract_category(soup):
         text,
         re.I,
     )
-    return match.group(1).strip().lower() if match else ""
+    if not match:
+        return ""
+
+    raw = match.group(1).strip().lower()
+    # PKG-Zone may expose multiple labels such as "hb game".
+    for category in sorted(CATEGORY_FOLDERS, key=len, reverse=True):
+        if re.search(rf"(?<![a-z]){re.escape(category)}(?![a-z])", raw):
+            return category
+    return raw
 
 def extract_package_url(record):
     response = fetch(record["detail_url"])
@@ -122,7 +130,7 @@ def collect_records():
             failed_pages.append(page)
             consecutive_page_failures += 1
             print(
-                f"{CATEGORY}: page {page}: unavailable after retries "
+                f"PKG-Zone: page {page}: unavailable after retries "
                 f"(consecutive failures: {consecutive_page_failures}); continuing."
             )
             if consecutive_page_failures >= 3:
