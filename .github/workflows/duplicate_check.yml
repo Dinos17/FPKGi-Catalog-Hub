@@ -4,7 +4,9 @@ on:
   workflow_dispatch:
   push:
     paths:
-      - "*.json"
+      - "ps4/**/*.json"
+      - "ps5/**/*.json"
+      - "changes/*.json"
       - "tools/duplicate_check.py"
       - ".github/workflows/duplicate_check.yml"
 
