@@ -75,12 +75,14 @@ def build_database(source: str) -> dict[str, dict[str, str]]:
 
     rows = list(parser.rows)
 
-    # r.jina.ai normally returns Markdown rather than the original HTML.
+    # r.jina.ai normally returns Markdown/plain text rather than the original HTML.
+    # Accept both pipe-table rows with and without leading/trailing pipes.
     if not rows:
         for line in source.splitlines():
             line = line.strip()
-            if not line.startswith("|"):
+            if "|" not in line:
                 continue
+
             cells = [cell.strip() for cell in line.strip("|").split("|")]
             if len(cells) < 4:
                 continue
@@ -88,7 +90,16 @@ def build_database(source: str) -> dict[str, dict[str, str]]:
                 continue
             if all(set(cell) <= {"-", ":", " "} for cell in cells[:4]):
                 continue
-            rows.append(cells[:4])
+
+            # The Developer Wiki table is:
+            # title_id | concept_id | concept_name_en | concept_type_code
+            # Keep the first four fields and tolerate Markdown formatting.
+            title_id_match = re.search(r"\\b([A-Z]{4}\\d{5})\\b", cells[0], re.IGNORECASE)
+            type_match = re.search(r"\\b(GAME|APPLICATION)\\b\\s*$", cells[3], re.IGNORECASE)
+            if title_id_match and type_match:
+                cells[0] = title_id_match.group(1)
+                cells[3] = type_match.group(1)
+                rows.append(cells[:4])
 
     database: dict[str, dict[str, str]] = {}
 
