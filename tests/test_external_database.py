@@ -171,3 +171,48 @@ def test_scan_database_resolved_app_overrides_generic_games(monkeypatch):
     assert skipped == 0
     assert len(entries) == 1
     assert next(iter(entries.values()))["category"] == "apps"
+
+
+def test_fetch_external_database_entries_prefers_application_database_on_conflict(
+    monkeypatch,
+):
+    url = "https://example.com/shared.pkg"
+
+    def fake_scan(database):
+        if database["name"] == "PS-Games-Dataset":
+            return (
+                {
+                    url: {
+                        "title_id": "CUSA01116",
+                        "name": "YouTube",
+                        "category": "games",
+                    }
+                },
+                1,
+                0,
+            )
+        return (
+            {
+                url: {
+                    "title_id": "CUSA01116",
+                    "name": "YouTube",
+                    "category": "apps",
+                }
+            },
+            1,
+            0,
+        )
+
+    monkeypatch.setattr(
+        external_database,
+        "load_database_urls",
+        lambda: [
+            {"name": "PS-Games-Dataset", "url": "https://example.com/games"},
+            {"name": "PS-Applications", "url": "https://example.com/apps"},
+        ],
+    )
+    monkeypatch.setattr(external_database, "_scan_database", fake_scan)
+
+    entries = external_database.fetch_external_database_entries()
+
+    assert entries[url]["category"] == "apps"
