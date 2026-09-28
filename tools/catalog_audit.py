@@ -7,7 +7,7 @@ from title_resolver import resolve_category
 
 
 ROOT = Path(__file__).resolve().parent.parent
-FALLBACK_WORKERS = 8
+FALLBACK_WORKERS = 2
 
 CATEGORY_MAP = {
     "game": "games",
@@ -99,14 +99,38 @@ def resolve_external_categories():
     return url_categories, unique_title_categories
 
 
+CACHE_PATH = ROOT / "config" / "title_api_cache.json"
+
+
+def _load_title_cache():
+    if not CACHE_PATH.exists():
+        return {}
+    try:
+        data = json.loads(CACHE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        print(f"WARNING: Could not load title API cache: {exc}")
+        return {}
+    return data if isinstance(data, dict) else {}
+
+
+def _save_title_cache(cache):
+    CACHE_PATH.write_text(
+        json.dumps(cache, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
+
 def resolve_categories(title_ids):
-    results = {}
     if not title_ids:
-        return results
+        return {}
+
+    cache = _load_title_cache()
+    results = {title_id: cache[title_id] for title_id in title_ids if title_id in cache}
+    pending = sorted(set(title_ids) - set(results))
 
     print(
         f"Catalog audit: resolving {len(title_ids)} unique title IDs "
-        f"using direct title/category lookup with {FALLBACK_WORKERS} workers"
+        f"({len(results)} cached, {len(pending)} live) with {FALLBACK_WORKERS} workers"
     )
 
     def lookup(title_id):
@@ -117,10 +141,15 @@ def resolve_categories(title_ids):
             return title_id, None
 
     with ThreadPoolExecutor(max_workers=FALLBACK_WORKERS) as executor:
-        futures = [executor.submit(lookup, title_id) for title_id in sorted(title_ids)]
+        futures = [executor.submit(lookup, title_id) for title_id in pending]
         for future in as_completed(futures):
             title_id, category = future.result()
             results[title_id] = category
+            if category is not None:
+                cache[title_id] = category
+
+    if pending:
+        _save_title_cache(cache)
 
     print(
         f"Catalog audit: resolved {sum(value is not None for value in results.values())} "
