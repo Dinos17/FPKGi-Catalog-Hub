@@ -240,6 +240,11 @@ def audit_catalogs():
         # Use the configured databases as the strongest fallback so packages
         # already misplaced in games.json can be moved to their real category.
         record_category = normalize(record.get("category"))
+        # The catalog file itself is authoritative for specific categories.
+        # This prevents a broad title-ID classification from moving DLC,
+        # updates, demos, themes, or homebrew into games/apps.
+        if category != "games":
+            record_category = category
         external_category = external_categories.get(title_id)
         exact_external_category = external_url_categories.get(url)
         resolved_category = resolved_categories.get(title_id)
