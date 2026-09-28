@@ -31,7 +31,7 @@ def expected_catalogs(root):
     for category in categories:
         validate_category_name(category)
         if category in legacy_categories:
-            files.append(f"ps4/{category}.json")
+            files.extend((f"ps4/{category}.json", f"ps5/{category}.json"))
         else:
             files.extend((f"ps4/{category}.json", f"ps5/ps5-{category}.json"))
     return files
