@@ -2,6 +2,7 @@ import io
 import os
 import re
 import struct
+import time
 from urllib.parse import unquote, urlparse
 
 import requests
@@ -321,43 +322,59 @@ def main():
     uploaded = 0
     skipped = 0
 
+    max_attempts = 3
+    retry_delay = 5
+
     for index, source_url in enumerate(source_urls, 1):
         print("\n" + "=" * 80)
         print(f"[{index}/{len(source_urls)}] {source_url}")
 
-        try:
-            info = inspect_remote_pkg(session, source_url)
-            repo_id, path_in_repo = destination(
-                repo_override, requested_path, info
-            )
-        except Exception as exc:
-            print(f"SKIP: {exc}")
-            skipped += 1
-            continue
+        completed = False
+        last_error = None
 
-        print(f"Title: {info['title']}")
-        print(f"Title ID: {info['title_id']}")
-        print(f"PKG CATEGORY: {info['pkg_category']}")
-        print(f"Resolved category: {info['category']}")
-        print(f"Remote size: {info['size']:,} bytes")
-        print(f"HF destination: {repo_id}/{path_in_repo}")
-        print("Streaming directly from Archive.org to Hugging Face.")
+        for attempt in range(1, max_attempts + 1):
+            print(f"Attempt {attempt}/{max_attempts}")
 
-        try:
-            operation = CommitOperationAdd(
-                path_in_repo=path_in_repo,
-                path_or_fileobj=info["remote"],
-            )
-            api.create_commit(
-                repo_id=repo_id,
-                repo_type="dataset",
-                operations=[operation],
-                commit_message=f"Upload {info['filename']}",
-            )
-            print(f"Uploaded: {repo_id}/{path_in_repo}")
-            uploaded += 1
-        except Exception as exc:
-            print(f"UPLOAD FAILED: {exc}")
+            try:
+                # Recreate the remote stream on every attempt so a failed
+                # range request or upload never leaves us with a consumed
+                # file-like object.
+                info = inspect_remote_pkg(session, source_url)
+                repo_id, path_in_repo = destination(
+                    repo_override, requested_path, info
+                )
+
+                print(f"Title: {info['title']}")
+                print(f"Title ID: {info['title_id']}")
+                print(f"PKG CATEGORY: {info['pkg_category']}")
+                print(f"Resolved category: {info['category']}")
+                print(f"Remote size: {info['size']:,} bytes")
+                print(f"HF destination: {repo_id}/{path_in_repo}")
+                print("Streaming directly from Archive.org to Hugging Face.")
+
+                operation = CommitOperationAdd(
+                    path_in_repo=path_in_repo,
+                    path_or_fileobj=info["remote"],
+                )
+                api.create_commit(
+                    repo_id=repo_id,
+                    repo_type="dataset",
+                    operations=[operation],
+                    commit_message=f"Upload {info['filename']}",
+                )
+                print(f"Uploaded: {repo_id}/{path_in_repo}")
+                uploaded += 1
+                completed = True
+                break
+            except Exception as exc:
+                last_error = exc
+                print(f"FAILED: {exc}")
+                if attempt < max_attempts:
+                    print(f"Retrying in {retry_delay} seconds...")
+                    time.sleep(retry_delay)
+
+        if not completed:
+            print(f"SKIP after {max_attempts} attempts: {last_error}")
             skipped += 1
 
     print("\n" + "=" * 80)
