@@ -1,5 +1,6 @@
 import re
 import struct
+from pathlib import Path
 from typing import Dict, Optional
 
 import requests
