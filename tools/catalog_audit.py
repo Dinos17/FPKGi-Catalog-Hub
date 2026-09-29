@@ -291,23 +291,33 @@ def audit_catalogs():
         exact_external_category = external_url_categories.get(url)
         resolved_category = resolved_categories.get(title_id)
 
-        # A generic games classification is not authoritative. External
-        # databases are used to correct packages such as applications that
-        # were previously registered in games.json. Specific classifications
-        # such as DLC, updates, demos, themes, and homebrew remain authoritative
-        # because those packages can legitimately share a title ID with a base
-        # game.
+        # A generic games classification can be corrected when reliable
+        # external metadata identifies the exact package as an application.
+        # Specific catalog categories remain authoritative because DLC,
+        # updates, demos, themes, and homebrew can share title IDs with games.
         if record_category and record_category != "games":
             resolved = record_category
         else:
-            # Exact package-URL classification is strongest. If it is only
-            # generic "games", a title lookup may still correct a known
-            # application such as YouTube or Netflix.
+            # An exact external URL classification is strongest. Never let a
+            # title-ID classification override an exact package classification.
             resolved = (
-                resolved_category
-                if exact_external_category == "games" and resolved_category
-                else exact_external_category or resolved_category or external_category or record_category
+                exact_external_category
+                or resolved_category
+                or external_category
+                or record_category
             )
+
+            # A title-ID/external classification can be stale or ambiguous.
+            # When it would move a generic games record away from games, verify
+            # the actual package PARAM.SFO before reclassifying it. This avoids
+            # moving real games such as Dead Island into apps because of a stale
+            # title-level cache, while still allowing known apps such as YouTube
+            # to move when their exact external package entry says "apps".
+            if category == "games" and resolved not in {None, "games"}:
+                pkg_category = _resolve_pkg_category(url, record, pkg_cache)
+                if pkg_category:
+                    resolved = pkg_category
+
         if resolved is None and category == "games":
             # Fall back to the actual package PARAM.SFO. CATEGORY is package-specific.
             resolved = _resolve_pkg_category(url, record, pkg_cache)
