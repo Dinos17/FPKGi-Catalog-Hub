@@ -8,9 +8,9 @@ on:
         required: true
         type: string
       hf_repo:
-        description: "Hugging Face repository, for example dinos17/FPKGi-Packages"
+        description: "Optional Hugging Face repository override"
         required: false
-        default: "dinos17/FPKGi-Packages"
+        default: ""
         type: string
 
 permissions:
@@ -72,7 +72,7 @@ jobs:
           from huggingface_hub import HfApi
 
           token = os.environ["HF_TOKEN"]
-          repo_id = os.environ["HF_REPO"]
+          repo_id = os.environ.get("HF_REPO", "").strip()
           source_file = Path(os.environ["SOURCE_FILE"])
           path_in_repo = source_file.name
 
