@@ -1,3 +1,29 @@
 {
-  "DATA": {}
+  "DATA": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS5_PPSA01615_v6.00.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS5_PPSA01615_v6.00.pkg?download=true",
+      "old": {
+        "title_id": "PPSA01615",
+        "region": null,
+        "name": "Netflix",
+        "version": null,
+        "release": null,
+        "size": 93847552,
+        "min_fw": null,
+        "cover_url": null,
+        "category": "apps"
+      },
+      "new": {
+        "title_id": "PPSA01615",
+        "region": null,
+        "name": "PS5_PPSA01615_v6.00.pkg",
+        "version": null,
+        "release": null,
+        "size": 93847552,
+        "min_fw": null,
+        "cover_url": null,
+        "category": "apps"
+      }
+    }
+  }
 }

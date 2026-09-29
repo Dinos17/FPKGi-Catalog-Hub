@@ -1740,6 +1740,16 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10484.png"
     },
+    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20-%20[EU]%20[EN]%20[1.03].pkg": {
+      "title_id": "CUSA03291",
+      "region": "EUR",
+      "name": "Dead Island",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 4719443968,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03291.png"
+    },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%202%20-%20[EU]%20[EN]%20[1.10].pkg": {
       "title_id": "CUSA27043",
       "region": "EUR",
@@ -1749,6 +1759,16 @@
       "size": 24618860544,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA27043.png"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20Riptide%20-%20[EU]%20[EN]%20[1.03].pkg": {
+      "title_id": "CUSA03290",
+      "region": "EUR",
+      "name": "Dead Island: Riptide",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 4803592192,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03290.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Nation%20-%20[US]%20[EN]%20[1.03].pkg": {
       "title_id": "CUSA00236",
@@ -2119,6 +2139,16 @@
       "size": 37988204544,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA12555.png"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-d/Dying%20Light%20The%20Following%20-%20[EU]%20[EN]%20[1.31].pkg": {
+      "title_id": "CUSA03991",
+      "region": "EUR",
+      "name": "Dying Light: The Following",
+      "version": "01.31",
+      "release": "11-15-2013",
+      "size": 18575196160,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03991.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-e/EA%20SPORTS%20FC%2024%20-%20[EU]%20[EN]%20[1.22].pkg": {
       "title_id": "CUSA40325",
@@ -8620,6 +8650,16 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01345.png"
     },
+    "https://spyderrock.com/3Buq0901-FLTZ00003V1.pkg": {
+      "title_id": "AZIF00001",
+      "region": "USA",
+      "name": "FLTZ",
+      "version": "1.00",
+      "release": "01-01-2025",
+      "size": 125682320,
+      "min_fw": "5.05",
+      "cover_url": "https://i0.wp.com/wololo.net/wagic/wp-content/uploads/2021/11/ps4vibe.png"
+    },
     "https://buzzheavier.com/dl/0UUlWLFUpBogzfsqihj-zcNd5Qb8Ql1j-ySjv80gpqqJDhAXJW69Fv5YW-3fz2MdKzTZHeG53tI8NmlQjOutU-At8W04CcaIOXj4vgP3iH_EZ6RQZXQHB6AkwgWa1D8OcDab0PL8MVyvP16whDhMPRaf1PcKtOY6WvrPQMkXygE?v=1740484770-Wae73qFk81xm3EYzB06FphEeBSz%2F7Uru3HgmBSdmF8s%3D": {
       "title_id": "CUSA00419",
       "region": "USA",
@@ -8808,6 +8848,17 @@
       "release": null,
       "size": 274202624,
       "min_fw": "4.80",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true": {
+      "title_id": "CUSA01116",
+      "region": null,
+      "name": "YouTube",
+      "version": "01.00",
+      "release": null,
+      "size": 151650304,
+      "min_fw": "5.05",
       "cover_url": null,
       "category": "games"
     }
