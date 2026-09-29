@@ -187,6 +187,45 @@ def test_scan_database_prefers_filename_title_id_over_generic_pkg_metadata(monke
     assert entry["title_id"] == "NPXS29129"
 
 
+def test_scan_database_path_category_overrides_pkg_category(monkeypatch):
+    monkeypatch.setattr(
+        external_database,
+        "fetch_database_files",
+        lambda url: [{
+            "path": "Media/EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg",
+            "size": 123,
+        }],
+    )
+    monkeypatch.setattr(
+        external_database,
+        "extract_metadata",
+        lambda url, size: {
+            "title_id": "CUSA01116",
+            "region": "EU",
+            "name": "YouTube",
+            "version": "02.39",
+            "release": None,
+            "size": size,
+            "min_fw": "17.00.128",
+            "cover_url": None,
+            "category": "gp",
+        },
+    )
+    monkeypatch.setattr(external_database, "resolve_category", lambda title_id: None)
+    monkeypatch.setattr(external_database, "resolve_title", lambda title_id: None)
+
+    entries, scanned, skipped = external_database._scan_database(
+        {
+            "name": "PS-Applications",
+            "url": "https://huggingface.co/datasets/example/apps",
+        }
+    )
+
+    assert scanned == 1
+    assert skipped == 0
+    assert next(iter(entries.values()))["category"] == "apps"
+
+
 def test_scan_database_resolved_app_overrides_generic_games(monkeypatch):
     monkeypatch.setattr(
         external_database,
