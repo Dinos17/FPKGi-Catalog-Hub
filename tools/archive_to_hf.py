@@ -322,7 +322,7 @@ def main():
     uploaded = 0
     skipped = 0
 
-    max_attempts = 3
+    max_attempts = 50
     retry_delay = 5
 
     for index, source_url in enumerate(source_urls, 1):
