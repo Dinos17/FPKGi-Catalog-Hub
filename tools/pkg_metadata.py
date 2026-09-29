@@ -141,10 +141,30 @@ def parse_sfo(data: bytes) -> Dict[str, object]:
 
     return entries
 
+class FileReader:
+    """Read byte ranges from a downloaded local PKG file."""
 
-def extract_metadata(url: str, size: int) -> Dict[str, object]:
-    reader = RangeReader(url, size)
+    def __init__(self, path):
+        self.path = path
+        self.size = path.stat().st_size
 
+    def read(self, start: int, length: int) -> bytes:
+        if start < 0 or length < 0 or start + length > self.size:
+            raise ValueError("Requested byte range is outside the file")
+
+        with self.path.open("rb") as file:
+            file.seek(start)
+            content = file.read(length)
+
+        if len(content) != length:
+            raise RuntimeError(
+                f"File read length mismatch: expected {length}, got {len(content)}"
+            )
+
+        return content
+
+
+def _extract_metadata_from_reader(reader, size: int) -> Dict[str, object]:
     header = reader.read(0, 0x1000)
 
     magic = struct.unpack_from(">I", header, 0)[0]
@@ -202,8 +222,6 @@ def extract_metadata(url: str, size: int) -> Dict[str, object]:
     if not isinstance(system_ver, int):
         system_ver = None
 
-    # FPKGi's "version" should represent the application's version.
-    # PS4 PARAM.SFO exposes that as APP_VER; VERSION is the package/disc revision.
     fpkgi_version = app_ver or version
 
     region = None
@@ -221,3 +239,15 @@ def extract_metadata(url: str, size: int) -> Dict[str, object]:
     }
 
     return {key: value for key, value in metadata.items() if value not in (None, "")}
+
+
+def extract_metadata(url: str, size: int) -> Dict[str, object]:
+    return _extract_metadata_from_reader(RangeReader(url, size), size)
+
+
+def extract_metadata_from_file(path) -> Dict[str, object]:
+    """Extract PS4 PKG metadata from a downloaded local file."""
+    path = Path(path)
+    if not path.is_file():
+        raise FileNotFoundError(path)
+    return _extract_metadata_from_reader(FileReader(path), path.stat().st_size)
