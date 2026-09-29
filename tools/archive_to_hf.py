@@ -43,11 +43,24 @@ def archive_pkg_urls(session, identifier):
     urls = []
     for record in response.json().get("files", []):
         name = str(record.get("name") or "")
-        if name.lower().endswith(".pkg"):
-            urls.append(
-                "https://archive.org/download/"
-                f"{identifier}/{name}"
-            )
+        if not name.lower().endswith(".pkg"):
+            continue
+
+        # Keep the normal Archive.org download URL first, but also use the
+        # file server recorded in metadata when available. This avoids
+        # repeatedly depending on the same regional redirect target.
+        candidates = [
+            "https://archive.org/download/"
+            f"{identifier}/{name}"
+        ]
+        server = str(record.get("server") or "").strip()
+        directory = str(record.get("dir") or "").strip()
+        if server and directory:
+            direct_url = f"https://{server}{directory}/{name}"
+            if direct_url not in candidates:
+                candidates.append(direct_url)
+
+        urls.append(candidates)
     return urls
 
 class RemoteRangeFile(io.BufferedIOBase):
@@ -307,14 +320,15 @@ def main():
     session.headers.update({"User-Agent": "FPKGi-Catalog-Hub/1.0"})
 
     source_urls = []
-    seen_urls = set()
+    seen_files = set()
     for identifier in identifiers:
-        urls = archive_pkg_urls(session, identifier)
-        print(f"{identifier}: found {len(urls)} PKG files")
-        for url in urls:
-            if url not in seen_urls:
-                seen_urls.add(url)
-                source_urls.append(url)
+        url_candidates = archive_pkg_urls(session, identifier)
+        print(f"{identifier}: found {len(url_candidates)} PKG files")
+        for candidates in url_candidates:
+            key = tuple(candidates)
+            if key not in seen_files:
+                seen_files.add(key)
+                source_urls.append(candidates)
 
     print(f"Total unique Archive.org PKG URLs: {len(source_urls)}")
 
@@ -325,15 +339,16 @@ def main():
     max_attempts = 50
     retry_delay = 5
 
-    for index, source_url in enumerate(source_urls, 1):
+    for index, source_url_candidates in enumerate(source_urls, 1):
         print("\n" + "=" * 80)
-        print(f"[{index}/{len(source_urls)}] {source_url}")
+        print(f"[{index}/{len(source_urls)}] {source_url_candidates[0]}")
 
         completed = False
         last_error = None
 
         for attempt in range(1, max_attempts + 1):
-            print(f"Attempt {attempt}/{max_attempts}")
+            source_url = source_url_candidates[(attempt - 1) % len(source_url_candidates)]
+            print(f"Attempt {attempt}/{max_attempts} via {source_url}")
 
             try:
                 # Recreate the remote stream on every attempt so a failed
