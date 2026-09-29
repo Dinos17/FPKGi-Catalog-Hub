@@ -125,7 +125,6 @@ def test_audit_uses_title_lookup_to_correct_generic_game_package(
             url: {
                 "name": "YouTube",
                 "title_id": "CUSA01116",
-                "category": "games",
             }
         },
     )
@@ -133,6 +132,11 @@ def test_audit_uses_title_lookup_to_correct_generic_game_package(
         catalog_audit,
         "resolve_categories",
         lambda title_ids: {"CUSA01116": "apps"},
+    )
+    monkeypatch.setattr(
+        catalog_audit,
+        "extract_metadata",
+        lambda url, size: {"category": "gde", "title_id": "CUSA01116"},
     )
 
     moved = catalog_audit.audit_catalogs()
@@ -182,3 +186,51 @@ def test_audit_uses_pkg_category_for_unresolved_game(
     assert json.loads((ps4 / "apps.json").read_text(encoding="utf-8"))["DATA"][url][
         "category"
     ] == "apps"
+
+
+def test_audit_pkg_category_overrides_stale_title_app_classification(
+    tmp_path, monkeypatch
+):
+    ps4 = tmp_path / "ps4"
+    ps5 = tmp_path / "ps5"
+    ps4.mkdir()
+    ps5.mkdir()
+
+    url = "https://example.com/dead-island.pkg"
+    record = {
+        "name": "Dead Island",
+        "title_id": "CUSA03291",
+        "category": "games",
+        "size": 123,
+    }
+    (ps4 / "games.json").write_text(
+        json.dumps({"DATA": {url: record}}), encoding="utf-8"
+    )
+    (ps4 / "apps.json").write_text(json.dumps({"DATA": {}}), encoding="utf-8")
+
+    monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        catalog_audit,
+        "fetch_external_database_entries",
+        lambda: {},
+    )
+    monkeypatch.setattr(
+        catalog_audit,
+        "resolve_categories",
+        lambda title_ids: {"CUSA03291": "apps"},
+    )
+    monkeypatch.setattr(
+        catalog_audit,
+        "extract_metadata",
+        lambda url, size: {"category": "gd", "title_id": "CUSA03291"},
+    )
+
+    moved = catalog_audit.audit_catalogs()
+
+    assert moved == []
+    assert json.loads((ps4 / "games.json").read_text(encoding="utf-8"))["DATA"][
+        url
+    ]["category"] == "games"
+    assert json.loads((ps4 / "apps.json").read_text(encoding="utf-8")) == {
+        "DATA": {}
+    }
