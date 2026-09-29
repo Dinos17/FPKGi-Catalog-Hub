@@ -1,52 +1,16 @@
 {
   "DATA": {
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20-%20[EU]%20[EN]%20[1.03].pkg": {
-      "url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20-%20[EU]%20[EN]%20[1.03].pkg",
-      "title_id": "CUSA03291",
-      "region": "EUR",
-      "name": "Dead Island",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 4719443968,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03291.png",
-      "category": "apps"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20Riptide%20-%20[EU]%20[EN]%20[1.03].pkg": {
-      "url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20Riptide%20-%20[EU]%20[EN]%20[1.03].pkg",
-      "title_id": "CUSA03290",
-      "region": "EUR",
-      "name": "Dead Island: Riptide",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 4803592192,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03290.png",
-      "category": "apps"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dying%20Light%20The%20Following%20-%20[EU]%20[EN]%20[1.31].pkg": {
-      "url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dying%20Light%20The%20Following%20-%20[EU]%20[EN]%20[1.31].pkg",
-      "title_id": "CUSA03991",
-      "region": "EUR",
-      "name": "Dying Light: The Following",
-      "version": "01.31",
-      "release": "11-15-2013",
-      "size": 18575196160,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03991.png",
-      "category": "apps"
-    },
-    "https://spyderrock.com/3Buq0901-FLTZ00003V1.pkg": {
-      "url": "https://spyderrock.com/3Buq0901-FLTZ00003V1.pkg",
-      "title_id": "AZIF00001",
-      "region": "USA",
-      "name": "FLTZ",
-      "version": "1.00",
-      "release": "01-01-2025",
-      "size": 125682320,
-      "min_fw": "5.05",
-      "cover_url": "https://i0.wp.com/wololo.net/wagic/wp-content/uploads/2021/11/ps4vibe.png",
-      "category": "apps"
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FEP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
+      "url": "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FEP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true",
+      "title_id": "CUSA01116",
+      "region": null,
+      "name": "YouTube",
+      "version": "02.39",
+      "release": null,
+      "size": 128974848,
+      "min_fw": "17.00.128",
+      "cover_url": null,
+      "category": "updates"
     }
   }
 }
