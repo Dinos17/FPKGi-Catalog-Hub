@@ -3,17 +3,22 @@ name: Upload URL to Hugging Face
 on:
   workflow_dispatch:
     inputs:
-      source_url:
-        description: "Direct URL of a file you are authorized to upload"
+      source_collection:
+        description: "Archive.org collection to process"
         required: true
-        type: string
+        default: "both"
+        type: choice
+        options:
+          - both
+          - ps4-fpkg-collection-english-t
+          - ps4-fpkg-collection-english-d
       hf_repo:
         description: "Optional Hugging Face repository override"
         required: false
         default: ""
         type: string
       hf_path:
-        description: "Optional exact destination path inside the Hugging Face dataset"
+        description: "Optional exact destination path inside the Hugging Face dataset (single-file mode only)"
         required: false
         default: ""
         type: string
@@ -28,7 +33,7 @@ jobs:
     steps:
       - name: Inspect and stream source to Hugging Face
         env:
-          SOURCE_URL: ${{ inputs.source_url }}
+          SOURCE_COLLECTION: ${{ inputs.source_collection }}
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO: ${{ inputs.hf_repo }}
           HF_PATH: ${{ inputs.hf_path }}
@@ -46,43 +51,53 @@ jobs:
           import requests
           from huggingface_hub import CommitOperationAdd, HfApi
 
-          source_url = os.environ["SOURCE_URL"]
+          source_collection = os.environ["SOURCE_COLLECTION"]
           token = os.environ["HF_TOKEN"]
           repo_id = os.environ.get("HF_REPO", "").strip()
           requested_path = os.environ.get("HF_PATH", "").strip()
 
           if not token:
               raise SystemExit("HF_TOKEN repository secret is not configured.")
-          if not source_url.startswith("https://"):
-              raise SystemExit("SOURCE_URL must use HTTPS.")
+          collections = {
+              "ps4-fpkg-collection-english-t": "ps4-fpkg-collection-english-t",
+              "ps4-fpkg-collection-english-d": "ps4-fpkg-collection-english-d",
+          }
+          if source_collection == "both":
+              identifiers = list(collections.values())
+          elif source_collection in collections:
+              identifiers = [collections[source_collection]]
+          else:
+              raise SystemExit(f"Unknown Archive.org collection: {source_collection}")
 
           session = requests.Session()
           session.headers.update({"User-Agent": "FPKGi-Catalog-Hub/1.0"})
 
-          # Resolve redirects and get the total size with a 1-byte range.
-          # No PKG data is written to the GitHub runner.
-          probe = session.get(
-              source_url,
-              allow_redirects=True,
-              timeout=60,
-              headers={"Range": "bytes=0-0"},
-          )
-          probe.raise_for_status()
-          final_url = probe.url
-          content_range = probe.headers.get("Content-Range", "")
-          match = re.fullmatch(r"bytes 0-0/(\d+)", content_range)
-          if not match:
-              raise SystemExit(
-                  f"Source did not return a valid Content-Range: {content_range!r}"
-              )
+          def archive_pkg_urls(identifier):
+              metadata_url = f"https://archive.org/metadata/{identifier}"
+              response = session.get(metadata_url, timeout=60)
+              response.raise_for_status()
+              files = response.json().get("files", [])
+              urls = []
+              for record in files:
+                  name = str(record.get("name") or "")
+                  if name.lower().endswith(".pkg"):
+                      urls.append(
+                          "https://archive.org/download/"
+                          f"{identifier}/{name}"
+                      )
+              return urls
 
-          size = int(match.group(1))
-          filename = unquote(os.path.basename(urlparse(final_url).path))
-          if not filename or size <= 0:
-              raise SystemExit("Could not determine remote filename or size.")
+          source_urls = []
+          seen_urls = set()
+          for identifier in identifiers:
+              urls = archive_pkg_urls(identifier)
+              print(f"{identifier}: found {len(urls)} PKG files")
+              for url in urls:
+                  if url not in seen_urls:
+                      seen_urls.add(url)
+                      source_urls.append(url)
 
-          print(f"Remote file: {filename}")
-          print(f"Remote size: {size:,} bytes")
+          print(f"Total unique Archive.org PKG URLs: {len(source_urls)}")
 
           class RemoteRangeFile(io.BufferedIOBase):
               """Seekable file-like object backed entirely by HTTP ranges."""
@@ -152,22 +167,51 @@ jobs:
                   self.pos += len(data)
                   return data
 
-          remote = RemoteRangeFile(final_url, size)
+          for source_url in source_urls:
+              print("\n" + "=" * 80)
+              print(f"Processing: {source_url}")
 
-          def read_at(offset, length):
-              remote.seek(offset)
-              return remote.read(length)
+              probe = session.get(
+                  source_url,
+                  allow_redirects=True,
+                  timeout=60,
+                  headers={"Range": "bytes=0-0"},
+              )
+              probe.raise_for_status()
+              final_url = probe.url
+              content_range = probe.headers.get("Content-Range", "")
+              match = re.fullmatch(r"bytes 0-0/(\d+)", content_range)
+              if not match:
+                  print(f"SKIP: invalid Content-Range: {content_range!r}")
+                  continue
+
+              size = int(match.group(1))
+              filename = unquote(os.path.basename(urlparse(final_url).path))
+              if not filename or size <= 0:
+                  print("SKIP: could not determine remote filename or size.")
+                  continue
+
+              print(f"Remote file: {filename}")
+              print(f"Remote size: {size:,} bytes")
+
+              remote = RemoteRangeFile(final_url, size)
+
+              def read_at(offset, length):
+                  remote.seek(offset)
+                  return remote.read(length)
 
           # PS4 PKG magic: 0x7F504B47.
-          if read_at(0, 4) != bytes.fromhex("7F504B47"):
-              raise SystemExit("Source is not a valid PS4 PKG.")
+              if read_at(0, 4) != bytes.fromhex("7F504B47"):
+                  print("SKIP: source is not a valid PS4 PKG.")
+                  continue
 
           header = read_at(0, 0x1000)
           entry_count = struct.unpack_from(">I", header, 0x10)[0]
           table_offset = struct.unpack_from(">I", header, 0x18)[0]
 
-          if entry_count <= 0 or table_offset >= size:
-              raise SystemExit("Invalid PKG file table.")
+              if entry_count <= 0 or table_offset >= size:
+                  print("SKIP: invalid PKG file table.")
+                  continue
 
           table_size = entry_count * 0x20
           table = read_at(table_offset, table_size)
@@ -186,8 +230,9 @@ jobs:
                   sfo_size = entry_size
                   break
 
-          if sfo_offset is None or sfo_size is None:
-              raise SystemExit("PKG does not contain PARAM.SFO.")
+              if sfo_offset is None or sfo_size is None:
+                  print("SKIP: PKG does not contain PARAM.SFO.")
+                  continue
 
           sfo = read_at(sfo_offset, sfo_size)
 
@@ -246,10 +291,9 @@ jobs:
           }
 
           category = category_map.get(pkg_category)
-          if not category:
-              raise SystemExit(
-                  f"Unknown PKG CATEGORY {pkg_category!r}; refusing to guess."
-              )
+              if not category:
+                  print(f"SKIP: unknown PKG CATEGORY {pkg_category!r}; refusing to guess.")
+                  continue
 
           subcategory = None
           if category == "apps" and title_id:
@@ -332,5 +376,7 @@ jobs:
               commit_message=f"Upload {filename}",
           )
 
-          print(f"Uploaded {path_in_repo} to {repo_id}")
+              print(f"Uploaded {path_in_repo} to {repo_id}")
+
+          print("\nAll Archive.org collections processed.")
           PY
