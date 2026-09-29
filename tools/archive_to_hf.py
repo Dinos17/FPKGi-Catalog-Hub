@@ -40,25 +40,44 @@ def archive_pkg_urls(session, identifier):
         timeout=60,
     )
     response.raise_for_status()
+    payload = response.json()
     urls = []
-    for record in response.json().get("files", []):
+
+    # Archive.org stores the download hosts and item directory at the
+    # top level of the metadata response, not on each file record.
+    directory = str(payload.get("dir") or "").strip()
+    servers = []
+    for value in (
+        payload.get("server"),
+        payload.get("d1"),
+        payload.get("d2"),
+    ):
+        value = str(value or "").strip()
+        if value and value not in servers:
+            servers.append(value)
+
+    for value in payload.get("workable_servers") or []:
+        value = str(value or "").strip()
+        if value and value not in servers:
+            servers.append(value)
+
+    for record in payload.get("files", []):
         name = str(record.get("name") or "")
         if not name.lower().endswith(".pkg"):
             continue
 
-        # Keep the normal Archive.org download URL first, but also use the
-        # file server recorded in metadata when available. This avoids
-        # repeatedly depending on the same regional redirect target.
+        # Try the normal Archive.org URL plus every usable storage server
+        # advertised by the metadata. The direct storage URLs avoid relying
+        # on the regional download redirect that has been returning HTTP 500.
         candidates = [
             "https://archive.org/download/"
             f"{identifier}/{name}"
         ]
-        server = str(record.get("server") or "").strip()
-        directory = str(record.get("dir") or "").strip()
-        if server and directory:
-            direct_url = f"https://{server}{directory}/{name}"
-            if direct_url not in candidates:
-                candidates.append(direct_url)
+        if directory:
+            for server in servers:
+                direct_url = f"https://{server}{directory}/{name}"
+                if direct_url not in candidates:
+                    candidates.append(direct_url)
 
         urls.append(candidates)
     return urls
