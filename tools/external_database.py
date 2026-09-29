@@ -278,11 +278,15 @@ def _scan_database(database):
         except Exception as exc:
             print(f"  WARNING: Could not inspect {database_name}/{filename}: {exc}")
 
+        # An explicit dataset path is authoritative when the package is
+        # deliberately organized into a category folder. This prevents a
+        # package-level PARAM.SFO value such as "gp" from overriding a
+        # human-curated Media/Applications placement.
         metadata_category = normalize_external_category(metadata.get("category"))
-        if metadata_category:
-            metadata["category"] = metadata_category
-        elif path_category:
+        if path_category:
             metadata["category"] = path_category
+        elif metadata_category:
+            metadata["category"] = metadata_category
 
         # Prefer the title ID encoded in the filename. External PKG metadata can
         # be generic or stale (for example, Store metadata embedded in a
