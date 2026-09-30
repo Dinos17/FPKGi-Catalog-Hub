@@ -7870,16 +7870,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA32748.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-t/TowerFall%20Ascension%20-%20[US]%20[EN]%20[1.03].pkg": {
-      "title_id": "CUSA00466",
-      "region": "USA",
-      "name": "TowerFall Ascension",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 303628288,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00466.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-t/Trackmania%20Turbo%20-%20[EU]%20[EN]%20[1.02].pkg": {
       "title_id": "CUSA01210",
       "region": "EUR",
@@ -8771,17 +8761,6 @@
       "release": null,
       "size": 9244311552,
       "min_fw": "1.117",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tearaway%20Unfolded%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
-      "title_id": "CUSA00562",
-      "region": null,
-      "name": "Tearaway™ Unfolded",
-      "version": "01.00",
-      "release": null,
-      "size": 6738477056,
-      "min_fw": "7.80",
       "cover_url": null,
       "category": "games"
     },

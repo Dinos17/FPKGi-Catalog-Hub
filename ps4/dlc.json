@@ -49,6 +49,28 @@
       "size": 1048576,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00466.png"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/TowerFall%20Dark%20World%20Expansion.pkg?download=true": {
+      "title_id": "CUSA00466",
+      "region": null,
+      "name": "TowerFall Dark World Expansion",
+      "version": "01.00",
+      "release": null,
+      "size": 1048576,
+      "min_fw": null,
+      "cover_url": null,
+      "category": "dlc"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-t/TowerFall%20Ascension%20-%20[US]%20[EN]%20[1.03].pkg": {
+      "title_id": "CUSA00466",
+      "region": "USA",
+      "name": "TowerFall Ascension",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 303628288,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00466.png",
+      "category": "dlc"
     }
   }
 }
