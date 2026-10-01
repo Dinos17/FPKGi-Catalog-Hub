@@ -10,6 +10,94 @@
       "min_fw": "17.00.128",
       "cover_url": null,
       "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/CUSA05186_TRICKY_TOWERS_UPDATEv1.80_FXD_%5BFW505%5D.pkg?download=true": {
+      "title_id": "CUSA05186",
+      "region": null,
+      "name": "Tricky Towers",
+      "version": "01.80",
+      "release": null,
+      "size": 137494528,
+      "min_fw": "4.00.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/UP3643-CUSA04550_00-DOWNWELLUSP40001-A0101-V0100.pkg?download=true": {
+      "title_id": "CUSA04550",
+      "region": null,
+      "name": "Downwell",
+      "version": "01.01",
+      "release": null,
+      "size": 4587520,
+      "min_fw": "4.80",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA00466_TOWERFALL_ASCENSION_UPDATEv1.03_SPLASH-FIX_%5BFW405%5D.pkg?download=true": {
+      "title_id": "CUSA00466",
+      "region": null,
+      "name": "TowerFall Ascension",
+      "version": "01.03",
+      "release": null,
+      "size": 46923776,
+      "min_fw": "2.80.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FEP1661-CUSA12172_00-SYPS4THEMOOSEMAN-A0101-V0100.pkg?download=true": {
+      "title_id": "CUSA12172",
+      "region": null,
+      "name": "The Mooseman",
+      "version": "01.01",
+      "release": null,
+      "size": 48955392,
+      "min_fw": "5.00.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Touryst_CUSA27266_v1.02_OptionalFix_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+      "title_id": "CUSA27266",
+      "region": null,
+      "name": "The Touryst",
+      "version": "01.02",
+      "release": null,
+      "size": 5570560,
+      "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDLPSGAME.COM%5D-Dandara.Update.v1.17.PS4-UNLiMiTED.pkg?download=true": {
+      "title_id": "CUSA10749",
+      "region": null,
+      "name": "Dandara: Trials of Fear Edition",
+      "version": "01.17",
+      "release": null,
+      "size": 534183936,
+      "min_fw": "6.80.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDLPSGAME.COM%5D-EP2647-CUSA07917_00-TOOTHNTAIL00SIEE-A0171-V0100.pkg?download=true": {
+      "title_id": "CUSA07917",
+      "region": null,
+      "name": "Tooth and Tail",
+      "version": "01.71",
+      "release": null,
+      "size": 297926656,
+      "min_fw": "5.00.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDownloadgameps3.com%5D-CUSA15271.v2.02.pkg?download=true": {
+      "title_id": "CUSA15271",
+      "region": null,
+      "name": "The Messenger",
+      "version": "02.02",
+      "release": null,
+      "size": 374079488,
+      "min_fw": "6.80.128",
+      "cover_url": null,
+      "category": "updates"
     }
   }
 }

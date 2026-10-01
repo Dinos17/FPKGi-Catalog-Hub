@@ -61,15 +61,15 @@
       "cover_url": null,
       "category": "dlc"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-t/TowerFall%20Ascension%20-%20[US]%20[EN]%20[1.03].pkg": {
-      "title_id": "CUSA00466",
-      "region": "USA",
-      "name": "TowerFall Ascension",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 303628288,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00466.png",
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA00948_THOMAS_WAS_ALONE_BENJAMINS_FLIGHT_DLC_FXD.pkg?download=true": {
+      "title_id": "CUSA00948",
+      "region": null,
+      "name": "Thomas Was Alone - Benjamin's Flight",
+      "version": "01.01",
+      "release": null,
+      "size": 1179648,
+      "min_fw": null,
+      "cover_url": null,
       "category": "dlc"
     }
   }

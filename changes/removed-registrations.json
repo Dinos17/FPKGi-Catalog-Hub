@@ -9,19 +9,8 @@
       "release": "11-15-2013",
       "size": 303628288,
       "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00466.png"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tearaway%20Unfolded%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
-      "url": "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tearaway%20Unfolded%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true",
-      "title_id": "CUSA00562",
-      "region": null,
-      "name": "Tearaway™ Unfolded",
-      "version": "01.00",
-      "release": null,
-      "size": 6738477056,
-      "min_fw": "7.80",
-      "cover_url": null,
-      "category": "games"
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00466.png",
+      "category": "dlc"
     }
   }
 }
