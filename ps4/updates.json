@@ -55,6 +55,17 @@
       "cover_url": null,
       "category": "updates"
     },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Gardens.Between_CUSA10527_v1.01_BACKPORT_%5B5.05-6.72%5D_OPOISSO893.pkg?download=true": {
+      "title_id": "CUSA10527",
+      "region": null,
+      "name": "The Gardens Between",
+      "version": "01.01",
+      "release": null,
+      "size": 924057600,
+      "min_fw": "5.80.128",
+      "cover_url": null,
+      "category": "updates"
+    },
     "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Touryst_CUSA27266_v1.02_OptionalFix_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA27266",
       "region": null,
@@ -63,6 +74,17 @@
       "release": null,
       "size": 5570560,
       "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FUP1767-CUSA04613_00-HIGHHORSEDISCJAM-A0108-V0101.pkg?download=true": {
+      "title_id": "CUSA04613",
+      "region": null,
+      "name": "Disc Jam™",
+      "version": "01.08",
+      "release": null,
+      "size": 1068695552,
+      "min_fw": "2.112",
       "cover_url": null,
       "category": "updates"
     },
