@@ -9,7 +9,6 @@ import requests
 from catalog_names import validate_category_name
 from release_sources import fetch_release_entries
 from external_database import fetch_external_database_entries
-from catalog_identity import find_existing_identity, load_catalog_identity_index
 
 
 CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "sources.json"
@@ -230,12 +229,11 @@ def is_ps5_entry(metadata):
     return isinstance(title_id, str) and title_id.upper().startswith("PPSA")
 
 
-def merge_category(category, urls, release_entries, excluded_urls=None, identity_index=None):
+def merge_category(category, urls, release_entries, excluded_urls=None):
     merged = {}
     excluded_urls = excluded_urls or set()
     total_source_entries = 0
     failed_sources = 0
-    identity_replacements = 0
 
     print(f"\n{'=' * 60}")
     print(f"{category.upper()}")
@@ -265,16 +263,6 @@ def merge_category(category, urls, release_entries, excluded_urls=None, identity
                     duplicates += 1
                     continue
 
-                if identity_index is not None:
-                    matches = find_existing_identity(identity_index, pkg_url, metadata, category)
-                    same_category_matches = [m for m in matches if catalog_category(m[0]) == category]
-                    if len(same_category_matches) == 1:
-                        old_path, old_url, _old_record = same_category_matches[0]
-                        if old_url != pkg_url:
-                            merged.pop(old_url, None)
-                            identity_replacements += 1
-                            print(f"Identity match: replacing {old_path.name} {old_url} -> {pkg_url}")
-
                 merged[pkg_url] = metadata
                 added += 1
 
@@ -299,16 +287,6 @@ def merge_category(category, urls, release_entries, excluded_urls=None, identity
         if pkg_url in merged:
             release_duplicates += 1
             continue
-
-        if identity_index is not None:
-            matches = find_existing_identity(identity_index, pkg_url, metadata, category)
-            same_category_matches = [m for m in matches if catalog_category(m[0]) == category]
-            if len(same_category_matches) == 1:
-                old_path, old_url, _old_record = same_category_matches[0]
-                if old_url != pkg_url:
-                    merged.pop(old_url, None)
-                    identity_replacements += 1
-                    print(f"Identity match: replacing {old_path.name} {old_url} -> {pkg_url}")
 
         merged[pkg_url] = metadata
         release_added += 1
@@ -391,7 +369,6 @@ def merge_category(category, urls, release_entries, excluded_urls=None, identity
 
     print(f"Total source entries: {total_source_entries}")
     print(f"Final unique entries: {len(merged)}")
-    print(f"Identity replacements: {identity_replacements}")
     print(f"Output: {output_path}")
 
     return len(merged)
@@ -404,9 +381,6 @@ def main():
     sources = load_sources()
     exclusions = load_exclusions()
     release_entries, ps5_release_entries = fetch_release_entries()
-
-    identity_index = load_catalog_identity_index(OUTPUT_DIR, catalog_output_path, catalog_category)
-    print(f"Catalog identity index: {len(identity_index)} identity keys loaded")
 
     try:
         dataset_entries = fetch_external_database_entries()
@@ -435,7 +409,6 @@ def main():
                 if not is_ps5_entry(metadata)
             },
             exclusions.get(category, set()),
-            identity_index=identity_index,
         )
 
         ps5_entries = {
