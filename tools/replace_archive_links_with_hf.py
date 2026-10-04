@@ -1,373 +1,167 @@
 #!/usr/bin/env python3
-"""
-Replace confirmed Archive.org PKG URLs in the FPKGi catalogs with Hugging Face
-dataset URLs.
-
-Default mode is a dry-run. Use --apply to modify the catalogs.
-
-Matching is conservative and uses the information already present in the
-GitHub catalog record:
-1. exact filename
-2. title ID + PKG size
-3. unique title ID
-4. normalized game/application name + PKG size
-5. unique normalized game/application name
-6. otherwise leave the Archive.org URL unchanged
-
-Only Archive.org .pkg URLs are considered. Icon URLs and every other URL are
-left untouched.
-"""
-
+"""HF-first PKG reconciliation for the FPKGi catalog."""
 from __future__ import annotations
-
-import argparse
-import json
-import re
-import sys
-import unicodedata
+import argparse, json, os, re, unicodedata
 from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
-
 import requests
+from pkg_metadata import extract_metadata
 
-REPO_OWNER = "dinos17"
-HF_BASE = "https://huggingface.co"
+OWNER = "dinos17"
+HF = "https://huggingface.co"
+TIMEOUT = 60
 CATALOGS = {
     "ps4/games.json": "PS-Games-Dataset",
+    "ps4/apps.json": "PS-Applications",
     "ps4/dlc.json": "PS-Applications",
     "ps4/updates.json": "PS-Applications",
+    "ps4/homebrew.json": "PS-Applications",
 }
+TITLE_ID_RE = re.compile(r"\b([A-Z]{4}\d{5})\b", re.I)
+CONTENT_ID_RE = re.compile(r"\b[A-Z]{2}\d{4}-[A-Z0-9]{9}_[A-Z0-9]{2}-[A-Z0-9]{16}\b", re.I)
 
-TIMEOUT = 30
-PAGE_SIZE = 1000
-TITLE_ID_RE = re.compile(r"\b([A-Z]{4}\d{5})\b", re.IGNORECASE)
-
-
-def hf_tree(repo_id: str) -> list[dict]:
-    """Fetch the complete HF dataset tree using the public Hub API."""
-    url = f"{HF_BASE}/api/datasets/{REPO_OWNER}/{repo_id}/tree/main"
-    params = {"recursive": "true", "expand": "false", "limit": PAGE_SIZE}
-    files: list[dict] = []
-    session = requests.Session()
-
+def hf_tree(repo):
+    url = f"{HF}/api/datasets/{OWNER}/{repo}/tree/main"
+    params = {"recursive":"true","expand":"false","limit":1000}
+    out=[]; s=requests.Session()
     while True:
-        response = session.get(url, params=params, timeout=TIMEOUT)
-        response.raise_for_status()
-        batch = response.json()
-        if not isinstance(batch, list):
-            raise RuntimeError(f"Unexpected HF API response for {repo_id}")
+        r=s.get(url,params=params,timeout=TIMEOUT); r.raise_for_status()
+        batch=r.json()
+        if not isinstance(batch,list): raise RuntimeError(f"Unexpected HF tree response for {repo}")
+        out += [x for x in batch if x.get("type")=="file" and str(x.get("path","")).lower().endswith(".pkg")]
+        nxt=None
+        for part in r.headers.get("Link","").split(","):
+            if 'rel="next"' in part: nxt=part.strip().split(";",1)[0].strip("<> "); break
+        if not nxt: return out
+        url=nxt; params={}
 
-        files.extend(
-            item
-            for item in batch
-            if item.get("type") == "file"
-            and item.get("path", "").lower().endswith(".pkg")
-        )
+def norm_name(v):
+    if not isinstance(v,str): return ""
+    v=unicodedata.normalize("NFKD",v).encode("ascii","ignore").decode().casefold()
+    v=re.sub(r"\[[^\]]*\]"," ",v); v=TITLE_ID_RE.sub(" ",v)
+    v=re.sub(r"\b(?:v|ver|version)?\s*\d+(?:\.\d+){1,3}\b"," ",v)
+    v=re.sub(r"[_./\\-]+"," ",v); v=re.sub(r"[^a-z0-9]+"," ",v)
+    return " ".join(v.split())
 
-        link = response.headers.get("Link", "")
-        next_url = None
-        for part in link.split(","):
-            if 'rel="next"' in part:
-                next_url = part.strip().split(";", 1)[0].strip("<> ")
-                break
+def norm_ver(v): return v.strip().casefold() if isinstance(v,str) else ""
+def content_id(v):
+    m=CONTENT_ID_RE.search(unquote(v)) if isinstance(v,str) else None
+    return m.group(0).upper() if m else ""
 
-        if not next_url:
-            break
+def archive_pkg(v):
+    if not isinstance(v,str): return False
+    p=urlparse(v)
+    return (p.hostname or "").lower().endswith("archive.org") and unquote(p.path).lower().endswith(".pkg")
 
-        url = next_url
-        params = {}
+def hf_url(repo,path):
+    return f"{HF}/datasets/{OWNER}/{repo}/resolve/main/{quote(path,safe='/')}?download=true"
 
-    return files
+def load_records(root):
+    out=[]
+    for rel,repo in CATALOGS.items():
+        p=root/rel
+        data=json.loads(p.read_text(encoding="utf-8"))
+        for url,rec in data.get("DATA",{}).items():
+            if isinstance(url,str) and isinstance(rec,dict):
+                out.append({"path":rel,"repo":repo,"url":url,"record":rec})
+    return out
 
+def indexes(records):
+    idx={k:{} for k in ("content","tvs","ts","nvs")}
+    def add(k,key,item):
+        if key: idx[k].setdefault(key,[]).append(item)
+    for x in records:
+        r=x["record"]; tid=str(r.get("title_id") or "").strip().upper()
+        ver=norm_ver(r.get("version")); size=r.get("size")
+        cid=content_id(x["url"]) or str(r.get("content_id") or "").strip().upper()
+        add("content",cid,x)
+        if tid and ver and isinstance(size,int): add("tvs",(tid,ver,size),x)
+        if tid and isinstance(size,int): add("ts",(tid,size),x)
+        n=norm_name(r.get("name"))
+        if n and ver and isinstance(size,int): add("nvs",(n,ver,size),x)
+    return idx
 
-def normalize_name(value: object) -> str:
-    """Normalize a catalog/HF name for conservative name comparison."""
-    if not isinstance(value, str):
-        return ""
+def uniq(xs):
+    seen=set(); out=[]
+    for x in xs:
+        k=(x["path"],x["url"])
+        if k not in seen: seen.add(k); out.append(x)
+    return out
 
-    value = unicodedata.normalize("NFKD", value)
-    value = value.encode("ascii", "ignore").decode("ascii").casefold()
+def match(meta,idx):
+    cid=str(meta.get("content_id") or "").strip().upper()
+    tid=str(meta.get("title_id") or "").strip().upper()
+    ver=norm_ver(meta.get("version")); size=meta["_size"]; name=norm_name(meta.get("name"))
+    checks=[
+        ("content_id", idx["content"].get(cid,[]) if cid else []),
+        ("title_id + version + size", idx["tvs"].get((tid,ver,size),[]) if tid and ver else []),
+        ("title_id + size", idx["ts"].get((tid,size),[]) if tid else []),
+        ("name + version + size", idx["nvs"].get((name,ver,size),[]) if name and ver else []),
+    ]
+    for method,c in checks:
+        c=uniq(c)
+        if len(c)==1: return c[0],method,[]
+        if len(c)>1: return None,None,c
+    return None,None,[]
 
-    # Remove common filename metadata such as [US], [EU], [EN], versions,
-    # CUSA IDs, and separators. This is intentionally not fuzzy matching.
-    value = re.sub(r"\[[^\]]*\]", " ", value)
-    value = TITLE_ID_RE.sub(" ", value)
-    value = re.sub(r"\b(?:v|ver|version)?\s*\d+(?:\.\d+){1,3}\b", " ", value)
-    value = re.sub(r"[_./\\-]+", " ", value)
-    value = re.sub(r"[^a-z0-9]+", " ", value)
-    return " ".join(value.split())
+def delete_hf(repo,paths,token):
+    from huggingface_hub import HfApi
+    api=HfApi(token=token)
+    for i in range(0,len(paths),100):
+        api.delete_files(repo_id=f"{OWNER}/{repo}",delete_patterns=paths[i:i+100],
+                         repo_type="dataset",commit_message="Remove PKGs not needed by FPKGi catalog")
 
-
-def extract_title_ids(value: object) -> set[str]:
-    if not isinstance(value, str):
-        return set()
-    return {match.upper() for match in TITLE_ID_RE.findall(unquote(value))}
-
-
-def candidate_name(item: dict) -> str:
-    return normalize_name(Path(unquote(item.get("path", ""))).stem)
-
-
-def build_index(files: list[dict]) -> dict[str, dict]:
-    """
-    Build indexes used by the five conservative matching levels.
-
-    HF tree metadata normally provides path + size. Title IDs are extracted
-    from the HF filename/path because the Hub file itself is not inspected.
-    """
-    exact: dict[str, list[dict]] = {}
-    title_id: dict[str, list[dict]] = {}
-    name_size: dict[tuple[str, int], list[dict]] = {}
-    name_index: dict[str, list[dict]] = {}
-
-    for item in files:
-        path = item.get("path", "")
-        filename = Path(path).name.casefold()
-        exact.setdefault(filename, []).append(item)
-
-        ids = extract_title_ids(path)
-        for tid in ids:
-            title_id.setdefault(tid, []).append(item)
-
-        size = item.get("size")
-        name = candidate_name(item)
-        if name:
-            name_index.setdefault(name, []).append(item)
-            if isinstance(size, int):
-                name_size.setdefault((name, size), []).append(item)
-
-    return {
-        "exact": exact,
-        "title_id": title_id,
-        "name_size": name_size,
-        "name": name_index,
-    }
-
-
-def is_archive_pkg(value: object) -> bool:
-    if not isinstance(value, str):
-        return False
-    parsed = urlparse(value)
-    host = (parsed.hostname or "").lower()
-    path = unquote(parsed.path)
-    return host.endswith("archive.org") and path.lower().endswith(".pkg")
-
-
-def make_hf_url(repo_id: str, path: str) -> str:
-    return (
-        f"{HF_BASE}/datasets/{REPO_OWNER}/{repo_id}/resolve/main/"
-        f"{quote(path, safe='/')}?download=true"
-    )
-
-
-def choose_candidate(
-    value: str,
-    record: dict,
-    repo_id: str,
-    indexes: dict[str, dict],
-) -> tuple[dict | None, str | None, list[dict]]:
-    """Return (candidate, match_method, ambiguous_candidates)."""
-    parsed = urlparse(value)
-    filename = Path(unquote(parsed.path)).name.casefold()
-    index = indexes[repo_id]
-
-    # 1. Exact filename.
-    candidates = index["exact"].get(filename, [])
-    if len(candidates) == 1:
-        return candidates[0], "exact filename", []
-    if len(candidates) > 1:
-        sized = [
-            item for item in candidates
-            if item.get("size") == record.get("size")
-        ]
-        if len(sized) == 1:
-            return sized[0], "exact filename + size", []
-        return None, None, candidates
-
-    record_size = record.get("size")
-    record_ids = extract_title_ids(record.get("title_id"))
-
-    # 2. Title ID + PKG size.
-    if record_ids and isinstance(record_size, int):
-        sized: list[dict] = []
-        for tid in record_ids:
-            sized.extend(
-                item
-                for item in index["title_id"].get(tid, [])
-                if item.get("size") == record_size
-            )
-        unique = {item.get("path"): item for item in sized}
-        if len(unique) == 1:
-            return next(iter(unique.values())), "title ID + size", []
-        if len(unique) > 1:
-            return None, None, list(unique.values())
-
-    # 3. Unique title ID.
-    if record_ids:
-        by_path: dict[str, dict] = {}
-        for tid in record_ids:
-            for item in index["title_id"].get(tid, []):
-                by_path[item.get("path")] = item
-        if len(by_path) == 1:
-            return next(iter(by_path.values())), "unique title ID", []
-        if len(by_path) > 1:
-            # If multiple versions exist, do not guess.
-            return None, None, list(by_path.values())
-
-    # 4. Normalized catalog name + size.
-    name = normalize_name(record.get("name"))
-    if isinstance(record_size, int):
-        candidates = index["name_size"].get((name, record_size), [])
-        if len(candidates) == 1:
-            return candidates[0], "normalized name + size", []
-        if len(candidates) > 1:
-            return None, None, candidates
-
-    # 5. Unique normalized catalog name.
-    # Safe only when exactly one HF PKG has that normalized name.
-    name_candidates = index["name"].get(name, []) if name else []
-    if len(name_candidates) == 1:
-        return name_candidates[0], "unique normalized name", []
-    if len(name_candidates) > 1:
-        return None, None, name_candidates
-
-    return None, None, []
-
-
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--repo",
-        default=".",
-        help="Path to the FPKGi-Catalog-Hub repository (default: current directory)",
-    )
-    parser.add_argument(
-        "--apply",
-        action="store_true",
-        help="Write the replacements to the catalog files",
-    )
-    args = parser.parse_args()
-
-    root = Path(args.repo).resolve()
-    indexes: dict[str, dict] = {}
-
-    print("Fetching Hugging Face file indexes...")
-    for repo_id in sorted(set(CATALOGS.values())):
-        files = hf_tree(repo_id)
-        indexes[repo_id] = build_index(files)
-        print(f"  {repo_id}: {len(files)} PKG files")
-
-    stats = {
-        "replaced": 0,
-        "unmatched": 0,
-        "ambiguous": 0,
-    }
-    methods: dict[str, int] = {}
-    unmatched: list[dict] = []
-    ambiguous: list[dict] = []
-    pending: list[tuple[Path, str]] = []
-
-    for rel_path, expected_repo in CATALOGS.items():
-        path = root / rel_path
-        if not path.exists():
-            raise FileNotFoundError(path)
-
-        original = path.read_text(encoding="utf-8")
-        data = json.loads(original)
-
-        def walk(obj: object) -> object:
-            if isinstance(obj, list):
-                return [walk(x) for x in obj]
-
-            if isinstance(obj, dict):
-                # The catalogs are keyed by URL under DATA. Pass the associated
-                # record dict to the matcher so title_id/name/size are available.
-                if "DATA" in obj and isinstance(obj["DATA"], dict):
-                    new_data = {}
-                    for url, record in obj["DATA"].items():
-                        if isinstance(url, str) and is_archive_pkg(url) and isinstance(record, dict):
-                            candidate, method, ambiguous_candidates = choose_candidate(
-                                url, record, expected_repo, indexes
-                            )
-                            if candidate is not None:
-                                new_url = make_hf_url(expected_repo, candidate["path"])
-                                new_data[new_url] = record
-                                stats["replaced"] += 1
-                                methods[method] = methods.get(method, 0) + 1
-                            else:
-                                new_data[url] = record
-                                if ambiguous_candidates:
-                                    stats["ambiguous"] += 1
-                                    ambiguous.append({
-                                        "url": url,
-                                        "name": record.get("name"),
-                                        "title_id": record.get("title_id"),
-                                        "repo": expected_repo,
-                                        "candidates": [
-                                            item.get("path")
-                                            for item in ambiguous_candidates
-                                        ],
-                                    })
-                                else:
-                                    stats["unmatched"] += 1
-                                    unmatched.append({
-                                        "url": url,
-                                        "name": record.get("name"),
-                                        "title_id": record.get("title_id"),
-                                        "repo": expected_repo,
-                                    })
-                        else:
-                            new_data[url] = walk(record)
-                    return {**obj, "DATA": new_data}
-
-                return {k: walk(v) for k, v in obj.items()}
-
-            return obj
-
-        updated = walk(data)
-
-        # Compare parsed JSON, not rendered text. This avoids reporting
-        # line-ending/serialization differences as catalog changes.
-        if updated != data:
-            rendered = json.dumps(updated, ensure_ascii=False, indent=2) + "\n"
-            pending.append((path, rendered))
-
-    print()
-    print(f"Confirmed replacements: {stats['replaced']}")
-    print(f"Unmatched PKG URLs:     {stats['unmatched']}")
-    print(f"Ambiguous PKG URLs:     {stats['ambiguous']}")
-    print(f"Catalog files changed:  {len(pending)}")
-
+def main():
+    ap=argparse.ArgumentParser()
+    ap.add_argument("--repo",default="."); ap.add_argument("--apply",action="store_true")
+    a=ap.parse_args(); root=Path(a.repo).resolve()
+    records=load_records(root); idx=indexes(records)
+    repos=sorted(set(CATALOGS.values())); stats={"scanned":0,"failed":0,"replaced":0,"delete":0,"ambiguous":0}
+    methods={}; deletes={}; changes={}; report=[]
+    for repo in repos:
+        for item in hf_tree(repo):
+            stats["scanned"]+=1; path=str(item.get("path","")); size=item.get("size")
+            if not isinstance(size,int) or size<=0:
+                stats["failed"]+=1; report.append(f"METADATA FAILED: {repo}/{path}: invalid size"); continue
+            try:
+                meta=extract_metadata(hf_url(repo,path),size); meta["_size"]=size
+            except Exception as e:
+                stats["failed"]+=1; report.append(f"METADATA FAILED: {repo}/{path}: {e}"); continue
+            cand,method,amb=match(meta,idx)
+            if amb:
+                stats["ambiguous"]+=1
+                report.append(f"AMBIGUOUS: {repo}/{path} -> "+", ".join(x["path"]+":"+str(x["record"].get("name")) for x in amb))
+                continue
+            if cand is None:
+                deletes.setdefault(repo,[]).append(path); stats["delete"]+=1
+                report.append(f"DELETE NO MATCH: {repo}/{path} ({meta.get('title_id')} {meta.get('version')} {size})"); continue
+            methods[method]=methods.get(method,0)+1
+            if not archive_pkg(cand["url"]):
+                deletes.setdefault(repo,[]).append(path); stats["delete"]+=1
+                report.append(f"DELETE ALREADY COVERED: {repo}/{path} -> {cand['path']}:{cand['record'].get('name')}"); continue
+            cp=root/cand["path"]
+            if cp not in changes: changes[cp]=json.loads(cp.read_text(encoding="utf-8"))
+            data=changes[cp]; data["DATA"][hf_url(repo,path)]=data["DATA"].pop(cand["url"])
+            stats["replaced"]+=1
+            report.append(f"REPLACE: {cand['path']} {cand['url']} -> {hf_url(repo,path)} [{method}]")
+    print(f"HF PKGs scanned: {stats['scanned']}")
+    print(f"Metadata failures: {stats['failed']}")
+    print(f"Archive URLs replaced: {stats['replaced']}")
+    print(f"HF PKGs to delete: {stats['delete']}")
+    print(f"Ambiguous (untouched): {stats['ambiguous']}")
     if methods:
-        print("\nMatch methods:")
-        for method, count in methods.items():
-            print(f"  {method}: {count}")
-
-    if unmatched:
-        print("\nUnmatched examples:")
-        for item in unmatched[:20]:
-            print(
-                f"  {item['name']!r} ({item['title_id']}) -> {item['repo']}"
-            )
-
-    if ambiguous:
-        print("\nAmbiguous examples:")
-        for item in ambiguous[:20]:
-            print(
-                f"  {item['name']!r} ({item['title_id']}) -> "
-                f"{item['candidates']}"
-            )
-
-    if args.apply:
-        for path, rendered in pending:
-            path.write_text(rendered, encoding="utf-8")
-            print(f"Updated {path.relative_to(root)}")
-        print("\nApplied. Review the diff before committing.")
-    else:
-        print("\nDry-run only. Re-run with --apply to modify the catalogs.")
-
+        print("Match methods:"); [print(f"  {k}: {v}") for k,v in sorted(methods.items())]
+    print("Planned actions:")
+    for line in report[:100]: print("  "+line)
+    if len(report)>100: print(f"  ... {len(report)-100} more")
+    if not a.apply:
+        print("Dry-run only. No changes made."); return 0
+    if stats["failed"]:
+        print("Refusing --apply because metadata extraction failed."); return 2
+    token=os.environ.get("HF_TOKEN")
+    for p,data in changes.items(): p.write_text(json.dumps(data,ensure_ascii=False,indent=2)+"\n",encoding="utf-8")
+    for repo,paths in deletes.items(): delete_hf(repo,paths,token)
+    print("Applied successfully.")
     return 0
 
-
-if __name__ == "__main__":
-    sys.exit(main())
+if __name__=="__main__": raise SystemExit(main())
