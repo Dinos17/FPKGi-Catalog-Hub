@@ -11,7 +11,8 @@ GitHub catalog record:
 2. title ID + PKG size
 3. unique title ID
 4. normalized game/application name + PKG size
-5. otherwise leave the Archive.org URL unchanged
+5. unique normalized game/application name
+6. otherwise leave the Archive.org URL unchanged
 
 Only Archive.org .pkg URLs are considered. Icon URLs and every other URL are
 left untouched.
@@ -117,6 +118,7 @@ def build_index(files: list[dict]) -> dict[str, dict]:
     exact: dict[str, list[dict]] = {}
     title_id: dict[str, list[dict]] = {}
     name_size: dict[tuple[str, int], list[dict]] = {}
+    name_index: dict[str, list[dict]] = {}
 
     for item in files:
         path = item.get("path", "")
@@ -129,13 +131,16 @@ def build_index(files: list[dict]) -> dict[str, dict]:
 
         size = item.get("size")
         name = candidate_name(item)
-        if isinstance(size, int) and name:
-            name_size.setdefault((name, size), []).append(item)
+        if name:
+            name_index.setdefault(name, []).append(item)
+            if isinstance(size, int):
+                name_size.setdefault((name, size), []).append(item)
 
     return {
         "exact": exact,
         "title_id": title_id,
         "name_size": name_size,
+        "name": name_index,
     }
 
 
@@ -210,13 +215,21 @@ def choose_candidate(
             return None, None, list(by_path.values())
 
     # 4. Normalized catalog name + size.
+    name = normalize_name(record.get("name"))
     if isinstance(record_size, int):
-        name = normalize_name(record.get("name"))
         candidates = index["name_size"].get((name, record_size), [])
         if len(candidates) == 1:
             return candidates[0], "normalized name + size", []
         if len(candidates) > 1:
             return None, None, candidates
+
+    # 5. Unique normalized catalog name.
+    # Safe only when exactly one HF PKG has that normalized name.
+    name_candidates = index["name"].get(name, []) if name else []
+    if len(name_candidates) == 1:
+        return name_candidates[0], "unique normalized name", []
+    if len(name_candidates) > 1:
+        return None, None, name_candidates
 
     return None, None, []
 
