@@ -40,7 +40,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02084.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-t/TowerFall%20Dark%20World%20Expansion.pkg": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/DLC/TowerFall%20Dark%20World%20Expansion.pkg?download=true": {
       "title_id": "CUSA00466",
       "region": "USA",
       "name": "TowerFall Dark World Expansion",
