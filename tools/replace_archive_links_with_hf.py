@@ -5,11 +5,13 @@ dataset URLs.
 
 Default mode is a dry-run. Use --apply to modify the catalogs.
 
-Matching is deliberately conservative:
+Matching is deliberately conservative but searches using the information
+already present in the GitHub catalog:
 - only Archive.org URLs ending in .pkg are considered;
-- the decoded PKG filename must exist in the expected HF dataset;
-- if multiple HF files have the same filename, the catalog record's size is
-  used to disambiguate when available;
+- exact filename is preferred;
+- title ID + PKG size is used when HF naming differs;
+- a unique title ID is accepted when there is only one HF PKG for it;
+- normalized game/application name + size is used as another fallback;
 - unmatched/ambiguous files are left unchanged and reported.
 
 No Archive.org icon URLs or other non-PKG URLs are changed.
@@ -19,6 +21,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import sys
 from pathlib import Path
 from urllib.parse import quote, unquote, urlparse
@@ -204,13 +207,12 @@ def main() -> int:
             if isinstance(obj, list):
                 return [walk(x) for x in obj]
             if isinstance(obj, dict):
-                record_size = obj.get("size")
                 return {
                     k: (
                         replace_url(
                             v,
                             expected_repo,
-                            record_size,
+                            obj,
                             indexes,
                             stats,
                             unmatched,
@@ -221,7 +223,6 @@ def main() -> int:
                     )
                     for k, v in obj.items()
                 }
-            return obj
 
         updated = walk(data)
         rendered = json.dumps(updated, ensure_ascii=False, indent=2) + "\n"
