@@ -117,7 +117,7 @@ def main():
     a=ap.parse_args(); root=Path(a.repo).resolve()
     records=load_records(root); idx=indexes(records)
     repos=sorted(set(CATALOGS.values())); stats={"scanned":0,"failed":0,"replaced":0,"delete":0,"ambiguous":0}
-    methods={}; deletes={}; changes={}; report=[]
+    methods={}; deletes={}; changes={}; report=[]; consumed=set()
     for repo in repos:
         for item in hf_tree(repo):
             stats["scanned"]+=1; path=str(item.get("path","")); size=item.get("size")
