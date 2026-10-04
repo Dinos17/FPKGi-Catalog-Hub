@@ -10,51 +10,236 @@ jobs:
   organize:
     runs-on: ubuntu-24.04
     steps:
-      - name: Organize Hugging Face datasets
+      - name: Classify and organize Hugging Face datasets
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           set -euo pipefail
           test -n "$HF_TOKEN"
           python -m pip install --disable-pip-version-check huggingface_hub
+
           python - <<'PY'
           import os
+          import struct
+          import requests
           from huggingface_hub import HfApi, CommitOperationCopy, CommitOperationDelete
 
           api = HfApi(token=os.environ["HF_TOKEN"])
 
-          datasets = {
-              "dinos17/PS-Applications": "Media",
-              "dinos17/PS-Games-Dataset": "Games",
+          GAMES = "dinos17/PS-Games-Dataset"
+          APPS = "dinos17/PS-Applications"
+
+          # PS4 PARAM.SFO CATEGORY values.
+          CATEGORY_MAP = {
+              "gd": ("games", "Games"),
+              "gdo": ("games", "Games"),
+              "gdp": ("games", "Games"),
+              "gds": ("games", "Games"),
+              "gdt": ("games", "Games"),
+              "gdu": ("games", "Games"),
+              "gdx": ("games", "Games"),
+              "gda": ("apps", "Media"),
+              "gdc": ("apps", "Media"),
+              "gdd": ("apps", "Media"),
+              "gde": ("apps", "Media"),
+              "gdg": ("apps", "Media"),
+              "gdk": ("apps", "Media"),
+              "gdl": ("apps", "Media"),
+              "gapp": ("apps", "Media"),
+              "ac": ("dlc", "DLC"),
+              "gaddon": ("dlc", "DLC"),
+              "gp": ("updates", "Updates"),
+              "gpatch": ("updates", "Updates"),
+              "gup": ("updates", "Updates"),
+              "gpc": ("updates", "Updates"),
+              "gpd": ("updates", "Updates"),
+              "gpe": ("updates", "Updates"),
+              "gpk": ("updates", "Updates"),
+              "gpl": ("updates", "Updates"),
+              "gtheme": ("themes", "Themes"),
           }
 
-          for repo, folder in datasets.items():
-              files = [
-                  path
-                  for path in api.list_repo_files(repo_id=repo, repo_type="dataset")
-                  if path.lower().endswith(".pkg") and "/" not in path
-              ]
-
-              if not files:
-                  print(f"{repo}: no root-level PKG files need organizing.")
-                  continue
-
-              operations = []
-              for path in files:
-                  operations.append(
-                      CommitOperationCopy(
-                          src_path_in_repo=path,
-                          path_in_repo=f"{folder}/{path}",
-                      )
+          def read_range(url, start, length, size):
+              end = start + length - 1
+              response = requests.get(
+                  url,
+                  headers={
+                      "Range": f"bytes={start}-{end}",
+                      "Accept-Encoding": "identity",
+                      "User-Agent": "FPKGi-Catalog-Hub/1.0",
+                  },
+                  timeout=60,
+              )
+              response.raise_for_status()
+              if response.status_code != 206:
+                  raise RuntimeError("PKG source did not return HTTP 206")
+              content_range = response.headers.get("Content-Range", "")
+              expected = f"bytes {start}-{end}/{size}"
+              if content_range != expected:
+                  raise RuntimeError(
+                      f"Unexpected Content-Range: expected {expected}, got {content_range}"
                   )
-                  operations.append(CommitOperationDelete(path_in_repo=path))
+              if len(response.content) != length:
+                  raise RuntimeError("Range response length mismatch")
+              return response.content
 
-              api.create_commit(
-                  repo_id=repo,
-                  repo_type="dataset",
-                  operations=operations,
-                  commit_message=f"Organize root PKG files into {folder}/",
+          def c_string(data):
+              return data.split(b"\x00", 1)[0].decode("utf-8", errors="replace").strip()
+
+          def parse_sfo(data):
+              if len(data) < 20:
+                  raise RuntimeError("PARAM.SFO is too small")
+              magic, _version, key_offset, data_offset, count = struct.unpack_from(
+                  "<5I", data, 0
+              )
+              if magic != 0x46535000:
+                  raise RuntimeError("Invalid PARAM.SFO magic")
+              result = {}
+              for index in range(count):
+                  offset = 20 + index * 16
+                  key_rel, fmt, value_len, _max_len, value_rel = struct.unpack_from(
+                      "<HHIII", data, offset
+                  )
+                  key_start = key_offset + key_rel
+                  key_end = data.find(b"\x00", key_start)
+                  if key_end == -1:
+                      key_end = len(data)
+                  key = data[key_start:key_end].decode("utf-8", errors="replace")
+                  value_start = data_offset + value_rel
+                  raw = data[value_start:value_start + value_len]
+                  if fmt == 0x0204:
+                      value = c_string(raw)
+                  elif fmt == 0x0404 and len(raw) >= 4:
+                      value = struct.unpack_from("<I", raw, 0)[0]
+                  else:
+                      value = raw
+                  result[key] = value
+              return result
+
+          def get_category(repo, path, size):
+              url = (
+                  "https://huggingface.co/datasets/"
+                  + repo.split("/", 1)[0]
+                  + "/"
+                  + repo.split("/", 1)[1]
+                  + "/resolve/main/"
+                  + path
               )
 
-              print(f"{repo}: moved {len(files)} root PKG file(s) into {folder}/.")
+              header = read_range(url, 0, 0x1000, size)
+              magic = struct.unpack_from(">I", header, 0)[0]
+              if magic != 0x7F434E54:
+                  raise RuntimeError("Not a PS4 PKG (bad magic)")
+
+              entry_count = struct.unpack_from(">I", header, 0x10)[0]
+              table_offset = struct.unpack_from(">I", header, 0x18)[0]
+              table = read_range(url, table_offset, entry_count * 0x20, size)
+
+              sfo_offset = None
+              sfo_size = None
+              for index in range(entry_count):
+                  entry = table[index * 0x20:(index + 1) * 0x20]
+                  entry_id, _fo, _f1, _f2, offset, entry_size = struct.unpack_from(
+                      ">IIIIII", entry, 0
+                  )
+                  if entry_id == 0x1000:
+                      sfo_offset = offset
+                      sfo_size = entry_size
+                      break
+
+              if sfo_offset is None:
+                  raise RuntimeError("PARAM.SFO not found")
+
+              sfo = read_range(url, sfo_offset, sfo_size, size)
+              params = parse_sfo(sfo)
+              category = str(params.get("CATEGORY", "")).lower()
+              if category not in CATEGORY_MAP:
+                  raise RuntimeError(f"Unknown PKG CATEGORY: {category!r}")
+              return CATEGORY_MAP[category][0], CATEGORY_MAP[category][1], category
+
+          repo_files = {
+              GAMES: api.list_repo_files(repo_id=GAMES, repo_type="dataset"),
+              APPS: api.list_repo_files(repo_id=APPS, repo_type="dataset"),
+          }
+
+          existing = {
+              repo: set(files)
+              for repo, files in repo_files.items()
+          }
+
+          moves = []
+
+          for source_repo in (GAMES, APPS):
+              for path in repo_files[source_repo]:
+                  if not path.lower().endswith(".pkg") or "/" in path:
+                      continue
+
+                  info = api.get_paths_info(
+                      repo_id=source_repo,
+                      repo_type="dataset",
+                      paths=[path],
+                      expand=True,
+                  )
+                  if not info:
+                      print(f"SKIP {source_repo}/{path}: file metadata unavailable")
+                      continue
+
+                  size = info[0].size
+                  try:
+                      category, folder, raw_category = get_category(
+                          source_repo, path, size
+                      )
+                  except Exception as exc:
+                      print(f"SKIP {source_repo}/{path}: {exc}")
+                      continue
+
+                  target_repo = GAMES if category == "games" else APPS
+                  target_path = f"{folder}/{path}"
+
+                  if source_repo == target_repo and target_path in existing[target_repo]:
+                      print(f"OK   {source_repo}/{path}: already organized as {target_path}")
+                      continue
+
+                  if target_path in existing[target_repo]:
+                      print(
+                          f"SKIP {source_repo}/{path}: target already exists "
+                          f"at {target_repo}/{target_path}"
+                      )
+                      continue
+
+                  moves.append(
+                      (source_repo, path, target_repo, target_path, raw_category)
+                  )
+
+          for source_repo, path, target_repo, target_path, raw_category in moves:
+              print(
+                  f"MOVE {source_repo}/{path} -> "
+                  f"{target_repo}/{target_path} (CATEGORY={raw_category})"
+              )
+
+              api.create_commit(
+                  repo_id=target_repo,
+                  repo_type="dataset",
+                  operations=[
+                      CommitOperationCopy(
+                          src_repo_id=source_repo,
+                          src_repo_type="dataset",
+                          src_path_in_repo=path,
+                          path_in_repo=target_path,
+                      )
+                  ],
+                  commit_message=f"Move {path} into {target_path.rsplit('/', 1)[0]}/",
+              )
+
+              api.create_commit(
+                  repo_id=source_repo,
+                  repo_type="dataset",
+                  operations=[CommitOperationDelete(path_in_repo=path)],
+                  commit_message=f"Remove misclassified root PKG {path}",
+              )
+
+              existing[target_repo].add(target_path)
+              existing[source_repo].discard(path)
+
+          print(f"Done. Organized {len(moves)} root-level PKG file(s).")
           PY
