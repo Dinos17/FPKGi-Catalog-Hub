@@ -1,4 +1,4 @@
-name: Organize PS Applications Dataset
+name: Organize PS Datasets
 
 on:
   workflow_dispatch:
@@ -10,7 +10,7 @@ jobs:
   organize:
     runs-on: ubuntu-24.04
     steps:
-      - name: Move applications into Media
+      - name: Organize Hugging Face datasets
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
@@ -22,26 +22,39 @@ jobs:
           from huggingface_hub import HfApi, CommitOperationCopy, CommitOperationDelete
 
           api = HfApi(token=os.environ["HF_TOKEN"])
-          repo = "dinos17/PS-Applications"
-          files = [
-              "EP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg",
-              "PS4_CUSA01116_v2.32.pkg",
-              "PS5_PPSA01615_v6.00.pkg",
-          ]
 
-          operations = []
-          for path in files:
-              operations.append(CommitOperationCopy(
-                  src_path_in_repo=path,
-                  path_in_repo=f"Media/{path}",
-              ))
-              operations.append(CommitOperationDelete(path_in_repo=path))
+          datasets = {
+              "dinos17/PS-Applications": "Media",
+              "dinos17/PS-Games-Dataset": "Games",
+          }
 
-          api.create_commit(
-              repo_id=repo,
-              repo_type="dataset",
-              operations=operations,
-              commit_message="Organize applications into Media folder",
-          )
-          print("Moved 3 application packages into Media/.")
+          for repo, folder in datasets.items():
+              files = [
+                  path
+                  for path in api.list_repo_files(repo_id=repo, repo_type="dataset")
+                  if path.lower().endswith(".pkg") and "/" not in path
+              ]
+
+              if not files:
+                  print(f"{repo}: no root-level PKG files need organizing.")
+                  continue
+
+              operations = []
+              for path in files:
+                  operations.append(
+                      CommitOperationCopy(
+                          src_path_in_repo=path,
+                          path_in_repo=f"{folder}/{path}",
+                      )
+                  )
+                  operations.append(CommitOperationDelete(path_in_repo=path))
+
+              api.create_commit(
+                  repo_id=repo,
+                  repo_type="dataset",
+                  operations=operations,
+                  commit_message=f"Organize root PKG files into {folder}/",
+              )
+
+              print(f"{repo}: moved {len(files)} root PKG file(s) into {folder}/.")
           PY
