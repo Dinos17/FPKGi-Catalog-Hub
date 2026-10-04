@@ -10,15 +10,29 @@ jobs:
   organize:
     runs-on: ubuntu-24.04
     steps:
+      - name: Restore organizer Python environment
+        uses: actions/cache@v4
+        with:
+          path: .github/organizer-venv
+          key: ${{ runner.os }}-organizer-venv-huggingface-hub-2.1.1
+
       - name: Classify and organize Hugging Face datasets
         env:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
         run: |
           set -euo pipefail
           test -n "$HF_TOKEN"
-          python -m pip install --disable-pip-version-check huggingface_hub
 
-          python - <<'PY'
+          if [ -x ".github/organizer-venv/bin/python" ] && \
+             ".github/organizer-venv/bin/python" -c "import huggingface_hub, requests" >/dev/null 2>&1; then
+            echo "Using cached Hugging Face organizer environment."
+          else
+            echo "Cached environment not found or incomplete. Installing dependencies..."
+            python -m venv .github/organizer-venv
+            .github/organizer-venv/bin/python -m pip install --disable-pip-version-check huggingface_hub==2.1.1 requests
+          fi
+
+          .github/organizer-venv/bin/python - <<'PY'
           import os
           import struct
           from urllib.parse import quote
