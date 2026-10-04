@@ -136,12 +136,18 @@ def main():
                 deletes.setdefault(repo,[]).append(path); stats["delete"]+=1
                 report.append(f"DELETE NO MATCH: {repo}/{path} ({meta.get('title_id')} {meta.get('version')} {size})"); continue
             methods[method]=methods.get(method,0)+1
+            candidate_key=(cand["path"],cand["url"])
+            if candidate_key in consumed:
+                deletes.setdefault(repo,[]).append(path); stats["delete"]+=1
+                report.append(f"DELETE DUPLICATE HF PKG: {repo}/{path} -> {cand['path']}:{cand['record'].get('name')}")
+                continue
             if not archive_pkg(cand["url"]):
                 deletes.setdefault(repo,[]).append(path); stats["delete"]+=1
                 report.append(f"DELETE ALREADY COVERED: {repo}/{path} -> {cand['path']}:{cand['record'].get('name')}"); continue
             cp=root/cand["path"]
             if cp not in changes: changes[cp]=json.loads(cp.read_text(encoding="utf-8"))
             data=changes[cp]; data["DATA"][hf_url(repo,path)]=data["DATA"].pop(cand["url"])
+            consumed.add(candidate_key)
             stats["replaced"]+=1
             report.append(f"REPLACE: {cand['path']} {cand['url']} -> {hf_url(repo,path)} [{method}]")
     print(f"HF PKGs scanned: {stats['scanned']}")
