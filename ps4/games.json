@@ -2090,16 +2090,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16286.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Downwell%20-%20[US]%20[EN]%20[1.01].pkg": {
-      "title_id": "CUSA04550",
-      "region": "USA",
-      "name": "Downwell",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 55181312,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04550.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Dragon%20Age%20Inquisition%20-%20[US]%20[EN]%20[1.12].pkg": {
       "title_id": "CUSA00220",
       "region": "USA",
@@ -8730,128 +8720,51 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01073.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/CUSA05186_TRICKY_TOWERS_FXDv1.00_%5BFW505%5D.pkg?download=true": {
-      "title_id": "CUSA05186",
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EA%20SPORTS%20FC%2027%2F1.%20Game%2FEA%20SPORTS%20FC%2027%20CUSA57220%20By%20Haider%20Kiara%20-%20%5BDLPSGAME.COM%5D.pkg?download=true": {
+      "title_id": "CUSA57220",
       "region": null,
-      "name": "Tricky Towers",
-      "version": "01.00",
+      "name": "EA SPORTS FC 27",
+      "version": null,
       "release": null,
-      "size": 138215424,
-      "min_fw": "3.00.128",
+      "size": 44576931840,
+      "min_fw": null,
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/THE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
-      "title_id": "CUSA11736",
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EA%20SPORTS%20FC%2027%2F2.%20Update%201.03%20Backport%209.00%2B%2FEA%20SPORTS%20FC%2027%20Update%201.03%20Backport%209.00%2B%20By%20Haider%20Kiara%20-%20%5BDLPSGAME.COM%5D.pkg?download=true": {
+      "title_id": null,
       "region": null,
-      "name": "THE QUIET MAN",
-      "version": "01.00",
+      "name": "EA SPORTS FC 27 Update 1.03 Backport 9.00+ By Haider Kiara - [DLPSGAME.COM].pkg",
+      "version": null,
       "release": null,
-      "size": 24921702400,
-      "min_fw": "5.80.128",
+      "size": 23791140864,
+      "min_fw": null,
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tacoma%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
-      "title_id": "CUSA11366",
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EA%20SPORTS%20FC%2027%2F3.%20Unlock%20Offline%2FEA%20SPORTS%20FC%2027%20Unlock%20By%20Haider%20Kiara.pkg?download=true": {
+      "title_id": null,
       "region": null,
-      "name": "Tacoma",
-      "version": "01.00",
+      "name": "EA SPORTS FC 27 Unlock By Haider Kiara.pkg",
+      "version": null,
       "release": null,
-      "size": 1599275008,
-      "min_fw": "5.00.128",
+      "size": 458752,
+      "min_fw": null,
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Taiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20%5BJP%5D%20%5BEN%5D%20%5B1.28%5D.pkg?download=true": {
-      "title_id": "CUSA07515",
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/EA%20SPORTS%20FC%2027%2FPS4%20Apollo%20Save%20Tool%20-IV0000-APOL00004_00-APOLLO0000000PS4.pkg?download=true": {
+      "title_id": "APOL00004",
       "region": null,
-      "name": "Taiko No Tatsujin – Drum Session",
-      "version": "01.00",
+      "name": "PS4 Apollo Save Tool -IV0000-APOL00004_00-APOLLO0000000PS4.pkg",
+      "version": null,
       "release": null,
-      "size": 1552482304,
-      "min_fw": "5.00.128",
+      "size": 22675456,
+      "min_fw": null,
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tales%20from%20the%20Borderlands%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.07%5D.pkg?download=true": {
-      "title_id": "CUSA00870",
-      "region": null,
-      "name": "Tales from the Borderlands",
-      "version": "01.00",
-      "release": null,
-      "size": 9244311552,
-      "min_fw": "1.117",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Teenage%20Mutant%20Ninja%20Turtles%20Shredder%27s%20Revenge%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg?download=true": {
-      "title_id": "CUSA30991",
-      "region": null,
-      "name": "Teenage Mutant Ninja Turtles: Shredder's Revenge",
-      "version": "01.00",
-      "release": null,
-      "size": 803274752,
-      "min_fw": "7.80",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Terraria%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.35%5D.pkg?download=true": {
-      "title_id": "CUSA00740",
-      "region": null,
-      "name": "Terraria",
-      "version": "01.00",
-      "release": null,
-      "size": 328073216,
-      "min_fw": "9.00.128",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Tetris%20Effect%20Connected%20-%20%5BEU%5D%20%5BEN%5D%20%5B2.02%5D.pkg?download=true": {
-      "title_id": "CUSA13643",
-      "region": null,
-      "name": "Tetris® Effect: Connected",
-      "version": "01.00",
-      "release": null,
-      "size": 5513347072,
-      "min_fw": "9.00.128",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/The%20Artful%20Escape%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.02%5D.pkg?download=true": {
-      "title_id": "CUSA30113",
-      "region": null,
-      "name": "The Artful Escape",
-      "version": "01.00",
-      "release": null,
-      "size": 6574505984,
-      "min_fw": "8.80.128",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/The%20Binding%20of%20Isaac%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.16%5D.pkg?download=true": {
-      "title_id": "CUSA00792",
-      "region": null,
-      "name": "The Binding of Isaac",
-      "version": "01.00",
-      "release": null,
-      "size": 920453120,
-      "min_fw": "9.00.128",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/The%20Bug%20Butcher%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg?download=true": {
-      "title_id": "CUSA04995",
-      "region": null,
-      "name": "The Bug Butcher",
-      "version": "01.00",
-      "release": null,
-      "size": 274202624,
-      "min_fw": "4.80",
-      "cover_url": null,
-      "category": "games"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA00466_TOWERFALL_ASCENSION_FXDv1.03_%5BFW405%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FCUSA00466_TOWERFALL_ASCENSION_FXDv1.03_%5BFW405%5D.pkg?download=true": {
       "title_id": "CUSA00466",
       "region": null,
       "name": "TowerFall Ascension",
@@ -8862,7 +8775,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA00948_THOMAS_WAS_ALONE_FXDv1.00_%5BFW405%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FCUSA00948_THOMAS_WAS_ALONE_FXDv1.00_%5BFW405%5D.pkg?download=true": {
       "title_id": "CUSA00948",
       "region": null,
       "name": "Thomas Was Alone",
@@ -8873,7 +8786,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA03559_THUMPER_FXDv1.00_%5BFW505%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FCUSA03559_THUMPER_FXDv1.00_%5BFW505%5D.pkg?download=true": {
       "title_id": "CUSA03559",
       "region": null,
       "name": "Thumper",
@@ -8884,7 +8797,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA05170-EUR-Game-%285.05%2B%29-PS4-%5BDLPSGAME.COM%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FCUSA05170-EUR-Game-%285.05%2B%29-PS4-%5BDLPSGAME.COM%5D.pkg?download=true": {
       "title_id": "CUSA05170",
       "region": null,
       "name": "DRAGON QUEST BUILDERS",
@@ -8895,7 +8808,18 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA08773_TREADNAUTS_FXDv1.00_%5BFW505%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FCUSA05186_TRICKY_TOWERS_FXDv1.00_%5BFW505%5D.pkg?download=true": {
+      "title_id": "CUSA05186",
+      "region": null,
+      "name": "Tricky Towers",
+      "version": "01.00",
+      "release": null,
+      "size": 138215424,
+      "min_fw": "3.00.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FCUSA08773_TREADNAUTS_FXDv1.00_%5BFW505%5D.pkg?download=true": {
       "title_id": "CUSA08773",
       "region": null,
       "name": "Treadnauts",
@@ -8906,7 +8830,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FDREDGE_CUSA35761_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FDREDGE_CUSA35761_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA35761",
       "region": null,
       "name": "DREDGE",
@@ -8917,7 +8841,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FDeath.s.Door_CUSA30424_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FDeath.s.Door_CUSA30424_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA30424",
       "region": null,
       "name": "Death's Door",
@@ -8928,7 +8852,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FDespot.s.Game_CUSA31748_v1.00_%5B11.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FDespot.s.Game_CUSA31748_v1.00_%5B11.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA31748",
       "region": null,
       "name": "Despot's Game",
@@ -8939,7 +8863,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FEP1003-CUSA15565_00-A0100-V0100-%5BDLPSGAME.COM%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FEP1003-CUSA15565_00-A0100-V0100-%5BDLPSGAME.COM%5D.pkg?download=true": {
       "title_id": "CUSA15565",
       "region": null,
       "name": "DOOM",
@@ -8950,7 +8874,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FEP1003-CUSA15566_00-DOOMTWO199400000-A0100-V0100.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FEP1003-CUSA15566_00-DOOMTWO199400000-A0100-V0100.pkg?download=true": {
       "title_id": "CUSA15566",
       "region": null,
       "name": "DOOM 2",
@@ -8961,7 +8885,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FEP1661-CUSA12172_00-SYPS4THEMOOSEMAN-A0100-V0100.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FEP1661-CUSA12172_00-SYPS4THEMOOSEMAN-A0100-V0100.pkg?download=true": {
       "title_id": "CUSA12172",
       "region": null,
       "name": "The Mooseman",
@@ -8972,7 +8896,117 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Falconeer.Warrior.Edition_CUSA26400_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTHE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
+      "title_id": "CUSA11736",
+      "region": null,
+      "name": "THE QUIET MAN",
+      "version": "01.00",
+      "release": null,
+      "size": 24921702400,
+      "min_fw": "5.80.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTacoma%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
+      "title_id": "CUSA11366",
+      "region": null,
+      "name": "Tacoma",
+      "version": "01.00",
+      "release": null,
+      "size": 1599275008,
+      "min_fw": "5.00.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTaiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20%5BJP%5D%20%5BEN%5D%20%5B1.28%5D.pkg?download=true": {
+      "title_id": "CUSA07515",
+      "region": null,
+      "name": "Taiko No Tatsujin – Drum Session",
+      "version": "01.00",
+      "release": null,
+      "size": 1552482304,
+      "min_fw": "5.00.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTales%20from%20the%20Borderlands%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.07%5D.pkg?download=true": {
+      "title_id": "CUSA00870",
+      "region": null,
+      "name": "Tales from the Borderlands",
+      "version": "01.00",
+      "release": null,
+      "size": 9244311552,
+      "min_fw": "1.117",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTeenage%20Mutant%20Ninja%20Turtles%20Shredder%27s%20Revenge%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg?download=true": {
+      "title_id": "CUSA30991",
+      "region": null,
+      "name": "Teenage Mutant Ninja Turtles: Shredder's Revenge",
+      "version": "01.00",
+      "release": null,
+      "size": 803274752,
+      "min_fw": "7.80",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTerraria%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.35%5D.pkg?download=true": {
+      "title_id": "CUSA00740",
+      "region": null,
+      "name": "Terraria",
+      "version": "01.00",
+      "release": null,
+      "size": 328073216,
+      "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTetris%20Effect%20Connected%20-%20%5BEU%5D%20%5BEN%5D%20%5B2.02%5D.pkg?download=true": {
+      "title_id": "CUSA13643",
+      "region": null,
+      "name": "Tetris® Effect: Connected",
+      "version": "01.00",
+      "release": null,
+      "size": 5513347072,
+      "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe%20Artful%20Escape%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.02%5D.pkg?download=true": {
+      "title_id": "CUSA30113",
+      "region": null,
+      "name": "The Artful Escape",
+      "version": "01.00",
+      "release": null,
+      "size": 6574505984,
+      "min_fw": "8.80.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe%20Binding%20of%20Isaac%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.16%5D.pkg?download=true": {
+      "title_id": "CUSA00792",
+      "region": null,
+      "name": "The Binding of Isaac",
+      "version": "01.00",
+      "release": null,
+      "size": 920453120,
+      "min_fw": "9.00.128",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe%20Bug%20Butcher%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg?download=true": {
+      "title_id": "CUSA04995",
+      "region": null,
+      "name": "The Bug Butcher",
+      "version": "01.00",
+      "release": null,
+      "size": 274202624,
+      "min_fw": "4.80",
+      "cover_url": null,
+      "category": "games"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe.Falconeer.Warrior.Edition_CUSA26400_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA26400",
       "region": null,
       "name": "The Falconeer: Warrior Edition",
@@ -8983,7 +9017,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Gardens.Between_CUSA10527_v1.00_%5B6.72%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe.Gardens.Between_CUSA10527_v1.00_%5B6.72%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA10527",
       "region": null,
       "name": "The Gardens Between",
@@ -8994,7 +9028,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Metronomicon.Slay.the.Dance.Floor_CUSA08647_v1.00_%5B5.05%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe.Metronomicon.Slay.the.Dance.Floor_CUSA08647_v1.00_%5B5.05%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA08647",
       "region": null,
       "name": "The Metronomicon: Slay the Dance Floor",
@@ -9005,7 +9039,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Pedestrian_CUSA20287_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe.Pedestrian_CUSA20287_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA20287",
       "region": null,
       "name": "The Pedestrian",
@@ -9016,7 +9050,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Touryst_CUSA27266_v1.02_FULLGAME_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThe.Touryst_CUSA27266_v1.02_FULLGAME_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA27266",
       "region": null,
       "name": "The Touryst",
@@ -9027,7 +9061,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThimbleweed%20Park%20%5BCUSA08960%5D%5BBASE%5D-%5BDLPSGAME.COM%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FThimbleweed%20Park%20%5BCUSA08960%5D%5BBASE%5D-%5BDLPSGAME.COM%5D.pkg?download=true": {
       "title_id": "CUSA08960",
       "region": null,
       "name": "Thimbleweed Park",
@@ -9038,7 +9072,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FTrain.Valley.2.Community.Edition_CUSA35553_v1.00_%5B11.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTrain.Valley.2.Community.Edition_CUSA35553_v1.00_%5B11.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA35553",
       "region": null,
       "name": "Train Valley 2: Community Edition",
@@ -9049,7 +9083,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FTrash.Sailors_CUSA28642_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTrash.Sailors_CUSA28642_v1.00_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA28642",
       "region": null,
       "name": "Trash Sailors",
@@ -9060,7 +9094,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FTurnip.Boy.Commits.Tax.Evasion_CUSA35834_v1.00_%5B11.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FTurnip.Boy.Commits.Tax.Evasion_CUSA35834_v1.00_%5B11.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA35834",
       "region": null,
       "name": "Turnip Boy Commits Tax Evasion",
@@ -9071,7 +9105,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FUP1767-CUSA04613_00-HIGHHORSEDISCJAM-A0100-V0100.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FUP1767-CUSA04613_00-HIGHHORSEDISCJAM-A0100-V0100.pkg?download=true": {
       "title_id": "CUSA04613",
       "region": null,
       "name": "Disc Jam",
@@ -9082,7 +9116,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FUP3590-CUSA20639_00-A0100-V0100-TRIFECTA-%5BDLPSGAME.COM%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FUP3590-CUSA20639_00-A0100-V0100-TRIFECTA-%5BDLPSGAME.COM%5D.pkg?download=true": {
       "title_id": "CUSA20639",
       "region": null,
       "name": "The Eternal Castle [REMASTERED]",
@@ -9093,7 +9127,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDLPSGAME.COM%5D-Dandara.PS4-UNLiMiTED.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2F%5BDLPSGAME.COM%5D-Dandara.PS4-UNLiMiTED.pkg?download=true": {
       "title_id": "CUSA10749",
       "region": null,
       "name": "Dandara",
@@ -9104,7 +9138,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDLPSGAME.COM%5D-EP2647-CUSA07917_00-TOOTHNTAIL00SIEE-A0100-V0102.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2F%5BDLPSGAME.COM%5D-EP2647-CUSA07917_00-TOOTHNTAIL00SIEE-A0100-V0102.pkg?download=true": {
       "title_id": "CUSA07917",
       "region": null,
       "name": "Tooth and Tail",
@@ -9115,7 +9149,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDLPSGAME.COM%5D-UP1260-CUSA30348_00-6083661116869159-A0100-V0100-NoTrophy-CyB1K.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2F%5BDLPSGAME.COM%5D-UP1260-CUSA30348_00-6083661116869159-A0100-V0100-NoTrophy-CyB1K.pkg?download=true": {
       "title_id": "CUSA30348",
       "region": null,
       "name": "Time on Frog Island",
@@ -9126,7 +9160,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDownloadgameps3.com%5D-CUSA15271.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2F%5BDownloadgameps3.com%5D-CUSA15271.pkg?download=true": {
       "title_id": "CUSA15271",
       "region": null,
       "name": "The Messenger",
@@ -9137,7 +9171,7 @@
       "cover_url": null,
       "category": "games"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FPS4_CUSA01116_v2.32.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games%2FPS4_CUSA01116_v2.32.pkg?download=true": {
       "title_id": "CUSA01116",
       "region": null,
       "name": "YouTube",
@@ -9146,6 +9180,17 @@
       "size": 151650304,
       "min_fw": "5.05",
       "cover_url": null,
+      "category": "games"
+    },
+    "https://eu1.akirabox.com/uploads/users/EBnkmW8P3R0y/cohmWPuIS502InEjDde-IV0000-APOL00004_00-APOLLO0000000PS4.pkg": {
+      "title_id": "APOL00004",
+      "region": "EUR",
+      "name": "PS4 Apollo Save Tool",
+      "size": 15728640,
+      "version": "2.00",
+      "release": "17-02-2025",
+      "min_fw": "5.05+",
+      "cover_url": "https://i.imgur.com/RtZ4AjU.png",
       "category": "games"
     }
   }

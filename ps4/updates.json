@@ -1,39 +1,6 @@
 {
   "DATA": {
-    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Media%2FEP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
-      "title_id": "CUSA01116",
-      "region": null,
-      "name": "YouTube",
-      "version": "02.39",
-      "release": null,
-      "size": 128974848,
-      "min_fw": "17.00.128",
-      "cover_url": null,
-      "category": "updates"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/CUSA05186_TRICKY_TOWERS_UPDATEv1.80_FXD_%5BFW505%5D.pkg?download=true": {
-      "title_id": "CUSA05186",
-      "region": null,
-      "name": "Tricky Towers",
-      "version": "01.80",
-      "release": null,
-      "size": 137494528,
-      "min_fw": "4.00.128",
-      "cover_url": null,
-      "category": "updates"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/UP3643-CUSA04550_00-DOWNWELLUSP40001-A0101-V0100.pkg?download=true": {
-      "title_id": "CUSA04550",
-      "region": null,
-      "name": "Downwell",
-      "version": "01.01",
-      "release": null,
-      "size": 4587520,
-      "min_fw": "4.80",
-      "cover_url": null,
-      "category": "updates"
-    },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FCUSA00466_TOWERFALL_ASCENSION_UPDATEv1.03_SPLASH-FIX_%5BFW405%5D.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FCUSA00466_TOWERFALL_ASCENSION_UPDATEv1.03_SPLASH-FIX_%5BFW405%5D.pkg?download=true": {
       "title_id": "CUSA00466",
       "region": null,
       "name": "TowerFall Ascension",
@@ -44,7 +11,18 @@
       "cover_url": null,
       "category": "updates"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FEP1661-CUSA12172_00-SYPS4THEMOOSEMAN-A0101-V0100.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FCUSA05186_TRICKY_TOWERS_UPDATEv1.80_FXD_%5BFW505%5D.pkg?download=true": {
+      "title_id": "CUSA05186",
+      "region": null,
+      "name": "Tricky Towers",
+      "version": "01.80",
+      "release": null,
+      "size": 137494528,
+      "min_fw": "4.00.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FEP1661-CUSA12172_00-SYPS4THEMOOSEMAN-A0101-V0100.pkg?download=true": {
       "title_id": "CUSA12172",
       "region": null,
       "name": "The Mooseman",
@@ -55,7 +33,18 @@
       "cover_url": null,
       "category": "updates"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Gardens.Between_CUSA10527_v1.01_BACKPORT_%5B5.05-6.72%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FEP4381-CUSA01116_00-YOUTUBESCEE00000-A0239-V0100.pkg?download=true": {
+      "title_id": "CUSA01116",
+      "region": null,
+      "name": "YouTube",
+      "version": "02.39",
+      "release": null,
+      "size": 128974848,
+      "min_fw": "17.00.128",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FThe.Gardens.Between_CUSA10527_v1.01_BACKPORT_%5B5.05-6.72%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA10527",
       "region": null,
       "name": "The Gardens Between",
@@ -66,7 +55,7 @@
       "cover_url": null,
       "category": "updates"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FThe.Touryst_CUSA27266_v1.02_OptionalFix_%5B9.00%5D_OPOISSO893.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FThe.Touryst_CUSA27266_v1.02_OptionalFix_%5B9.00%5D_OPOISSO893.pkg?download=true": {
       "title_id": "CUSA27266",
       "region": null,
       "name": "The Touryst",
@@ -77,7 +66,7 @@
       "cover_url": null,
       "category": "updates"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2FUP1767-CUSA04613_00-HIGHHORSEDISCJAM-A0108-V0101.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FUP1767-CUSA04613_00-HIGHHORSEDISCJAM-A0108-V0101.pkg?download=true": {
       "title_id": "CUSA04613",
       "region": null,
       "name": "Disc Jam™",
@@ -88,7 +77,18 @@
       "cover_url": null,
       "category": "updates"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDLPSGAME.COM%5D-Dandara.Update.v1.17.PS4-UNLiMiTED.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2FUP3643-CUSA04550_00-DOWNWELLUSP40001-A0101-V0100.pkg?download=true": {
+      "title_id": "CUSA04550",
+      "region": null,
+      "name": "Downwell",
+      "version": "01.01",
+      "release": null,
+      "size": 4587520,
+      "min_fw": "4.80",
+      "cover_url": null,
+      "category": "updates"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2F%5BDLPSGAME.COM%5D-Dandara.Update.v1.17.PS4-UNLiMiTED.pkg?download=true": {
       "title_id": "CUSA10749",
       "region": null,
       "name": "Dandara: Trials of Fear Edition",
@@ -99,7 +99,7 @@
       "cover_url": null,
       "category": "updates"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDLPSGAME.COM%5D-EP2647-CUSA07917_00-TOOTHNTAIL00SIEE-A0171-V0100.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2F%5BDLPSGAME.COM%5D-EP2647-CUSA07917_00-TOOTHNTAIL00SIEE-A0171-V0100.pkg?download=true": {
       "title_id": "CUSA07917",
       "region": null,
       "name": "Tooth and Tail",
@@ -110,7 +110,7 @@
       "cover_url": null,
       "category": "updates"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/packages%2F%5BDownloadgameps3.com%5D-CUSA15271.v2.02.pkg?download=true": {
+    "https://huggingface.co/datasets/dinos17/PS-Applications/resolve/main/Updates%2F%5BDownloadgameps3.com%5D-CUSA15271.v2.02.pkg?download=true": {
       "title_id": "CUSA15271",
       "region": null,
       "name": "The Messenger",
@@ -119,6 +119,17 @@
       "size": 374079488,
       "min_fw": "6.80.128",
       "cover_url": null,
+      "category": "updates"
+    },
+    "https://archive.org/download/ps4-fpkg-collection-english-d/Downwell%20-%20[US]%20[EN]%20[1.01].pkg": {
+      "title_id": "CUSA04550",
+      "region": "USA",
+      "name": "Downwell",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 55181312,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04550.png",
       "category": "updates"
     }
   }
