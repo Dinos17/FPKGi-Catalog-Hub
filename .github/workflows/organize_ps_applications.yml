@@ -248,10 +248,12 @@ jobs:
                   repo_type="dataset",
                   operations=[
                       CommitOperationCopy(
-                          src_repo_id=source_repo,
-                          src_repo_type="dataset",
                           src_path_in_repo=path,
                           path_in_repo=target_path,
+                          **({
+                              "src_repo_id": source_repo,
+                              "src_repo_type": "dataset",
+                          } if source_repo != target_repo else {})
                       )
                   ],
                   commit_message=(
