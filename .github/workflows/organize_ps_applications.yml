@@ -21,6 +21,8 @@ jobs:
           python - <<'PY'
           import os
           import struct
+          from urllib.parse import quote
+
           import requests
           from huggingface_hub import HfApi, CommitOperationCopy, CommitOperationDelete
 
@@ -29,7 +31,7 @@ jobs:
           GAMES = "dinos17/PS-Games-Dataset"
           APPS = "dinos17/PS-Applications"
 
-          # PS4 PARAM.SFO CATEGORY values.
+          # PS4 PARAM.SFO CATEGORY values -> logical category -> dataset folder.
           CATEGORY_MAP = {
               "gd": ("games", "Games"),
               "gdo": ("games", "Games"),
@@ -89,50 +91,67 @@ jobs:
           def parse_sfo(data):
               if len(data) < 20:
                   raise RuntimeError("PARAM.SFO is too small")
+
               magic, _version, key_offset, data_offset, count = struct.unpack_from(
                   "<5I", data, 0
               )
               if magic != 0x46535000:
                   raise RuntimeError("Invalid PARAM.SFO magic")
+
               result = {}
               for index in range(count):
                   offset = 20 + index * 16
+                  if offset + 16 > len(data):
+                      raise RuntimeError("PARAM.SFO entry table is truncated")
+
                   key_rel, fmt, value_len, _max_len, value_rel = struct.unpack_from(
                       "<HHIII", data, offset
                   )
                   key_start = key_offset + key_rel
+                  if key_start >= len(data):
+                      raise RuntimeError("PARAM.SFO key is outside the file")
+
                   key_end = data.find(b"\x00", key_start)
                   if key_end == -1:
                       key_end = len(data)
+
                   key = data[key_start:key_end].decode("utf-8", errors="replace")
                   value_start = data_offset + value_rel
-                  raw = data[value_start:value_start + value_len]
+                  value_end = value_start + value_len
+                  if value_start < 0 or value_end > len(data):
+                      raise RuntimeError(f"PARAM.SFO value for {key} is outside the file")
+
+                  raw = data[value_start:value_end]
                   if fmt == 0x0204:
                       value = c_string(raw)
                   elif fmt == 0x0404 and len(raw) >= 4:
                       value = struct.unpack_from("<I", raw, 0)[0]
                   else:
                       value = raw
+
                   result[key] = value
+
               return result
 
-          def get_category(repo, path, size):
-              url = (
-                  "https://huggingface.co/datasets/"
-                  + repo.split("/", 1)[0]
-                  + "/"
-                  + repo.split("/", 1)[1]
-                  + "/resolve/main/"
-                  + path
+          def pkg_url(repo, path):
+              owner, dataset = repo.split("/", 1)
+              return (
+                  f"https://huggingface.co/datasets/{owner}/{dataset}"
+                  f"/resolve/main/{quote(path, safe='/')}"
               )
 
+          def get_category(repo, path, size):
+              url = pkg_url(repo, path)
+
               header = read_range(url, 0, 0x1000, size)
-              magic = struct.unpack_from(">I", header, 0)[0]
-              if magic != 0x7F434E54:
+              if struct.unpack_from(">I", header, 0)[0] != 0x7F434E54:
                   raise RuntimeError("Not a PS4 PKG (bad magic)")
 
               entry_count = struct.unpack_from(">I", header, 0x10)[0]
               table_offset = struct.unpack_from(">I", header, 0x18)[0]
+              if entry_count <= 0:
+                  raise RuntimeError("PKG contains no file-table entries")
+
               table = read_range(url, table_offset, entry_count * 0x20, size)
 
               sfo_offset = None
@@ -147,14 +166,14 @@ jobs:
                       sfo_size = entry_size
                       break
 
-              if sfo_offset is None:
+              if sfo_offset is None or sfo_size is None:
                   raise RuntimeError("PARAM.SFO not found")
 
-              sfo = read_range(url, sfo_offset, sfo_size, size)
-              params = parse_sfo(sfo)
+              params = parse_sfo(read_range(url, sfo_offset, sfo_size, size))
               category = str(params.get("CATEGORY", "")).lower()
               if category not in CATEGORY_MAP:
                   raise RuntimeError(f"Unknown PKG CATEGORY: {category!r}")
+
               return CATEGORY_MAP[category][0], CATEGORY_MAP[category][1], category
 
           repo_files = {
@@ -162,16 +181,13 @@ jobs:
               APPS: api.list_repo_files(repo_id=APPS, repo_type="dataset"),
           }
 
-          existing = {
-              repo: set(files)
-              for repo, files in repo_files.items()
-          }
-
+          existing = {repo: set(files) for repo, files in repo_files.items()}
           moves = []
 
+          # Scan EVERY PKG recursively, not just root-level files.
           for source_repo in (GAMES, APPS):
               for path in repo_files[source_repo]:
-                  if not path.lower().endswith(".pkg") or "/" in path:
+                  if not path.lower().endswith(".pkg"):
                       continue
 
                   info = api.get_paths_info(
@@ -180,11 +196,12 @@ jobs:
                       paths=[path],
                       expand=True,
                   )
-                  if not info:
+                  if not info or info[0].size is None:
                       print(f"SKIP {source_repo}/{path}: file metadata unavailable")
                       continue
 
                   size = info[0].size
+
                   try:
                       category, folder, raw_category = get_category(
                           source_repo, path, size
@@ -194,12 +211,19 @@ jobs:
                       continue
 
                   target_repo = GAMES if category == "games" else APPS
-                  target_path = f"{folder}/{path}"
+                  filename = path.rsplit("/", 1)[-1]
+                  target_path = f"{folder}/{filename}"
 
-                  if source_repo == target_repo and target_path in existing[target_repo]:
-                      print(f"OK   {source_repo}/{path}: already organized as {target_path}")
+                  # Already exactly where classification says it belongs.
+                  if source_repo == target_repo and path == target_path:
+                      print(
+                          f"OK   {source_repo}/{path}: "
+                          f"already correctly organized (CATEGORY={raw_category})"
+                      )
                       continue
 
+                  # Never overwrite an existing package. This avoids destructive
+                  # behavior if the same filename already exists at the target.
                   if target_path in existing[target_repo]:
                       print(
                           f"SKIP {source_repo}/{path}: target already exists "
@@ -217,6 +241,8 @@ jobs:
                   f"{target_repo}/{target_path} (CATEGORY={raw_category})"
               )
 
+              # Copy first. The source is deleted only after the destination
+              # commit succeeds.
               api.create_commit(
                   repo_id=target_repo,
                   repo_type="dataset",
@@ -228,18 +254,23 @@ jobs:
                           path_in_repo=target_path,
                       )
                   ],
-                  commit_message=f"Move {path} into {target_path.rsplit('/', 1)[0]}/",
+                  commit_message=(
+                      f"Organize {path} into "
+                      f"{target_path.rsplit('/', 1)[0]}/"
+                  ),
               )
 
               api.create_commit(
                   repo_id=source_repo,
                   repo_type="dataset",
-                  operations=[CommitOperationDelete(path_in_repo=path)],
-                  commit_message=f"Remove misclassified root PKG {path}",
+                  operations=[
+                      CommitOperationDelete(path_in_repo=path)
+                  ],
+                  commit_message=f"Remove misclassified PKG {path}",
               )
 
               existing[target_repo].add(target_path)
               existing[source_repo].discard(path)
 
-          print(f"Done. Organized {len(moves)} root-level PKG file(s).")
+          print(f"Done. Organized {len(moves)} PKG file(s).")
           PY
