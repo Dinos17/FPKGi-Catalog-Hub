@@ -1570,7 +1570,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14835.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/CUSA05170-EUR-Game-%285.05%2B%29-PS4-%5BDLPSGAME.COM%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20QUEST%20BUILDERS%20-%20[EU]%20[EN]%20[1.00].pkg": {
       "title_id": "CUSA05170",
       "region": "EUR",
       "name": "DRAGON QUEST BUILDERS",
@@ -7050,7 +7050,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA06014.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/THE%20QUIET%20MAN%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/THE%20QUIET%20MAN%20-%20[EU]%20[EN]%20[1.05].pkg": {
       "title_id": "CUSA11736",
       "region": "EUR",
       "name": "THE QUIET MAN",
@@ -7060,7 +7060,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA11736.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/Tacoma%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.04%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/Tacoma%20-%20[US]%20[EN]%20[1.04].pkg": {
       "title_id": "CUSA11366",
       "region": "USA",
       "name": "Tacoma",
@@ -7070,7 +7070,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA11366.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/Taiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20%5BJP%5D%20%5BEN%5D%20%5B1.28%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/Taiko%20No%20Tatsujin%20-%20Drum%20Session%20-%20[JP]%20[EN]%20[1.28].pkg": {
       "title_id": "CUSA07515",
       "region": "JAP",
       "name": "Taiko No Tatsujin – Drum Session",
@@ -7080,7 +7080,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07515.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/Tales%20from%20the%20Borderlands%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.07%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/Tales%20from%20the%20Borderlands%20-%20[US]%20[EN]%20[1.07].pkg": {
       "title_id": "CUSA00870",
       "region": "USA",
       "name": "Tales from the Borderlands",
@@ -7100,7 +7100,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00562.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/Teenage%20Mutant%20Ninja%20Turtles%20Shredder%27s%20Revenge%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/Teenage%20Mutant%20Ninja%20Turtles%20Shredder's%20Revenge%20-%20[US]%20[EN]%20[1.10].pkg": {
       "title_id": "CUSA30991",
       "region": "USA",
       "name": "Teenage Mutant Ninja Turtles: Shredder's Revenge",
@@ -7120,7 +7120,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16927.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/Terraria%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.35%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/Terraria%20-%20[US]%20[EN]%20[1.35].pkg": {
       "title_id": "CUSA00740",
       "region": "USA",
       "name": "Terraria",
@@ -7130,7 +7130,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00740.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/Tetris%20Effect%20Connected%20-%20%5BEU%5D%20%5BEN%5D%20%5B2.02%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/Tetris%20Effect%20Connected%20-%20[EU]%20[EN]%20[2.02].pkg": {
       "title_id": "CUSA13643",
       "region": "EUR",
       "name": "Tetris® Effect: Connected",
@@ -7150,7 +7150,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00239.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/The%20Artful%20Escape%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.02%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/The%20Artful%20Escape%20-%20[EU]%20[EN]%20[1.02].pkg": {
       "title_id": "CUSA30113",
       "region": "EUR",
       "name": "The Artful Escape",
@@ -7170,7 +7170,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09376.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/The%20Binding%20of%20Isaac%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.16%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/The%20Binding%20of%20Isaac%20-%20[US]%20[EN]%20[1.16].pkg": {
       "title_id": "CUSA00792",
       "region": "USA",
       "name": "The Binding of Isaac",
@@ -7180,7 +7180,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00792.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/The%20Bug%20Butcher%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/The%20Bug%20Butcher%20-%20[EU]%20[EN]%20[1.01].pkg": {
       "title_id": "CUSA04995",
       "region": "EUR",
       "name": "The Bug Butcher",
@@ -7420,7 +7420,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA32039.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/%5BDownloadgameps3.com%5D-CUSA15271.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/The%20Messenger%20-%20[US]%20[EN]%20[2.02].pkg": {
       "title_id": "CUSA15271",
       "region": "USA",
       "name": "The Messenger",
@@ -7670,7 +7670,7 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00252.png"
     },
-    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Games/Thimbleweed%20Park%20%5BCUSA08960%5D%5BBASE%5D-%5BDLPSGAME.COM%5D.pkg?download=true": {
+    "https://archive.org/download/ps4-fpkg-collection-english-t/Thimbleweed%20Park%20-%20[US]%20[EN]%20[1.04].pkg": {
       "title_id": "CUSA08960",
       "region": "USA",
       "name": "Thimbleweed Park",
