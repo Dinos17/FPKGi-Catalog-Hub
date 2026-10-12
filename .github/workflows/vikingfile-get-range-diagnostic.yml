@@ -11,19 +11,38 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 2
     steps:
-      - name: Request at most one byte without saving the package
+      - name: Resolve VikingFile redirect without following it
+        id: redirect
         shell: bash
         env:
           SOURCE_URL: https://vikingfile.com/d/rwLeh0ry8G/%5BSPSX%5D-Red.Dead.Redemption.2_CUSA08519_v1.00_%5B6.72%5D_OPOISSO893.pkg
         run: |
-          set +e
-          echo "Testing GET with Range: bytes=0-0. Response body is discarded; no package file is created."
-          result=$(curl --silent --show-error --location --range 0-0 --max-filesize 1 --max-time 30 --output /dev/null --write-out 'http_code=%{http_code}\nsize_download=%{size_download}\nurl_effective_host=%{url_effective}\n' "$SOURCE_URL" 2>&1)
-          rc=$?
-          printf '%s\n' "$result" | sed -E 's#url_effective_host=.*#effective_url=[redacted]#'
-          echo "curl_exit_code=$rc"
-          if [ "$rc" -eq 0 ]; then
-            echo "RESULT: range request completed within the one-byte cap."
-          else
-            echo "RESULT: request did not complete; this alone does not prove a normal browser GET fails."
+          set -euo pipefail
+          # Fetch only the small redirect response; do not follow it here.
+          curl --silent --show-error --max-time 15 --max-redirs 0 --dump-header headers.txt --output /dev/null "$SOURCE_URL" || rc=$?
+          status=$(awk 'toupper($1) ~ /^HTTP\// { code=$2 } END { print code }' headers.txt)
+          location=$(awk 'BEGIN{IGNORECASE=1} /^location:/ {sub(/^[^:]*:[[:space:]]*/, ""); sub(/\r$/, ""); print; exit}' headers.txt)
+          rm -f headers.txt
+          echo "redirect_http_status=${status:-unknown}"
+          if [ -z "${location:-}" ]; then
+            echo "RESULT: no redirect Location header was returned."
+            exit 0
           fi
+          # Do not print the signed URL; it may contain temporary credentials.
+          echo "redirect_location_received=true" >> "$GITHUB_OUTPUT"
+          printf '%s' "$location" > "$RUNNER_TEMP/vikingfile_location"
+      - name: Test final URL with a one-byte range and hard size cap
+        shell: bash
+        run: |
+          set +e
+          location=$(cat "$RUNNER_TEMP/vikingfile_location")
+          result=$(curl --silent --show-error --range 0-0 --max-filesize 2 --max-time 20 --output /dev/null --write-out 'http_code=%{http_code}\nsize_download=%{size_download}\n' "$location" 2>&1)
+          rc=$?
+          printf '%s\n' "$result"
+          echo "curl_exit_code=$rc"
+          if [ "$rc" -eq 0 ] && printf '%s' "$result" | grep -q 'http_code=206' && printf '%s' "$result" | grep -q 'size_download=1'; then
+            echo "RESULT: final endpoint served exactly one byte (206 Partial Content)."
+          else
+            echo "RESULT: one-byte range was not confirmed. Full-file transfer remained blocked by the 2-byte cap."
+          fi
+          rm -f "$RUNNER_TEMP/vikingfile_location"
