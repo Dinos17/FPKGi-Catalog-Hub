@@ -24,6 +24,12 @@ def main():
 
     print("Inspecting the remote file and reading PKG metadata without saving it to GitHub.")
     info = inspect_remote_pkg(session, source_url)
+    if requested_path and not repo_override:
+        repo_override = (
+            "dinos17/PS-Games-Dataset"
+            if info["category"] == "games"
+            else "dinos17/PS-Applications"
+        )
     repo_id, path_in_repo = destination(repo_override, requested_path, info)
 
     print(f"Title: {info['title']}")
