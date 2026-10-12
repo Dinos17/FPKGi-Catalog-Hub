@@ -1,0 +1,42 @@
+name: Upload a URL directly to Hugging Face
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: "HTTPS direct-download URL for a PS4 PKG"
+        required: true
+        type: string
+      hf_repo:
+        description: "Optional Hugging Face dataset repo (default is chosen from PKG metadata)"
+        required: false
+        default: ""
+        type: string
+      hf_path:
+        description: "Optional exact destination path inside that dataset (for example Game/MyGame.pkg)"
+        required: false
+        default: ""
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  upload:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v5
+
+      - name: Install upload dependencies
+        run: python -m pip install --disable-pip-version-check huggingface_hub requests
+
+      - name: Stream URL directly to Hugging Face
+        env:
+          SOURCE_URL: ${{ inputs.source_url }}
+          HF_TOKEN: ${{ secrets.HF_TOKEN }}
+          HF_REPO: ${{ inputs.hf_repo }}
+          HF_PATH: ${{ inputs.hf_path }}
+        run: |
+          set -euo pipefail
+          python tools/url_to_hf.py
