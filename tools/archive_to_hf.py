@@ -242,10 +242,10 @@ def inspect_remote_pkg(session, source_url):
         return remote.read(length)
 
     signature = read_at(0, 16)
-    if signature[:4] != bytes.fromhex("7F504B47"):
+    if signature[:4] != bytes.fromhex("7F434E54"):
         preview = "".join(chr(byte) if 32 <= byte < 127 else "." for byte in signature)
         raise ValueError(
-            "Remote response is not PKG data. "
+            "Remote response does not have the PS4 PKG magic bytes (7F434E54). "
             f"Final URL: {final_url!r}; "
             f"Content-Type: {probe.headers.get('Content-Type', '')!r}; "
             f"first 16 bytes (hex): {signature.hex()}; "
