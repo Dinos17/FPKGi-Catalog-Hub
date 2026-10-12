@@ -88,9 +88,14 @@ class RemoteRangeFile(io.BufferedIOBase):
         self.size = size
         self.pos = 0
         self.session = requests.Session()
-        self.session.headers.update(
-            {"User-Agent": "FPKGi-Catalog-Hub/1.0"}
-        )
+        self.session.headers.update({
+            "User-Agent": (
+                "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+                "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+            ),
+            "Accept": "*/*",
+            "Referer": "https://vikingfile.com/",
+        })
 
     def readable(self):
         return True
@@ -236,8 +241,17 @@ def inspect_remote_pkg(session, source_url):
         remote.seek(offset)
         return remote.read(length)
 
-    if read_at(0, 4) != bytes.fromhex("7F504B47"):
-        raise ValueError("Source is not a valid PS4 PKG.")
+    signature = read_at(0, 16)
+    if signature[:4] != bytes.fromhex("7F504B47"):
+        preview = "".join(chr(byte) if 32 <= byte < 127 else "." for byte in signature)
+        raise ValueError(
+            "Remote response is not PKG data. "
+            f"Final URL: {final_url!r}; "
+            f"Content-Type: {probe.headers.get('Content-Type', '')!r}; "
+            f"first 16 bytes (hex): {signature.hex()}; "
+            f"ASCII preview: {preview!r}. "
+            "The host may be returning a browser challenge or blocking the runner."
+        )
 
     header = read_at(0, 0x1000)
     entry_count = struct.unpack_from(">I", header, 0x10)[0]
