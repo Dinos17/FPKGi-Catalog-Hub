@@ -1,0 +1,59 @@
+name: VikingFile Header-Only Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect-download-redirect:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Inspect redirect without downloading file contents
+        shell: bash
+        run: |
+          set -euo pipefail
+          source_url='https://vikingfile.com/d/rwLeh0ry8G/%5BSPSX%5D-Red.Dead.Redemption.2_CUSA08519_v1.00_%5B6.72%5D_OPOISSO893.pkg'
+          headers_file="$(mktemp)"
+          trap 'rm -f "$headers_file"' EXIT
+
+          echo "Requesting headers only from the original URL."
+          curl --silent --show-error --head --max-time 20 --max-redirs 0 \
+            --output "$headers_file" "$source_url" || true
+
+          python3 - "$headers_file" <<'PY'
+          import sys
+          from urllib.parse import urlparse
+
+          path = sys.argv[1]
+          with open(path, encoding="utf-8", errors="replace") as f:
+              lines = f.read().splitlines()
+
+          status_lines = [line.strip() for line in lines if line.startswith("HTTP/")]
+          locations = [line.split(":", 1)[1].strip() for line in lines
+                       if line.lower().startswith("location:")]
+          print("Initial response:", status_lines[-1] if status_lines else "no HTTP status")
+          if locations:
+              parsed = urlparse(locations[-1])
+              print("Redirect host:", parsed.hostname or "unavailable")
+              print("Redirect has signed-query parameters:",
+                    "yes" if "X-Amz-Signature=" in locations[-1] else "no")
+              print("Redirect expiry field present:",
+                    "yes" if "X-Amz-Expires=" in locations[-1] else "no")
+          else:
+              print("Redirect host: none")
+          PY
+
+          echo "Following redirects with HEAD requests only; response body is not downloaded."
+          final_status="$(curl --silent --show-error --head --location \
+            --max-time 30 --max-redirs 10 --output /dev/null \
+            --write-out '%{http_code}' "$source_url" || true)"
+          echo "Final HTTP status: ${final_status:-unknown}"
+          if [ "$final_status" = "200" ] || [ "$final_status" = "206" ]; then
+            echo "HEAD request reached a successful final response."
+          else
+            echo "HEAD-only diagnostic did not reach a successful final response."
+            echo "No PKG body was downloaded and no Hugging Face upload was attempted."
+          fi
