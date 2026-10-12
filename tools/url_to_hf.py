@@ -20,7 +20,14 @@ def main():
 
     import requests
     session = requests.Session()
-    session.headers.update({"User-Agent": "FPKGi-Catalog-Hub/1.0"})
+    session.headers.update({
+        "User-Agent": (
+            "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
+            "(KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36"
+        ),
+        "Accept": "*/*",
+        "Referer": "https://vikingfile.com/",
+    })
 
     print("Inspecting the remote file and reading PKG metadata without saving it to GitHub.")
     info = inspect_remote_pkg(session, source_url)
