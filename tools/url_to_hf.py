@@ -47,6 +47,7 @@ def main():
     print("Streaming the remote file directly into Hugging Face; no PKG file is stored in the GitHub repository.")
 
     api = HfApi(token=token)
+    info["remote"].start_progress()
     operation = CommitOperationAdd(
         path_in_repo=path_in_repo,
         path_or_fileobj=info["remote"],
