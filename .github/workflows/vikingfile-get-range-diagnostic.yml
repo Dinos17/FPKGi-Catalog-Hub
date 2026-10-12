@@ -1,0 +1,29 @@
+name: VikingFile GET Range Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test-range:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Request at most one byte without saving the package
+        shell: bash
+        env:
+          SOURCE_URL: https://vikingfile.com/d/rwLeh0ry8G/%5BSPSX%5D-Red.Dead.Redemption.2_CUSA08519_v1.00_%5B6.72%5D_OPOISSO893.pkg
+        run: |
+          set +e
+          echo "Testing GET with Range: bytes=0-0. Response body is discarded; no package file is created."
+          result=$(curl --silent --show-error --location --range 0-0 --max-filesize 1 --max-time 30 --output /dev/null --write-out 'http_code=%{http_code}\nsize_download=%{size_download}\nurl_effective_host=%{url_effective}\n' "$SOURCE_URL" 2>&1)
+          rc=$?
+          printf '%s\n' "$result" | sed -E 's#url_effective_host=.*#effective_url=[redacted]#'
+          echo "curl_exit_code=$rc"
+          if [ "$rc" -eq 0 ]; then
+            echo "RESULT: range request completed within the one-byte cap."
+          else
+            echo "RESULT: request did not complete; this alone does not prove a normal browser GET fails."
+          fi
