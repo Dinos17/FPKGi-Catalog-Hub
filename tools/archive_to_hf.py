@@ -87,6 +87,10 @@ class RemoteRangeFile(io.BufferedIOBase):
         self.url = url
         self.size = size
         self.pos = 0
+        self.progress_enabled = False
+        self.progress_bytes = 0
+        self.progress_started = 0.0
+        self.progress_last_print = 0.0
         self.session = requests.Session()
         self.session.headers.update({
             "User-Agent": (
@@ -96,6 +100,13 @@ class RemoteRangeFile(io.BufferedIOBase):
             "Accept": "*/*",
             "Referer": "https://vikingfile.com/",
         })
+
+    def start_progress(self):
+        self.progress_enabled = True
+        self.progress_bytes = 0
+        self.progress_started = time.monotonic()
+        self.progress_last_print = 0.0
+        print(f"\nStream progress: 0.0% of {self.size:,} bytes", flush=True)
 
     def readable(self):
         return True
@@ -149,6 +160,30 @@ class RemoteRangeFile(io.BufferedIOBase):
                 f"Range read mismatch: expected {expected}, got {len(data)}"
             )
         self.pos += len(data)
+        if self.progress_enabled:
+            self.progress_bytes += len(data)
+            now = time.monotonic()
+            if now - self.progress_last_print >= 5 or self.progress_bytes >= self.size:
+                elapsed = max(now - self.progress_started, 0.001)
+                speed = self.progress_bytes / elapsed
+                percent = min(100.0, self.progress_bytes * 100.0 / self.size)
+                remaining = max(0, self.size - self.progress_bytes)
+                eta = remaining / speed if speed > 0 else 0
+                def human_bytes(value):
+                    value = float(value)
+                    for unit in ("B", "KB", "MB", "GB", "TB"):
+                        if value < 1024 or unit == "TB":
+                            return f"{value:.1f} {unit}"
+                        value /= 1024
+                eta_minutes, eta_seconds = divmod(int(eta), 60)
+                print(
+                    f"Stream progress: {percent:5.1f}% | "
+                    f"{human_bytes(min(self.progress_bytes, self.size))} / "
+                    f"{human_bytes(self.size)} | "
+                    f"{human_bytes(speed)}/s | ETA {eta_minutes}m {eta_seconds}s",
+                    flush=True,
+                )
+                self.progress_last_print = now
         return data
 
 def parse_sfo(data):
