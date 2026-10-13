@@ -78,6 +78,11 @@ class StagedCompositeFile(io.BufferedIOBase):
             filename=self.paths[index],
             repo_type=self.repo_type,
         )
+        print(
+            f"Finalization: fetching checkpoint {index + 1}/{len(self.paths)} "
+            f"({self.sizes[index]:,} bytes) from Hugging Face...",
+            flush=True,
+        )
         response = self.session.get(url, timeout=(30, 600))
         response.raise_for_status()
         data = response.content
@@ -275,7 +280,12 @@ def main():
     if missing:
         print()  # End the in-place terminal progress line.
 
-    operations = []
+    # Build delete operations before constructing the composite add operation:
+    # CommitOperationAdd may scan the entire stream to calculate its upload metadata.
+    # Validate operation arguments before that expensive 85+ GB scan begins.
+    operations = [
+        CommitOperationDelete(path_in_repo=path) for path in part_paths
+    ]
     if oversized:
         first_size = (info["size"] + 1) // 2
         second_size = info["size"] - first_size
@@ -368,9 +378,6 @@ def main():
             )
         )
 
-    operations.extend(
-        CommitOperationDelete(path=path) for path in part_paths
-    )
     marker_data = (
         "source=" + fingerprint + "\nsize=" + str(info["size"])
         + "\ndestination=" + repo_id + "/" + path_in_repo + "\n"
@@ -381,6 +388,12 @@ def main():
             path_in_repo=marker_path,
             path_or_fileobj=io.BytesIO(marker_data),
         )
+    )
+    print(
+        f"Finalization: submitting final Hugging Face commit with "
+        f"{len(operations)} operations; checkpoint files will only be deleted "
+        "in the same commit that publishes the completed file.",
+        flush=True,
     )
     api.create_commit(
         repo_id=repo_id,
