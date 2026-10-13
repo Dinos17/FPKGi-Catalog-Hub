@@ -141,24 +141,29 @@ class RemoteRangeFile(io.BufferedIOBase):
         response = self.session.get(
             self.url,
             headers={"Range": f"bytes={self.pos}-{end}"},
-            timeout=600,
+            timeout=(30, 90),
+            stream=True,
         )
-        response.raise_for_status()
+        try:
+            response.raise_for_status()
 
-        expected = end - self.pos + 1
-        content_range = response.headers.get("Content-Range", "")
-        expected_range = f"bytes {self.pos}-{end}/{self.size}"
-        if response.status_code != 206 or content_range != expected_range:
-            raise RuntimeError(
-                f"Range request was not honored: status={response.status_code}, "
-                f"Content-Range={content_range!r}, expected={expected_range!r}"
-            )
+            expected = end - self.pos + 1
+            content_range = response.headers.get("Content-Range", "")
+            expected_range = f"bytes {self.pos}-{end}/{self.size}"
+            if response.status_code != 206 or content_range != expected_range:
+                raise RuntimeError(
+                    f"Range request was not honored: status={response.status_code}, "
+                    f"Content-Range={content_range!r}, expected={expected_range!r}. "
+                    "The source host must support HTTP Range requests."
+                )
 
-        data = response.content
-        if len(data) != expected:
-            raise RuntimeError(
-                f"Range read mismatch: expected {expected}, got {len(data)}"
-            )
+            data = response.raw.read(expected)
+            if len(data) != expected:
+                raise RuntimeError(
+                    f"Range read mismatch: expected {expected}, got {len(data)}"
+                )
+        finally:
+            response.close()
         self.pos += len(data)
         if self.progress_enabled:
             self.progress_bytes += len(data)
@@ -279,23 +284,30 @@ def classify_application(session, title_id):
     return "apps", None
 
 def inspect_remote_pkg(session, source_url):
+    print("Probing source URL for file size and HTTP Range support...", flush=True)
     probe = session.get(
         source_url,
         allow_redirects=True,
-        timeout=60,
+        timeout=(20, 45),
         headers={"Range": "bytes=0-0"},
+        stream=True,
     )
-    probe.raise_for_status()
+    try:
+        probe.raise_for_status()
 
-    final_url = probe.url
-    content_range = probe.headers.get("Content-Range", "")
-    match = re.fullmatch(r"bytes 0-0/(\d+)", content_range)
-    if not match:
-        raise RuntimeError(
-            f"Source did not return a valid Content-Range: {content_range!r}"
-        )
+        final_url = probe.url
+        content_range = probe.headers.get("Content-Range", "")
+        match = re.fullmatch(r"bytes 0-0/(\d+)", content_range)
+        if probe.status_code != 206 or not match:
+            raise RuntimeError(
+                "Source does not support a one-byte HTTP Range probe: "
+                f"status={probe.status_code}, Content-Range={content_range!r}. "
+                "Refusing to read the full remote file during metadata inspection."
+            )
 
-    size = int(match.group(1))
+        size = int(match.group(1))
+    finally:
+        probe.close()
     filename = unquote(os.path.basename(urlparse(final_url).path))
     if not filename or size <= 0:
         raise RuntimeError("Could not determine remote filename or size.")
