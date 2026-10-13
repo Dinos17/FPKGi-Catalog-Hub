@@ -29,7 +29,7 @@ jobs:
         uses: actions/checkout@v5
 
       - name: Install upload dependencies
-        run: python -m pip install --disable-pip-version-check huggingface_hub requests
+        run: python -m pip install --upgrade --disable-pip-version-check huggingface_hub hf_xet requests
 
       - name: Stream URL directly to Hugging Face
         env:
@@ -37,7 +37,6 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO: ${{ inputs.hf_repo }}
           HF_PATH: ${{ inputs.hf_path }}
-          HF_HUB_DISABLE_XET: "1"
         run: |
           set -euo pipefail
           python tools/url_to_hf.py
