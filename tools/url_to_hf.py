@@ -388,7 +388,22 @@ def main():
         operations=operations,
         commit_message=f"Finalize resumable upload: {info['filename']}",
     )
-    print(f"SUCCESS: https://huggingface.co/datasets/{repo_id}/blob/main/{quote(path_in_repo, safe='/')}")
+    if oversized:
+        print(
+            "SUCCESS: Split PKG uploaded. The requested destination now contains "
+            "the JSON manifest; download and concatenate both listed part files."
+        )
+        print(
+            f"MANIFEST: https://huggingface.co/datasets/{repo_id}/blob/main/"
+            f"{quote(path_in_repo, safe='/')}"
+        )
+        for output_path in split_paths:
+            print(
+                f"PART: https://huggingface.co/datasets/{repo_id}/blob/main/"
+                f"{quote(output_path, safe='/')}"
+            )
+    else:
+        print(f"SUCCESS: https://huggingface.co/datasets/{repo_id}/blob/main/{quote(path_in_repo, safe='/')}")
     set_complete_output()
 
 
