@@ -344,7 +344,7 @@ def main():
             CommitOperationAdd(
                 path_in_repo=path_in_repo,
                 path_or_fileobj=io.BytesIO(
-                    (json.dumps(manifest, indent=2) + "\\n").encode("utf-8")
+                    (json.dumps(manifest, indent=2) + "\n").encode("utf-8")
                 ),
             )
         )
@@ -372,9 +372,9 @@ def main():
         CommitOperationDelete(path=path) for path in part_paths
     )
     marker_data = (
-        "source=" + fingerprint + "\\nsize=" + str(info["size"])
-        + "\\ndestination=" + repo_id + "/" + path_in_repo + "\\n"
-        + ("format=split-pkg-v1\\n" if oversized else "format=single-file\\n")
+        "source=" + fingerprint + "\nsize=" + str(info["size"])
+        + "\ndestination=" + repo_id + "/" + path_in_repo + "\n"
+        + ("format=split-pkg-v1\n" if oversized else "format=single-file\n")
     ).encode("utf-8")
     operations.append(
         CommitOperationAdd(
