@@ -184,10 +184,14 @@ def main():
     for number in missing:
         start = number * CHUNK_SIZE
         length = part_sizes[number]
-        print(
-            f"Downloading and checkpointing chunk {number + 1}/{part_count}: "
-            f"bytes {start:,}-{start + length - 1:,} ({length:,} bytes)"
-        )
+        if number == missing[0] or (number + 1) % 5 == 0 or number == missing[-1]:
+            print(
+                f"Checkpoint transfer: chunk {number + 1}/{part_count} "
+                f"({part_count - len(missing) + missing.index(number) + 1} "
+                f"new chunks processed; {part_count - len(missing) + missing.index(number) + 1}/"
+                f"{part_count} total checkpoints accounted for)",
+                flush=True,
+            )
         info["remote"].seek(start)
         chunk = info["remote"].read(length)
         if len(chunk) != length:
@@ -208,7 +212,8 @@ def main():
                 f"for {info['filename']}"
             ),
         )
-        print(f"Checkpoint saved: {part_paths[number]}")
+        if number == missing[0] or (number + 1) % 5 == 0 or number == missing[-1]:
+            print(f"Checkpoint saved through chunk {number + 1}/{part_count}", flush=True)
 
     if missing:
         print()  # End the in-place terminal progress line.
