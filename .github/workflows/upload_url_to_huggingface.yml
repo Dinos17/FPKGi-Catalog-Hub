@@ -39,4 +39,4 @@ jobs:
           HF_PATH: ${{ inputs.hf_path }}
         run: |
           set -euo pipefail
-          python tools/url_to_hf.py
+          python -u tools/url_to_hf.py
