@@ -141,7 +141,7 @@ class RemoteRangeFile(io.BufferedIOBase):
         response = self.session.get(
             self.url,
             headers={"Range": f"bytes={self.pos}-{end}"},
-            timeout=180,
+            timeout=600,
         )
         response.raise_for_status()
 
