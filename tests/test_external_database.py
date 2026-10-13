@@ -305,4 +305,40 @@ def test_fetch_external_database_entries_prefers_application_database_on_conflic
     entries = external_database.fetch_external_database_entries()
 
     assert entries[url]["category"] == "apps"
-\n\ndef test_scan_database_maps_sony_tmdb_gapp_to_apps(monkeypatch):\n    monkeypatch.setattr(\n        external_database,\n        "fetch_database_files",\n        lambda url: [{"path": "PS4_CUSA01116.pkg", "size": 123}],\n    )\n    monkeypatch.setattr(\n        external_database,\n        "extract_metadata",\n        lambda url, size: {\n            "title_id": "CUSA01116",\n            "region": "EU",\n            "name": "YouTube",\n            "version": "2.32",\n            "release": None,\n            "size": size,\n            "min_fw": "5.05",\n            "cover_url": None,\n            "category": "games",\n        },\n    )\n    monkeypatch.setattr(external_database, "resolve_category", lambda title_id: "gapp")\n    monkeypatch.setattr(external_database, "resolve_title", lambda title_id: "YouTube")\n\n    entries, scanned, skipped = external_database._scan_database(\n        {\n            "name": "PS-Games-Dataset",\n            "url": "https://huggingface.co/datasets/example/games",\n        }\n    )\n\n    assert scanned == 1\n    assert skipped == 0\n    assert next(iter(entries.values()))["category"] == "apps"\n
+
+
+
+def test_scan_database_maps_sony_tmdb_gapp_to_apps(monkeypatch):
+    monkeypatch.setattr(
+        external_database,
+        "fetch_database_files",
+        lambda url: [{"path": "PS4_CUSA01116.pkg", "size": 123}],
+    )
+    monkeypatch.setattr(
+        external_database,
+        "extract_metadata",
+        lambda url, size: {
+            "title_id": "CUSA01116",
+            "region": "EU",
+            "name": "YouTube",
+            "version": "2.32",
+            "release": None,
+            "size": size,
+            "min_fw": "5.05",
+            "cover_url": None,
+            "category": "games",
+        },
+    )
+    monkeypatch.setattr(external_database, "resolve_category", lambda title_id: "gapp")
+    monkeypatch.setattr(external_database, "resolve_title", lambda title_id: "YouTube")
+
+    entries, scanned, skipped = external_database._scan_database(
+        {
+            "name": "PS-Games-Dataset",
+            "url": "https://huggingface.co/datasets/example/games",
+        }
+    )
+
+    assert scanned == 1
+    assert skipped == 0
+    assert next(iter(entries.values()))["category"] == "apps"
