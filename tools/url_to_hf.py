@@ -178,6 +178,9 @@ def main():
         "already stored; completed chunks will be skipped."
     )
 
+    if missing:
+        info["remote"].start_progress()
+
     for number in missing:
         start = number * CHUNK_SIZE
         length = part_sizes[number]
@@ -206,6 +209,9 @@ def main():
             ),
         )
         print(f"Checkpoint saved: {part_paths[number]}")
+
+    if missing:
+        print()  # End the in-place terminal progress line.
 
     print(
         "All source chunks are safely stored on Hugging Face. "
