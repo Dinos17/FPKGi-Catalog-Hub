@@ -188,7 +188,7 @@ class RemoteRangeFile(io.BufferedIOBase):
                 # emit a checkpoint only every five minutes there.
                 in_ci = os.environ.get("GITHUB_ACTIONS") == "true"
                 if not in_ci or now - self.progress_last_print >= 300:
-                    print(progress_line, end="\\n" if in_ci else "\\r", flush=True)
+                    print(progress_line, end="\n" if in_ci else "\r", flush=True)
                     self.progress_last_print = now
         return data
 
