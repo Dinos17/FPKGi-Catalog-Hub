@@ -17,6 +17,12 @@ except ImportError:  # direct execution: python tools/url_to_hf.py
 CHUNK_SIZE = 512 * 1024 * 1024
 STAGING_ROOT = ".__upload_staging__"
 
+def set_complete_output():
+    output_path = os.environ.get("GITHUB_OUTPUT")
+    if output_path:
+        with open(output_path, "a", encoding="utf-8") as output:
+            output.write("complete=true\n")
+
 
 class StagedCompositeFile(io.BufferedIOBase):
     """Seekable view of ordered Hugging Face staging chunks without disk usage."""
@@ -140,6 +146,7 @@ def main():
         f"{source_url}\n{info['size']}\n{repo_id}\n{path_in_repo}".encode("utf-8")
     ).hexdigest()[:24]
     staging_dir = f"{STAGING_ROOT}/{fingerprint}"
+    marker_path = f"{staging_dir}/COMPLETE"
     part_count = (info["size"] + CHUNK_SIZE - 1) // CHUNK_SIZE
     part_paths = [
         f"{staging_dir}/part-{index:05d}.bin" for index in range(part_count)
@@ -161,6 +168,10 @@ def main():
     existing = set(
         api.list_repo_files(repo_id=repo_id, repo_type="dataset")
     )
+    if marker_path in existing and path_in_repo in existing:
+        print("This exact source upload is already finalized; nothing to do.")
+        set_complete_output()
+        return
     missing = [i for i, path in enumerate(part_paths) if path not in existing]
     print(
         f"Checkpoint status: {part_count - len(missing)}/{part_count} chunks "
@@ -217,6 +228,16 @@ def main():
     operations.extend(
         CommitOperationDelete(path_in_repo=path) for path in part_paths
     )
+    marker_data = (
+        "source=" + fingerprint + "\nsize=" + str(info["size"])
+        + "\ndestination=" + repo_id + "/" + path_in_repo + "\n"
+    ).encode("utf-8")
+    operations.append(
+        CommitOperationAdd(
+            path_in_repo=marker_path,
+            path_or_fileobj=io.BytesIO(marker_data),
+        )
+    )
     api.create_commit(
         repo_id=repo_id,
         repo_type="dataset",
@@ -224,6 +245,7 @@ def main():
         commit_message=f"Finalize resumable upload: {info['filename']}",
     )
     print(f"SUCCESS: https://huggingface.co/datasets/{repo_id}/blob/main/{quote(path_in_repo, safe='/')}")
+    set_complete_output()
 
 
 if __name__ == "__main__":
