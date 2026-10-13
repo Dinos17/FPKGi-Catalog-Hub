@@ -55,3 +55,28 @@ def test_staged_composite_supports_seek_from_end(monkeypatch):
 
     assert stream.seek(-2, 2) == 3
     assert stream.read(2) == b"de"
+
+
+
+def test_staged_composite_slice_reads_only_its_range():
+    base = __import__("io").BytesIO(b"abcdefghij")
+    stream = url_to_hf.StagedCompositeSlice(base, start=3, length=4)
+
+    assert stream.read(2) == b"de"
+    assert stream.tell() == 2
+    assert stream.read(20) == b"fg"
+    assert stream.read(1) == b""
+    assert stream.seek(-2, 2) == 2
+    assert stream.read() == b"fg"
+
+
+def test_staged_composite_slice_rejects_out_of_bounds_seek():
+    base = __import__("io").BytesIO(b"abcdefghij")
+    stream = url_to_hf.StagedCompositeSlice(base, start=3, length=4)
+
+    try:
+        stream.seek(5)
+    except ValueError as exc:
+        assert "outside staged slice" in str(exc)
+    else:
+        raise AssertionError("expected out-of-bounds seek to fail")
