@@ -12,7 +12,7 @@ def make_sfo(entries):
     records = []
     for key, fmt, value in entries:
         key_index = len(key_table)
-        key_table.extend(key.encode("utf-8") + b"\\x00")
+        key_table.extend(key.encode("utf-8") + b"\x00")
         value_offset = len(data_table)
         data_table.extend(value)
         records.append((key_index, fmt, len(value), len(value), value_offset))
@@ -26,8 +26,8 @@ def make_sfo(entries):
 
 def test_parse_sfo_keeps_title_and_title_id_as_strings():
     data = make_sfo([
-        ("TITLE", 0x0204, b"Red Dead Redemption 2\\x00"),
-        ("TITLE_ID", 0x0204, b"CUSA08519\\x00"),
+        ("TITLE", 0x0204, b"Red Dead Redemption 2\x00"),
+        ("TITLE_ID", 0x0204, b"CUSA08519\x00"),
         ("ATTRIBUTE", 0x0404, (7).to_bytes(4, "little")),
     ])
 
@@ -40,10 +40,10 @@ def test_parse_sfo_keeps_title_and_title_id_as_strings():
 
 def test_parse_sfo_rejects_truncated_header():
     with pytest.raises(ValueError, match="header is truncated"):
-        parse_sfo(b"\\x00PSF")
+        parse_sfo(b"\x00PSF")
 
 
 def test_parse_sfo_rejects_unknown_format():
-    data = make_sfo([("TITLE", 0x0104, b"wrong\\x00")])
+    data = make_sfo([("TITLE", 0x0104, b"wrong\x00")])
     with pytest.raises(ValueError, match="Unsupported PARAM.SFO format"):
         parse_sfo(data)
