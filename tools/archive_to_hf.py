@@ -464,6 +464,7 @@ def main():
                 print(f"Remote size: {info['size']:,} bytes")
                 print(f"HF destination: {repo_id}/{path_in_repo}")
                 print("Streaming directly from Archive.org to Hugging Face.")
+                info["remote"].start_progress()
 
                 operation = CommitOperationAdd(
                     path_in_repo=path_in_repo,
@@ -475,6 +476,7 @@ def main():
                     operations=[operation],
                     commit_message=f"Upload {info['filename']}",
                 )
+                print()  # End the in-place terminal progress line.
                 print(f"Uploaded: {repo_id}/{path_in_repo}")
                 uploaded += 1
                 completed = True
