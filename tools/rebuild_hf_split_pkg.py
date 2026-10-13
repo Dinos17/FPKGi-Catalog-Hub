@@ -125,8 +125,10 @@ def main():
                 f"Streamed {bytes_sent:,} bytes, expected {EXPECTED_SIZE:,}; "
                 "published parts have been left untouched."
             )
+        # The Xet upload-commit context manager finalizes/waits on normal exit.
+        # Calling wait_to_finish() here as well completes the same commit twice
+        # and can raise RuntimeError: Already completed after the entire stream.
         metadata = stream.finish()
-        xet_commit.wait_to_finish()
 
     sha256_hex = metadata.xet_info.sha256
     if len(sha256_hex) != 64:
