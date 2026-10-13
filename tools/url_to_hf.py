@@ -6,7 +6,10 @@ from urllib.parse import quote, urlparse
 import requests
 from huggingface_hub import CommitOperationAdd, CommitOperationDelete, HfApi, hf_hub_url
 
-from archive_to_hf import destination, inspect_remote_pkg
+try:
+    from .archive_to_hf import destination, inspect_remote_pkg
+except ImportError:  # direct execution: python tools/url_to_hf.py
+    from archive_to_hf import destination, inspect_remote_pkg
 
 # Each durable chunk is committed to the target dataset. A rerun skips chunks
 # already present, so GitHub Actions' job time limit does not restart the source
