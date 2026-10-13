@@ -214,7 +214,7 @@ def parse_sfo(data):
         key_start = key_offset + key_index
         if key_start >= len(data):
             raise ValueError(f"PARAM.SFO key offset is invalid for entry {index}.")
-        key_end = data.find(b"\\x00", key_start, data_offset)
+        key_end = data.find(b"\x00", key_start, data_offset)
         if key_end < 0:
             raise ValueError(f"PARAM.SFO key is not NUL-terminated for entry {index}.")
         key = data[key_start:key_end].decode("utf-8", errors="strict")
@@ -231,7 +231,7 @@ def parse_sfo(data):
                 raise ValueError(f"PARAM.SFO integer {key!r} must be 4 bytes.")
             result[key] = int.from_bytes(raw, "little", signed=False)
         elif fmt == 0x0204:
-            result[key] = raw.rstrip(b"\\x00").decode("utf-8", errors="strict")
+            result[key] = raw.rstrip(b"\x00").decode("utf-8", errors="strict")
         else:
             raise ValueError(
                 f"Unsupported PARAM.SFO format 0x{fmt:04X} for key {key!r}."
