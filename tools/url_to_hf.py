@@ -183,7 +183,7 @@ def main():
             operations=[
                 CommitOperationAdd(
                     path_in_repo=part_paths[number],
-                    path_or_fileobj=chunk,
+                    path_or_fileobj=io.BytesIO(chunk),
                 )
             ],
             commit_message=(
@@ -195,7 +195,7 @@ def main():
 
     print(
         "All source chunks are safely stored on Hugging Face. "
-        "Assembling the original file server-side-streamed from checkpoints..."
+        "Assembling the original file by streaming the stored checkpoints; no full local copy is created..."
     )
     composite = StagedCompositeFile(
         repo_id=repo_id,
