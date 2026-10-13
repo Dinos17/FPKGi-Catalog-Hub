@@ -14,10 +14,10 @@ except ImportError:  # direct execution: python tools/url_to_hf.py
 
 # Each durable chunk is committed to the target dataset. A rerun skips chunks
 # already present, so GitHub Actions' job time limit does not restart the source
-# transfer from byte zero. Hugging Face enforces a 50 GB per-file limit, so large
-# PKGs are finalized as two parts plus a JSON manifest at the requested path.
+# transfer from byte zero. Current Hugging Face Xet storage supports files below
+# 200 GB; keep larger files split into two parts plus a JSON manifest.
 CHUNK_SIZE = 512 * 1024 * 1024
-MAX_HF_FILE_SIZE = 49_000_000_000  # stay safely below the 50 GB service limit
+MAX_HF_FILE_SIZE = 199_000_000_000  # stay safely below the 200 GB Xet file limit
 STAGING_ROOT = ".__upload_staging__"
 
 def set_complete_output():
@@ -285,7 +285,7 @@ def main():
         ]
         print(
             "All source chunks are safely stored on Hugging Face. "
-            "The PKG exceeds the 50 GB per-file limit; streaming it into two "
+            "The PKG exceeds the 200 GB per-file limit; streaming it into two "
             "parts plus a manifest, without a full local copy..."
         )
         for output_path, start_offset, length in part_specs:
