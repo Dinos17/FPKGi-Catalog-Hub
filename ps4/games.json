@@ -8659,6 +8659,16 @@
       "size": 24603983872,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01073.png"
+    },
+    "https://huggingface.co/datasets/dinos17/PS-Games-Dataset/resolve/main/Game/9nV1JUjHhJ?download=true": {
+      "title_id": "CUSA08519",
+      "region": "USA",
+      "name": "Red Dead Redemption 2",
+      "version": null,
+      "release": null,
+      "size": 85290778624,
+      "min_fw": null,
+      "cover_url": null
     }
   }
 }
