@@ -187,30 +187,54 @@ class RemoteRangeFile(io.BufferedIOBase):
         return data
 
 def parse_sfo(data):
-    magic, _, key_offset, data_offset, count = struct.unpack_from(
+    """Parse a PARAM.SFO table with strict type and bounds validation.
+
+    PSF type 0x0204 is a string and 0x0404 is an integer. Testing only the
+    low byte incorrectly treats strings as integers, corrupting TITLE/TITLE_ID.
+    """
+    if len(data) < 20:
+        raise ValueError("PARAM.SFO header is truncated.")
+
+    magic, version, key_offset, data_offset, count = struct.unpack_from(
         "<5I", data, 0
     )
     if magic != 0x46535000:
-        raise ValueError("Invalid PARAM.SFO.")
+        raise ValueError("Invalid PARAM.SFO magic.")
+    if count > (len(data) - 20) // 16:
+        raise ValueError("PARAM.SFO entry table is truncated.")
+    if key_offset > len(data) or data_offset > len(data):
+        raise ValueError("PARAM.SFO table offset is outside the file.")
 
     result = {}
     for index in range(count):
-        offset = 20 + index * 16
-        key_index, fmt, value_len, _, value_offset = struct.unpack_from(
-            "<HHIII", data, offset
+        entry_offset = 20 + index * 16
+        key_index, fmt, value_len, max_value_len, value_offset = struct.unpack_from(
+            "<HHIII", data, entry_offset
         )
         key_start = key_offset + key_index
-        key_end = data.find(b"\x00", key_start)
-        key = data[key_start:key_end].decode("utf-8", errors="replace")
-        raw = data[
-            data_offset + value_offset:
-            data_offset + value_offset + value_len
-        ]
-        if fmt & 0xFF == 0x04 and len(raw) >= 4:
-            result[key] = int.from_bytes(raw[:4], "little")
+        if key_start >= len(data):
+            raise ValueError(f"PARAM.SFO key offset is invalid for entry {index}.")
+        key_end = data.find(b"\\x00", key_start, data_offset)
+        if key_end < 0:
+            raise ValueError(f"PARAM.SFO key is not NUL-terminated for entry {index}.")
+        key = data[key_start:key_end].decode("utf-8", errors="strict")
+        value_start = data_offset + value_offset
+        value_end = value_start + value_len
+        if value_start < data_offset or value_end > len(data):
+            raise ValueError(f"PARAM.SFO value is out of bounds for key {key!r}.")
+        if value_len > max_value_len:
+            raise ValueError(f"PARAM.SFO value length exceeds maximum for {key!r}.")
+
+        raw = data[value_start:value_end]
+        if fmt == 0x0404:
+            if value_len != 4:
+                raise ValueError(f"PARAM.SFO integer {key!r} must be 4 bytes.")
+            result[key] = int.from_bytes(raw, "little", signed=False)
+        elif fmt == 0x0204:
+            result[key] = raw.rstrip(b"\\x00").decode("utf-8", errors="strict")
         else:
-            result[key] = raw.rstrip(b"\x00").decode(
-                "utf-8", errors="replace"
+            raise ValueError(
+                f"Unsupported PARAM.SFO format 0x{fmt:04X} for key {key!r}."
             )
     return result
 
