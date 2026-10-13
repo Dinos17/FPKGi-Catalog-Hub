@@ -37,6 +37,7 @@ jobs:
           HF_TOKEN: ${{ secrets.HF_TOKEN }}
           HF_REPO: ${{ inputs.hf_repo }}
           HF_PATH: ${{ inputs.hf_path }}
+          HF_HUB_DISABLE_XET: "1"
         run: |
           set -euo pipefail
           python tools/url_to_hf.py
