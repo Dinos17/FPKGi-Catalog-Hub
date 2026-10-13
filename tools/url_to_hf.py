@@ -1,6 +1,5 @@
 import hashlib
 import io
-import json
 import os
 from urllib.parse import quote, urlparse
 
@@ -14,10 +13,10 @@ except ImportError:  # direct execution: python tools/url_to_hf.py
 
 # Each durable chunk is committed to the target dataset. A rerun skips chunks
 # already present, so GitHub Actions' job time limit does not restart the source
-# transfer from byte zero. Hugging Face enforces a 50 GB per-file limit, so large
-# PKGs are finalized as two parts plus a JSON manifest at the requested path.
+# transfer from byte zero. Finalization uses Hugging Face's Xet-backed upload path
+# so PKGs can remain a single file up to the documented 200 GB hard limit.
 CHUNK_SIZE = 512 * 1024 * 1024
-MAX_HF_FILE_SIZE = 49_000_000_000  # stay safely below the 50 GB service limit
+MAX_HF_FILE_SIZE = 200_000_000_000
 STAGING_ROOT = ".__upload_staging__"
 
 def set_complete_output():
@@ -113,51 +112,6 @@ class StagedCompositeFile(io.BufferedIOBase):
 
 
 
-class StagedCompositeSlice(io.BufferedIOBase):
-    """Seekable bounded slice of a staged composite stream."""
-
-    def __init__(self, stream, start, length):
-        self.stream = stream
-        self.start = start
-        self.length = length
-        self.pos = 0
-
-    def readable(self):
-        return True
-
-    def seekable(self):
-        return True
-
-    def tell(self):
-        return self.pos
-
-    def seek(self, offset, whence=0):
-        if whence == 0:
-            new_pos = offset
-        elif whence == 1:
-            new_pos = self.pos + offset
-        elif whence == 2:
-            new_pos = self.length + offset
-        else:
-            raise ValueError("invalid whence")
-        if new_pos < 0 or new_pos > self.length:
-            raise ValueError("seek outside staged slice")
-        self.pos = new_pos
-        self.stream.seek(self.start + self.pos)
-        return self.pos
-
-    def read(self, length=-1):
-        if length is None or length < 0:
-            length = self.length - self.pos
-        length = min(length, self.length - self.pos)
-        if length <= 0:
-            return b""
-        self.stream.seek(self.start + self.pos)
-        data = self.stream.read(length)
-        self.pos += len(data)
-        return data
-
-
 def main():
     source_url = os.environ.get("SOURCE_URL", "").strip()
     token = os.environ.get("HF_TOKEN", "").strip()
@@ -214,16 +168,15 @@ def main():
     print(f"Checkpoint directory: {staging_dir}")
 
     api = HfApi(token=token)
+    if info["size"] > MAX_HF_FILE_SIZE:
+        raise SystemExit(
+            f"PKG is {info['size']:,} bytes, above Hugging Face's documented "
+            f"{MAX_HF_FILE_SIZE:,}-byte individual-file maximum."
+        )
     existing = set(
         api.list_repo_files(repo_id=repo_id, repo_type="dataset")
     )
-    oversized = info["size"] > MAX_HF_FILE_SIZE
-    if oversized:
-        split_paths = [f"{path_in_repo}.part001", f"{path_in_repo}.part002"]
-        output_paths = [path_in_repo, *split_paths]
-    else:
-        split_paths = []
-        output_paths = [path_in_repo]
+    output_paths = [path_in_repo]
 
     if marker_path in existing and all(path in existing for path in output_paths):
         print("This exact source upload is already finalized; nothing to do.")
@@ -275,98 +228,25 @@ def main():
     if missing:
         print()  # End the in-place terminal progress line.
 
-    operations = []
-    if oversized:
-        first_size = (info["size"] + 1) // 2
-        second_size = info["size"] - first_size
-        part_specs = [
-            (split_paths[0], 0, first_size),
-            (split_paths[1], first_size, second_size),
-        ]
-        print(
-            "All source chunks are safely stored on Hugging Face. "
-            "The PKG exceeds the 50 GB per-file limit; streaming it into two "
-            "parts plus a manifest, without a full local copy..."
+    print(
+        "All source chunks are safely stored on Hugging Face. "
+        "Assembling the original single PKG through the Xet-enabled upload path; "
+        "no full local copy is created..."
+    )
+    composite = StagedCompositeFile(
+        repo_id=repo_id,
+        repo_type="dataset",
+        paths=part_paths,
+        sizes=part_sizes,
+        token=token,
+        total_size=info["size"],
+    )
+    operations = [
+        CommitOperationAdd(
+            path_in_repo=path_in_repo,
+            path_or_fileobj=composite,
         )
-        for output_path, start_offset, length in part_specs:
-            stream = StagedCompositeSlice(
-                StagedCompositeFile(
-                    repo_id=repo_id,
-                    repo_type="dataset",
-                    paths=part_paths,
-                    sizes=part_sizes,
-                    token=token,
-                    total_size=info["size"],
-                ),
-                start_offset,
-                length,
-            )
-            operations.append(
-                CommitOperationAdd(
-                    path_in_repo=output_path,
-                    path_or_fileobj=stream,
-                )
-            )
-        manifest = {
-            "format": "split-pkg-v1",
-            "title": info["title"],
-            "title_id": info["title_id"],
-            "pkg_category": info["pkg_category"],
-            "original_filename": info["filename"],
-            "original_size_bytes": info["size"],
-            "part_count": 2,
-            "reassembly_order": split_paths,
-            "parts": [
-                {
-                    "path": output_path,
-                    "size_bytes": length,
-                    "download_url": (
-                        f"https://huggingface.co/datasets/{repo_id}/resolve/main/"
-                        f"{quote(output_path, safe='/')}"
-                    ),
-                }
-                for output_path, _, length in part_specs
-            ],
-            "reassembly": (
-                "Download both part files into the same directory and concatenate "
-                "them in listed order as raw binary bytes to recreate the original PKG."
-            ),
-            "windows_command": (
-                f'copy /b "{os.path.basename(split_paths[0])}" + '
-                f'"{os.path.basename(split_paths[1])}" "{os.path.basename(info["filename"])}"'
-            ),
-            "linux_command": (
-                f'cat "{os.path.basename(split_paths[0])}" '
-                f'"{os.path.basename(split_paths[1])}" > "{os.path.basename(info["filename"])}"'
-            ),
-        }
-        operations.append(
-            CommitOperationAdd(
-                path_in_repo=path_in_repo,
-                path_or_fileobj=io.BytesIO(
-                    (json.dumps(manifest, indent=2) + "\n").encode("utf-8")
-                ),
-            )
-        )
-    else:
-        print(
-            "All source chunks are safely stored on Hugging Face. "
-            "Assembling the original file by streaming the stored checkpoints; no full local copy is created..."
-        )
-        composite = StagedCompositeFile(
-            repo_id=repo_id,
-            repo_type="dataset",
-            paths=part_paths,
-            sizes=part_sizes,
-            token=token,
-            total_size=info["size"],
-        )
-        operations.append(
-            CommitOperationAdd(
-                path_in_repo=path_in_repo,
-                path_or_fileobj=composite,
-            )
-        )
+    ]
 
     operations.extend(
         CommitOperationDelete(path=path) for path in part_paths
@@ -374,7 +254,7 @@ def main():
     marker_data = (
         "source=" + fingerprint + "\nsize=" + str(info["size"])
         + "\ndestination=" + repo_id + "/" + path_in_repo + "\n"
-        + ("format=split-pkg-v1\n" if oversized else "format=single-file\n")
+        + "format=single-file\n"
     ).encode("utf-8")
     operations.append(
         CommitOperationAdd(
@@ -388,22 +268,7 @@ def main():
         operations=operations,
         commit_message=f"Finalize resumable upload: {info['filename']}",
     )
-    if oversized:
-        print(
-            "SUCCESS: Split PKG uploaded. The requested destination now contains "
-            "the JSON manifest; download and concatenate both listed part files."
-        )
-        print(
-            f"MANIFEST: https://huggingface.co/datasets/{repo_id}/blob/main/"
-            f"{quote(path_in_repo, safe='/')}"
-        )
-        for output_path in split_paths:
-            print(
-                f"PART: https://huggingface.co/datasets/{repo_id}/blob/main/"
-                f"{quote(output_path, safe='/')}"
-            )
-    else:
-        print(f"SUCCESS: https://huggingface.co/datasets/{repo_id}/blob/main/{quote(path_in_repo, safe='/')}")
+    print(f"SUCCESS: https://huggingface.co/datasets/{repo_id}/blob/main/{quote(path_in_repo, safe='/')}")
     set_complete_output()
 
 
