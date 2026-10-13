@@ -176,14 +176,20 @@ class RemoteRangeFile(io.BufferedIOBase):
                             return f"{value:.1f} {unit}"
                         value /= 1024
                 eta_minutes, eta_seconds = divmod(int(eta), 60)
-                print(
+                progress_line = (
                     f"Stream progress: {percent:5.1f}% | "
                     f"{human_bytes(min(self.progress_bytes, self.size))} / "
                     f"{human_bytes(self.size)} | "
-                    f"{human_bytes(speed)}/s | ETA {eta_minutes}m {eta_seconds}s",
-                    flush=True,
+                    f"{human_bytes(speed)}/s | ETA {eta_minutes}m {eta_seconds}s"
                 )
-                self.progress_last_print = now
+                # A carriage return updates one terminal line instead of
+                # appending a new line every few seconds. GitHub Actions log
+                # rendering does not reliably support in-place updates, so
+                # emit a checkpoint only every five minutes there.
+                in_ci = os.environ.get("GITHUB_ACTIONS") == "true"
+                if not in_ci or now - self.progress_last_print >= 300:
+                    print(progress_line, end="\\n" if in_ci else "\\r", flush=True)
+                    self.progress_last_print = now
         return data
 
 def parse_sfo(data):
