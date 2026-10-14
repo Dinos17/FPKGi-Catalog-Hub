@@ -154,28 +154,6 @@
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA15271.png",
       "category": "updates"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-t/The%20Mooseman%20-%20[EU]%20[EN]%20[1.01].pkg": {
-      "title_id": "CUSA12172",
-      "region": "EUR",
-      "name": "The Mooseman",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 243728384,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA12172.png",
-      "category": "updates"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-t/The%20Touryst%20-%20[US]%20[EN]%20[1.02].pkg": {
-      "title_id": "CUSA27266",
-      "region": "USA",
-      "name": "The Touryst",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 250609664,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA27266.png",
-      "category": "updates"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-t/Tooth%20and%20Tail%20-%20[EU]%20[EN]%20[1.71].pkg": {
       "title_id": "CUSA07917",
       "region": "EUR",
@@ -185,17 +163,6 @@
       "size": 429457408,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07917.png",
-      "category": "updates"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-t/Tricky%20Towers%20-%20[US]%20[EN]%20[1.80].pkg": {
-      "title_id": "CUSA05186",
-      "region": "USA",
-      "name": "Tricky Towers",
-      "version": "01.80",
-      "release": "11-15-2013",
-      "size": 173408256,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05186.png",
       "category": "updates"
     }
   }
