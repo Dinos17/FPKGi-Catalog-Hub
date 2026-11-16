@@ -13,4 +13,4 @@ jobs:
       - run: python -m pip install -r requirements.txt
       - run: python tools/validate_catalogs.py
       - run: python -m pip install pytest
-      - run: python -m pytest -q tests/test_akirabox_scanner.py
+      - run: python -m pytest -q tests/test_akirabox_scanner.py tests/test_sort_upload_files.py
