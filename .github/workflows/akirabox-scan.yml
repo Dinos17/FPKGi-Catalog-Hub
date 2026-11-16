@@ -1,0 +1,73 @@
+name: AkiraBox Read-Only Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_url:
+        description: Public AkiraBox folder URL containing content you own or are authorized to redistribute
+        required: true
+        type: string
+      category:
+        description: Source category
+        required: true
+        type: choice
+        options:
+          - homebrew
+          - apps
+          - emulators
+          - themes
+          - demos
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Install scanner dependency
+        run: python -m pip install requests
+
+      - name: Create temporary scan configuration
+        env:
+          SOURCE_URL: ${{ inputs.source_url }}
+          SOURCE_CATEGORY: ${{ inputs.category }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          config = {
+              "sources": [{
+                  "url": os.environ["SOURCE_URL"],
+                  "category": os.environ["SOURCE_CATEGORY"],
+                  "label": "manual workflow source"
+              }]
+          }
+          Path("/tmp/akirabox-sources.json").write_text(
+              json.dumps(config), encoding="utf-8"
+          )
+          PY
+
+      - name: Scan public folder metadata (read-only)
+        run: |
+          python tools/akirabox_scanner.py \
+            --config /tmp/akirabox-sources.json \
+            --output akirabox-scan-report.json
+
+      - name: Upload scan report
+        if: always() && hashFiles('akirabox-scan-report.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: akirabox-scan-report
+          path: akirabox-scan-report.json
+          if-no-files-found: error
