@@ -601,3 +601,26 @@ Always make sure that your use or distribution of any referenced package is lega
 ---
 
 **Built and maintained by Dinos17.**
+
+
+## Sort files before uploading to AkiraBox
+
+The local file sorter scans a directory tree and creates two JSON manifests. It does not upload, move, rename, or modify the source files.
+
+The default threshold is **20 GiB (21,474,836,480 bytes)** for the registered free-account limit used by this project:
+- `small_file.json`: files whose size is less than or equal to the threshold.
+- `big_file.json`: files larger than the threshold.
+
+Run from the repository root:
+
+```bash
+python tools/sort_upload_files.py "/path/to/your/upload-folder"
+```
+
+The reports are written to `file_sort_report/small_file.json` and `file_sort_report/big_file.json`. To use a different limit or output directory:
+
+```bash
+python tools/sort_upload_files.py "/path/to/your/upload-folder" --limit-bytes 21474836480 --output-dir "/path/to/reports"
+```
+
+Each manifest contains the limit in bytes and each file's name, relative path, extension, byte size, and GiB size. Symbolic links are skipped. A non-zero exit code indicates a scan error; inspect the warning output before relying on the manifests.
