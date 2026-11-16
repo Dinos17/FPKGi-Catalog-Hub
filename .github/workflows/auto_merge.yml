@@ -3,9 +3,6 @@ name: Auto Merge FPKGi JSONs
 on:
   workflow_dispatch:
 
-  schedule:
-    - cron: "0 3 * * *"
-
 concurrency:
   group: fpkgi-catalog-auto-merge
   cancel-in-progress: false
@@ -118,4 +115,4 @@ jobs:
           echo "### ❌ FPKGi Auto Merge — Failed" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> "$GITHUB_STEP_SUMMARY"
           echo "**Status:** Failed" >> "$GITHUB_STEP_SUMMARY"
-          echo "Check the failed step above for details." >> "$GITHUB_STEP_SUMMARY"
+          echo "Check the failed step above for details."
