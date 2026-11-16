@@ -70,7 +70,7 @@ def load_entries(repo_root: Path) -> tuple[list[dict[str, Any]], list[dict[str, 
 
 
 def classify(entries: list[dict[str, Any]], limit_bytes: int
-             ) -> tuple[list[dict[str, Any]], list[dict[str, Any]]]:
+             ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, Any]]]:
     small: list[dict[str, Any]] = []
     big: list[dict[str, Any]] = []
     unknown: list[dict[str, Any]] = []
