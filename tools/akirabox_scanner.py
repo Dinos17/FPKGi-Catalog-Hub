@@ -40,6 +40,8 @@ class ScanResult:
 
 
 def _validate_folder_url(url: str) -> str:
+    if not isinstance(url, str):
+        raise ScanError("Folder URL must be a string")
     parsed = urlparse(url)
     if parsed.scheme != "https" or parsed.hostname not in AKIRA_HOSTS:
         raise ScanError(f"Unsupported AkiraBox folder URL: {url}")
@@ -102,8 +104,9 @@ def _extract_page_data(html: str) -> tuple[dict[str, Any], dict[str, Any], dict[
         raise ScanError(f"Folder is private or its public status is unknown: {folder.get('name')}")
     if (not isinstance(pager.get("page"), int)
             or not isinstance(pager.get("perPage"), int)
+            or not isinstance(pager.get("total"), int)
             or pager["page"] < 1 or pager["perPage"] < 1
-            or pager["page"] > 100000):
+            or pager["total"] < 0 or pager["page"] > 100000):
         raise ScanError("Invalid pagination metadata")
     return folder, listing, pager
 
@@ -145,6 +148,10 @@ class AkiraBoxScanner:
             page_url = folder_url if page == 1 else f"{folder_url}?page={page}"
             html = self._get_html(page_url)
             folder, listing, pager = _extract_page_data(html)
+            if folder["id"] != folder_id:
+                raise ScanError(f"Folder ID mismatch while reading {folder_url}")
+            if pager["page"] != page:
+                raise ScanError(f"Requested page {page}, but AkiraBox returned page {pager['page']}")
             folder_name = folder["name"]
             if folder_record is None:
                 folder_record = {
