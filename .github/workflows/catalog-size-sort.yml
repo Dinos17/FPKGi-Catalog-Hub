@@ -2,6 +2,13 @@ name: Sort All PS4 and PS5 Catalog Entries by Package Size
 
 on:
   workflow_dispatch:
+  push:
+    paths:
+      - "ps4/**/*.json"
+      - "ps5/**/*.json"
+      - "tools/sort_upload_files.py"
+      - "tests/test_sort_upload_files.py"
+      - ".github/workflows/catalog-size-sort.yml"
 
 permissions:
   contents: read
