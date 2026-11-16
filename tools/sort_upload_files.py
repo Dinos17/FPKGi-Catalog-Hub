@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """Sort local files into AkiraBox upload-size groups without uploading them.
 
-The default registered-free-account threshold is 20 GiB (21,474,836,480 bytes).
-Files at or below the threshold go to small_file.json; larger files go to
-big_file.json. Symlinks are skipped so the scan cannot escape the chosen tree.
+AkiraBox's official free registered-account limit is 20 GB per file
+(20,000,000,000 bytes). Files at or below that limit go to small_file.json;
+larger files go to big_file.json. Symlinks are skipped.
 """
 from __future__ import annotations
 
@@ -11,15 +11,14 @@ import argparse
 import json
 import os
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-DEFAULT_LIMIT_BYTES = 20 * 1024**3
+DEFAULT_LIMIT_BYTES = 20_000_000_000
 
 
 def scan_files(root: Path, limit_bytes: int, excluded: set[Path] | None = None
-               ) -> tuple[list[dict[str, Any]], list[dict[str, str]]]:
+               ) -> tuple[list[dict[str, Any]], list[dict[str, Any]], list[dict[str, str]]]:
     root = root.expanduser().resolve(strict=True)
     if not root.is_dir():
         raise ValueError(f"Input path is not a directory: {root}")
@@ -64,7 +63,7 @@ def scan_files(root: Path, limit_bytes: int, excluded: set[Path] | None = None
                 "path": path.relative_to(root).as_posix(),
                 "extension": path.suffix.lower(),
                 "size_bytes": size,
-                "size_gib": round(size / (1024**3), 6),
+                "size_gb": round(size / 1_000_000_000, 6),
             }
             (small if size <= limit_bytes else big).append(record)
 
@@ -104,6 +103,8 @@ def main(argv: list[str] | None = None) -> int:
     try:
         root = args.directory.expanduser().resolve(strict=True)
         output_dir = args.output_dir.expanduser().resolve()
+        if output_dir == root:
+            raise ValueError("Output directory cannot be the same as the scanned directory")
         small, big, errors = scan_files(root, args.limit_bytes, {output_dir})
         write_report(output_dir / "small_file.json", args.limit_bytes, small)
         write_report(output_dir / "big_file.json", args.limit_bytes, big)
@@ -112,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
     print(f"Scanned: {root}")
-    print(f"Limit: {args.limit_bytes:,} bytes ({args.limit_bytes / 1024**3:.3f} GiB)")
+    print(f"Limit: {args.limit_bytes:,} bytes ({args.limit_bytes / 1_000_000_000:.3f} GB)")
     print(f"Small files: {len(small)} -> {output_dir / 'small_file.json'}")
     print(f"Big files:   {len(big)} -> {output_dir / 'big_file.json'}")
     print(f"Scan errors: {len(errors)}")
