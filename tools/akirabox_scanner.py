@@ -198,12 +198,13 @@ class AkiraBoxScanner:
         result = ScanResult(folders=[], files=[], errors=[])
         visited: set[str] = set()
         for source in sources:
+            if not isinstance(source, dict):
+                result.errors.append({"source": "invalid source", "error": "Each source must be a JSON object"})
+                continue
             label = source.get("label", "unnamed source")
             raw_category = source.get("category", "")
             category = raw_category.lower() if isinstance(raw_category, str) else ""
             try:
-                if not isinstance(source, dict):
-                    raise ScanError("Each source must be a JSON object")
                 if category not in ALLOWED_CATEGORIES:
                     raise ScanError(
                         f"Category '{category}' is not enabled. Allowed: {', '.join(sorted(ALLOWED_CATEGORIES))}"
