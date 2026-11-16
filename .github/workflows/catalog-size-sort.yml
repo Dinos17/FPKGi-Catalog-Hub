@@ -1,0 +1,31 @@
+name: Sort Authorized Homebrew Catalog by Package Size
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  sort-catalog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out catalog
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Classify catalog entries using metadata sizes
+        run: python tools/sort_upload_files.py --repo-root . --output-dir file_sort_report
+
+      - name: Upload size-sorted JSON reports
+        if: always() && hashFiles('file_sort_report/*.json') != ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: akirabox-size-sorted-homebrew-catalog
+          path: file_sort_report/*.json
+          if-no-files-found: error
+          retention-days: 14
