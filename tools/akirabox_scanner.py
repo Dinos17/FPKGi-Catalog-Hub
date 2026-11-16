@@ -51,7 +51,7 @@ def _validate_folder_url(url: str) -> str:
 def _next_flight_text(html: str) -> str:
     """Decode Next.js Flight string chunks embedded in script tags."""
     chunks: list[str] = []
-    pattern = re.compile(r'self\\.__next_f\\.push\\(\\[1,("(?:\\\\.|[^"\\\\])*")\\]\\)')
+    pattern = re.compile(r'self\.__next_f\.push\(\[1,("(?:\\.|[^"\\])*")\]\)')
     for match in pattern.finditer(html):
         try:
             value = json.loads(match.group(1))
