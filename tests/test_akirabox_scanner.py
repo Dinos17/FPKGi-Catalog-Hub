@@ -93,7 +93,7 @@ def test_scans_all_pages_using_pager_metadata():
         root: flight_html(
             {"id": "ROOT123", "name": "Homebrew", "isPrivate": False},
             [{"id": "FILE001", "name": "first.pkg", "extension": "pkg",
-              "size": 10, "kind": "file"}],
+              "size": 10, "kind": "file", "visibility": "public"}],
             total=2,
             page=1,
             per_page=1,
@@ -101,7 +101,7 @@ def test_scans_all_pages_using_pager_metadata():
         root + "?page=2": flight_html(
             {"id": "ROOT123", "name": "Homebrew", "isPrivate": False},
             [{"id": "FILE002", "name": "second.pkg", "extension": "pkg",
-              "size": 20, "kind": "file"}],
+              "size": 20, "kind": "file", "visibility": "public"}],
             total=2,
             page=2,
             per_page=1,
