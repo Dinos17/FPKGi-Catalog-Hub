@@ -34,7 +34,7 @@ def test_scans_nested_directories_and_skips_symlinks(tmp_path):
 
 
 def test_default_limit_is_20_gib():
-    assert DEFAULT_LIMIT_BYTES == 20 * 1024**3
+    assert DEFAULT_LIMIT_BYTES == 20_000_000_000
 
 
 def test_cli_writes_two_json_reports(tmp_path):
