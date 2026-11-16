@@ -11,7 +11,7 @@ import argparse
 import json
 import re
 import sys
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -100,6 +100,11 @@ def _extract_page_data(html: str) -> tuple[dict[str, Any], dict[str, Any], dict[
         raise ScanError("Folder metadata, item list, or pagination data is missing")
     if folder.get("isPrivate") is not False:
         raise ScanError(f"Folder is private or its public status is unknown: {folder.get('name')}")
+    if (not isinstance(pager.get("page"), int)
+            or not isinstance(pager.get("perPage"), int)
+            or pager["page"] < 1 or pager["perPage"] < 1
+            or pager["page"] > 100000):
+        raise ScanError("Invalid pagination metadata")
     return folder, listing, pager
 
 
@@ -165,6 +170,10 @@ class AkiraBoxScanner:
                     self._scan_folder(child_url, category, path + [folder_name],
                                       visited, result)
                 elif kind == "file":
+                    if item.get("visibility") != "public":
+                        continue
+                    if any(existing["id"] == item_id for existing in result.files):
+                        continue
                     extension = item.get("extension")
                     result.files.append({
                         "id": item_id,
@@ -190,8 +199,11 @@ class AkiraBoxScanner:
         visited: set[str] = set()
         for source in sources:
             label = source.get("label", "unnamed source")
-            category = source.get("category", "").lower()
+            raw_category = source.get("category", "")
+            category = raw_category.lower() if isinstance(raw_category, str) else ""
             try:
+                if not isinstance(source, dict):
+                    raise ScanError("Each source must be a JSON object")
                 if category not in ALLOWED_CATEGORIES:
                     raise ScanError(
                         f"Category '{category}' is not enabled. Allowed: {', '.join(sorted(ALLOWED_CATEGORIES))}"
