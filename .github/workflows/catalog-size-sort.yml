@@ -1,4 +1,4 @@
-name: Sort Authorized Homebrew Catalog by Package Size
+name: Sort All PS4 and PS5 Catalog Entries by Package Size
 
 on:
   workflow_dispatch:
@@ -18,14 +18,14 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Classify catalog entries using metadata sizes
+      - name: Sort every PS4 and PS5 catalog using metadata sizes
         run: python tools/sort_upload_files.py --repo-root . --output-dir file_sort_report
 
       - name: Upload size-sorted JSON reports
         if: always() && hashFiles('file_sort_report/*.json') != ''
         uses: actions/upload-artifact@v4
         with:
-          name: akirabox-size-sorted-homebrew-catalog
+          name: all-catalog-size-sorted-report
           path: file_sort_report/*.json
           if-no-files-found: error
           retention-days: 14
