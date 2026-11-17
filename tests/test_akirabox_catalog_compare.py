@@ -603,3 +603,32 @@ def test_source_duplicate_binary_verification_uses_sha256_when_available(
     assert report["results"][1]["status"] == "duplicate"
     assert report["results"][1]["binary_verification"]["status"] == expected
     assert calls == ["first", "second"]
+
+
+class _BrokenAkiraPageResponse(_AkiraPageResponse):
+    @property
+    def text(self):
+        raise requests.exceptions.ChunkedEncodingError("truncated response body")
+
+
+def test_streamed_page_body_failure_keeps_duplicate_comparison_unverified(tmp_path):
+    for path in ("ps4/games.json", "ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+
+    def hash_checker(file_id):
+        response = _BrokenAkiraPageResponse()
+        return comparator.fetch_akirabox_sha256(file_id, _AkiraPageSession(response))
+
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "first", "name": "Absolute Drift - [US] [EN] [1.02].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+        {"id": "second", "name": "Absolute Drift - [US] [EN] [1.02] (1).pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+    ]}
+
+    report = compare_scan(scan, tmp_path, hash_checker=hash_checker)
+
+    duplicate = report["results"][1]
+    assert duplicate["status"] == "duplicate"
+    assert duplicate["binary_verification"]["status"] == "unverified"
+    assert "ChunkedEncodingError" in duplicate["binary_verification"]["reason"]
