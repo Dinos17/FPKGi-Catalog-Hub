@@ -228,6 +228,30 @@ def test_parses_language_and_firmware_without_confusing_version():
     assert parsed["min_fw"] == "5.05"
 
 
+
+def test_catalog_metadata_is_exposed_for_a_unique_match(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/game.pkg": {
+            "name": "Example Game", "region": "USA", "version": "01.00",
+            "size": 100, "release": "11-15-2013",
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "catalog-metadata",
+        "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path)
+
+    result = report["results"][0]
+    assert result["status"] == "matched"
+    assert result["catalog_metadata"]["name"] == "Example Game"
+    assert result["catalog_metadata"]["version"] == "01.00"
+    assert result["catalog_metadata"]["size"] == 100
+    assert result["catalog_metadata"]["size_bytes"] == 100
+    assert result["catalog_metadata"]["parsed_filename_metadata"]["title"] == "game"
+
 def test_reports_only_source_observable_metadata_differences(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
         "https://archive.org/download/game/Example_Game_CUSA12345_v1.00_[US]_[EN].pkg": {
