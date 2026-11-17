@@ -637,3 +637,41 @@ def test_streamed_page_body_failure_keeps_duplicate_comparison_unverified(tmp_pa
     assert duplicate["status"] == "duplicate"
     assert duplicate["binary_verification"]["status"] == "unverified"
     assert duplicate["binary_verification"]["reason"] == "A SHA-256 value was unavailable for at least one file"
+
+
+def test_verified_identical_duplicate_auto_selects_newest_upload(tmp_path):
+    for path in ("ps4/games.json", "ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "older", "name": "Example Game - [US] [EN] [1.00].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+         "created_at": "2026-01-01T10:00:00Z"},
+        {"id": "newer", "name": "Example Game - [US] [EN] [1.00].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+         "created_at": "2026-02-01T10:00:00Z"},
+    ]}
+    report = compare_scan(scan, tmp_path, hash_checker=lambda file_id: {
+        "status": "available", "sha256": "a" * 64, "reason": "test",
+    })
+    duplicate = next(row for row in report["results"] if row["status"] == "duplicate")
+    assert duplicate["binary_verification"]["status"] == "verified_identical"
+    assert duplicate["automatic_decision"]["decision"] == "keep_akirabox"
+    assert duplicate["automatic_decision"]["selected_file_id"] == "newer"
+    assert report["catalog_write_performed"] is False
+
+
+def test_verified_duplicate_without_creation_timestamps_stays_manual(tmp_path):
+    for path in ("ps4/games.json", "ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "older", "name": "Example Game - [US] [EN] [1.00].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100},
+        {"id": "newer", "name": "Example Game - [US] [EN] [1.00].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100},
+    ]}
+    report = compare_scan(scan, tmp_path, hash_checker=lambda file_id: {
+        "status": "available", "sha256": "a" * 64, "reason": "test",
+    })
+    duplicate = next(row for row in report["results"] if row["status"] == "duplicate")
+    assert duplicate["binary_verification"]["status"] == "verified_identical"
+    assert "automatic_decision" not in duplicate
