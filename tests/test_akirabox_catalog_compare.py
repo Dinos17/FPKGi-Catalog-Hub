@@ -608,7 +608,7 @@ def test_source_duplicate_binary_verification_uses_sha256_when_available(
 class _BrokenAkiraPageResponse(_AkiraPageResponse):
     @property
     def text(self):
-        raise requests.exceptions.ChunkedEncodingError("truncated response body")
+        raise comparator.requests.exceptions.ChunkedEncodingError("truncated response body")
 
 
 def test_streamed_page_body_failure_keeps_duplicate_comparison_unverified(tmp_path):
