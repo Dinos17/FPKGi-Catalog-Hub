@@ -255,8 +255,6 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                 status, reason = "unclassified", "Matched catalog entry, but version or file-size metadata is missing"
             else:
                 status, reason = "unchanged", "Matching title identity; version and file size agree"
-            if metadata_differences:
-                reason += "; metadata differences detected"
         counts[status] += 1
         results.append({
             "status": status, "file_id": item.get("id"), "name": item.get("name"),
