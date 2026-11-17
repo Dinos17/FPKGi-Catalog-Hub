@@ -120,7 +120,7 @@ def test_audit_uses_title_lookup_to_correct_generic_game_package(
         catalog_audit,
         "fetch_external_database_entries",
         lambda: {
-            url: {
+            "https://example.com/another-youtube-build.pkg": {
                 "name": "YouTube",
                 "title_id": "CUSA01116",
                 "category": "apps",
