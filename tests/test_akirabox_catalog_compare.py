@@ -1,11 +1,20 @@
 import json
 import sys
+import pytest
 from pathlib import Path
 
 TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
+import akirabox_catalog_compare as comparator
 from akirabox_catalog_compare import compare_scan, parse_source_details, parse_source_identity, parse_source_metadata
+
+
+@pytest.fixture(autouse=True)
+def stub_catalog_link_checks(monkeypatch):
+    monkeypatch.setattr(comparator, "check_catalog_url", lambda url: {
+        "status": "reachable", "http_status": 200, "reason": "test URL reachable",
+    })
 
 
 def write_catalog(root: Path, relative: str, data: dict) -> None:
@@ -323,3 +332,99 @@ def test_single_dlc_title_id_candidate_accepts_exact_package_name(tmp_path):
 
     assert report["results"][0]["status"] == "matched"
 
+
+
+
+def test_broken_catalog_url_changes_metadata_match_to_outdated(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/game.pkg": {
+            "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "broken", "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path, link_checker=lambda url: {
+        "status": "broken", "http_status": 404, "reason": "Catalog URL returned HTTP 404",
+    })
+    result = report["results"][0]
+    assert result["status"] == "outdated"
+    assert result["catalog_url"] == "https://archive.org/download/example/game.pkg"
+    assert result["link_check"]["http_status"] == 404
+    assert "HTTP 404" in result["reason"]
+
+
+def test_inconclusive_catalog_url_is_not_called_matched(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/game.pkg": {
+            "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "uncertain", "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path, link_checker=lambda url: {
+        "status": "inconclusive", "http_status": 403, "reason": "HTTP 403",
+    })
+    assert report["results"][0]["status"] == "unclassified"
+
+
+def test_check_catalog_url_uses_head_and_classifies_404_without_downloading():
+    class Response:
+        status_code = 404
+        headers = {}
+        def close(self):
+            pass
+
+    class Session:
+        calls = []
+        def request(self, method, url, **kwargs):
+            self.calls.append((method, kwargs))
+            return Response()
+
+    session = Session()
+    result = comparator.check_catalog_url("https://archive.org/download/example/game.pkg", session)
+    assert result["status"] == "broken"
+    assert result["http_status"] == 404
+    assert [call[0] for call in session.calls] == ["HEAD"]
+    assert session.calls[0][1]["stream"] is True
+
+
+def test_check_catalog_url_falls_back_to_one_byte_range_when_head_unsupported():
+    class Response:
+        def __init__(self, status):
+            self.status_code = status
+            self.headers = {}
+        def close(self):
+            pass
+
+    class Session:
+        def __init__(self):
+            self.calls = []
+        def request(self, method, url, **kwargs):
+            self.calls.append((method, kwargs))
+            return Response(405 if method == "HEAD" else 206)
+
+    session = Session()
+    result = comparator.check_catalog_url("https://archive.org/download/example/game.pkg", session)
+    assert result["status"] == "reachable"
+    assert [call[0] for call in session.calls] == ["HEAD", "GET"]
+    assert session.calls[1][1]["headers"]["Range"] == "bytes=0-0"
+    assert session.calls[1][1]["stream"] is True
+
+
+def test_check_catalog_url_rejects_non_archive_hosts_without_request():
+    class Session:
+        called = False
+        def request(self, *args, **kwargs):
+            self.called = True
+            raise AssertionError("must not request untrusted host")
+
+    session = Session()
+    result = comparator.check_catalog_url("https://example.com/game.pkg", session)
+    assert result["status"] == "inconclusive"
+    assert session.called is False
