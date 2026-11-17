@@ -32,6 +32,8 @@ def normalize_title(value: Any) -> str:
 def parse_source_details(name: str) -> tuple[str, str | None, str | None, str | None]:
     """Parse common scene names and names containing a CUSA/PPSA title ID."""
     stem = re.sub(r"\.(pkg|zip)$", "", name, flags=re.I).strip()
+    # AkiraBox appends duplicate-copy counters after the final bracketed tag.
+    stem = re.sub(r"(?<=\])\s*\(\d+\)$", "", stem)
     title_id_match = re.search(r"(?<![A-Z0-9])((?:CUSA|PPSA)\d{5})(?!\d)", stem, re.I)
     title_id = title_id_match.group(1).upper() if title_id_match else None
 
