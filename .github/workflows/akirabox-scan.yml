@@ -2,22 +2,6 @@ name: AkiraBox Read-Only Scan
 
 on:
   workflow_dispatch:
-    inputs:
-      folder_url:
-        description: "Public AkiraBox folder URL to scan (content you own or may redistribute)"
-        required: true
-        type: string
-      scan_mode:
-        description: "Choose Catalog for PS4/PS5 Games and DLC folder classification"
-        required: true
-        type: choice
-        options:
-          - homebrew
-          - apps
-          - emulators
-          - themes
-          - demos
-          - catalog
 
 permissions:
   contents: read
@@ -37,32 +21,10 @@ jobs:
       - name: Install scanner dependency
         run: python -m pip install requests
 
-      - name: Create temporary scan configuration
-        env:
-          SOURCE_URL: ${{ inputs.folder_url }}
-          SOURCE_CATEGORY: ${{ inputs.scan_mode }}
-        run: |
-          python - <<'PY'
-          import json
-          import os
-          from pathlib import Path
-
-          config = {
-              "sources": [{
-                  "url": os.environ["SOURCE_URL"],
-                  "category": os.environ["SOURCE_CATEGORY"],
-                  "label": "manual workflow source"
-              }]
-          }
-          Path("/tmp/akirabox-sources.json").write_text(
-              json.dumps(config), encoding="utf-8"
-          )
-          PY
-
-      - name: Scan public folder metadata (read-only)
+      - name: Scan configured public folder metadata (read-only)
         run: |
           python tools/akirabox_scanner.py \
-            --config /tmp/akirabox-sources.json \
+            --config config/akirabox_sources.json \
             --output akirabox-scan-report.json
 
       - name: Upload scan report
