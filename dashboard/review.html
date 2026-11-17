@@ -102,13 +102,29 @@ function render(){
  const shown=rows.filter(x=>{const status=x.result?.status||"unclassified";return !safeIds.has(String(x.source.id))&&status!=="matched";});
  $("results").innerHTML=shown.length?shown.map(({source:s,index,result:r})=>{
  const safe=safeIds.has(String(s.id));const duplicateSibling=rows.some(other=>String(other.source.id)!==String(s.id)&&normalizedText(String(other.source.name).replace(/\s+\(\d+\)$/,""))===normalizedText(String(s.name).replace(/\s+\(\d+\)$/,"")));const status=safe?"safe":(r?.status||"unclassified"),diffs=r?.metadata_differences||[],parsedSource=r?.source_metadata||{};
- const {category:parsedCategory,...parsedFields}=parsedSource;
- const sourceData={...s,...parsedFields,parsed_category:parsedCategory??null,folder_path:Array.isArray(s.folder_path)?s.folder_path.join(" / "):s.folder_path};
- const catalog=r?.catalog_metadata||null;const changed=diffs.map(d=>d.field);
+ const catalog=r?.catalog_metadata||null;
  const decision=decisions[String(s.id)]||"pending";
- const diffHtml=diffs.length?'<div class="reason"><strong>Reported differences:</strong> '+diffs.map(d=>esc(pretty(d.field))+': <span class="diff">'+esc(d.source_value)+'</span> vs <span class="diff">'+esc(d.catalog_value)+'</span>').join(" · ")+'</div>':'';
+ const sourceData={
+  name:s.name,
+  region:parsedSource.region,
+  version:parsedSource.version,
+  languages:parsedSource.languages,
+  minimum_firmware:parsedSource.min_fw,
+  file_size:parsedSource.size_bytes??s.size_bytes,
+  download_url:s.share_url
+ };
+ const catalogData=catalog?{
+  title:catalog.title,
+  title_id:catalog.title_id,
+  region:catalog.region,
+  version:catalog.version,
+  languages:catalog.languages??catalog.parsed_filename_metadata?.languages,
+  minimum_firmware:catalog.min_fw,
+  file_size:catalog.size_bytes??catalog.size,
+  current_url:r?.catalog_url
+ }:null;
  const proposal=r?.proposed_replacement;
- return '<article class="item"><div class="item-head"><div><div class="title">'+esc(s.name)+'</div><div class="sub">'+esc(s.platform)+' · '+esc(s.catalog_category||s.category)+' · AkiraBox file ID '+esc(s.id)+'</div></div><span class="pill '+esc(status)+'">'+(safe?"SAFE REPLACEMENT":esc(status))+'</span></div><div class="columns"><section class="side"><h3>AkiraBox source metadata</h3><dl>'+fieldRows(sourceData)+'</dl></section><section class="side"><h3>Current catalog metadata</h3><dl>'+(catalog?fieldRows(catalog,changed):'<dt>Catalog match</dt><dd>'+(r?esc(r.reason):'No comparison record found for this file ID')+'</dd>')+'</dl>'+(r?.catalog_url?'<p class="muted">Catalog URL: '+linkOrText(r.catalog_url)+'</p>':'')+(proposal?'<p class="muted">Proposed URL: '+linkOrText(proposal.to)+'</p>':'')+'</section></div>'+diffHtml+'<div class="reason">'+(safe?"Safe URL-only replacement: title, region, version, category, and exact file size agree. No decision is required; this does not update the catalog.":duplicateSibling?"Possible duplicate: another scanned upload has the same normalized filename. Resolve which copy to use before approving either.":esc(r?.reason||"No comparison result was produced for this upload."))+'</div>'+(safe?"":'<div class="actions"><strong>Decision: '+esc(decision)+'</strong><span style="flex:1"></span><button class="approve '+(decision==="approved"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="approved">Approve</button><button class="reject '+(decision==="rejected"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="rejected">Reject</button><button data-id="'+esc(s.id)+'" data-value="pending">Clear</button></div>')+'</article>';
+ return '<article class="item"><div class="item-head"><div class="title">'+esc(s.name)+'</div><span class="pill '+esc(status)+'">'+(safe?"SAFE REPLACEMENT":esc(status))+'</span></div><div class="columns"><section class="side"><h3>AkiraBox source</h3><dl>'+fieldRows(sourceData)+'</dl></section><section class="side"><h3>Current catalog</h3><dl>'+(catalog?fieldRows(catalogData):'<dt>Catalog record</dt><dd>'+(r?esc(r.reason):'No comparison record found')+'</dd>')+'</dl></section></div>'+(proposal?'<section class="side"><h3>Proposed replacement</h3><dl>'+fieldRows({proposed_url:proposal.to})+'</dl></section>':'')+(safe?"":'<div class="actions"><strong>Decision: '+esc(decision)+'</strong><span style="flex:1"></span><button class="approve '+(decision==="approved"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="approved">Approve</button><button class="reject '+(decision==="rejected"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="rejected">Reject</button><button data-id="'+esc(s.id)+'" data-value="pending">Clear</button></div>')+'</article>';
  }).join(""):'<div class="empty">No uploads currently require manual review.</div>';
  $("results").querySelectorAll("[data-id][data-value]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.value==="pending")delete decisions[b.dataset.id];else decisions[b.dataset.id]=b.dataset.value;render();}));
  const missing=comparison.missing_catalog_entries||[];
