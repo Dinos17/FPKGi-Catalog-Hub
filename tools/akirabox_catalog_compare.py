@@ -22,7 +22,6 @@ ARCHIVE_HOST = "archive.org"
 LINK_TIMEOUT_SECONDS = 15
 MAX_LINK_REDIRECTS = 5
 AKIRABOX_HASH_TIMEOUT_SECONDS = 20
-AKIRABOX_HOSTS = {"akirabox.to", "akirabox.com"}
 
 
 def fetch_akirabox_sha256(file_id: str, session: Any = None) -> dict[str, Any]:
