@@ -37,7 +37,11 @@ def make_case(tmp_path):
          "catalog_metadata": {**record, "size_bytes": 100}},
         {"status": "duplicate", "file_id": "newer",
          "duplicate_of_file_id": "older",
-         "binary_verification": {"status": "verified_identical"},
+         "binary_verification": {
+             "status": "verified_identical",
+             "original_sha256": "a" * 64,
+             "duplicate_sha256": "a" * 64,
+         },
          "automatic_decision": {
              "decision": "keep_akirabox", "selected_file_id": "newer",
              "selected_file_name": scan["files"][1]["name"],
@@ -89,6 +93,14 @@ def test_does_not_remove_catalog_entries_with_different_metadata(tmp_path):
 def test_rejects_group_without_matching_hash_verification(tmp_path):
     old_url, older_url, newer_url, record, scan, comparison = make_case(tmp_path)
     comparison["results"][1]["binary_verification"]["status"] = "unverified"
+    report = apply_verified_duplicates(scan, comparison, tmp_path)
+    assert report["applied_count"] == 0
+    assert old_url in json.loads((tmp_path / "ps4/games.json").read_text())["DATA"]
+
+
+def test_rejects_mismatched_sha256_values(tmp_path):
+    old_url, older_url, newer_url, record, scan, comparison = make_case(tmp_path)
+    comparison["results"][1]["binary_verification"]["duplicate_sha256"] = "b" * 64
     report = apply_verified_duplicates(scan, comparison, tmp_path)
     assert report["applied_count"] == 0
     assert old_url in json.loads((tmp_path / "ps4/games.json").read_text())["DATA"]
