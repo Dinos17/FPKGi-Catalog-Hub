@@ -5,7 +5,7 @@ from pathlib import Path
 TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
-from akirabox_catalog_compare import compare_scan, parse_source_details, parse_source_identity
+from akirabox_catalog_compare import compare_scan, parse_source_details, parse_source_identity, parse_source_metadata
 
 
 def write_catalog(root: Path, relative: str, data: dict) -> None:
@@ -205,3 +205,55 @@ def test_numbered_packages_sharing_title_id_are_not_duplicates(tmp_path):
     report = compare_scan(scan, tmp_path)
     assert [item["status"] for item in report["results"]] == ["unchanged", "unchanged"]
     assert report["counts"]["duplicate"] == 0
+
+
+
+def test_parses_language_and_firmware_without_confusing_version():
+    parsed = parse_source_metadata(
+        "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[EN+FR]_[5.05]-PS4.pkg"
+    )
+    assert parsed["version"] == "1.00"
+    assert parsed["languages"] == ["EN", "FR"]
+    assert parsed["min_fw"] == "5.05"
+
+
+def test_reports_only_source_observable_metadata_differences(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/game/Game%20-%20[US]%20[EN]%20[1.00].pkg": {
+            "name": "Example Game", "title_id": "CUSA12345", "region": "USA",
+            "version": "01.00", "size": 100, "min_fw": "5.05",
+            "release": "11-15-2013", "cover_url": "https://example.test/cover.png",
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "metadata-diff",
+        "name": "Example Game - [EU] [FR] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path)
+    result = report["results"][0]
+    assert result["status"] == "unchanged"
+    assert {item["field"] for item in result["metadata_differences"]} == {"region", "language"}
+    assert "min_fw" not in {item["field"] for item in result["metadata_differences"]}
+    assert "release" not in {item["field"] for item in result["metadata_differences"]}
+    assert "cover_url" not in {item["field"] for item in result["metadata_differences"]}
+
+
+def test_reports_minimum_firmware_difference_when_both_sides_have_it(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/game/Game_CUSA12345_v1.00_[5.05].pkg": {
+            "name": "Example Game", "title_id": "CUSA12345", "region": "USA",
+            "version": "01.00", "size": 100, "min_fw": "5.05",
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "firmware-diff",
+        "name": "Example Game_CUSA12345_v1.00_[6.72].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path)
+    assert report["results"][0]["metadata_differences"] == [{
+        "field": "min_fw", "source_value": "6.72", "catalog_value": "5.05",
+    }]
