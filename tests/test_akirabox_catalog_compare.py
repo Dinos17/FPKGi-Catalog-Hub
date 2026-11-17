@@ -219,7 +219,7 @@ def test_parses_language_and_firmware_without_confusing_version():
 
 def test_reports_only_source_observable_metadata_differences(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
-        "https://archive.org/download/game/Game%20-%20[US]%20[EN]%20[1.00].pkg": {
+        "https://archive.org/download/game/Example_Game_CUSA12345_v1.00_[US]_[EN].pkg": {
             "name": "Example Game", "title_id": "CUSA12345", "region": "USA",
             "version": "01.00", "size": 100, "min_fw": "5.05",
             "release": "11-15-2013", "cover_url": "https://example.test/cover.png",
@@ -229,7 +229,7 @@ def test_reports_only_source_observable_metadata_differences(tmp_path):
         write_catalog(tmp_path, path, {})
     report = compare_scan({"errors": [], "folders": [], "files": [{
         "id": "metadata-diff",
-        "name": "Example Game - [EU] [FR] [1.00].pkg",
+        "name": "Example_Game_CUSA12345_v1.00_[EU]_[FR].pkg",
         "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
     }]}, tmp_path)
     result = report["results"][0]
