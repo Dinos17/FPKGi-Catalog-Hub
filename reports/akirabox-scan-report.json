@@ -1,0 +1,297 @@
+{
+  "scanner": "akirabox",
+  "read_only": true,
+  "folder_count": 3,
+  "file_count": 14,
+  "folders": [
+    {
+      "id": "Z9dzBXkvgmk1",
+      "name": "PS4",
+      "url": "https://akirabox.to/Z9dzBXkvgmk1/folder",
+      "path": [
+        "PS4"
+      ],
+      "category": "unclassified",
+      "platform": "PS4",
+      "catalog_category": null
+    },
+    {
+      "id": "E1x3AZkKWzyk",
+      "name": "Games",
+      "url": "https://akirabox.to/E1x3AZkKWzyk/folder",
+      "path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qPez45WveGOY",
+      "name": "PS5",
+      "url": "https://akirabox.to/qPez45WveGOY/folder",
+      "path": [
+        "PS5"
+      ],
+      "category": "unclassified",
+      "platform": "PS5",
+      "catalog_category": null
+    }
+  ],
+  "files": [
+    {
+      "id": "l5YzMlp2O3yO",
+      "numeric_id": 949818,
+      "name": "Absolute Drift - [US] [EN] [1.02] (1)",
+      "extension": "pkg",
+      "size_bytes": 189136896,
+      "visibility": "public",
+      "created_at": "2026-11-17T17:07:06.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/l5YzMlp2O3yO/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "rk9zK0aeqG0l",
+      "numeric_id": 949664,
+      "name": "Amnesia Rebirth - [US] [EN] [1.30]",
+      "extension": "pkg",
+      "size_bytes": 17873240064,
+      "visibility": "public",
+      "created_at": "2026-11-17T15:25:24.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/rk9zK0aeqG0l/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "9AqGQ8lorzMn",
+      "numeric_id": 949583,
+      "name": "Amnesia Collection - [US] [EN] [1.05]",
+      "extension": "pkg",
+      "size_bytes": 3556507648,
+      "visibility": "public",
+      "created_at": "2026-11-17T14:02:47.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/9AqGQ8lorzMn/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "Xkrzo67NY3BO",
+      "numeric_id": 949568,
+      "name": "Ace Attorney Investigations Collection - [JP] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 7489781760,
+      "visibility": "public",
+      "created_at": "2026-11-17T13:49:42.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/Xkrzo67NY3BO/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "EL73gK2e839B",
+      "numeric_id": 949451,
+      "name": "A Way Out - [US] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 17402822656,
+      "visibility": "public",
+      "created_at": "2026-11-17T12:33:03.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/EL73gK2e839B/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "5pVzNKB7JG7w",
+      "numeric_id": 949377,
+      "name": "AVICII Invector - [US] [EN] [1.05]",
+      "extension": "pkg",
+      "size_bytes": 2837446656,
+      "visibility": "public",
+      "created_at": "2026-11-17T10:51:05.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/5pVzNKB7JG7w/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qLQ365Wwdm19",
+      "numeric_id": 949344,
+      "name": "ASTRONEER - [US] [EN] [1.64]",
+      "extension": "pkg",
+      "size_bytes": 1678049280,
+      "visibility": "public",
+      "created_at": "2026-11-17T10:26:15.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qLQ365Wwdm19/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "APVma1BW6mXo",
+      "numeric_id": 949336,
+      "name": "A Hat in Time - [US] [EN] [1.04]",
+      "extension": "pkg",
+      "size_bytes": 7746420736,
+      "visibility": "public",
+      "created_at": "2026-11-17T10:17:38.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/APVma1BW6mXo/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qw1zeKMW4mXy",
+      "numeric_id": 949322,
+      "name": "A Short Hike - [EU] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 308281344,
+      "visibility": "public",
+      "created_at": "2026-11-17T10:11:19.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qw1zeKMW4mXy/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "vgKGxBYjQ38Q",
+      "numeric_id": 949308,
+      "name": "A Monster's Expedition - [EU] [EN] [1.03]",
+      "extension": "pkg",
+      "size_bytes": 489095168,
+      "visibility": "public",
+      "created_at": "2026-11-17T09:57:45.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "jJD3V1vYlma5",
+      "numeric_id": 947684,
+      "name": "ADR1FT - [US] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 2004353024,
+      "visibility": "public",
+      "created_at": "2026-11-17T09:28:48.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/jJD3V1vYlma5/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "jar3Xb6V2G2d",
+      "numeric_id": 946774,
+      "name": "ABZU - [EU] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 2311192576,
+      "visibility": "public",
+      "created_at": "2026-11-17T09:18:33.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/jar3Xb6V2G2d/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "ZvqzlKwYO3aD",
+      "numeric_id": 944943,
+      "name": "Absolute Drift - [US] [EN] [1.02]",
+      "extension": "pkg",
+      "size_bytes": 189136896,
+      "visibility": "public",
+      "created_at": "2026-11-17T08:39:03.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/ZvqzlKwYO3aD/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "E9Qz9AWjwzOL",
+      "numeric_id": 942670,
+      "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4",
+      "extension": "pkg",
+      "size_bytes": 611123200,
+      "visibility": "public",
+      "created_at": "2026-11-16T15:33:53.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/E9Qz9AWjwzOL/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    }
+  ],
+  "errors": []
+}
