@@ -225,7 +225,15 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             metadata_differences = []
 
             def add_metadata_difference(field: str, source_value: Any, catalog_value: Any) -> None:
-                if source_value is not None and catalog_value is not None and source_value != catalog_value:
+                if source_value is None or catalog_value is None:
+                    return
+                if field == "version":
+                    differs = str(source_value).lstrip("0") != str(catalog_value).lstrip("0")
+                elif field == "title_id":
+                    differs = str(source_value).upper() != str(catalog_value).upper()
+                else:
+                    differs = source_value != catalog_value
+                if differs:
                     metadata_differences.append({
                         "field": field, "source_value": source_value, "catalog_value": catalog_value,
                     })
