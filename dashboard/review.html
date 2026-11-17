@@ -23,8 +23,8 @@ dl{display:grid;grid-template-columns:minmax(125px,.42fr) 1fr;gap:7px 12px;margi
 <header><div><h1>AkiraBox Review</h1><p>Inspect source uploads and matching catalog records side by side.</p></div><a href="./index.html">← Back to Catalog</a></header>
 <div class="notice">Read-only review. Approve/reject decisions stay in this browser session and can be exported. No catalog or GitHub changes are made.</div>
 <section class="toolbar">
-<label class="upload">1. Load scan report <input id="scanFile" type="file" accept=".json,application/json" hidden></label><span id="scanName" class="muted">akirabox-scan-report.json not loaded</span>
-<label class="upload">2. Load comparison report <input id="compareFile" type="file" accept=".json,application/json" hidden></label><span id="compareName" class="muted">akirabox-comparison-report.json not loaded</span>
+<label class="upload">1. Load scan report <input id="scanFile" type="file" accept=".json,application/json"></label><span id="scanName" class="muted">akirabox-scan-report.json not loaded</span>
+<label class="upload">2. Load comparison report <input id="compareFile" type="file" accept=".json,application/json"></label><span id="compareName" class="muted">akirabox-comparison-report.json not loaded</span>
 <button id="export" disabled>Export decisions</button>
 </section>
 <div id="summary" class="stats"></div><div id="warning"></div><div id="filters" class="filters"></div>
@@ -37,9 +37,41 @@ const esc=v=>String(v===null||v===undefined||v===""?"—":v).replace(/[&<>"']/g,
 const pretty=k=>String(k).replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 function linkOrText(v){const s=String(v??"");return /^https:\/\//i.test(s)?'<a href="'+esc(s)+'" target="_blank" rel="noopener noreferrer">'+esc(s)+'</a>':esc(s);}
 function fieldRows(obj,highlightKeys=[]){if(!obj||typeof obj!=="object")return '<dt>Record</dt><dd>Not available</dd>';return Object.entries(obj).filter(([,v])=>v!==undefined).map(([k,v])=>{const value=v===null?"—":typeof v==="object"?JSON.stringify(v,null,2):String(v);const rendered=highlightKeys.includes(k)?'<span class="diff">'+esc(value)+'</span>':(String(k).toLowerCase().includes("url")&&typeof v==="string"?linkOrText(v):esc(value));return '<dt>'+esc(pretty(k))+'</dt><dd>'+rendered+'</dd>';}).join("")||'<dt>Metadata</dt><dd>No fields supplied</dd>';}
-function parseFile(file,kind){return file.text().then(t=>{const data=JSON.parse(t);if(kind==="scan"&&(!Array.isArray(data.files)||!Array.isArray(data.folders)))throw Error("Scan report must contain files[] and folders[].");if(kind==="compare"&&(!Array.isArray(data.results)||!data.counts))throw Error("Comparison report must contain results[] and counts.");return data;});}
-async function loadInput(input,kind){const file=input.files[0];if(!file)return;try{const data=await parseFile(file,kind);if(kind==="scan"){scan=data;$("scanName").textContent=file.name;}else{comparison=data;$("compareName").textContent=file.name;}decisions={};render();}catch(e){$("warning").innerHTML='<div class="notice">'+esc(e.message)+'</div>';}}
-$("scanFile").addEventListener("change",e=>loadInput(e.target,"scan"));$("compareFile").addEventListener("change",e=>loadInput(e.target,"compare"));
+const loadGeneration={scan:0,compare:0};
+function isRecord(value){return value!==null&&typeof value==="object"&&!Array.isArray(value);}
+function parseFile(file,kind){return file.text().then(t=>{
+ const data=JSON.parse(t);
+ if(kind==="scan"){
+  if(!isRecord(data)||!Array.isArray(data.files)||!Array.isArray(data.folders))throw Error("Scan report must contain files[] and folders[].");
+  if(data.files.some(item=>!isRecord(item)||item.id===undefined||item.id===null||!(typeof item.id==="string"||typeof item.id==="number")))throw Error("Every scan file must be an object with a string or numeric id.");
+ }
+ if(kind==="compare"){
+  if(!isRecord(data)||!Array.isArray(data.results)||!isRecord(data.counts))throw Error("Comparison report must contain results[] and counts.");
+  if(data.results.some(r=>!isRecord(r)||!(typeof r.file_id==="string"||typeof r.file_id==="number")||typeof r.status!=="string"||!Array.isArray(r.metadata_differences)||(r.source_metadata!==undefined&&r.source_metadata!==null&&!isRecord(r.source_metadata))||(r.catalog_metadata!==undefined&&r.catalog_metadata!==null&&!isRecord(r.catalog_metadata))||(r.proposed_replacement!==undefined&&r.proposed_replacement!==null&&!isRecord(r.proposed_replacement))))throw Error("Every comparison result must contain a valid file_id, status, metadata_differences[], and valid metadata objects.");
+  if(data.results.some(r=>r.metadata_differences.some(d=>!isRecord(d)||typeof d.field!=="string")))throw Error("Comparison metadata differences must be objects with a field name.");
+  if(data.missing_catalog_entries!==undefined&&!Array.isArray(data.missing_catalog_entries))throw Error("Comparison missing_catalog_entries must be an array.");
+  if(Array.isArray(data.missing_catalog_entries)&&data.missing_catalog_entries.some(m=>!isRecord(m)))throw Error("Every missing catalog entry must be an object.");
+ }
+ return data;
+});}
+async function loadInput(input,kind){
+ const file=input.files[0];if(!file)return;
+ const generation=++loadGeneration[kind];
+ try{
+  const data=await parseFile(file,kind);
+  if(generation!==loadGeneration[kind])return;
+  if(kind==="scan"){
+   scan=data;comparison=null;$("scanName").textContent=file.name;
+   $("compareName").textContent="akirabox-comparison-report.json not loaded";
+  }else{comparison=data;$("compareName").textContent=file.name;}
+  decisions={};$("warning").textContent="";render();
+ }catch(e){
+  if(generation!==loadGeneration[kind])return;
+  $("warning").textContent="";
+  const notice=document.createElement("div");notice.className="notice";notice.textContent=e.message;$("warning").append(notice);
+ }
+}
+$("scanFile".addEventListener("change",e=>loadInput(e.target,"scan"));$("compareFile").addEventListener("change",e=>loadInput(e.target,"compare"));
 function render(){
  const ready=!!(scan&&comparison);$("export").disabled=!ready;
  if(!ready){$("summary").innerHTML="";$("filters").innerHTML="";$("results").innerHTML='<div class="empty">Load both JSON reports. The file ID links each scanned upload to its comparison result.</div>';return;}
