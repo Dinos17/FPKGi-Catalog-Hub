@@ -636,4 +636,4 @@ def test_streamed_page_body_failure_keeps_duplicate_comparison_unverified(tmp_pa
     duplicate = report["results"][1]
     assert duplicate["status"] == "duplicate"
     assert duplicate["binary_verification"]["status"] == "unverified"
-    assert "ChunkedEncodingError" in duplicate["binary_verification"]["reason"]
+    assert duplicate["binary_verification"]["reason"] == "A SHA-256 value was unavailable for at least one file"
