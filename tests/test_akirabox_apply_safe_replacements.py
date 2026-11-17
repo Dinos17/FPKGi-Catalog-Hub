@@ -26,7 +26,7 @@ def make_case(tmp_path):
         write_catalog(tmp_path, relative, {})
     scan = {"files": [{
         "id": "file-1", "name": "Example Game - [US] [EN] [1.00].pkg",
-        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100, "share_url": new_url,
     }]}
     comparison = {"results": [{
         "status": "outdated", "file_id": "file-1", "name": scan["files"][0]["name"],
