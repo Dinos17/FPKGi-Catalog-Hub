@@ -28,14 +28,35 @@ def normalize_title(value: Any) -> str:
     return " ".join("".join(ch if ch.isalnum() else " " for ch in value).split())
 
 
-def parse_source_identity(name: str) -> tuple[str, str | None, str | None]:
+def parse_source_details(name: str) -> tuple[str, str | None, str | None, str | None]:
+    """Parse common scene names and names containing a CUSA/PPSA title ID."""
     stem = re.sub(r"\.(pkg|zip)$", "", name, flags=re.I).strip()
+    title_id_match = re.search(r"\b((?:CUSA|PPSA)\d{5})\b", stem, re.I)
+    title_id = title_id_match.group(1).upper() if title_id_match else None
+
     region_match = re.search(r"\[\s*(US|USA|EU|EUR|JP|JAP|ASIA)\s*\]", stem, re.I)
-    version_match = re.search(r"\[\s*v?(\d+(?:\.\d+)+)\s*\]", stem, re.I)
     region = REGIONS.get(region_match.group(1).upper()) if region_match else None
+
+    # Prefer explicit _v1.00-style versions so firmware tags such as [5.05]
+    # are never mistaken for the package version.
+    version_match = re.search(r"(?:^|[_\\s-])v(\d+(?:\.\d+)+)(?=$|[_\\s-])", stem, re.I)
+    if not version_match:
+        version_match = re.search(r"\[\s*(\d+(?:\.\d+)+)\s*\]", stem)
     version = version_match.group(1) if version_match else None
-    title = re.sub(r"\s*-?\s*\[[^]]+\]", " ", stem)
-    return normalize_title(title), region, version
+
+    if title_id_match:
+        title = stem[:title_id_match.start()]
+        title = re.sub(r"^\s*\[[^]]+\]\s*[-_ ]*", "", title)
+        title = title.strip(" -_")
+    else:
+        title = re.sub(r"\s*-?\s*\[[^]]+\]", " ", stem)
+    return normalize_title(title), region, version, title_id
+
+
+def parse_source_identity(name: str) -> tuple[str, str | None, str | None]:
+    """Backward-compatible three-field identity parser."""
+    title, region, version, _ = parse_source_details(name)
+    return title, region, version
 
 
 def _catalog_identity(metadata: dict[str, Any]) -> tuple[str, str | None]:
@@ -60,14 +81,20 @@ def _load_catalog(root: Path, relative: Path) -> dict[str, dict[str, Any]]:
 def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
     catalogs = {key: _load_catalog(catalog_root, path) for key, path in CATALOGS.items()}
     indexes: dict[tuple[str, str], dict[tuple[str, str | None], list[tuple[str, dict[str, Any]]]]] = {}
+    title_id_indexes: dict[tuple[str, str], dict[str, list[tuple[str, dict[str, Any]]]]] = {}
     for (platform, category), entries in catalogs.items():
         index: dict[tuple[str, str | None], list[tuple[str, dict[str, Any]]]] = {}
+        title_id_index: dict[str, list[tuple[str, dict[str, Any]]]] = {}
         for url, metadata in entries.items():
             if isinstance(metadata, dict):
                 identity = _catalog_identity(metadata)
                 if identity[0]:
                     index.setdefault(identity, []).append((url, metadata))
+                title_id = metadata.get("title_id")
+                if isinstance(title_id, str) and title_id.strip():
+                    title_id_index.setdefault(title_id.strip().upper(), []).append((url, metadata))
         indexes[(platform, category)] = index
+        title_id_indexes[(platform, category)] = title_id_index
 
     results = []
     source_seen: dict[tuple[str, str, str, str | None, str | None], str] = {}
@@ -81,13 +108,14 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                             "name": item.get("name"), "reason": "Missing supported platform/category"})
             continue
 
-        title, region, source_version = parse_source_identity(item["name"])
+        title, region, source_version, source_title_id = parse_source_details(item["name"])
         if not title:
             counts["unclassified"] += 1
             results.append({"status": "unclassified", "file_id": item.get("id"),
                             "name": item.get("name"), "reason": "Could not normalize filename"})
             continue
         index = indexes[(platform, category)]
+        title_id_index = title_id_indexes[(platform, category)]
         identity_key = (platform, category, title, region, source_version)
         if identity_key in source_seen:
             counts["duplicate"] += 1
@@ -97,15 +125,21 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             continue
         source_seen[identity_key] = str(item.get("id"))
         source_identities.setdefault((platform, category), set()).add((title, region))
+        id_candidates = title_id_index.get(source_title_id, []) if source_title_id else []
         exact = index.get((title, region), [])
-        # If the source filename has no region, only accept a unique title match.
-        candidates = exact if region else [
-            entry for identity, entries in index.items() if identity[0] == title for entry in entries
-        ]
+        # Prefer the platform title ID when present; fall back to title/region
+        # for conventional filenames that do not carry a CUSA/PPSA identifier.
+        if id_candidates:
+            candidates = id_candidates
+        else:
+            # If the source filename has no region, only accept a unique title match.
+            candidates = exact if region else [
+                entry for identity, entries in index.items() if identity[0] == title for entry in entries
+            ]
         if len(candidates) > 1:
-            status, reason = "duplicate", "Multiple catalog entries match title and region"
+            status, reason = "duplicate", "Multiple catalog entries match the available title identity"
         elif not candidates:
-            status, reason = "new", "No matching title and region in the target catalog"
+            status, reason = "new", "No matching title ID or title/region in the target catalog"
         else:
             _, metadata = candidates[0]
             old_version = str(metadata.get("version") or "").lstrip("0")
@@ -118,13 +152,15 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                 differences.append("file size differs")
             if differences:
                 status, reason = "outdated", ", ".join(differences)
+            elif not source_version or not old_version or not isinstance(new_size, int) or not isinstance(old_size, int):
+                status, reason = "unclassified", "Matched catalog entry, but version or file-size metadata is missing"
             else:
-                status, reason = "unchanged", "Matching title/region; available version and size metadata agree"
+                status, reason = "unchanged", "Matching title identity; version and file size agree"
         counts[status] += 1
         results.append({
             "status": status, "file_id": item.get("id"), "name": item.get("name"),
             "platform": platform, "category": category, "region": region,
-            "version": source_version, "share_url": item.get("share_url"), "reason": reason,
+            "version": source_version, "title_id": source_title_id, "share_url": item.get("share_url"), "reason": reason,
         })
 
     expected = {(platform, category) for platform in ("PS4", "PS5") for category in ("games", "dlc")}
