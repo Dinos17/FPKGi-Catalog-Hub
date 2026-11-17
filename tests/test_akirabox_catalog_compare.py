@@ -54,7 +54,11 @@ def test_title_id_match_handles_slime_rancher_filename(tmp_path):
     })
     for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
         write_catalog(tmp_path, path, {})
-    report = compare_scan({"errors": [], "folders": [], "files": [{
+    complete_folders = [
+        {"path": ["PS4", "Games"]}, {"path": ["PS4", "DLC"]},
+        {"path": ["PS5", "Games"]}, {"path": ["PS5", "DLC"]},
+    ]
+    report = compare_scan({"errors": [], "folders": complete_folders, "files": [{
         "id": "E9Qz9AWjwzOL",
         "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4.pkg",
         "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
@@ -62,6 +66,7 @@ def test_title_id_match_handles_slime_rancher_filename(tmp_path):
     assert report["results"][0]["title_id"] == "CUSA11650"
     assert report["results"][0]["status"] == "outdated"
     assert report["results"][0]["reason"] == "version differs"
+    assert report["missing_candidate_count"] == 0
 
 
 def test_missing_version_or_size_is_not_claimed_unchanged(tmp_path):
