@@ -10,7 +10,9 @@ import duplicate_check  # noqa: E402
 
 
 @pytest.fixture(autouse=True)
-def catalog_dirs(tmp_path):
+def catalog_dirs(tmp_path, monkeypatch):
+    # Tests use temporary catalogs; never overwrite the real GitHub Actions summary.
+    monkeypatch.delenv("GITHUB_STEP_SUMMARY", raising=False)
     (tmp_path / "ps4").mkdir()
     (tmp_path / "ps5").mkdir()
 
