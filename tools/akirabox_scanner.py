@@ -24,7 +24,7 @@ USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
-ALLOWED_CATEGORIES = {"homebrew", "apps", "emulators", "themes", "demos"}
+ALLOWED_CATEGORIES = {"homebrew", "apps", "emulators", "themes", "demos", "catalog"}
 AKIRA_HOSTS = {"akirabox.to", "akirabox.com"}
 
 
@@ -111,6 +111,18 @@ def _extract_page_data(html: str) -> tuple[dict[str, Any], dict[str, Any], dict[
     return folder, listing, pager
 
 
+def _classify_catalog_path(path: list[str]) -> tuple[str | None, str | None]:
+    """Classify paths such as PS4/Games or PS5/DLC, including nested folders."""
+    normalized = [part.strip().casefold() for part in path]
+    for index, part in enumerate(normalized):
+        if part not in {"ps4", "ps5"}:
+            continue
+        for candidate in normalized[index + 1:]:
+            if candidate in {"games", "dlc"}:
+                return part.upper(), candidate
+    return None, None
+
+
 class AkiraBoxScanner:
     def __init__(self, session: requests.Session | None = None, timeout: int = 30,
                  max_pages: int = 100, max_folders: int = 500):
@@ -153,13 +165,17 @@ class AkiraBoxScanner:
             if pager["page"] != page:
                 raise ScanError(f"Requested page {page}, but AkiraBox returned page {pager['page']}")
             folder_name = folder["name"]
+            current_path = path + [folder_name]
+            platform, catalog_category = _classify_catalog_path(current_path)
             if folder_record is None:
                 folder_record = {
                     "id": folder_id,
                     "name": folder_name,
                     "url": folder_url,
-                    "path": path + [folder_name],
-                    "category": category,
+                    "path": current_path,
+                    "category": (catalog_category or "unclassified") if category == "catalog" else category,
+                    "platform": platform,
+                    "catalog_category": catalog_category,
                 }
                 result.folders.append(folder_record)
 
@@ -174,7 +190,7 @@ class AkiraBoxScanner:
                     continue
                 if kind == "folder":
                     child_url = f"https://akirabox.to/{item_id}/folder"
-                    self._scan_folder(child_url, category, path + [folder_name],
+                    self._scan_folder(child_url, category, current_path,
                                       visited, result)
                 elif kind == "file":
                     if item.get("visibility") != "public":
@@ -182,6 +198,12 @@ class AkiraBoxScanner:
                     if any(existing["id"] == item_id for existing in result.files):
                         continue
                     extension = item.get("extension")
+                    file_path = current_path
+                    platform, catalog_category = _classify_catalog_path(file_path)
+                    output_category = (
+                        catalog_category or "unclassified"
+                        if category == "catalog" else category
+                    )
                     result.files.append({
                         "id": item_id,
                         "numeric_id": item.get("numericId"),
@@ -192,8 +214,10 @@ class AkiraBoxScanner:
                         "created_at": item.get("createdAt"),
                         "parent_id": item.get("parentId"),
                         "share_url": f"https://akirabox.to/{item_id}/file",
-                        "folder_path": path + [folder_name],
-                        "category": category,
+                        "folder_path": file_path,
+                        "category": output_category,
+                        "platform": platform,
+                        "catalog_category": catalog_category,
                     })
 
             total_pages = max(1, (pager["total"] + pager["perPage"] - 1) // pager["perPage"])
