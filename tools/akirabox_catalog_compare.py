@@ -39,7 +39,7 @@ def parse_source_details(name: str) -> tuple[str, str | None, str | None, str | 
 
     # Prefer explicit _v1.00-style versions so firmware tags such as [5.05]
     # are never mistaken for the package version.
-    version_match = re.search(r"(?:^|[_\\s-])v(\d+(?:\.\d+)+)(?=$|[_\\s-])", stem, re.I)
+    version_match = re.search(r"(?:^|[_\s-])v(\d+(?:\.\d+)+)(?=$|[_\s-])", stem, re.I)
     if not version_match:
         version_match = re.search(r"\[\s*(\d+(?:\.\d+)+)\s*\]", stem)
     version = version_match.group(1) if version_match else None
