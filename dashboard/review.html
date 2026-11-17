@@ -71,7 +71,7 @@ async function loadInput(input,kind){
   const notice=document.createElement("div");notice.className="notice";notice.textContent=e.message;$("warning").append(notice);
  }
 }
-$("scanFile".addEventListener("change",e=>loadInput(e.target,"scan"));$("compareFile").addEventListener("change",e=>loadInput(e.target,"compare"));
+$("scanFile").addEventListener("change",e=>loadInput(e.target,"scan"));$("compareFile").addEventListener("change",e=>loadInput(e.target,"compare"));
 function render(){
  const ready=!!(scan&&comparison);$("export").disabled=!ready;
  if(!ready){$("summary").innerHTML="";$("filters").innerHTML="";$("results").innerHTML='<div class="empty">Load both JSON reports. The file ID links each scanned upload to its comparison result.</div>';return;}
