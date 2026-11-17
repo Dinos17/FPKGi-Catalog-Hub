@@ -505,3 +505,135 @@ def test_akirabox_file_endpoint_is_not_misreported_as_catalog_filename(tmp_path)
     result = report["results"][0]
     assert result["status"] == "matched"
     assert "parsed_filename_metadata" not in result["catalog_metadata"]
+
+
+class _AkiraPageResponse:
+    def __init__(self, status=200, body="", content_type="text/html; charset=utf-8"):
+        self.status_code = status
+        self.text = body
+        self.headers = {"Content-Type": content_type}
+        self.closed = False
+
+    def close(self):
+        self.closed = True
+
+
+class _AkiraPageSession:
+    def __init__(self, response):
+        self.response = response
+        self.calls = []
+
+    def get(self, url, **kwargs):
+        self.calls.append((url, kwargs))
+        return self.response
+
+
+def test_fetch_akirabox_sha256_reads_escaped_page_field_without_following_redirects():
+    digest = "c2e0dea5adf67cafdb03ae3eb6f0a708def8570f423aeed09e0f7696032fb273"
+    response = _AkiraPageResponse(body=(
+        r'\"sha256\":{\"value\":\"' + digest + r'\",\"pending\":false}'
+    ))
+    session = _AkiraPageSession(response)
+
+    result = comparator.fetch_akirabox_sha256("jJD3V1vYlma5", session)
+
+    assert result == {
+        "status": "available", "sha256": digest,
+        "reason": "SHA-256 read from AkiraBox file page",
+    }
+    assert session.calls[0][1]["allow_redirects"] is False
+    assert session.calls[0][1]["stream"] is True
+    assert session.calls[0][1]["timeout"] == comparator.AKIRABOX_HASH_TIMEOUT_SECONDS
+    assert response.closed is True
+
+
+def test_fetch_akirabox_sha256_treats_null_as_unavailable():
+    response = _AkiraPageResponse(body=r'\"sha256\":{\"value\":null,\"pending\":false}')
+    result = comparator.fetch_akirabox_sha256("APVma1BW6mXo", _AkiraPageSession(response))
+    assert result["status"] == "unavailable"
+    assert result["sha256"] is None
+
+
+def test_fetch_akirabox_sha256_does_not_follow_redirects_or_read_binary():
+    response = _AkiraPageResponse(status=302, body="", content_type="application/octet-stream")
+    session = _AkiraPageSession(response)
+    result = comparator.fetch_akirabox_sha256("abc123", session)
+    assert result["status"] == "unavailable"
+    assert session.calls[0][1]["allow_redirects"] is False
+
+
+@pytest.mark.parametrize(
+    ("first_hash", "second_hash", "expected"),
+    [
+        ("a" * 64, "a" * 64, "verified_identical"),
+        ("a" * 64, "b" * 64, "different"),
+        (None, "b" * 64, "unverified"),
+    ],
+)
+def test_source_duplicate_binary_verification_uses_sha256_when_available(
+    tmp_path, first_hash, second_hash, expected
+):
+    for path in ("ps4/games.json", "ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    values = {
+        "first": {
+            "status": "available" if first_hash else "unavailable",
+            "sha256": first_hash, "reason": "test",
+        },
+        "second": {
+            "status": "available" if second_hash else "unavailable",
+            "sha256": second_hash, "reason": "test",
+        },
+    }
+    calls = []
+
+    def hash_checker(file_id):
+        calls.append(file_id)
+        return values[file_id]
+
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "first", "name": "Absolute Drift - [US] [EN] [1.02].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+        {"id": "second", "name": "Absolute Drift - [US] [EN] [1.02] (1).pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+    ]}
+
+    report = compare_scan(scan, tmp_path, hash_checker=hash_checker)
+
+    assert report["results"][1]["status"] == "duplicate"
+    assert report["results"][1]["binary_verification"]["status"] == expected
+    assert calls == ["first", "second"]
+
+
+class _BrokenAkiraPageResponse(_AkiraPageResponse):
+    def __init__(self):
+        self.status_code = 200
+        self.headers = {"Content-Type": "text/html; charset=utf-8"}
+        self.closed = False
+
+    @property
+    def text(self):
+        raise comparator.requests.exceptions.ChunkedEncodingError("truncated response body")
+
+
+def test_streamed_page_body_failure_keeps_duplicate_comparison_unverified(tmp_path):
+    for path in ("ps4/games.json", "ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+
+    def hash_checker(file_id):
+        response = _BrokenAkiraPageResponse()
+        return comparator.fetch_akirabox_sha256(file_id, _AkiraPageSession(response))
+
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "first", "name": "Absolute Drift - [US] [EN] [1.02].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+        {"id": "second", "name": "Absolute Drift - [US] [EN] [1.02] (1).pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+    ]}
+
+    report = compare_scan(scan, tmp_path, hash_checker=hash_checker)
+
+    duplicate = report["results"][1]
+    assert duplicate["status"] == "duplicate"
+    assert duplicate["binary_verification"]["status"] == "unverified"
+    assert duplicate["binary_verification"]["reason"] == "A SHA-256 value was unavailable for at least one file"
