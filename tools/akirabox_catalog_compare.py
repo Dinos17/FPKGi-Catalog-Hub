@@ -21,6 +21,55 @@ from urllib.parse import urljoin, urlparse
 ARCHIVE_HOST = "archive.org"
 LINK_TIMEOUT_SECONDS = 15
 MAX_LINK_REDIRECTS = 5
+AKIRABOX_HASH_TIMEOUT_SECONDS = 20
+AKIRABOX_HOSTS = {"akirabox.to", "akirabox.com"}
+
+
+def fetch_akirabox_sha256(file_id: str, session: Any = None) -> dict[str, Any]:
+    """Read a file-page SHA-256 without following redirects or downloading the package."""
+    if not isinstance(file_id, str) or not re.fullmatch(r"[A-Za-z0-9]+", file_id):
+        return {"status": "unavailable", "sha256": None, "reason": "Invalid AkiraBox file ID"}
+
+    client = session or requests.Session()
+    url = f"https://akirabox.to/{file_id}/file"
+    try:
+        response = client.get(
+            url,
+            timeout=AKIRABOX_HASH_TIMEOUT_SECONDS,
+            allow_redirects=False,
+            headers={"User-Agent": "Mozilla/5.0 FPKGi-Catalog-Hub checksum verifier"},
+        )
+    except requests.RequestException as exc:
+        return {"status": "unavailable", "sha256": None,
+                "reason": f"AkiraBox page request failed: {type(exc).__name__}"}
+
+    try:
+        if response.status_code != 200:
+            return {"status": "unavailable", "sha256": None,
+                    "reason": f"AkiraBox page returned HTTP {response.status_code}"}
+        content_type = response.headers.get("Content-Type", "").lower()
+        if "text/html" not in content_type:
+            return {"status": "unavailable", "sha256": None,
+                    "reason": "AkiraBox endpoint did not return an HTML file page"}
+        # Next.js embeds this object with escaped quotes in the HTML source.
+        match = re.search(
+            r'\\?"sha256\\?"\s*:\s*\{\s*\\?"value\\?"\s*:\s*(?:\\?"([a-f0-9]{64})\\?"|null)\s*,\s*\\?"pending\\?"\s*:\s*(true|false)',
+            response.text,
+            re.IGNORECASE,
+        )
+        if not match:
+            return {"status": "unavailable", "sha256": None,
+                    "reason": "SHA-256 field was not present in the AkiraBox page"}
+        value, pending = match.groups()
+        if pending == "true":
+            return {"status": "pending", "sha256": None,
+                    "reason": "AkiraBox has not finished calculating the SHA-256"}
+        if not value:
+            return {"status": "unavailable", "sha256": None,
+                    "reason": "AkiraBox reports no SHA-256 for this file"}
+        return {"status": "available", "sha256": value.lower(), "reason": "SHA-256 read from AkiraBox file page"}
+    finally:
+        response.close()
 
 
 def _is_archive_url(url: str) -> bool:
@@ -231,7 +280,7 @@ def _load_catalog(root: Path, relative: Path) -> dict[str, dict[str, Any]]:
     return data
 
 
-def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) -> dict[str, Any]:
+def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, hash_checker=None) -> dict[str, Any]:
     catalogs = {key: _load_catalog(catalog_root, path) for key, path in CATALOGS.items()}
     indexes: dict[tuple[str, str], dict[tuple[str, str | None], list[tuple[str, dict[str, Any]]]]] = {}
     title_id_indexes: dict[tuple[str, str], dict[str, list[tuple[str, dict[str, Any]]]]] = {}
@@ -251,6 +300,16 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
 
     results = []
     source_seen: dict[tuple[Any, ...], str] = {}
+    hash_cache: dict[str, dict[str, Any]] = {}
+
+    def source_hash(file_id: Any) -> dict[str, Any]:
+        if not isinstance(file_id, str) or not file_id:
+            return {"status": "unavailable", "sha256": None, "reason": "Missing AkiraBox file ID"}
+        if file_id not in hash_cache:
+            hash_cache[file_id] = hash_checker(file_id) if hash_checker else {
+                "status": "not_checked", "sha256": None, "reason": "Checksum lookup was not enabled",
+            }
+        return hash_cache[file_id]
     source_catalog_urls: dict[tuple[str, str], set[str]] = {}
     counts = {"new": 0, "matched": 0, "outdated": 0, "duplicate": 0, "unclassified": 0}
     for item in scan.get("files", []):
@@ -283,9 +342,37 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
         )
         if identity_key in source_seen:
             counts["duplicate"] += 1
-            results.append({"status": "duplicate", "file_id": item.get("id"), "name": item.get("name"),
-                            "duplicate_of_file_id": source_seen[identity_key],
-                            "reason": "Duplicate AkiraBox title/region/version already seen in this scan"})
+            original_id = source_seen[identity_key]
+            original_hash = source_hash(original_id)
+            duplicate_hash = source_hash(item.get("id"))
+            if original_hash.get("status") == "available" and duplicate_hash.get("status") == "available":
+                verification_status = (
+                    "verified_identical"
+                    if original_hash.get("sha256") == duplicate_hash.get("sha256")
+                    else "different"
+                )
+                verification_reason = (
+                    "Both AkiraBox pages expose the same SHA-256"
+                    if verification_status == "verified_identical"
+                    else "AkiraBox pages expose different SHA-256 values"
+                )
+            elif hash_checker is None:
+                verification_status = "not_checked"
+                verification_reason = "Checksum lookup was not enabled"
+            else:
+                verification_status = "unverified"
+                verification_reason = "A SHA-256 value was unavailable for at least one file"
+            results.append({
+                "status": "duplicate", "file_id": item.get("id"), "name": item.get("name"),
+                "duplicate_of_file_id": original_id,
+                "binary_verification": {
+                    "status": verification_status,
+                    "original_sha256": original_hash.get("sha256"),
+                    "duplicate_sha256": duplicate_hash.get("sha256"),
+                    "reason": verification_reason,
+                },
+                "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+            })
             continue
         source_seen[identity_key] = str(item.get("id"))
         id_candidates = title_id_index.get(source_title_id, []) if source_title_id else []
@@ -471,7 +558,7 @@ def main() -> int:
     args = parser.parse_args()
     try:
         scan = json.loads(args.scan_report.read_text(encoding="utf-8"))
-        report = compare_scan(scan, args.catalog_root)
+        report = compare_scan(scan, args.catalog_root, hash_checker=fetch_akirabox_sha256)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         parser.error(str(exc))
     rendered = json.dumps(report, indent=2, ensure_ascii=False) + "\n"
