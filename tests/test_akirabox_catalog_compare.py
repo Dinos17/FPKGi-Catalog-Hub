@@ -69,7 +69,7 @@ def test_title_id_match_handles_slime_rancher_filename(tmp_path):
     assert report["missing_candidate_count"] == 0
 
 
-def test_missing_version_or_size_is_not_claimed_unchanged(tmp_path):
+def test_missing_version_or_size_is_not_claimed_matched(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
         "https://archive.org/game.pkg": {
             "name": "Example Game", "region": "USA", "version": "01.00",
@@ -84,7 +84,7 @@ def test_missing_version_or_size_is_not_claimed_unchanged(tmp_path):
     assert report["results"][0]["status"] == "unclassified"
 
 
-def test_classifies_new_unchanged_and_outdated_without_writing(tmp_path):
+def test_classifies_new_matched_and_outdated_without_writing(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
         "https://archive.org/old.pkg": {"name": "A Hat in Time", "region": "USA", "version": "01.04", "size": 100},
         "https://archive.org/older.pkg": {"name": "ASTRONEER", "region": "USA", "version": "01.63", "size": 200},
@@ -96,7 +96,7 @@ def test_classifies_new_unchanged_and_outdated_without_writing(tmp_path):
         {"id": "3", "name": "Brand New Game - [EU] [EN] [1.00].pkg", "platform": "PS4", "catalog_category": "games", "size_bytes": 300},
     ]}
     report = compare_scan(scan, tmp_path)
-    assert report["counts"] == {"new": 1, "unchanged": 1, "outdated": 1, "duplicate": 0, "unclassified": 0}
+    assert report["counts"] == {"new": 1, "matched": 1, "outdated": 1, "duplicate": 0, "unclassified": 0}
     assert report["scan_complete_for_all_categories"] is True
     assert report["catalog_write_performed"] is False
 
@@ -136,7 +136,7 @@ def test_shared_dlc_title_id_matches_the_specific_package_and_tracks_each_catalo
         "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100,
     }]}, tmp_path)
 
-    assert report["results"][0]["status"] == "unchanged"
+    assert report["results"][0]["status"] == "matched"
     assert report["missing_catalog_entries"] == [{
         "platform": "PS4", "category": "dlc",
         "name": "Rock Band™ Expansion Pack 2", "region": "USA",
@@ -165,7 +165,7 @@ def test_same_visible_name_with_different_title_ids_is_not_a_source_duplicate(tm
          "platform": "PS4", "catalog_category": "games", "size_bytes": 200},
     ]}, tmp_path)
 
-    assert [item["status"] for item in report["results"]] == ["unchanged", "unchanged"]
+    assert [item["status"] for item in report["results"]] == ["matched", "matched"]
     assert report["counts"]["duplicate"] == 0
 
 
@@ -183,7 +183,7 @@ def test_duplicate_copy_suffix_normalizes_to_same_source_identity(tmp_path):
         {"id": "copy", "name": "Absolute Drift - [US] [EN] [1.02] (1).pkg", "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
     ]}
     report = compare_scan(scan, tmp_path)
-    assert report["counts"] == {"new": 0, "unchanged": 1, "outdated": 0, "duplicate": 1, "unclassified": 0}
+    assert report["counts"] == {"new": 0, "matched": 1, "outdated": 0, "duplicate": 1, "unclassified": 0}
     assert report["results"][1]["duplicate_of_file_id"] == "original"
 
 
@@ -203,7 +203,7 @@ def test_numbered_packages_sharing_title_id_are_not_duplicates(tmp_path):
          "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100},
     ]}
     report = compare_scan(scan, tmp_path)
-    assert [item["status"] for item in report["results"]] == ["unchanged", "unclassified"]
+    assert [item["status"] for item in report["results"]] == ["matched", "unclassified"]
     assert report["counts"]["duplicate"] == 0
 
 
@@ -233,7 +233,7 @@ def test_reports_only_source_observable_metadata_differences(tmp_path):
         "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
     }]}, tmp_path)
     result = report["results"][0]
-    assert result["status"] == "unchanged"
+    assert result["status"] == "matched"
     assert {item["field"] for item in result["metadata_differences"]} == {"region", "language"}
     assert "min_fw" not in {item["field"] for item in result["metadata_differences"]}
     assert "release" not in {item["field"] for item in result["metadata_differences"]}
@@ -282,7 +282,7 @@ def test_source_duplicate_identity_includes_language_firmware_and_size(tmp_path)
     report = compare_scan(scan, tmp_path)
 
     assert [item["status"] for item in report["results"]] == [
-        "unchanged", "unchanged", "unchanged", "outdated",
+        "matched", "matched", "matched", "outdated",
     ]
     assert report["counts"]["duplicate"] == 0
 
@@ -321,5 +321,5 @@ def test_single_dlc_title_id_candidate_accepts_exact_package_name(tmp_path):
         "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100,
     }]}, tmp_path)
 
-    assert report["results"][0]["status"] == "unchanged"
+    assert report["results"][0]["status"] == "matched"
 
