@@ -18,8 +18,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install scanner dependency
-        run: python -m pip install requests pytest
+      - name: Install test and scanner dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
 
       - name: Run tests
         run: python -m pytest -q
