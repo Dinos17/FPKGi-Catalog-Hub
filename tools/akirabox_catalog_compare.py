@@ -187,11 +187,14 @@ def parse_source_details(name: str) -> tuple[str, str | None, str | None, str | 
     return parsed["title"], parsed["region"], parsed["version"], parsed["title_id"]
 
 
-def _catalog_filename_metadata(url: str) -> dict[str, Any]:
-    """Parse filename tags from the catalog URL without fetching the package."""
+def _catalog_filename_metadata(url: str) -> dict[str, Any] | None:
+    """Parse package filename tags when the URL actually exposes a package filename."""
     from urllib.parse import unquote, urlparse
 
     filename = unquote(urlparse(url).path.rsplit("/", 1)[-1])
+    # Share endpoints such as AkiraBox's /file are not package filenames.
+    if filename.casefold() in {"file", "download"} or not re.search(r"\.(pkg|zip)$", filename, re.I):
+        return None
     return parse_source_metadata(filename)
 
 
@@ -364,7 +367,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             add_metadata_difference("region", region, REGIONS.get(str(metadata.get("region") or "").upper()))
             add_metadata_difference("title_id", source_title_id, metadata.get("title_id"))
             add_metadata_difference("language", source_metadata["languages"] or None,
-                                    catalog_filename["languages"] or None)
+                                    catalog_filename.get("languages") or None if catalog_filename else None)
             add_metadata_difference("min_fw", source_metadata["min_fw"], metadata.get("min_fw"))
             add_metadata_difference("size_bytes", new_size, old_size)
 
@@ -417,7 +420,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             "catalog_metadata": ({
                 **metadata,
                 "size_bytes": metadata.get("size"),
-                "parsed_filename_metadata": catalog_filename,
+                **({"parsed_filename_metadata": catalog_filename} if catalog_filename is not None else {}),
             } if candidates and len(candidates) == 1 else None),
             "catalog_url": catalog_url if candidates and len(candidates) == 1 else None,
             "proposed_replacement": proposed_replacement,

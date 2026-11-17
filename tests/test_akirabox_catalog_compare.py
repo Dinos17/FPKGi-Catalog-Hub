@@ -486,3 +486,22 @@ def test_check_catalog_url_does_not_consume_malformed_redirect_body():
     assert result["status"] == "inconclusive"
     assert "Malformed redirect URL" in result["reason"]
     assert len(adapter.calls) == 1
+
+
+def test_akirabox_file_endpoint_is_not_misreported_as_catalog_filename(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://akirabox.to/example123/file": {
+            "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "akirabox-endpoint",
+        "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path)
+
+    result = report["results"][0]
+    assert result["status"] == "matched"
+    assert "parsed_filename_metadata" not in result["catalog_metadata"]
