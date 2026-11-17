@@ -42,8 +42,8 @@ def is_akirabox_url(value: Any) -> bool:
 
 
 def filename_identity(value: Any) -> str:
-    name = re.sub(r"\\.(pkg|zip)$", "", str(value or ""), flags=re.IGNORECASE)
-    name = re.sub(r"\\s+\\(\\d+\\)$", "", name)
+    name = re.sub(r"\.(pkg|zip)$", "", str(value or ""), flags=re.IGNORECASE)
+    name = re.sub(r"\s+\(\d+\)$", "", name)
     return normalized_text(name)
 
 
@@ -79,13 +79,13 @@ def is_safe_replacement(result: dict[str, Any], source: dict[str, Any],
         return False
     if normalized_text(result.get("category")) != normalized_text(source.get("catalog_category", source.get("category"))):
         return False
-    identity = normalized_text(re.sub(r"\s+\(\d+\)$", "", str(source.get("name", ""))))
+    identity = filename_identity(source.get("name"))
     if not identity:
         return False
     for other in all_files:
         if str(other.get("id")) == str(source.get("id")):
             continue
-        other_identity = normalized_text(re.sub(r"\s+\(\d+\)$", "", str(other.get("name", ""))))
+        other_identity = filename_identity(other.get("name"))
         if other_identity == identity:
             return False
     return True
