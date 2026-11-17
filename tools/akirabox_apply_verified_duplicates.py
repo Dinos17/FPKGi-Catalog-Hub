@@ -112,8 +112,15 @@ def apply_verified_duplicates(scan: dict[str, Any], comparison: dict[str, Any],
             continue
 
         timestamps = [parse_created_at(item.get("created_at")) for item in group_rows]
-        if (any(row.get("binary_verification", {}).get("status") != "verified_identical"
-                for row in duplicate_rows)
+        hashes_valid = all(
+            row.get("binary_verification", {}).get("status") == "verified_identical"
+            and isinstance(row.get("binary_verification", {}).get("original_sha256"), str)
+            and re.fullmatch(r"[a-f0-9]{64}", row["binary_verification"]["original_sha256"])
+            and row.get("binary_verification", {}).get("original_sha256")
+                == row.get("binary_verification", {}).get("duplicate_sha256")
+            for row in duplicate_rows
+        )
+        if (not hashes_valid
                 or any(timestamp is None for timestamp in timestamps)
                 or len(set(timestamps)) != len(timestamps)):
             skipped.append({"original_file_id": original_id, "reason": "Hashes or creation timestamps failed verification"})
@@ -152,7 +159,7 @@ def apply_verified_duplicates(scan: dict[str, Any], comparison: dict[str, Any],
             item.get("share_url") for item in group_rows
             if is_akirabox_url(item.get("share_url"))
         }
-        existing_source_urls = [url for url in source_urls if url in data]
+        existing_source_urls = sorted(url for url in source_urls if url in data)
         source_records = [data[url] for url in existing_source_urls]
         if any(record != data[catalog_url] for record in source_records):
             skipped.append({"original_file_id": original_id, "reason": "Existing duplicate catalog records are not identical"})
