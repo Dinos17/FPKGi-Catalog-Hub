@@ -17,6 +17,7 @@ on:
           - emulators
           - themes
           - demos
+          - catalog
 
 permissions:
   contents: read
