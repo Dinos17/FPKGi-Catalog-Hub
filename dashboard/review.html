@@ -91,7 +91,7 @@ function isSafeReplacement(result,source,allRows){
 }
 function render(){
  const ready=!!(scan&&comparison);$("export").disabled=!ready;
- if(!ready){$("summary").innerHTML="";$("filters").innerHTML="";$("results").innerHTML='<div class="empty">The file ID links each scanned upload to its comparison result.</div>';return;}
+ if(!ready){$("summary").innerHTML="";$("results").innerHTML='<div class="empty">The file ID links each scanned upload to its comparison result.</div>';return;}
  const byId=new Map(comparison.results.filter(r=>r.file_id!==undefined&&r.file_id!==null).map(r=>[String(r.file_id),r]));
  const rows=scan.files.map((source,index)=>({source,index,result:byId.get(String(source.id))||null}));
  const safeIds=new Set(rows.filter(row=>isSafeReplacement(row.result,row.source,rows)).map(row=>String(row.source.id)));
