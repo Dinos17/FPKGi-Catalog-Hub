@@ -27,10 +27,14 @@ jobs:
             --config config/akirabox_sources.json \
             --output akirabox-scan-report.json
 
-      - name: Upload scan report
+      - name: Display scan report in run summary
         if: always() && hashFiles('akirabox-scan-report.json') != ''
-        uses: actions/upload-artifact@v4
-        with:
-          name: akirabox-scan-report
-          path: akirabox-scan-report.json
-          if-no-files-found: error
+        run: |
+          echo "## AkiraBox scan report" >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo 'The full report is also printed in this step’s log.' >> "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat akirabox-scan-report.json | tee -a "$GITHUB_STEP_SUMMARY"
+          echo >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
