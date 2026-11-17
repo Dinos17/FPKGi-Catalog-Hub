@@ -70,6 +70,8 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         indexes[(platform, category)] = index
 
     results = []
+    source_seen: dict[tuple[str, str, str, str | None, str | None], str] = {}
+    source_identities: dict[tuple[str, str], set[tuple[str, str | None]]] = {}
     counts = {"new": 0, "unchanged": 0, "outdated": 0, "duplicate": 0, "unclassified": 0}
     for item in scan.get("files", []):
         platform, category = item.get("platform"), item.get("catalog_category")
@@ -86,6 +88,15 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                             "name": item.get("name"), "reason": "Could not normalize filename"})
             continue
         index = indexes[(platform, category)]
+        identity_key = (platform, category, title, region, source_version)
+        if identity_key in source_seen:
+            counts["duplicate"] += 1
+            results.append({"status": "duplicate", "file_id": item.get("id"), "name": item.get("name"),
+                            "duplicate_of_file_id": source_seen[identity_key],
+                            "reason": "Duplicate AkiraBox title/region/version already seen in this scan"})
+            continue
+        source_seen[identity_key] = str(item.get("id"))
+        source_identities.setdefault((platform, category), set()).add((title, region))
         exact = index.get((title, region), [])
         # If the source filename has no region, only accept a unique title match.
         candidates = exact if region else [
@@ -123,6 +134,18 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         if len(path) >= 2 and str(path[1]).casefold() in {"games", "dlc"}:
             discovered.add((str(path[0]).upper(), str(path[1]).casefold()))
     complete = not scan.get("errors") and expected.issubset(discovered)
+    missing_candidates = []
+    if complete:
+        for (platform, category), entries in catalogs.items():
+            seen = source_identities.get((platform, category), set())
+            for url, metadata in entries.items():
+                if not isinstance(metadata, dict):
+                    continue
+                identity = _catalog_identity(metadata)
+                if identity[0] and identity not in seen:
+                    missing_candidates.append({"platform": platform, "category": category,
+                                               "name": metadata.get("name"), "region": metadata.get("region"),
+                                               "catalog_url": url, "status": "not_seen_in_source"})
     return {
         "scanner": "akirabox_catalog_comparison",
         "read_only": True,
@@ -131,8 +154,9 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         "missing_check_deferred": not complete,
         "counts": counts,
         "results": results,
-        "missing_catalog_entries": [],
-        "note": ("All four source categories were discovered; missing-source comparison can be enabled."
+        "missing_candidate_count": len(missing_candidates),
+        "missing_catalog_entries": missing_candidates,
+        "note": ("Missing candidates are only flagged for review; nothing is deleted."
                  if complete else
                  "At least one of PS4/Games, PS4/DLC, PS5/Games, PS5/DLC is not confirmed. "
                  "Missing catalog entries are intentionally not inferred from this partial scan."),
