@@ -113,3 +113,57 @@ def test_duplicate_catalog_matches_are_flagged(tmp_path):
     for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"): write_catalog(tmp_path, path, {})
     report = compare_scan({"errors": [], "folders": [], "files": [{"id": "X", "name": "Same Game - [US] [EN] [1.00].pkg", "platform": "PS4", "catalog_category": "games"}]}, tmp_path)
     assert report["results"][0]["status"] == "duplicate"
+
+def test_shared_dlc_title_id_matches_the_specific_package_and_tracks_each_catalog_url(tmp_path):
+    write_catalog(tmp_path, "ps4/dlc.json", {
+        "https://archive.org/rb-pack-1.pkg": {
+            "name": "Rock Band™ Expansion Pack 1", "title_id": "CUSA02084",
+            "region": "USA", "version": "01.00", "size": 100,
+        },
+        "https://archive.org/rb-pack-2.pkg": {
+            "name": "Rock Band™ Expansion Pack 2", "title_id": "CUSA02084",
+            "region": "USA", "version": "01.00", "size": 200,
+        },
+    })
+    for path in ("ps4/games.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    folders = [
+        {"path": ["PS4", "Games"]}, {"path": ["PS4", "DLC"]},
+        {"path": ["PS5", "Games"]}, {"path": ["PS5", "DLC"]},
+    ]
+    report = compare_scan({"errors": [], "folders": folders, "files": [{
+        "id": "rb1", "name": "Rock Band 4 Expansion Pack 1_CUSA02084_v1.00.pkg",
+        "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100,
+    }]}, tmp_path)
+
+    assert report["results"][0]["status"] == "unchanged"
+    assert report["missing_catalog_entries"] == [{
+        "platform": "PS4", "category": "dlc",
+        "name": "Rock Band™ Expansion Pack 2", "region": "USA",
+        "catalog_url": "https://archive.org/rb-pack-2.pkg",
+        "status": "not_seen_in_source",
+    }]
+
+
+def test_same_visible_name_with_different_title_ids_is_not_a_source_duplicate(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/game-a.pkg": {
+            "name": "Same Game", "title_id": "CUSA11111",
+            "region": "USA", "version": "01.00", "size": 100,
+        },
+        "https://archive.org/game-b.pkg": {
+            "name": "Same Game", "title_id": "CUSA22222",
+            "region": "USA", "version": "01.00", "size": 200,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [
+        {"id": "a", "name": "Same Game_CUSA11111_v1.00.pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100},
+        {"id": "b", "name": "Same Game_CUSA22222_v1.00.pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 200},
+    ]}, tmp_path)
+
+    assert [item["status"] for item in report["results"]] == ["unchanged", "unchanged"]
+    assert report["counts"]["duplicate"] == 0
