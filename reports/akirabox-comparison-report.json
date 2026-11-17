@@ -6,13 +6,67 @@
   "missing_check_deferred": true,
   "counts": {
     "new": 0,
-    "matched": 0,
-    "outdated": 13,
-    "duplicate": 1,
+    "matched": 10,
+    "outdated": 3,
+    "duplicate": 2,
     "unclassified": 0
   },
-  "replacement_candidate_count": 13,
+  "replacement_candidate_count": 3,
   "results": [
+    {
+      "status": "outdated",
+      "file_id": "qw1zeKMjvmXy",
+      "name": "ADR1FT - [US] [EN] [1.01] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "adr1ft",
+        "region": "USA",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2004353024,
+        "file_name": "ADR1FT - [US] [EN] [1.01] (1)",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA02572",
+        "region": "USA",
+        "name": "ADR1FT",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 2004353024,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02572.png",
+        "size_bytes": 2004353024,
+        "parsed_filename_metadata": {
+          "title": "adr1ft",
+          "region": "USA",
+          "version": "1.01",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/ADR1FT%20-%20[US]%20[EN]%20[1.01].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/ADR1FT%20-%20[US]%20[EN]%20[1.01].pkg",
+        "to": "https://akirabox.to/qw1zeKMjvmXy/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/qw1zeKMjvmXy/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
     {
       "status": "outdated",
       "file_id": "l5YzMlp2O3yO",
@@ -68,7 +122,7 @@
       "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "rk9zK0aeqG0l",
       "name": "Amnesia Rebirth - [US] [EN] [1.30]",
       "platform": "PS4",
@@ -102,27 +156,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA19254.png",
         "size_bytes": 17873240064,
         "parsed_filename_metadata": {
-          "title": "amnesia rebirth",
-          "region": "USA",
-          "version": "1.30",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Amnesia%20Rebirth%20-%20[US]%20[EN]%20[1.30].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Amnesia%20Rebirth%20-%20[US]%20[EN]%20[1.30].pkg",
-        "to": "https://akirabox.to/rk9zK0aeqG0l/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/rk9zK0aeqG0l/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/rk9zK0aeqG0l/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "9AqGQ8lorzMn",
       "name": "Amnesia Collection - [US] [EN] [1.05]",
       "platform": "PS4",
@@ -156,27 +204,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05882.png",
         "size_bytes": 3556507648,
         "parsed_filename_metadata": {
-          "title": "amnesia collection",
-          "region": "USA",
-          "version": "1.05",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Amnesia%20Collection%20-%20[US]%20[EN]%20[1.05].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Amnesia%20Collection%20-%20[US]%20[EN]%20[1.05].pkg",
-        "to": "https://akirabox.to/9AqGQ8lorzMn/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/9AqGQ8lorzMn/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/9AqGQ8lorzMn/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "Xkrzo67NY3BO",
       "name": "Ace Attorney Investigations Collection - [JP] [EN] [1.01]",
       "platform": "PS4",
@@ -210,27 +252,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA45443.png",
         "size_bytes": 7489781760,
         "parsed_filename_metadata": {
-          "title": "ace attorney investigations collection",
-          "region": "JAP",
-          "version": "1.01",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Ace%20Attorney%20Investigations%20Collection%20-%20[JP]%20[EN]%20[1.01].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Ace%20Attorney%20Investigations%20Collection%20-%20[JP]%20[EN]%20[1.01].pkg",
-        "to": "https://akirabox.to/Xkrzo67NY3BO/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/Xkrzo67NY3BO/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/Xkrzo67NY3BO/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "EL73gK2e839B",
       "name": "A Way Out - [US] [EN] [1.01]",
       "platform": "PS4",
@@ -264,27 +300,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07995.png",
         "size_bytes": 17402822656,
         "parsed_filename_metadata": {
-          "title": "a way out",
-          "region": "USA",
-          "version": "1.01",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Way%20Out%20-%20[US]%20[EN]%20[1.01].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Way%20Out%20-%20[US]%20[EN]%20[1.01].pkg",
-        "to": "https://akirabox.to/EL73gK2e839B/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/EL73gK2e839B/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/EL73gK2e839B/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "5pVzNKB7JG7w",
       "name": "AVICII Invector - [US] [EN] [1.05]",
       "platform": "PS4",
@@ -318,27 +348,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA18271.png",
         "size_bytes": 2837446656,
         "parsed_filename_metadata": {
-          "title": "avicii invector",
-          "region": "USA",
-          "version": "1.05",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/AVICII%20Invector%20-%20[US]%20[EN]%20[1.05].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/AVICII%20Invector%20-%20[US]%20[EN]%20[1.05].pkg",
-        "to": "https://akirabox.to/5pVzNKB7JG7w/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/5pVzNKB7JG7w/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/5pVzNKB7JG7w/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "qLQ365Wwdm19",
       "name": "ASTRONEER - [US] [EN] [1.64]",
       "platform": "PS4",
@@ -372,27 +396,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16473.png",
         "size_bytes": 1678049280,
         "parsed_filename_metadata": {
-          "title": "astroneer",
-          "region": "USA",
-          "version": "1.64",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/ASTRONEER%20-%20[US]%20[EN]%20[1.64].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/ASTRONEER%20-%20[US]%20[EN]%20[1.64].pkg",
-        "to": "https://akirabox.to/qLQ365Wwdm19/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/qLQ365Wwdm19/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/qLQ365Wwdm19/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "APVma1BW6mXo",
       "name": "A Hat in Time - [US] [EN] [1.04]",
       "platform": "PS4",
@@ -426,27 +444,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09267.png",
         "size_bytes": 7746420736,
         "parsed_filename_metadata": {
-          "title": "a hat in time",
-          "region": "USA",
-          "version": "1.04",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Hat%20in%20Time%20-%20[US]%20[EN]%20[1.04].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Hat%20in%20Time%20-%20[US]%20[EN]%20[1.04].pkg",
-        "to": "https://akirabox.to/APVma1BW6mXo/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/APVma1BW6mXo/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/APVma1BW6mXo/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "qw1zeKMW4mXy",
       "name": "A Short Hike - [EU] [EN] [1.01]",
       "platform": "PS4",
@@ -480,27 +492,21 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30277.png",
         "size_bytes": 308281344,
         "parsed_filename_metadata": {
-          "title": "a short hike",
-          "region": "EUR",
-          "version": "1.01",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Short%20Hike%20-%20[EU]%20[EN]%20[1.01].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Short%20Hike%20-%20[EU]%20[EN]%20[1.01].pkg",
-        "to": "https://akirabox.to/qw1zeKMW4mXy/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/qw1zeKMW4mXy/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/qw1zeKMW4mXy/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "vgKGxBYjQ38Q",
       "name": "A Monster's Expedition - [EU] [EN] [1.03]",
       "platform": "PS4",
@@ -534,81 +540,28 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29979.png",
         "size_bytes": 489095168,
         "parsed_filename_metadata": {
-          "title": "a monster s expedition",
-          "region": "EUR",
-          "version": "1.03",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Monster's%20Expedition%20-%20[EU]%20[EN]%20[1.03].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/A%20Monster's%20Expedition%20-%20[EU]%20[EN]%20[1.03].pkg",
-        "to": "https://akirabox.to/vgKGxBYjQ38Q/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "outdated",
+      "status": "duplicate",
       "file_id": "jJD3V1vYlma5",
       "name": "ADR1FT - [US] [EN] [1.01]",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.01",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "adr1ft",
-        "region": "USA",
-        "version": "1.01",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 2004353024,
-        "file_name": "ADR1FT - [US] [EN] [1.01]",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA02572",
-        "region": "USA",
-        "name": "ADR1FT",
-        "version": "01.01",
-        "release": "11-15-2013",
-        "size": 2004353024,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02572.png",
-        "size_bytes": 2004353024,
-        "parsed_filename_metadata": {
-          "title": "adr1ft",
-          "region": "USA",
-          "version": "1.01",
-          "title_id": null,
-          "languages": [
-            "EN"
-          ],
-          "min_fw": null
-        }
-      },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/ADR1FT%20-%20[US]%20[EN]%20[1.01].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/ADR1FT%20-%20[US]%20[EN]%20[1.01].pkg",
-        "to": "https://akirabox.to/jJD3V1vYlma5/file",
-        "status": "pending_review"
-      },
-      "share_url": "https://akirabox.to/jJD3V1vYlma5/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "duplicate_of_file_id": "qw1zeKMjvmXy",
+      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
-      "status": "outdated",
+      "status": "matched",
       "file_id": "jar3Xb6V2G2d",
       "name": "ABZU - [EU] [EN] [1.01]",
       "platform": "PS4",
@@ -642,24 +595,18 @@
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03364.png",
         "size_bytes": 2311192576,
         "parsed_filename_metadata": {
-          "title": "abzu",
-          "region": "EUR",
-          "version": "1.01",
+          "title": "file",
+          "region": null,
+          "version": null,
           "title_id": null,
-          "languages": [
-            "EN"
-          ],
+          "languages": [],
           "min_fw": null
         }
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/ABZU%20-%20[EU]%20[EN]%20[1.01].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/ABZU%20-%20[EU]%20[EN]%20[1.01].pkg",
-        "to": "https://akirabox.to/jar3Xb6V2G2d/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/jar3Xb6V2G2d/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/jar3Xb6V2G2d/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
       "status": "duplicate",

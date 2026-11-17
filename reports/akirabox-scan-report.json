@@ -2,7 +2,7 @@
   "scanner": "akirabox",
   "read_only": true,
   "folder_count": 3,
-  "file_count": 14,
+  "file_count": 15,
   "folders": [
     {
       "id": "Z9dzBXkvgmk1",
@@ -40,6 +40,24 @@
     }
   ],
   "files": [
+    {
+      "id": "qw1zeKMjvmXy",
+      "numeric_id": 949822,
+      "name": "ADR1FT - [US] [EN] [1.01] (1)",
+      "extension": "pkg",
+      "size_bytes": 2004353024,
+      "visibility": "public",
+      "created_at": "2026-11-17T17:11:57.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qw1zeKMjvmXy/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
     {
       "id": "l5YzMlp2O3yO",
       "numeric_id": 949818,
