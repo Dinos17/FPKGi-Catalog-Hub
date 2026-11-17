@@ -29,23 +29,41 @@ def normalize_title(value: Any) -> str:
     return " ".join("".join(ch if ch.isalnum() else " " for ch in value).split())
 
 
-def parse_source_details(name: str) -> tuple[str, str | None, str | None, str | None]:
-    """Parse common scene names and names containing a CUSA/PPSA title ID."""
+LANGUAGE_CODES = {
+    "AR", "BG", "CS", "DA", "DE", "EL", "EN", "ES", "FI", "FR", "HE",
+    "HR", "HU", "ID", "IT", "JA", "KO", "NL", "NO", "PL", "PT", "RO",
+    "RU", "SK", "SV", "TH", "TR", "UK", "VI", "ZH",
+}
+
+
+def parse_source_metadata(name: str) -> dict[str, Any]:
+    """Parse identity plus language and minimum-firmware tags when filenames expose them."""
     stem = re.sub(r"\.(pkg|zip)$", "", name, flags=re.I).strip()
     # AkiraBox appends duplicate-copy counters after the final bracketed tag.
     stem = re.sub(r"(?<=\])\s*\(\d+\)$", "", stem)
     title_id_match = re.search(r"(?<![A-Z0-9])((?:CUSA|PPSA)\d{5})(?!\d)", stem, re.I)
     title_id = title_id_match.group(1).upper() if title_id_match else None
 
+    tags = re.findall(r"\[\s*([^]]+?)\s*\]", stem)
     region_match = re.search(r"\[\s*(US|USA|EU|EUR|JP|JAP|ASIA)\s*\]", stem, re.I)
     region = REGIONS.get(region_match.group(1).upper()) if region_match else None
+    languages = sorted({
+        token.upper() for tag in tags
+        for token in re.split(r"[+,/\s]+", tag.upper())
+        if token in LANGUAGE_CODES
+    })
 
-    # Prefer explicit _v1.00-style versions so firmware tags such as [5.05]
-    # are never mistaken for the package version.
+    # An explicit v-prefixed version disambiguates a following numeric firmware tag.
     version_match = re.search(r"(?:^|[_\s-])v(\d+(?:\.\d+)+)(?=$|[_\s-])", stem, re.I)
-    if not version_match:
-        version_match = re.search(r"\[\s*(\d+(?:\.\d+)+)\s*\]", stem)
-    version = version_match.group(1) if version_match else None
+    numeric_tags = [tag.strip() for tag in tags if re.fullmatch(r"\d+(?:\.\d+)+", tag.strip())]
+    if version_match:
+        version = version_match.group(1)
+        firmware_tags = [tag for tag in numeric_tags if tag != version]
+        min_fw = firmware_tags[-1] if firmware_tags else None
+    else:
+        fallback = re.search(r"\[\s*(\d+(?:\.\d+)+)\s*\]", stem)
+        version = fallback.group(1) if fallback else None
+        min_fw = None
 
     if title_id_match:
         title = stem[:title_id_match.start()]
@@ -53,7 +71,29 @@ def parse_source_details(name: str) -> tuple[str, str | None, str | None, str | 
         title = title.strip(" -_")
     else:
         title = re.sub(r"\s*-?\s*\[[^]]+\]", " ", stem)
-    return normalize_title(title), region, version, title_id
+
+    return {
+        "title": normalize_title(title),
+        "region": region,
+        "version": version,
+        "title_id": title_id,
+        "languages": languages,
+        "min_fw": min_fw,
+    }
+
+
+def parse_source_details(name: str) -> tuple[str, str | None, str | None, str | None]:
+    """Backward-compatible four-field identity parser."""
+    parsed = parse_source_metadata(name)
+    return parsed["title"], parsed["region"], parsed["version"], parsed["title_id"]
+
+
+def _catalog_filename_metadata(url: str) -> dict[str, Any]:
+    """Parse filename tags from the catalog URL without fetching the package."""
+    from urllib.parse import unquote, urlparse
+
+    filename = unquote(urlparse(url).path.rsplit("/", 1)[-1])
+    return parse_source_metadata(filename)
 
 
 def parse_source_identity(name: str) -> tuple[str, str | None, str | None]:
@@ -119,7 +159,11 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                             "name": item.get("name"), "reason": "Missing supported platform/category"})
             continue
 
-        title, region, source_version, source_title_id = parse_source_details(item["name"])
+        source_metadata = parse_source_metadata(item["name"])
+        title = source_metadata["title"]
+        region = source_metadata["region"]
+        source_version = source_metadata["version"]
+        source_title_id = source_metadata["title_id"]
         if not title:
             counts["unclassified"] += 1
             results.append({"status": "unclassified", "file_id": item.get("id"),
@@ -172,26 +216,46 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         elif not candidates:
             status, reason = "new", "No unique matching title ID or title/region in the target catalog"
         else:
-            _, metadata = candidates[0]
+            catalog_url, metadata = candidates[0]
+            catalog_filename = _catalog_filename_metadata(catalog_url)
             old_version = str(metadata.get("version") or "").lstrip("0")
             new_version = str(source_version or "").lstrip("0")
             old_size, new_size = metadata.get("size"), item.get("size_bytes")
             differences = []
+            metadata_differences = []
+
+            def add_metadata_difference(field: str, source_value: Any, catalog_value: Any) -> None:
+                if source_value is not None and catalog_value is not None and source_value != catalog_value:
+                    metadata_differences.append({
+                        "field": field, "source_value": source_value, "catalog_value": catalog_value,
+                    })
+
             if source_version and old_version and new_version != old_version:
                 differences.append("version differs")
             if isinstance(new_size, int) and isinstance(old_size, int) and new_size != old_size:
                 differences.append("file size differs")
+            add_metadata_difference("version", source_version, metadata.get("version"))
+            add_metadata_difference("region", region, REGIONS.get(str(metadata.get("region") or "").upper()))
+            add_metadata_difference("title_id", source_title_id, metadata.get("title_id"))
+            add_metadata_difference("language", source_metadata["languages"] or None,
+                                    catalog_filename["languages"] or None)
+            add_metadata_difference("min_fw", source_metadata["min_fw"], metadata.get("min_fw"))
+
             if differences:
                 status, reason = "outdated", ", ".join(differences)
             elif not source_version or not old_version or not isinstance(new_size, int) or not isinstance(old_size, int):
                 status, reason = "unclassified", "Matched catalog entry, but version or file-size metadata is missing"
             else:
                 status, reason = "unchanged", "Matching title identity; version and file size agree"
+            if metadata_differences:
+                reason += "; metadata differences detected"
         counts[status] += 1
         results.append({
             "status": status, "file_id": item.get("id"), "name": item.get("name"),
             "platform": platform, "category": category, "region": region,
-            "version": source_version, "title_id": source_title_id, "share_url": item.get("share_url"), "reason": reason,
+            "version": source_version, "title_id": source_title_id,
+            "metadata_differences": metadata_differences if candidates and len(candidates) == 1 else [],
+            "share_url": item.get("share_url"), "reason": reason,
         })
 
     expected = {(platform, category) for platform in ("PS4", "PS5") for category in ("games", "dlc")}
