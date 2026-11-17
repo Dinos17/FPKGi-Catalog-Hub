@@ -1,3 +1,14 @@
 {
-  "sources": []
+  "sources": [
+    {
+      "label": "PS4 parent folder",
+      "platform": "PS4",
+      "url": "https://akirabox.to/Z9dzBXkvgmk1/folder"
+    },
+    {
+      "label": "PS5 parent folder",
+      "platform": "PS5",
+      "url": "https://akirabox.to/qPez45WveGOY/folder"
+    }
+  ]
 }
