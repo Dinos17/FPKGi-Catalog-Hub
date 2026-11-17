@@ -24,6 +24,7 @@ def normalize_title(value: Any) -> str:
         return ""
     value = re.sub(r"\.(pkg|zip)$", "", value.strip(), flags=re.I)
     value = re.sub(r"\s*-?\s*\[[^]]+\]", " ", value)
+    value = value.replace("™", " ").replace("®", " ").replace("©", " ")
     value = unicodedata.normalize("NFKD", value).casefold()
     return " ".join("".join(ch if ch.isalnum() else " " for ch in value).split())
 
