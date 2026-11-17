@@ -37,6 +37,7 @@ def fetch_akirabox_sha256(file_id: str, session: Any = None) -> dict[str, Any]:
             url,
             timeout=AKIRABOX_HASH_TIMEOUT_SECONDS,
             allow_redirects=False,
+            stream=True,
             headers={"User-Agent": "Mozilla/5.0 FPKGi-Catalog-Hub checksum verifier"},
         )
     except requests.RequestException as exc:
