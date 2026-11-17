@@ -606,6 +606,11 @@ def test_source_duplicate_binary_verification_uses_sha256_when_available(
 
 
 class _BrokenAkiraPageResponse(_AkiraPageResponse):
+    def __init__(self):
+        self.status_code = 200
+        self.headers = {"Content-Type": "text/html; charset=utf-8"}
+        self.closed = False
+
     @property
     def text(self):
         raise comparator.requests.exceptions.ChunkedEncodingError("truncated response body")
