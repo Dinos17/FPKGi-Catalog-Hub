@@ -51,7 +51,9 @@ def content_id(v):
 def archive_pkg(v):
     if not isinstance(v,str): return False
     p=urlparse(v)
-    return (p.hostname or "").lower().endswith("archive.org") and unquote(p.path).lower().endswith(".pkg")
+    host = (p.hostname or "").lower()
+    is_archive_host = host == "archive.org" or host.endswith(".archive.org")
+    return is_archive_host and unquote(p.path).lower().endswith(".pkg")
 
 def hf_url(repo,path):
     return f"{HF}/datasets/{OWNER}/{repo}/resolve/main/{quote(path,safe='/')}?download=true"
