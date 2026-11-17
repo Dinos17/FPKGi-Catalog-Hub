@@ -369,6 +369,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, ha
             else:
                 verification_status = "unverified"
                 verification_reason = "A SHA-256 value was unavailable for at least one file"
+            source_items[str(item.get("id"))] = item
             results.append({
                 "status": "duplicate", "file_id": item.get("id"), "name": item.get("name"),
                 "duplicate_of_file_id": original_id,
