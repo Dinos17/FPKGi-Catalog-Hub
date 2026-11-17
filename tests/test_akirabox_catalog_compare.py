@@ -576,7 +576,10 @@ def test_source_duplicate_binary_verification_uses_sha256_when_available(
     for path in ("ps4/games.json", "ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
         write_catalog(tmp_path, path, {})
     values = {
-        "first": {"status": "available", "sha256": first_hash, "reason": "test"},
+        "first": {
+            "status": "available" if first_hash else "unavailable",
+            "sha256": first_hash, "reason": "test",
+        },
         "second": {
             "status": "available" if second_hash else "unavailable",
             "sha256": second_hash, "reason": "test",
