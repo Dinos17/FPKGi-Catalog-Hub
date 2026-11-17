@@ -526,56 +526,162 @@
       "file_id": "5pVzNKB7JG7w",
       "name": "AVICII Invector - [US] [EN] [1.05]",
       "duplicate_of_file_id": "qLQ365WQwm19",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T10:51:05.000Z",
+      "duplicate_of_created_at": "2026-11-17T18:37:16.000Z",
+      "binary_verification": {
+        "status": "verified_identical",
+        "original_sha256": "676c1829513f38208eb21dafdf3331a04d14aad3d6aaaa55ec5b845030208b18",
+        "duplicate_sha256": "676c1829513f38208eb21dafdf3331a04d14aad3d6aaaa55ec5b845030208b18",
+        "reason": "Both AkiraBox pages expose the same SHA-256"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+      "automatic_decision": {
+        "decision": "keep_akirabox",
+        "selected_file_id": "qLQ365WQwm19",
+        "selected_file_name": "AVICII Invector - [US] [EN] [1.05] (1)",
+        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
+      }
     },
     {
       "status": "duplicate",
       "file_id": "qLQ365Wwdm19",
       "name": "ASTRONEER - [US] [EN] [1.64]",
       "duplicate_of_file_id": "LJlGnKlklm15",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T10:26:15.000Z",
+      "duplicate_of_created_at": "2026-11-17T18:25:18.000Z",
+      "binary_verification": {
+        "status": "verified_identical",
+        "original_sha256": "07274c1ff188e2048f5ce86c3f25c7891a78479cca25031d8e7c1c8be4f269a6",
+        "duplicate_sha256": "07274c1ff188e2048f5ce86c3f25c7891a78479cca25031d8e7c1c8be4f269a6",
+        "reason": "Both AkiraBox pages expose the same SHA-256"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+      "automatic_decision": {
+        "decision": "keep_akirabox",
+        "selected_file_id": "LJlGnKlklm15",
+        "selected_file_name": "ASTRONEER - [US] [EN] [1.64] (1)",
+        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
+      }
     },
     {
       "status": "duplicate",
       "file_id": "APVma1BW6mXo",
       "name": "A Hat in Time - [US] [EN] [1.04]",
       "duplicate_of_file_id": "Y2xm0RgE9zRO",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T10:17:38.000Z",
+      "duplicate_of_created_at": "2026-11-17T18:07:18.000Z",
+      "binary_verification": {
+        "status": "unverified",
+        "original_sha256": null,
+        "duplicate_sha256": null,
+        "reason": "A SHA-256 value was unavailable for at least one file"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately"
     },
     {
       "status": "duplicate",
       "file_id": "qw1zeKMW4mXy",
       "name": "A Short Hike - [EU] [EN] [1.01]",
       "duplicate_of_file_id": "dkD3Y2g5lzLQ",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T10:11:19.000Z",
+      "duplicate_of_created_at": "2026-11-17T18:16:11.000Z",
+      "binary_verification": {
+        "status": "verified_identical",
+        "original_sha256": "f194ae42a2f188180990c97450d5e7ede8809c6b1827b2795ed72ac2e6b3c640",
+        "duplicate_sha256": "f194ae42a2f188180990c97450d5e7ede8809c6b1827b2795ed72ac2e6b3c640",
+        "reason": "Both AkiraBox pages expose the same SHA-256"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+      "automatic_decision": {
+        "decision": "keep_akirabox",
+        "selected_file_id": "dkD3Y2g5lzLQ",
+        "selected_file_name": "A Short Hike - [EU] [EN] [1.01] (1)",
+        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
+      }
     },
     {
       "status": "duplicate",
       "file_id": "vgKGxBYjQ38Q",
       "name": "A Monster's Expedition - [EU] [EN] [1.03]",
       "duplicate_of_file_id": "2bJG8lWQDGOB",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T09:57:45.000Z",
+      "duplicate_of_created_at": "2026-11-17T18:14:48.000Z",
+      "binary_verification": {
+        "status": "verified_identical",
+        "original_sha256": "3abce2ccb4ba098d57c0c8f4e914b7b6bed74503b5f18331e3a99d9903883379",
+        "duplicate_sha256": "3abce2ccb4ba098d57c0c8f4e914b7b6bed74503b5f18331e3a99d9903883379",
+        "reason": "Both AkiraBox pages expose the same SHA-256"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+      "automatic_decision": {
+        "decision": "keep_akirabox",
+        "selected_file_id": "2bJG8lWQDGOB",
+        "selected_file_name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
+        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
+      }
     },
     {
       "status": "duplicate",
       "file_id": "jJD3V1vYlma5",
       "name": "ADR1FT - [US] [EN] [1.01]",
       "duplicate_of_file_id": "qw1zeKMjvmXy",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T09:28:48.000Z",
+      "duplicate_of_created_at": "2026-11-17T17:11:57.000Z",
+      "binary_verification": {
+        "status": "verified_identical",
+        "original_sha256": "c2e0dea5adf67cafdb03ae3eb6f0a708def8570f423aeed09e0f7696032fb273",
+        "duplicate_sha256": "c2e0dea5adf67cafdb03ae3eb6f0a708def8570f423aeed09e0f7696032fb273",
+        "reason": "Both AkiraBox pages expose the same SHA-256"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+      "automatic_decision": {
+        "decision": "keep_akirabox",
+        "selected_file_id": "qw1zeKMjvmXy",
+        "selected_file_name": "ADR1FT - [US] [EN] [1.01] (1)",
+        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
+      }
     },
     {
       "status": "duplicate",
       "file_id": "jar3Xb6V2G2d",
       "name": "ABZU - [EU] [EN] [1.01]",
       "duplicate_of_file_id": "LK0G1apwjG91",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T09:18:33.000Z",
+      "duplicate_of_created_at": "2026-11-17T18:13:12.000Z",
+      "binary_verification": {
+        "status": "verified_identical",
+        "original_sha256": "97725df6c3731ab731870e75dc887de4f3619e0466412addec4668d173374e60",
+        "duplicate_sha256": "97725df6c3731ab731870e75dc887de4f3619e0466412addec4668d173374e60",
+        "reason": "Both AkiraBox pages expose the same SHA-256"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+      "automatic_decision": {
+        "decision": "keep_akirabox",
+        "selected_file_id": "LK0G1apwjG91",
+        "selected_file_name": "ABZU - [EU] [EN] [1.01] (1)",
+        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
+      }
     },
     {
       "status": "duplicate",
       "file_id": "ZvqzlKwYO3aD",
       "name": "Absolute Drift - [US] [EN] [1.02]",
       "duplicate_of_file_id": "l5YzMlp2O3yO",
-      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
+      "created_at": "2026-11-17T08:39:03.000Z",
+      "duplicate_of_created_at": "2026-11-17T17:07:06.000Z",
+      "binary_verification": {
+        "status": "verified_identical",
+        "original_sha256": "25b227d0d0e5130eba781dad8915a1abf9151b2d1dc84a99f188b8991a3daab5",
+        "duplicate_sha256": "25b227d0d0e5130eba781dad8915a1abf9151b2d1dc84a99f188b8991a3daab5",
+        "reason": "Both AkiraBox pages expose the same SHA-256"
+      },
+      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
+      "automatic_decision": {
+        "decision": "keep_akirabox",
+        "selected_file_id": "l5YzMlp2O3yO",
+        "selected_file_name": "Absolute Drift - [US] [EN] [1.02] (1)",
+        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
+      }
     },
     {
       "status": "outdated",
