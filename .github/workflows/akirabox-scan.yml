@@ -3,12 +3,12 @@ name: AkiraBox Read-Only Scan
 on:
   workflow_dispatch:
     inputs:
-      source_url:
-        description: Public AkiraBox folder URL containing content you own or are authorized to redistribute
+      folder_url:
+        description: "Public AkiraBox folder URL to scan (content you own or may redistribute)"
         required: true
         type: string
-      category:
-        description: Source category
+      scan_mode:
+        description: "Choose Catalog for PS4/PS5 Games and DLC folder classification"
         required: true
         type: choice
         options:
@@ -39,8 +39,8 @@ jobs:
 
       - name: Create temporary scan configuration
         env:
-          SOURCE_URL: ${{ inputs.source_url }}
-          SOURCE_CATEGORY: ${{ inputs.category }}
+          SOURCE_URL: ${{ inputs.folder_url }}
+          SOURCE_CATEGORY: ${{ inputs.scan_mode }}
         run: |
           python - <<'PY'
           import json
