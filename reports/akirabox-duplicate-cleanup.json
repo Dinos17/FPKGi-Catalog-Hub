@@ -1,0 +1,91 @@
+{
+  "applied_count": 7,
+  "applied": [
+    {
+      "original_file_id": "qLQ365WQwm19",
+      "selected_file_id": "qLQ365WQwm19",
+      "selected_file_name": "AVICII Invector - [US] [EN] [1.05] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "catalog_file": "ps4/games.json",
+      "old_catalog_url": "https://akirabox.to/5pVzNKB7JG7w/file",
+      "new_catalog_url": "https://akirabox.to/qLQ365WQwm19/file",
+      "removed_duplicate_catalog_urls": []
+    },
+    {
+      "original_file_id": "LJlGnKlklm15",
+      "selected_file_id": "LJlGnKlklm15",
+      "selected_file_name": "ASTRONEER - [US] [EN] [1.64] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "catalog_file": "ps4/games.json",
+      "old_catalog_url": "https://akirabox.to/qLQ365Wwdm19/file",
+      "new_catalog_url": "https://akirabox.to/LJlGnKlklm15/file",
+      "removed_duplicate_catalog_urls": []
+    },
+    {
+      "original_file_id": "dkD3Y2g5lzLQ",
+      "selected_file_id": "dkD3Y2g5lzLQ",
+      "selected_file_name": "A Short Hike - [EU] [EN] [1.01] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "catalog_file": "ps4/games.json",
+      "old_catalog_url": "https://akirabox.to/qw1zeKMW4mXy/file",
+      "new_catalog_url": "https://akirabox.to/dkD3Y2g5lzLQ/file",
+      "removed_duplicate_catalog_urls": []
+    },
+    {
+      "original_file_id": "2bJG8lWQDGOB",
+      "selected_file_id": "2bJG8lWQDGOB",
+      "selected_file_name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "catalog_file": "ps4/games.json",
+      "old_catalog_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
+      "new_catalog_url": "https://akirabox.to/2bJG8lWQDGOB/file",
+      "removed_duplicate_catalog_urls": []
+    },
+    {
+      "original_file_id": "qw1zeKMjvmXy",
+      "selected_file_id": "qw1zeKMjvmXy",
+      "selected_file_name": "ADR1FT - [US] [EN] [1.01] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "catalog_file": "ps4/games.json",
+      "old_catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/ADR1FT%20-%20[US]%20[EN]%20[1.01].pkg",
+      "new_catalog_url": "https://akirabox.to/qw1zeKMjvmXy/file",
+      "removed_duplicate_catalog_urls": []
+    },
+    {
+      "original_file_id": "LK0G1apwjG91",
+      "selected_file_id": "LK0G1apwjG91",
+      "selected_file_name": "ABZU - [EU] [EN] [1.01] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "catalog_file": "ps4/games.json",
+      "old_catalog_url": "https://akirabox.to/jar3Xb6V2G2d/file",
+      "new_catalog_url": "https://akirabox.to/LK0G1apwjG91/file",
+      "removed_duplicate_catalog_urls": []
+    },
+    {
+      "original_file_id": "l5YzMlp2O3yO",
+      "selected_file_id": "l5YzMlp2O3yO",
+      "selected_file_name": "Absolute Drift - [US] [EN] [1.02] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "catalog_file": "ps4/games.json",
+      "old_catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Absolute%20Drift%20-%20[US]%20[EN]%20[1.02].pkg",
+      "new_catalog_url": "https://akirabox.to/l5YzMlp2O3yO/file",
+      "removed_duplicate_catalog_urls": []
+    }
+  ],
+  "skipped_count": 1,
+  "skipped": [
+    {
+      "original_file_id": "Y2xm0RgE9zRO",
+      "reason": "Duplicate group has no consistent automatic decision"
+    }
+  ],
+  "catalog_write_performed": true,
+  "akirabox_files_deleted": false
+}
