@@ -2,7 +2,7 @@
   "scanner": "akirabox",
   "read_only": true,
   "folder_count": 3,
-  "file_count": 21,
+  "file_count": 13,
   "folders": [
     {
       "id": "Z9dzBXkvgmk1",
@@ -40,150 +40,6 @@
     }
   ],
   "files": [
-    {
-      "id": "qLQ365WQwm19",
-      "numeric_id": 949888,
-      "name": "AVICII Invector - [US] [EN] [1.05] (1)",
-      "extension": "pkg",
-      "size_bytes": 2837446656,
-      "visibility": "public",
-      "created_at": "2026-11-17T18:37:16.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/qLQ365WQwm19/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
-    {
-      "id": "LJlGnKlklm15",
-      "numeric_id": 949878,
-      "name": "ASTRONEER - [US] [EN] [1.64] (1)",
-      "extension": "pkg",
-      "size_bytes": 1678049280,
-      "visibility": "public",
-      "created_at": "2026-11-17T18:25:18.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/LJlGnKlklm15/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
-    {
-      "id": "dkD3Y2g5lzLQ",
-      "numeric_id": 949873,
-      "name": "A Short Hike - [EU] [EN] [1.01] (1)",
-      "extension": "pkg",
-      "size_bytes": 308281344,
-      "visibility": "public",
-      "created_at": "2026-11-17T18:16:11.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/dkD3Y2g5lzLQ/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
-    {
-      "id": "2bJG8lWQDGOB",
-      "numeric_id": 949872,
-      "name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
-      "extension": "pkg",
-      "size_bytes": 489095168,
-      "visibility": "public",
-      "created_at": "2026-11-17T18:14:48.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/2bJG8lWQDGOB/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
-    {
-      "id": "LK0G1apwjG91",
-      "numeric_id": 949871,
-      "name": "ABZU - [EU] [EN] [1.01] (1)",
-      "extension": "pkg",
-      "size_bytes": 2311192576,
-      "visibility": "public",
-      "created_at": "2026-11-17T18:13:12.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/LK0G1apwjG91/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
-    {
-      "id": "Y2xm0RgE9zRO",
-      "numeric_id": 949869,
-      "name": "A Hat in Time - [US] [EN] [1.04] (1)",
-      "extension": "pkg",
-      "size_bytes": 7746420736,
-      "visibility": "public",
-      "created_at": "2026-11-17T18:07:18.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/Y2xm0RgE9zRO/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
-    {
-      "id": "qw1zeKMjvmXy",
-      "numeric_id": 949822,
-      "name": "ADR1FT - [US] [EN] [1.01] (1)",
-      "extension": "pkg",
-      "size_bytes": 2004353024,
-      "visibility": "public",
-      "created_at": "2026-11-17T17:11:57.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/qw1zeKMjvmXy/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
-    {
-      "id": "l5YzMlp2O3yO",
-      "numeric_id": 949818,
-      "name": "Absolute Drift - [US] [EN] [1.02] (1)",
-      "extension": "pkg",
-      "size_bytes": 189136896,
-      "visibility": "public",
-      "created_at": "2026-11-17T17:07:06.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/l5YzMlp2O3yO/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
-    },
     {
       "id": "rk9zK0aeqG0l",
       "numeric_id": 949664,
@@ -420,5 +276,5 @@
     }
   ],
   "errors": [],
-  "generated_at": "2026-11-17T23:49:56Z"
+  "generated_at": "2026-11-17T23:53:20Z"
 }

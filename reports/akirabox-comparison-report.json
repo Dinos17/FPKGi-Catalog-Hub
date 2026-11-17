@@ -8,331 +8,11 @@
     "new": 0,
     "matched": 12,
     "outdated": 1,
-    "duplicate": 8,
+    "duplicate": 0,
     "unclassified": 0
   },
   "replacement_candidate_count": 1,
   "results": [
-    {
-      "status": "matched",
-      "file_id": "qLQ365WQwm19",
-      "name": "AVICII Invector - [US] [EN] [1.05] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.05",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "avicii invector",
-        "region": "USA",
-        "version": "1.05",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 2837446656,
-        "file_name": "AVICII Invector - [US] [EN] [1.05] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA18271",
-        "region": "USA",
-        "name": "AVICII Invector",
-        "version": "01.05",
-        "release": "11-15-2013",
-        "size": 2837446656,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA18271.png",
-        "size_bytes": 2837446656
-      },
-      "catalog_url": "https://akirabox.to/qLQ365WQwm19/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/qLQ365WQwm19/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "matched",
-      "file_id": "LJlGnKlklm15",
-      "name": "ASTRONEER - [US] [EN] [1.64] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.64",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "astroneer",
-        "region": "USA",
-        "version": "1.64",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 1678049280,
-        "file_name": "ASTRONEER - [US] [EN] [1.64] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA16473",
-        "region": "USA",
-        "name": "ASTRONEER",
-        "version": "01.64",
-        "release": "11-15-2013",
-        "size": 1678049280,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16473.png",
-        "size_bytes": 1678049280
-      },
-      "catalog_url": "https://akirabox.to/LJlGnKlklm15/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/LJlGnKlklm15/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "matched",
-      "file_id": "dkD3Y2g5lzLQ",
-      "name": "A Short Hike - [EU] [EN] [1.01] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "EUR",
-      "version": "1.01",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "a short hike",
-        "region": "EUR",
-        "version": "1.01",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 308281344,
-        "file_name": "A Short Hike - [EU] [EN] [1.01] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA30277",
-        "region": "EUR",
-        "name": "A Short Hike",
-        "version": "01.01",
-        "release": "11-15-2013",
-        "size": 308281344,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30277.png",
-        "size_bytes": 308281344
-      },
-      "catalog_url": "https://akirabox.to/dkD3Y2g5lzLQ/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/dkD3Y2g5lzLQ/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "matched",
-      "file_id": "2bJG8lWQDGOB",
-      "name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "EUR",
-      "version": "1.03",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "a monster s expedition",
-        "region": "EUR",
-        "version": "1.03",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 489095168,
-        "file_name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA29979",
-        "region": "EUR",
-        "name": "A Monster's Expedition",
-        "version": "01.03",
-        "release": "11-15-2013",
-        "size": 489095168,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29979.png",
-        "size_bytes": 489095168
-      },
-      "catalog_url": "https://akirabox.to/2bJG8lWQDGOB/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/2bJG8lWQDGOB/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "matched",
-      "file_id": "LK0G1apwjG91",
-      "name": "ABZU - [EU] [EN] [1.01] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "EUR",
-      "version": "1.01",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "abzu",
-        "region": "EUR",
-        "version": "1.01",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 2311192576,
-        "file_name": "ABZU - [EU] [EN] [1.01] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA03364",
-        "region": "EUR",
-        "name": "ABZU",
-        "version": "01.01",
-        "release": "11-15-2013",
-        "size": 2311192576,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03364.png",
-        "size_bytes": 2311192576
-      },
-      "catalog_url": "https://akirabox.to/LK0G1apwjG91/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/LK0G1apwjG91/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "matched",
-      "file_id": "Y2xm0RgE9zRO",
-      "name": "A Hat in Time - [US] [EN] [1.04] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.04",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "a hat in time",
-        "region": "USA",
-        "version": "1.04",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 7746420736,
-        "file_name": "A Hat in Time - [US] [EN] [1.04] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA09267",
-        "region": "USA",
-        "name": "A Hat in Time",
-        "version": "01.04",
-        "release": "11-15-2013",
-        "size": 7746420736,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09267.png",
-        "size_bytes": 7746420736
-      },
-      "catalog_url": "https://akirabox.to/APVma1BW6mXo/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/Y2xm0RgE9zRO/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "matched",
-      "file_id": "qw1zeKMjvmXy",
-      "name": "ADR1FT - [US] [EN] [1.01] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.01",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "adr1ft",
-        "region": "USA",
-        "version": "1.01",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 2004353024,
-        "file_name": "ADR1FT - [US] [EN] [1.01] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA02572",
-        "region": "USA",
-        "name": "ADR1FT",
-        "version": "01.01",
-        "release": "11-15-2013",
-        "size": 2004353024,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02572.png",
-        "size_bytes": 2004353024
-      },
-      "catalog_url": "https://akirabox.to/qw1zeKMjvmXy/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/qw1zeKMjvmXy/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "matched",
-      "file_id": "l5YzMlp2O3yO",
-      "name": "Absolute Drift - [US] [EN] [1.02] (1)",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.02",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "absolute drift",
-        "region": "USA",
-        "version": "1.02",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 189136896,
-        "file_name": "Absolute Drift - [US] [EN] [1.02] (1)",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA05148",
-        "region": "USA",
-        "name": "Absolute Drift",
-        "version": "01.02",
-        "release": "11-15-2013",
-        "size": 189136896,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05148.png",
-        "size_bytes": 189136896
-      },
-      "catalog_url": "https://akirabox.to/l5YzMlp2O3yO/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/l5YzMlp2O3yO/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
     {
       "status": "matched",
       "file_id": "rk9zK0aeqG0l",
@@ -494,166 +174,324 @@
       "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "5pVzNKB7JG7w",
       "name": "AVICII Invector - [US] [EN] [1.05]",
-      "duplicate_of_file_id": "qLQ365WQwm19",
-      "created_at": "2026-11-17T10:51:05.000Z",
-      "duplicate_of_created_at": "2026-11-17T18:37:16.000Z",
-      "binary_verification": {
-        "status": "verified_identical",
-        "original_sha256": "676c1829513f38208eb21dafdf3331a04d14aad3d6aaaa55ec5b845030208b18",
-        "duplicate_sha256": "676c1829513f38208eb21dafdf3331a04d14aad3d6aaaa55ec5b845030208b18",
-        "reason": "Both AkiraBox pages expose the same SHA-256"
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.05",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "avicii invector",
+        "region": "USA",
+        "version": "1.05",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2837446656,
+        "file_name": "AVICII Invector - [US] [EN] [1.05]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
-      "automatic_decision": {
-        "decision": "keep_akirabox",
-        "selected_file_id": "qLQ365WQwm19",
-        "selected_file_name": "AVICII Invector - [US] [EN] [1.05] (1)",
-        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
-      }
+      "catalog_metadata": {
+        "title_id": "CUSA18271",
+        "region": "USA",
+        "name": "AVICII Invector",
+        "version": "01.05",
+        "release": "11-15-2013",
+        "size": 2837446656,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA18271.png",
+        "size_bytes": 2837446656
+      },
+      "catalog_url": "https://akirabox.to/qLQ365WQwm19/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/5pVzNKB7JG7w/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "qLQ365Wwdm19",
       "name": "ASTRONEER - [US] [EN] [1.64]",
-      "duplicate_of_file_id": "LJlGnKlklm15",
-      "created_at": "2026-11-17T10:26:15.000Z",
-      "duplicate_of_created_at": "2026-11-17T18:25:18.000Z",
-      "binary_verification": {
-        "status": "verified_identical",
-        "original_sha256": "07274c1ff188e2048f5ce86c3f25c7891a78479cca25031d8e7c1c8be4f269a6",
-        "duplicate_sha256": "07274c1ff188e2048f5ce86c3f25c7891a78479cca25031d8e7c1c8be4f269a6",
-        "reason": "Both AkiraBox pages expose the same SHA-256"
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.64",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "astroneer",
+        "region": "USA",
+        "version": "1.64",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 1678049280,
+        "file_name": "ASTRONEER - [US] [EN] [1.64]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
-      "automatic_decision": {
-        "decision": "keep_akirabox",
-        "selected_file_id": "LJlGnKlklm15",
-        "selected_file_name": "ASTRONEER - [US] [EN] [1.64] (1)",
-        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
-      }
+      "catalog_metadata": {
+        "title_id": "CUSA16473",
+        "region": "USA",
+        "name": "ASTRONEER",
+        "version": "01.64",
+        "release": "11-15-2013",
+        "size": 1678049280,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16473.png",
+        "size_bytes": 1678049280
+      },
+      "catalog_url": "https://akirabox.to/LJlGnKlklm15/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/qLQ365Wwdm19/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "APVma1BW6mXo",
       "name": "A Hat in Time - [US] [EN] [1.04]",
-      "duplicate_of_file_id": "Y2xm0RgE9zRO",
-      "created_at": "2026-11-17T10:17:38.000Z",
-      "duplicate_of_created_at": "2026-11-17T18:07:18.000Z",
-      "binary_verification": {
-        "status": "unverified",
-        "original_sha256": null,
-        "duplicate_sha256": null,
-        "reason": "A SHA-256 value was unavailable for at least one file"
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.04",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "a hat in time",
+        "region": "USA",
+        "version": "1.04",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 7746420736,
+        "file_name": "A Hat in Time - [US] [EN] [1.04]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately"
+      "catalog_metadata": {
+        "title_id": "CUSA09267",
+        "region": "USA",
+        "name": "A Hat in Time",
+        "version": "01.04",
+        "release": "11-15-2013",
+        "size": 7746420736,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09267.png",
+        "size_bytes": 7746420736
+      },
+      "catalog_url": "https://akirabox.to/APVma1BW6mXo/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/APVma1BW6mXo/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "qw1zeKMW4mXy",
       "name": "A Short Hike - [EU] [EN] [1.01]",
-      "duplicate_of_file_id": "dkD3Y2g5lzLQ",
-      "created_at": "2026-11-17T10:11:19.000Z",
-      "duplicate_of_created_at": "2026-11-17T18:16:11.000Z",
-      "binary_verification": {
-        "status": "verified_identical",
-        "original_sha256": "f194ae42a2f188180990c97450d5e7ede8809c6b1827b2795ed72ac2e6b3c640",
-        "duplicate_sha256": "f194ae42a2f188180990c97450d5e7ede8809c6b1827b2795ed72ac2e6b3c640",
-        "reason": "Both AkiraBox pages expose the same SHA-256"
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "a short hike",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 308281344,
+        "file_name": "A Short Hike - [EU] [EN] [1.01]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
-      "automatic_decision": {
-        "decision": "keep_akirabox",
-        "selected_file_id": "dkD3Y2g5lzLQ",
-        "selected_file_name": "A Short Hike - [EU] [EN] [1.01] (1)",
-        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
-      }
+      "catalog_metadata": {
+        "title_id": "CUSA30277",
+        "region": "EUR",
+        "name": "A Short Hike",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 308281344,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30277.png",
+        "size_bytes": 308281344
+      },
+      "catalog_url": "https://akirabox.to/dkD3Y2g5lzLQ/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/qw1zeKMW4mXy/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "vgKGxBYjQ38Q",
       "name": "A Monster's Expedition - [EU] [EN] [1.03]",
-      "duplicate_of_file_id": "2bJG8lWQDGOB",
-      "created_at": "2026-11-17T09:57:45.000Z",
-      "duplicate_of_created_at": "2026-11-17T18:14:48.000Z",
-      "binary_verification": {
-        "status": "verified_identical",
-        "original_sha256": "3abce2ccb4ba098d57c0c8f4e914b7b6bed74503b5f18331e3a99d9903883379",
-        "duplicate_sha256": "3abce2ccb4ba098d57c0c8f4e914b7b6bed74503b5f18331e3a99d9903883379",
-        "reason": "Both AkiraBox pages expose the same SHA-256"
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.03",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "a monster s expedition",
+        "region": "EUR",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 489095168,
+        "file_name": "A Monster's Expedition - [EU] [EN] [1.03]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
-      "automatic_decision": {
-        "decision": "keep_akirabox",
-        "selected_file_id": "2bJG8lWQDGOB",
-        "selected_file_name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
-        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
-      }
+      "catalog_metadata": {
+        "title_id": "CUSA29979",
+        "region": "EUR",
+        "name": "A Monster's Expedition",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 489095168,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29979.png",
+        "size_bytes": 489095168
+      },
+      "catalog_url": "https://akirabox.to/2bJG8lWQDGOB/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "jJD3V1vYlma5",
       "name": "ADR1FT - [US] [EN] [1.01]",
-      "duplicate_of_file_id": "qw1zeKMjvmXy",
-      "created_at": "2026-11-17T09:28:48.000Z",
-      "duplicate_of_created_at": "2026-11-17T17:11:57.000Z",
-      "binary_verification": {
-        "status": "verified_identical",
-        "original_sha256": "c2e0dea5adf67cafdb03ae3eb6f0a708def8570f423aeed09e0f7696032fb273",
-        "duplicate_sha256": "c2e0dea5adf67cafdb03ae3eb6f0a708def8570f423aeed09e0f7696032fb273",
-        "reason": "Both AkiraBox pages expose the same SHA-256"
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "adr1ft",
+        "region": "USA",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2004353024,
+        "file_name": "ADR1FT - [US] [EN] [1.01]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
-      "automatic_decision": {
-        "decision": "keep_akirabox",
-        "selected_file_id": "qw1zeKMjvmXy",
-        "selected_file_name": "ADR1FT - [US] [EN] [1.01] (1)",
-        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
-      }
+      "catalog_metadata": {
+        "title_id": "CUSA02572",
+        "region": "USA",
+        "name": "ADR1FT",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 2004353024,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02572.png",
+        "size_bytes": 2004353024
+      },
+      "catalog_url": "https://akirabox.to/qw1zeKMjvmXy/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/jJD3V1vYlma5/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "jar3Xb6V2G2d",
       "name": "ABZU - [EU] [EN] [1.01]",
-      "duplicate_of_file_id": "LK0G1apwjG91",
-      "created_at": "2026-11-17T09:18:33.000Z",
-      "duplicate_of_created_at": "2026-11-17T18:13:12.000Z",
-      "binary_verification": {
-        "status": "verified_identical",
-        "original_sha256": "97725df6c3731ab731870e75dc887de4f3619e0466412addec4668d173374e60",
-        "duplicate_sha256": "97725df6c3731ab731870e75dc887de4f3619e0466412addec4668d173374e60",
-        "reason": "Both AkiraBox pages expose the same SHA-256"
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "abzu",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2311192576,
+        "file_name": "ABZU - [EU] [EN] [1.01]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
-      "automatic_decision": {
-        "decision": "keep_akirabox",
-        "selected_file_id": "LK0G1apwjG91",
-        "selected_file_name": "ABZU - [EU] [EN] [1.01] (1)",
-        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
-      }
+      "catalog_metadata": {
+        "title_id": "CUSA03364",
+        "region": "EUR",
+        "name": "ABZU",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 2311192576,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03364.png",
+        "size_bytes": 2311192576
+      },
+      "catalog_url": "https://akirabox.to/LK0G1apwjG91/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/jar3Xb6V2G2d/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "duplicate",
+      "status": "matched",
       "file_id": "ZvqzlKwYO3aD",
       "name": "Absolute Drift - [US] [EN] [1.02]",
-      "duplicate_of_file_id": "l5YzMlp2O3yO",
-      "created_at": "2026-11-17T08:39:03.000Z",
-      "duplicate_of_created_at": "2026-11-17T17:07:06.000Z",
-      "binary_verification": {
-        "status": "verified_identical",
-        "original_sha256": "25b227d0d0e5130eba781dad8915a1abf9151b2d1dc84a99f188b8991a3daab5",
-        "duplicate_sha256": "25b227d0d0e5130eba781dad8915a1abf9151b2d1dc84a99f188b8991a3daab5",
-        "reason": "Both AkiraBox pages expose the same SHA-256"
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.02",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "absolute drift",
+        "region": "USA",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 189136896,
+        "file_name": "Absolute Drift - [US] [EN] [1.02]",
+        "platform": "PS4",
+        "category": "games"
       },
-      "reason": "Duplicate AkiraBox metadata identity; binary identity is reported separately",
-      "automatic_decision": {
-        "decision": "keep_akirabox",
-        "selected_file_id": "l5YzMlp2O3yO",
-        "selected_file_name": "Absolute Drift - [US] [EN] [1.02] (1)",
-        "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp"
-      }
+      "catalog_metadata": {
+        "title_id": "CUSA05148",
+        "region": "USA",
+        "name": "Absolute Drift",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 189136896,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05148.png",
+        "size_bytes": 189136896
+      },
+      "catalog_url": "https://akirabox.to/l5YzMlp2O3yO/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/ZvqzlKwYO3aD/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
       "status": "outdated",
