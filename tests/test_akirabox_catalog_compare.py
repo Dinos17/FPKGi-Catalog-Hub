@@ -185,3 +185,23 @@ def test_duplicate_copy_suffix_normalizes_to_same_source_identity(tmp_path):
     report = compare_scan(scan, tmp_path)
     assert report["counts"] == {"new": 0, "unchanged": 1, "outdated": 0, "duplicate": 1, "unclassified": 0}
     assert report["results"][1]["duplicate_of_file_id"] == "original"
+
+
+def test_numbered_packages_sharing_title_id_are_not_duplicates(tmp_path):
+    write_catalog(tmp_path, "ps4/dlc.json", {
+        "https://archive.org/costume-pack-1.pkg": {
+            "name": "Costume Pack (1)", "title_id": "CUSA12345",
+            "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/games.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "pack-1", "name": "Costume.Pack.(1)_CUSA12345_v1.00_[5.05]-PS4.pkg",
+         "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100},
+        {"id": "pack-2", "name": "Costume.Pack.(2)_CUSA12345_v1.00_[5.05]-PS4.pkg",
+         "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100},
+    ]}
+    report = compare_scan(scan, tmp_path)
+    assert [item["status"] for item in report["results"]] == ["unchanged", "unchanged"]
+    assert report["counts"]["duplicate"] == 0
