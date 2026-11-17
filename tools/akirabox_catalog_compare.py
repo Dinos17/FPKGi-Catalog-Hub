@@ -124,7 +124,6 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                             "reason": "Duplicate AkiraBox title/region/version already seen in this scan"})
             continue
         source_seen[identity_key] = str(item.get("id"))
-        source_identities.setdefault((platform, category), set()).add((title, region))
         id_candidates = title_id_index.get(source_title_id, []) if source_title_id else []
         exact = index.get((title, region), [])
         # Prefer the platform title ID when present; fall back to title/region
@@ -136,6 +135,10 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             candidates = exact if region else [
                 entry for identity, entries in index.items() if identity[0] == title for entry in entries
             ]
+        for _, matched_metadata in candidates:
+            matched_identity = _catalog_identity(matched_metadata)
+            if matched_identity[0]:
+                source_identities.setdefault((platform, category), set()).add(matched_identity)
         if len(candidates) > 1:
             status, reason = "duplicate", "Multiple catalog entries match the available title identity"
         elif not candidates:
