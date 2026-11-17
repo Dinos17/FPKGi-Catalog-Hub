@@ -8,11 +8,51 @@
     "new": 0,
     "matched": 10,
     "outdated": 3,
-    "duplicate": 2,
+    "duplicate": 3,
     "unclassified": 0
   },
   "replacement_candidate_count": 3,
   "results": [
+    {
+      "status": "matched",
+      "file_id": "Y2xm0RgE9zRO",
+      "name": "A Hat in Time - [US] [EN] [1.04] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.04",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "a hat in time",
+        "region": "USA",
+        "version": "1.04",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 7746420736,
+        "file_name": "A Hat in Time - [US] [EN] [1.04] (1)",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA09267",
+        "region": "USA",
+        "name": "A Hat in Time",
+        "version": "01.04",
+        "release": "11-15-2013",
+        "size": 7746420736,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09267.png",
+        "size_bytes": 7746420736
+      },
+      "catalog_url": "https://akirabox.to/APVma1BW6mXo/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/Y2xm0RgE9zRO/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+    },
     {
       "status": "outdated",
       "file_id": "qw1zeKMjvmXy",
@@ -154,15 +194,7 @@
         "size": 17873240064,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA19254.png",
-        "size_bytes": 17873240064,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 17873240064
       },
       "catalog_url": "https://akirabox.to/rk9zK0aeqG0l/file",
       "proposed_replacement": null,
@@ -202,15 +234,7 @@
         "size": 3556507648,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05882.png",
-        "size_bytes": 3556507648,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 3556507648
       },
       "catalog_url": "https://akirabox.to/9AqGQ8lorzMn/file",
       "proposed_replacement": null,
@@ -250,15 +274,7 @@
         "size": 7489781760,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA45443.png",
-        "size_bytes": 7489781760,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 7489781760
       },
       "catalog_url": "https://akirabox.to/Xkrzo67NY3BO/file",
       "proposed_replacement": null,
@@ -298,15 +314,7 @@
         "size": 17402822656,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07995.png",
-        "size_bytes": 17402822656,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 17402822656
       },
       "catalog_url": "https://akirabox.to/EL73gK2e839B/file",
       "proposed_replacement": null,
@@ -346,15 +354,7 @@
         "size": 2837446656,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA18271.png",
-        "size_bytes": 2837446656,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 2837446656
       },
       "catalog_url": "https://akirabox.to/5pVzNKB7JG7w/file",
       "proposed_replacement": null,
@@ -394,15 +394,7 @@
         "size": 1678049280,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16473.png",
-        "size_bytes": 1678049280,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 1678049280
       },
       "catalog_url": "https://akirabox.to/qLQ365Wwdm19/file",
       "proposed_replacement": null,
@@ -410,52 +402,11 @@
       "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "matched",
+      "status": "duplicate",
       "file_id": "APVma1BW6mXo",
       "name": "A Hat in Time - [US] [EN] [1.04]",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.04",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "a hat in time",
-        "region": "USA",
-        "version": "1.04",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 7746420736,
-        "file_name": "A Hat in Time - [US] [EN] [1.04]",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA09267",
-        "region": "USA",
-        "name": "A Hat in Time",
-        "version": "01.04",
-        "release": "11-15-2013",
-        "size": 7746420736,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09267.png",
-        "size_bytes": 7746420736,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
-      },
-      "catalog_url": "https://akirabox.to/APVma1BW6mXo/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/APVma1BW6mXo/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+      "duplicate_of_file_id": "Y2xm0RgE9zRO",
+      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
       "status": "matched",
@@ -490,15 +441,7 @@
         "size": 308281344,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30277.png",
-        "size_bytes": 308281344,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 308281344
       },
       "catalog_url": "https://akirabox.to/qw1zeKMW4mXy/file",
       "proposed_replacement": null,
@@ -538,15 +481,7 @@
         "size": 489095168,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29979.png",
-        "size_bytes": 489095168,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 489095168
       },
       "catalog_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
       "proposed_replacement": null,
@@ -593,15 +528,7 @@
         "size": 2311192576,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03364.png",
-        "size_bytes": 2311192576,
-        "parsed_filename_metadata": {
-          "title": "file",
-          "region": null,
-          "version": null,
-          "title_id": null,
-          "languages": [],
-          "min_fw": null
-        }
+        "size_bytes": 2311192576
       },
       "catalog_url": "https://akirabox.to/jar3Xb6V2G2d/file",
       "proposed_replacement": null,
