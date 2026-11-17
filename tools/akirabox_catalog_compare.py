@@ -370,7 +370,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             # Archive.org is the source being replaced, not a URL whose
             # availability needs to be probed. A unique identity match is
             # enough to propose the AkiraBox share URL in this read-only report.
-            archive_replacement = _is_archive_url(catalog_url)
+            archive_catalog_url = _is_archive_url(catalog_url)
             share_url = item.get("share_url")
             valid_share_url = False
             if isinstance(share_url, str):
@@ -382,7 +382,9 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
                     )
                 except ValueError:
                     valid_share_url = False
-            if archive_replacement and valid_share_url:
+            # Only flag an entry when a concrete AkiraBox destination exists.
+            archive_replacement = archive_catalog_url and valid_share_url
+            if archive_replacement:
                 proposed_replacement = {
                     "from": catalog_url,
                     "to": share_url,
@@ -392,11 +394,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
                 status = "outdated"
                 reasons = list(differences)
                 if archive_replacement:
-                    reasons.append(
-                        "Archive.org catalog URL should be replaced with the AkiraBox share URL"
-                        if valid_share_url else
-                        "Archive.org catalog URL needs replacement, but no valid AkiraBox share URL was found"
-                    )
+                    reasons.append("Archive.org catalog URL should be replaced with the AkiraBox share URL")
                 reason = ", ".join(reasons)
             elif not source_version or not old_version or not isinstance(new_size, int) or not isinstance(old_size, int):
                 status, reason = "unclassified", "Matched catalog entry, but version or file-size metadata is missing"
