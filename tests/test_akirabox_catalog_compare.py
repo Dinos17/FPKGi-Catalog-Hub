@@ -542,6 +542,7 @@ def test_fetch_akirabox_sha256_reads_escaped_page_field_without_following_redire
         "reason": "SHA-256 read from AkiraBox file page",
     }
     assert session.calls[0][1]["allow_redirects"] is False
+    assert session.calls[0][1]["stream"] is True
     assert session.calls[0][1]["timeout"] == comparator.AKIRABOX_HASH_TIMEOUT_SECONDS
     assert response.closed is True
 
