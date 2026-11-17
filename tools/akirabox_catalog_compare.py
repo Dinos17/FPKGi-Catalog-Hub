@@ -24,7 +24,7 @@ def normalize_title(value: Any) -> str:
         return ""
     value = re.sub(r"\.(pkg|zip)$", "", value.strip(), flags=re.I)
     # AkiraBox may append a copy counter such as "(1)" to duplicate uploads.
-    value = re.sub(r"\s*\(\d+\)$", "", value)
+    value = re.sub(r"(?<=\])\s*\(\d+\)$", "", value)
     value = re.sub(r"\s*-?\s*\[[^]]+\]", " ", value)
     value = value.replace("™", " ").replace("®", " ").replace("©", " ")
     value = unicodedata.normalize("NFKD", value).casefold()
