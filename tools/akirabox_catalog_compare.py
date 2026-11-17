@@ -406,6 +406,18 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             "platform": platform, "category": category, "region": region,
             "version": source_version, "title_id": source_title_id,
             "metadata_differences": metadata_differences if candidates and len(candidates) == 1 else [],
+            "source_metadata": {
+                **source_metadata,
+                "size_bytes": source_size,
+                "file_name": item.get("name"),
+                "platform": platform,
+                "category": category,
+            },
+            "catalog_metadata": ({
+                **metadata,
+                "size_bytes": metadata.get("size"),
+                "parsed_filename_metadata": catalog_filename,
+            } if candidates and len(candidates) == 1 else None),
             "catalog_url": catalog_url if candidates and len(candidates) == 1 else None,
             "proposed_replacement": proposed_replacement,
             "share_url": item.get("share_url"), "reason": reason,
