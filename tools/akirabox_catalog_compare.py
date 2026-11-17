@@ -24,14 +24,22 @@ MAX_LINK_REDIRECTS = 5
 
 
 def _is_archive_url(url: str) -> bool:
-    parsed = urlparse(url)
-    host = (parsed.hostname or "").lower()
-    return (
-        parsed.scheme == "https"
-        and (host == ARCHIVE_HOST or host.endswith("." + ARCHIVE_HOST))
-        and parsed.username is None
-        and parsed.password is None
-    )
+    try:
+        parsed = urlparse(url)
+        # Backslashes can terminate the authority when urllib3 prepares a URL,
+        # so reject them before checking the hostname suffix.
+        if "\\" in parsed.netloc:
+            return False
+        host = (parsed.hostname or "").lower()
+        return (
+            parsed.scheme == "https"
+            and (host == ARCHIVE_HOST or host.endswith("." + ARCHIVE_HOST))
+            and parsed.username is None
+            and parsed.password is None
+        )
+    except ValueError:
+        # urlparse raises for malformed authorities (for example, bad IPv6).
+        return False
 
 
 def check_catalog_url(url: str, session: Any = None) -> dict[str, Any]:
@@ -47,19 +55,37 @@ def check_catalog_url(url: str, session: Any = None) -> dict[str, Any]:
             if not _is_archive_url(current):
                 return None, "Redirect left permitted Internet Archive hosts"
             try:
-                response = client.request(
-                    method, current,
-                    headers={"Range": "bytes=0-0"} if method == "GET" else {},
-                    timeout=LINK_TIMEOUT_SECONDS, allow_redirects=False, stream=True,
+                # Prepare and send through the adapter directly. Session.send()
+                # resolves redirect metadata even with allow_redirects=False;
+                # that path can consume a redirect response body.
+                prepared = client.prepare_request(
+                    requests.Request(
+                        method, current,
+                        headers={"Range": "bytes=0-0"} if method == "GET" else {},
+                    )
                 )
-            except requests.RequestException as exc:
+                if not _is_archive_url(prepared.url):
+                    return None, "Prepared request left permitted Internet Archive hosts"
+                settings = client.merge_environment_settings(
+                    prepared.url, {}, True, None, None
+                )
+                adapter = client.get_adapter(prepared.url)
+                response = adapter.send(
+                    prepared, timeout=LINK_TIMEOUT_SECONDS, **settings
+                )
+            except (requests.RequestException, ValueError) as exc:
                 return None, f"Link check failed: {type(exc).__name__}"
             if response.status_code in {301, 302, 303, 307, 308}:
                 location = response.headers.get("Location")
                 response.close()
                 if not location:
                     return None, "Redirect response had no Location header"
-                current = urljoin(current, location)
+                try:
+                    current = urljoin(current, location)
+                except ValueError as exc:
+                    return None, f"Malformed redirect URL: {type(exc).__name__}"
+                if not _is_archive_url(current):
+                    return None, "Redirect left permitted Internet Archive hosts"
                 continue
             return response, None
         return None, "Too many redirects"
@@ -87,7 +113,6 @@ def check_catalog_url(url: str, session: Any = None) -> dict[str, Any]:
                 "reason": f"Catalog URL responded with HTTP {status_code}"}
     return {"status": "inconclusive", "http_status": status_code,
             "reason": f"Catalog URL check was inconclusive (HTTP {status_code})"}
-
 
 REGIONS = {"US": "USA", "USA": "USA", "EU": "EUR", "EUR": "EUR",
            "JP": "JAP", "JAP": "JAP", "ASIA": "ASIA"}
