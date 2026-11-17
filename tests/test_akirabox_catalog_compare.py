@@ -1,11 +1,22 @@
 import json
 import sys
+import pytest
 from pathlib import Path
 
 TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
+import akirabox_catalog_compare as comparator
 from akirabox_catalog_compare import compare_scan, parse_source_details, parse_source_identity, parse_source_metadata
+
+
+@pytest.fixture(autouse=True)
+def stub_catalog_link_checks(monkeypatch, request):
+    if request.node.name.startswith("test_check_catalog_url_"):
+        return
+    monkeypatch.setattr(comparator, "check_catalog_url", lambda url: {
+        "status": "reachable", "http_status": 200, "reason": "test URL reachable",
+    })
 
 
 def write_catalog(root: Path, relative: str, data: dict) -> None:
@@ -323,3 +334,122 @@ def test_single_dlc_title_id_candidate_accepts_exact_package_name(tmp_path):
 
     assert report["results"][0]["status"] == "matched"
 
+
+
+
+def test_broken_catalog_url_changes_metadata_match_to_outdated(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/game.pkg": {
+            "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "broken", "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path, link_checker=lambda url: {
+        "status": "broken", "http_status": 404, "reason": "Catalog URL returned HTTP 404",
+    })
+    result = report["results"][0]
+    assert result["status"] == "outdated"
+    assert result["catalog_url"] == "https://archive.org/download/example/game.pkg"
+    assert result["link_check"]["http_status"] == 404
+    assert "HTTP 404" in result["reason"]
+
+
+def test_inconclusive_catalog_url_is_not_called_matched(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/game.pkg": {
+            "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "uncertain", "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path, link_checker=lambda url: {
+        "status": "inconclusive", "http_status": 403, "reason": "HTTP 403",
+    })
+    assert report["results"][0]["status"] == "unclassified"
+
+
+class _StubResponse(comparator.requests.Response):
+    def __init__(self, status, headers=None, forbid_body=False):
+        super().__init__()
+        self.status_code = status
+        self.headers.update(headers or {})
+        self._content = False
+        self.raw = type("Raw", (), {"close": lambda self: None})()
+        self.forbid_body = forbid_body
+
+    @property
+    def content(self):
+        if self.forbid_body:
+            raise AssertionError("redirect response body must not be consumed")
+        return super().content
+
+
+class _StubAdapter(comparator.requests.adapters.BaseAdapter):
+    def __init__(self, responses):
+        self.responses = list(responses)
+        self.calls = []
+
+    def send(self, request, **kwargs):
+        self.calls.append((request, kwargs))
+        return self.responses.pop(0)
+
+    def close(self):
+        pass
+
+
+def _session_with_responses(*responses):
+    session = comparator.requests.Session()
+    adapter = _StubAdapter(responses)
+    session.mount("https://", adapter)
+    return session, adapter
+
+
+def test_check_catalog_url_uses_head_and_classifies_404_without_downloading():
+    session, adapter = _session_with_responses(_StubResponse(404))
+    result = comparator.check_catalog_url("https://archive.org/download/example/game.pkg", session)
+    assert result["status"] == "broken"
+    assert result["http_status"] == 404
+    assert [call[0].method for call in adapter.calls] == ["HEAD"]
+    assert adapter.calls[0][1]["stream"] is True
+
+
+def test_check_catalog_url_falls_back_to_one_byte_range_when_head_unsupported():
+    session, adapter = _session_with_responses(_StubResponse(405), _StubResponse(206))
+    result = comparator.check_catalog_url("https://archive.org/download/example/game.pkg", session)
+    assert result["status"] == "reachable"
+    assert [call[0].method for call in adapter.calls] == ["HEAD", "GET"]
+    assert adapter.calls[1][0].headers["Range"] == "bytes=0-0"
+    assert adapter.calls[1][1]["stream"] is True
+
+
+def test_check_catalog_url_rejects_non_archive_hosts_without_request():
+    session, adapter = _session_with_responses()
+    result = comparator.check_catalog_url("https://example.com/game.pkg", session)
+    assert result["status"] == "inconclusive"
+    assert adapter.calls == []
+
+
+def test_check_catalog_url_rejects_backslash_authority_bypass():
+    session, adapter = _session_with_responses()
+    result = comparator.check_catalog_url(
+        r"https://example.com\\.archive.org/game.pkg", session
+    )
+    assert result["status"] == "inconclusive"
+    assert adapter.calls == []
+
+
+def test_check_catalog_url_does_not_consume_malformed_redirect_body():
+    session, adapter = _session_with_responses(
+        _StubResponse(302, {"Location": "https://["}, forbid_body=True)
+    )
+    result = comparator.check_catalog_url("https://archive.org/download/example/game.pkg", session)
+    assert result["status"] == "inconclusive"
+    assert "Malformed redirect URL" in result["reason"]
+    assert len(adapter.calls) == 1
