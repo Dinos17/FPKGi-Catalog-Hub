@@ -10,8 +10,8 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:18p
 .toolbar,.notice,.item{background:var(--panel);border:1px solid var(--line);border-radius:14px}.toolbar{padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
 button,.upload{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover,.upload:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}
 input[type=file]{max-width:100%}.notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
-.stats,.filters{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
-.filters button.active{border-color:var(--blue);color:var(--blue)}.item{margin:14px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
+.item{margin:14px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line);flex-wrap:wrap}
 .title{font-weight:700;font-size:1.04rem;overflow-wrap:anywhere}.sub{color:var(--muted);font-size:.86rem}.pill{font-size:.75rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase}.pill.outdated{color:var(--amber)}.pill.new,.pill.matched{color:var(--green)}.pill.duplicate,.pill.unclassified{color:var(--red)}
 .columns{display:grid;grid-template-columns:1fr 1fr}.side{padding:16px 18px;min-width:0}.side+.side{border-left:1px solid var(--line)}.side h3{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
 dl{display:grid;grid-template-columns:minmax(125px,.42fr) 1fr;gap:7px 12px;margin:0;font-size:.88rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.diff{background:#342b18;color:#ffdb91;border:1px solid #65532e;border-radius:6px;padding:1px 5px}
@@ -23,12 +23,12 @@ dl{display:grid;grid-template-columns:minmax(125px,.42fr) 1fr;gap:7px 12px;margi
 <header><div><h1>AkiraBox Review</h1><p>Inspect source uploads and matching catalog records side by side.</p></div><a href="./index.html">← Back to Catalog</a></header>
 <div class="notice">Safe replacements are processed automatically through a separate catalog-update PR. This page shows only items that still need review; decisions here remain local and exportable.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Connecting to the latest AkiraBox scan…</span><button id="refresh" type="button">Refresh reports</button><button id="export" disabled>Export decisions</button></section>
-<div id="summary" class="stats"></div><div id="warning"></div><div id="filters" class="filters"></div>
+<div id="summary" class="stats"></div><div id="warning"></div>
 <h2 class="section-title">Scanned uploads</h2><div id="results"><div class="empty">Waiting for the latest reports from GitHub Actions.</div></div>
 <h2 class="section-title">Catalog entries not seen in AkiraBox</h2><div id="missing"><div class="empty">Missing-entry checks remain deferred until all four source categories are scanned.</div></div>
 </main>
 <script>
-const $=id=>document.getElementById(id);let scan=null,comparison=null,decisions={},filter="all";
+const $=id=>document.getElementById(id);let scan=null,comparison=null,decisions={};
 const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/akirabox-reports/reports/";
 const esc=v=>String(v===null||v===undefined||v===""?"—":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pretty=k=>String(k).replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
@@ -91,7 +91,7 @@ function isSafeReplacement(result,source,allRows){
 }
 function render(){
  const ready=!!(scan&&comparison);$("export").disabled=!ready;
- if(!ready){$("summary").innerHTML="";$("filters").innerHTML="";$("results").innerHTML='<div class="empty">The file ID links each scanned upload to its comparison result.</div>';return;}
+ if(!ready){$("summary").innerHTML="";$("results").innerHTML='<div class="empty">The file ID links each scanned upload to its comparison result.</div>';return;}
  const byId=new Map(comparison.results.filter(r=>r.file_id!==undefined&&r.file_id!==null).map(r=>[String(r.file_id),r]));
  const rows=scan.files.map((source,index)=>({source,index,result:byId.get(String(source.id))||null}));
  const safeIds=new Set(rows.filter(row=>isSafeReplacement(row.result,row.source,rows)).map(row=>String(row.source.id)));
@@ -99,9 +99,7 @@ function render(){
  $("summary").innerHTML=cards.map(([k,v])=>'<div class="stat">'+esc(k)+'<strong>'+esc(v)+'</strong></div>').join("");
  const complete=comparison.scan_complete_for_all_categories===true;
  $("warning").innerHTML=complete?'<div class="notice good">All four categories were confirmed. Missing-entry review is available below.</div>':'<div class="notice">Partial scan: missing catalog checks are deferred. Do not treat the absence of missing entries as proof that the catalog is complete.</div>';
- const filters=["all","new","outdated","duplicate","unclassified"];$("filters").innerHTML=filters.map(k=>'<button data-filter="'+k+'" class="'+(filter===k?"active":"")+'">'+pretty(k)+'</button>').join("");
- $("filters").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;render();}));
- const shown=rows.filter(x=>{const status=x.result?.status||"unclassified";return !safeIds.has(String(x.source.id))&&status!=="matched"&&(filter==="all"||status===filter);});
+ const shown=rows.filter(x=>{const status=x.result?.status||"unclassified";return !safeIds.has(String(x.source.id))&&status!=="matched";});
  $("results").innerHTML=shown.length?shown.map(({source:s,index,result:r})=>{
  const safe=safeIds.has(String(s.id));const duplicateSibling=rows.some(other=>String(other.source.id)!==String(s.id)&&normalizedText(String(other.source.name).replace(/\s+\(\d+\)$/,""))===normalizedText(String(s.name).replace(/\s+\(\d+\)$/,"")));const status=safe?"safe":(r?.status||"unclassified"),diffs=r?.metadata_differences||[],parsedSource=r?.source_metadata||{};
  const {category:parsedCategory,...parsedFields}=parsedSource;
@@ -111,7 +109,7 @@ function render(){
  const diffHtml=diffs.length?'<div class="reason"><strong>Reported differences:</strong> '+diffs.map(d=>esc(pretty(d.field))+': <span class="diff">'+esc(d.source_value)+'</span> vs <span class="diff">'+esc(d.catalog_value)+'</span>').join(" · ")+'</div>':'';
  const proposal=r?.proposed_replacement;
  return '<article class="item"><div class="item-head"><div><div class="title">'+esc(s.name)+'</div><div class="sub">'+esc(s.platform)+' · '+esc(s.catalog_category||s.category)+' · AkiraBox file ID '+esc(s.id)+'</div></div><span class="pill '+esc(status)+'">'+(safe?"SAFE REPLACEMENT":esc(status))+'</span></div><div class="columns"><section class="side"><h3>AkiraBox source metadata</h3><dl>'+fieldRows(sourceData)+'</dl></section><section class="side"><h3>Current catalog metadata</h3><dl>'+(catalog?fieldRows(catalog,changed):'<dt>Catalog match</dt><dd>'+(r?esc(r.reason):'No comparison record found for this file ID')+'</dd>')+'</dl>'+(r?.catalog_url?'<p class="muted">Catalog URL: '+linkOrText(r.catalog_url)+'</p>':'')+(proposal?'<p class="muted">Proposed URL: '+linkOrText(proposal.to)+'</p>':'')+'</section></div>'+diffHtml+'<div class="reason">'+(safe?"Safe URL-only replacement: title, region, version, category, and exact file size agree. No decision is required; this does not update the catalog.":duplicateSibling?"Possible duplicate: another scanned upload has the same normalized filename. Resolve which copy to use before approving either.":esc(r?.reason||"No comparison result was produced for this upload."))+'</div>'+(safe?"":'<div class="actions"><strong>Decision: '+esc(decision)+'</strong><span style="flex:1"></span><button class="approve '+(decision==="approved"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="approved">Approve</button><button class="reject '+(decision==="rejected"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="rejected">Reject</button><button data-id="'+esc(s.id)+'" data-value="pending">Clear</button></div>')+'</article>';
- }).join(""):'<div class="empty">No uploads match this filter.</div>';
+ }).join(""):'<div class="empty">No uploads currently require manual review.</div>';
  $("results").querySelectorAll("[data-id][data-value]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.value==="pending")delete decisions[b.dataset.id];else decisions[b.dataset.id]=b.dataset.value;render();}));
  const missing=comparison.missing_catalog_entries||[];
  $("missing").innerHTML=!complete?'<div class="empty">Deferred: PS4/Games, PS4/DLC, PS5/Games and PS5/DLC must all be confirmed before missing entries can be assessed.</div>':missing.length?'<div class="item"><div class="item-head"><strong>'+missing.length+' catalog entries not seen in the source scan</strong></div><div class="side"><dl>'+missing.map((m,i)=>'<dt>'+esc(m.platform+' / '+m.category)+'</dt><dd>'+esc(m.name)+' · '+linkOrText(m.catalog_url)+'</dd>').join("")+'</dl></div><div class="reason">These entries are flagged for manual review only. Nothing is deleted or changed.</div></div>':'<div class="empty">No missing catalog candidates were reported in this complete scan.</div>';
