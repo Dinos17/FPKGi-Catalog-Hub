@@ -203,7 +203,7 @@ def test_numbered_packages_sharing_title_id_are_not_duplicates(tmp_path):
          "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100},
     ]}
     report = compare_scan(scan, tmp_path)
-    assert [item["status"] for item in report["results"]] == ["unchanged", "unchanged"]
+    assert [item["status"] for item in report["results"]] == ["unchanged", "unclassified"]
     assert report["counts"]["duplicate"] == 0
 
 
@@ -257,3 +257,69 @@ def test_reports_minimum_firmware_difference_when_both_sides_have_it(tmp_path):
     assert report["results"][0]["metadata_differences"] == [{
         "field": "min_fw", "source_value": "6.72", "catalog_value": "5.05",
     }]
+
+
+def test_source_duplicate_identity_includes_language_firmware_and_size(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/game.pkg": {
+            "name": "Example Game", "title_id": "CUSA12345", "region": "USA",
+            "version": "01.00", "size": 100, "min_fw": "5.05",
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "en-505", "name": "Example Game_CUSA12345_v1.00_[US]_[EN]_[5.05].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100},
+        {"id": "fr-505", "name": "Example Game_CUSA12345_v1.00_[US]_[FR]_[5.05].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100},
+        {"id": "en-672", "name": "Example Game_CUSA12345_v1.00_[US]_[EN]_[6.72].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 100},
+        {"id": "en-different-size", "name": "Example Game_CUSA12345_v1.00_[US]_[EN]_[5.05].pkg",
+         "platform": "PS4", "catalog_category": "games", "size_bytes": 101},
+    ]}
+
+    report = compare_scan(scan, tmp_path)
+
+    assert [item["status"] for item in report["results"]] == [
+        "unchanged", "unchanged", "unchanged", "outdated",
+    ]
+    assert report["counts"]["duplicate"] == 0
+
+
+def test_single_dlc_title_id_candidate_still_requires_package_name_match(tmp_path):
+    write_catalog(tmp_path, "ps4/dlc.json", {
+        "https://archive.org/pack-1.pkg": {
+            "name": "Rock Band Expansion Pack 1", "title_id": "CUSA02084",
+            "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/games.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "wrong-pack",
+        "name": "Rock Band Expansion Pack 2_CUSA02084_v1.00_[US]_[EN].pkg",
+        "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100,
+    }]}, tmp_path)
+
+    assert report["results"][0]["status"] == "unclassified"
+    assert "package name" in report["results"][0]["reason"]
+
+
+def test_single_dlc_title_id_candidate_accepts_exact_package_name(tmp_path):
+    write_catalog(tmp_path, "ps4/dlc.json", {
+        "https://archive.org/pack-1.pkg": {
+            "name": "Rock Band Expansion Pack 1", "title_id": "CUSA02084",
+            "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/games.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "right-pack",
+        "name": "Rock Band Expansion Pack 1_CUSA02084_v1.00_[US]_[EN].pkg",
+        "platform": "PS4", "catalog_category": "dlc", "size_bytes": 100,
+    }]}, tmp_path)
+
+    assert report["results"][0]["status"] == "unchanged"
+
