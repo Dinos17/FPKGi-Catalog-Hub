@@ -35,13 +35,27 @@ def is_https(value: Any) -> bool:
         return False
 
 
+def is_akirabox_url(value: Any) -> bool:
+    if not is_https(value):
+        return False
+    return (urlparse(value).hostname or "").lower() in {"akirabox.to", "akirabox.com"}
+
+
+def filename_identity(value: Any) -> str:
+    name = re.sub(r"\\.(pkg|zip)$", "", str(value or ""), flags=re.IGNORECASE)
+    name = re.sub(r"\\s+\\(\\d+\\)$", "", name)
+    return normalized_text(name)
+
+
 def is_safe_replacement(result: dict[str, Any], source: dict[str, Any],
                         all_files: list[dict[str, Any]]) -> bool:
     proposal = result.get("proposed_replacement")
     source_meta = result.get("source_metadata")
     catalog_meta = result.get("catalog_metadata")
     if (result.get("status") != "outdated" or not isinstance(proposal, dict)
-            or not is_https(proposal.get("from")) or not is_https(proposal.get("to"))
+            or not is_https(proposal.get("from")) or not is_akirabox_url(proposal.get("to"))
+            or proposal.get("from") != result.get("catalog_url")
+            or proposal.get("to") != source.get("share_url")
             or result.get("metadata_differences") != []
             or not isinstance(source_meta, dict) or not isinstance(catalog_meta, dict)):
         return False
