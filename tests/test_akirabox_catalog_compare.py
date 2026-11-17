@@ -165,7 +165,7 @@ def test_same_visible_name_with_different_title_ids_is_not_a_source_duplicate(tm
          "platform": "PS4", "catalog_category": "games", "size_bytes": 200},
     ]}, tmp_path)
 
-    assert [item["status"] for item in report["results"]] == ["unchanged", "unchanged"]
+    assert [item["status"] for item in report["results"]] == ["unchanged", "unclassified"]
     assert report["counts"]["duplicate"] == 0
 
 
