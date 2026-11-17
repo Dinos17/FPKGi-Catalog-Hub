@@ -19,22 +19,25 @@ jobs:
           python-version: "3.12"
 
       - name: Install scanner dependency
-        run: python -m pip install requests
+        run: python -m pip install requests pytest
+
+      - name: Run tests
+        run: python -m pytest -q
 
       - name: Scan configured public folder metadata (read-only)
-        run: |
-          python tools/akirabox_scanner.py \
-            --config config/akirabox_sources.json \
-            --output akirabox-scan-report.json
+        run: python tools/akirabox_scanner.py --config config/akirabox_sources.json --output akirabox-scan-report.json
 
-      - name: Display scan report in run summary
-        if: always() && hashFiles('akirabox-scan-report.json') != ''
+      - name: Compare scan with GitHub catalogs (read-only)
+        run: python tools/akirabox_catalog_compare.py --scan-report akirabox-scan-report.json --catalog-root . --output akirabox-comparison-report.json
+
+      - name: Display scan and comparison reports
+        if: always()
         run: |
-          echo "## AkiraBox scan report" >> "$GITHUB_STEP_SUMMARY"
-          echo >> "$GITHUB_STEP_SUMMARY"
-          echo 'The full report is also printed in this step’s log.' >> "$GITHUB_STEP_SUMMARY"
-          echo >> "$GITHUB_STEP_SUMMARY"
-          echo '```json' >> "$GITHUB_STEP_SUMMARY"
-          cat akirabox-scan-report.json | tee -a "$GITHUB_STEP_SUMMARY"
-          echo >> "$GITHUB_STEP_SUMMARY"
-          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          for report in akirabox-scan-report.json akirabox-comparison-report.json; do
+            if [ -f "$report" ]; then
+              echo "## AkiraBox report: $report" >> "$GITHUB_STEP_SUMMARY"
+              echo >> "$GITHUB_STEP_SUMMARY"
+              cat "$report" | tee -a "$GITHUB_STEP_SUMMARY"
+              echo >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
