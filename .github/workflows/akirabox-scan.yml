@@ -1,7 +1,11 @@
-name: AkiraBox Scan and Safe Replacement PR
+name: AkiraBox Scan and Automatic Duplicate Cleanup
 
 on:
   workflow_dispatch:
+
+concurrency:
+  group: akirabox-catalog-scan
+  cancel-in-progress: false
 
 permissions:
   contents: write
@@ -43,6 +47,38 @@ jobs:
 
       - name: Compare scan with GitHub catalogs (read-only)
         run: python tools/akirabox_catalog_compare.py --scan-report akirabox-scan-report.json --catalog-root . --output akirabox-comparison-report.json
+
+      - name: Apply fully verified duplicate decisions
+        run: |
+          python tools/akirabox_apply_verified_duplicates.py \
+            --scan-report akirabox-scan-report.json \
+            --comparison-report akirabox-comparison-report.json \
+            --catalog-root . \
+            --output akirabox-duplicate-cleanup.json
+
+      - name: Publish verified duplicate cleanup to main automatically
+        if: success()
+        run: |
+          set -euo pipefail
+          if [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "Refusing to publish catalog changes from a non-main workflow run."
+            exit 1
+          fi
+          applied="$(jq -r '.applied_count' akirabox-duplicate-cleanup.json)"
+          if [ "$applied" -eq 0 ]; then
+            echo "No verified duplicate catalog changes to publish."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add ps4/games.json ps4/dlc.json ps5/ps5-games.json ps5/ps5-dlc.json
+          if git diff --cached --quiet; then
+            echo "No catalog changes were produced."
+            exit 0
+          fi
+          git commit -m "Automatically clean verified AkiraBox duplicates"
+          git push origin HEAD:main
+          echo "Automatically published $applied verified duplicate cleanup(s) to main." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Apply strictly verified safe replacements
         run: |
@@ -106,10 +142,10 @@ jobs:
             git -C "$publication_dir" switch --orphan "$REPORT_BRANCH"
           fi
           mkdir -p "$publication_dir/reports"
-          cp akirabox-scan-report.json akirabox-comparison-report.json akirabox-safe-replacements.json "$publication_dir/reports/"
+          cp akirabox-scan-report.json akirabox-comparison-report.json akirabox-safe-replacements.json akirabox-duplicate-cleanup.json "$publication_dir/reports/"
           git -C "$publication_dir" config user.name "github-actions[bot]"
           git -C "$publication_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "$publication_dir" add reports/akirabox-scan-report.json reports/akirabox-comparison-report.json reports/akirabox-safe-replacements.json
+          git -C "$publication_dir" add reports/akirabox-scan-report.json reports/akirabox-comparison-report.json reports/akirabox-safe-replacements.json reports/akirabox-duplicate-cleanup.json
           if git -C "$publication_dir" diff --cached --quiet; then
             echo "Latest reports are already published."
           else
@@ -120,7 +156,7 @@ jobs:
       - name: Display scan and comparison reports
         if: always()
         run: |
-          for report in akirabox-scan-report.json akirabox-comparison-report.json akirabox-safe-replacements.json; do
+          for report in akirabox-scan-report.json akirabox-comparison-report.json akirabox-safe-replacements.json akirabox-duplicate-cleanup.json; do
             if [ -f "$report" ]; then
               echo "## AkiraBox report: $report" >> "$GITHUB_STEP_SUMMARY"
               echo >> "$GITHUB_STEP_SUMMARY"
