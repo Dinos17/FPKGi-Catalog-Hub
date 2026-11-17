@@ -260,3 +260,59 @@ def test_catalog_mode_marks_unrecognized_paths_unclassified():
     assert result.files[0]["category"] == "unclassified"
     assert result.files[0]["platform"] is None
     assert result.files[0]["catalog_category"] is None
+
+
+def test_configured_platform_parent_discovers_games_and_dlc_and_ignores_siblings():
+    root = "https://akirabox.to/PARENT1/folder"
+    games = "https://akirabox.to/GAMES001/folder"
+    nested = "https://akirabox.to/NESTED01/folder"
+    dlc = "https://akirabox.to/DLC00001/folder"
+    ignored = "https://akirabox.to/OTHER001/folder"
+    pages = {
+        root: flight_html(
+            {"id": "PARENT1", "name": "My Files", "isPrivate": False},
+            [
+                {"id": "GAMES001", "name": "Games", "kind": "folder"},
+                {"id": "DLC00001", "name": "DLC", "kind": "folder"},
+                {"id": "OTHER001", "name": "Other", "kind": "folder"},
+            ], total=3,
+        ),
+        games: flight_html(
+            {"id": "GAMES001", "name": "Games", "isPrivate": False},
+            [{"id": "NESTED01", "name": "Action", "kind": "folder"}], total=1,
+        ),
+        nested: flight_html(
+            {"id": "NESTED01", "name": "Action", "isPrivate": False},
+            [{"id": "GAME0001", "name": "Game.pkg", "extension": "pkg", "size": 100,
+              "kind": "file", "visibility": "public"}], total=1,
+        ),
+        dlc: flight_html(
+            {"id": "DLC00001", "name": "DLC", "isPrivate": False},
+            [{"id": "DLCFILE1", "name": "Addon.pkg", "extension": "pkg", "size": 50,
+              "kind": "file", "visibility": "public"}], total=1,
+        ),
+        ignored: flight_html(
+            {"id": "OTHER001", "name": "Other", "isPrivate": False},
+            [{"id": "OTHERFILE", "name": "Ignore.pkg", "extension": "pkg", "size": 10,
+              "kind": "file", "visibility": "public"}], total=1,
+        ),
+    }
+    scanner = akirabox_scanner.AkiraBoxScanner(session=FakeSession(pages))
+    result = scanner.scan([{"label": "PS4 parent", "platform": "PS4", "url": root}])
+    assert result.errors == []
+    by_id = {item["id"]: item for item in result.files}
+    assert set(by_id) == {"GAME0001", "DLCFILE1"}
+    assert by_id["GAME0001"]["platform"] == "PS4"
+    assert by_id["GAME0001"]["category"] == "games"
+    assert by_id["GAME0001"]["folder_path"] == ["PS4", "Games", "Action"]
+    assert by_id["DLCFILE1"]["platform"] == "PS4"
+    assert by_id["DLCFILE1"]["category"] == "dlc"
+
+
+def test_platform_source_rejects_invalid_platform():
+    scanner = akirabox_scanner.AkiraBoxScanner(session=FakeSession({}))
+    result = scanner.scan([{"label": "bad platform", "platform": "PS6",
+                            "url": "https://akirabox.to/PARENT1/folder"}])
+    assert result.files == []
+    assert len(result.errors) == 1
+    assert "PS4" in result.errors[0]["error"]
