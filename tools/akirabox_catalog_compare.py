@@ -6,7 +6,6 @@ import argparse
 import json
 import re
 import unicodedata
-from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
@@ -68,8 +67,11 @@ def _catalog_identity(metadata: dict[str, Any]) -> tuple[str, str | None]:
 
 
 def _title_similarity(left: str, right: str) -> float:
-    """Return a conservative similarity score for package-name disambiguation."""
-    return SequenceMatcher(None, left, right).ratio()
+    """Compare package-name tokens, preserving meaningful pack/volume numbers."""
+    left_tokens, right_tokens = set(left.split()), set(right.split())
+    if not left_tokens or not right_tokens:
+        return 0.0
+    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
 
 
 def _load_catalog(root: Path, relative: Path) -> dict[str, dict[str, Any]]:
