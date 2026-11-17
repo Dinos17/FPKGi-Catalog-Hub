@@ -8,11 +8,211 @@
     "new": 0,
     "matched": 10,
     "outdated": 3,
-    "duplicate": 3,
+    "duplicate": 8,
     "unclassified": 0
   },
   "replacement_candidate_count": 3,
   "results": [
+    {
+      "status": "matched",
+      "file_id": "qLQ365WQwm19",
+      "name": "AVICII Invector - [US] [EN] [1.05] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.05",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "avicii invector",
+        "region": "USA",
+        "version": "1.05",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2837446656,
+        "file_name": "AVICII Invector - [US] [EN] [1.05] (1)",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA18271",
+        "region": "USA",
+        "name": "AVICII Invector",
+        "version": "01.05",
+        "release": "11-15-2013",
+        "size": 2837446656,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA18271.png",
+        "size_bytes": 2837446656
+      },
+      "catalog_url": "https://akirabox.to/5pVzNKB7JG7w/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/qLQ365WQwm19/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+    },
+    {
+      "status": "matched",
+      "file_id": "LJlGnKlklm15",
+      "name": "ASTRONEER - [US] [EN] [1.64] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.64",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "astroneer",
+        "region": "USA",
+        "version": "1.64",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 1678049280,
+        "file_name": "ASTRONEER - [US] [EN] [1.64] (1)",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA16473",
+        "region": "USA",
+        "name": "ASTRONEER",
+        "version": "01.64",
+        "release": "11-15-2013",
+        "size": 1678049280,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16473.png",
+        "size_bytes": 1678049280
+      },
+      "catalog_url": "https://akirabox.to/qLQ365Wwdm19/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/LJlGnKlklm15/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+    },
+    {
+      "status": "matched",
+      "file_id": "dkD3Y2g5lzLQ",
+      "name": "A Short Hike - [EU] [EN] [1.01] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "a short hike",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 308281344,
+        "file_name": "A Short Hike - [EU] [EN] [1.01] (1)",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA30277",
+        "region": "EUR",
+        "name": "A Short Hike",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 308281344,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30277.png",
+        "size_bytes": 308281344
+      },
+      "catalog_url": "https://akirabox.to/qw1zeKMW4mXy/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/dkD3Y2g5lzLQ/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+    },
+    {
+      "status": "matched",
+      "file_id": "2bJG8lWQDGOB",
+      "name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.03",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "a monster s expedition",
+        "region": "EUR",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 489095168,
+        "file_name": "A Monster's Expedition - [EU] [EN] [1.03] (1)",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA29979",
+        "region": "EUR",
+        "name": "A Monster's Expedition",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 489095168,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29979.png",
+        "size_bytes": 489095168
+      },
+      "catalog_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/2bJG8lWQDGOB/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+    },
+    {
+      "status": "matched",
+      "file_id": "LK0G1apwjG91",
+      "name": "ABZU - [EU] [EN] [1.01] (1)",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "abzu",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2311192576,
+        "file_name": "ABZU - [EU] [EN] [1.01] (1)",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA03364",
+        "region": "EUR",
+        "name": "ABZU",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 2311192576,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03364.png",
+        "size_bytes": 2311192576
+      },
+      "catalog_url": "https://akirabox.to/jar3Xb6V2G2d/file",
+      "proposed_replacement": null,
+      "share_url": "https://akirabox.to/LK0G1apwjG91/file",
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+    },
     {
       "status": "matched",
       "file_id": "Y2xm0RgE9zRO",
@@ -322,84 +522,18 @@
       "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
-      "status": "matched",
+      "status": "duplicate",
       "file_id": "5pVzNKB7JG7w",
       "name": "AVICII Invector - [US] [EN] [1.05]",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.05",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "avicii invector",
-        "region": "USA",
-        "version": "1.05",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 2837446656,
-        "file_name": "AVICII Invector - [US] [EN] [1.05]",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA18271",
-        "region": "USA",
-        "name": "AVICII Invector",
-        "version": "01.05",
-        "release": "11-15-2013",
-        "size": 2837446656,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA18271.png",
-        "size_bytes": 2837446656
-      },
-      "catalog_url": "https://akirabox.to/5pVzNKB7JG7w/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/5pVzNKB7JG7w/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+      "duplicate_of_file_id": "qLQ365WQwm19",
+      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
-      "status": "matched",
+      "status": "duplicate",
       "file_id": "qLQ365Wwdm19",
       "name": "ASTRONEER - [US] [EN] [1.64]",
-      "platform": "PS4",
-      "category": "games",
-      "region": "USA",
-      "version": "1.64",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "astroneer",
-        "region": "USA",
-        "version": "1.64",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 1678049280,
-        "file_name": "ASTRONEER - [US] [EN] [1.64]",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA16473",
-        "region": "USA",
-        "name": "ASTRONEER",
-        "version": "01.64",
-        "release": "11-15-2013",
-        "size": 1678049280,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16473.png",
-        "size_bytes": 1678049280
-      },
-      "catalog_url": "https://akirabox.to/qLQ365Wwdm19/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/qLQ365Wwdm19/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+      "duplicate_of_file_id": "LJlGnKlklm15",
+      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
       "status": "duplicate",
@@ -409,84 +543,18 @@
       "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
-      "status": "matched",
+      "status": "duplicate",
       "file_id": "qw1zeKMW4mXy",
       "name": "A Short Hike - [EU] [EN] [1.01]",
-      "platform": "PS4",
-      "category": "games",
-      "region": "EUR",
-      "version": "1.01",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "a short hike",
-        "region": "EUR",
-        "version": "1.01",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 308281344,
-        "file_name": "A Short Hike - [EU] [EN] [1.01]",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA30277",
-        "region": "EUR",
-        "name": "A Short Hike",
-        "version": "01.01",
-        "release": "11-15-2013",
-        "size": 308281344,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30277.png",
-        "size_bytes": 308281344
-      },
-      "catalog_url": "https://akirabox.to/qw1zeKMW4mXy/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/qw1zeKMW4mXy/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+      "duplicate_of_file_id": "dkD3Y2g5lzLQ",
+      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
-      "status": "matched",
+      "status": "duplicate",
       "file_id": "vgKGxBYjQ38Q",
       "name": "A Monster's Expedition - [EU] [EN] [1.03]",
-      "platform": "PS4",
-      "category": "games",
-      "region": "EUR",
-      "version": "1.03",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "a monster s expedition",
-        "region": "EUR",
-        "version": "1.03",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 489095168,
-        "file_name": "A Monster's Expedition - [EU] [EN] [1.03]",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA29979",
-        "region": "EUR",
-        "name": "A Monster's Expedition",
-        "version": "01.03",
-        "release": "11-15-2013",
-        "size": 489095168,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29979.png",
-        "size_bytes": 489095168
-      },
-      "catalog_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/vgKGxBYjQ38Q/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+      "duplicate_of_file_id": "2bJG8lWQDGOB",
+      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
       "status": "duplicate",
@@ -496,44 +564,11 @@
       "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
-      "status": "matched",
+      "status": "duplicate",
       "file_id": "jar3Xb6V2G2d",
       "name": "ABZU - [EU] [EN] [1.01]",
-      "platform": "PS4",
-      "category": "games",
-      "region": "EUR",
-      "version": "1.01",
-      "title_id": null,
-      "metadata_differences": [],
-      "source_metadata": {
-        "title": "abzu",
-        "region": "EUR",
-        "version": "1.01",
-        "title_id": null,
-        "languages": [
-          "EN"
-        ],
-        "min_fw": null,
-        "size_bytes": 2311192576,
-        "file_name": "ABZU - [EU] [EN] [1.01]",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA03364",
-        "region": "EUR",
-        "name": "ABZU",
-        "version": "01.01",
-        "release": "11-15-2013",
-        "size": 2311192576,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03364.png",
-        "size_bytes": 2311192576
-      },
-      "catalog_url": "https://akirabox.to/jar3Xb6V2G2d/file",
-      "proposed_replacement": null,
-      "share_url": "https://akirabox.to/jar3Xb6V2G2d/file",
-      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
+      "duplicate_of_file_id": "LK0G1apwjG91",
+      "reason": "Duplicate AkiraBox title/region/version already seen in this scan"
     },
     {
       "status": "duplicate",
