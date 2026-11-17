@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   scan:
@@ -29,6 +29,32 @@ jobs:
 
       - name: Compare scan with GitHub catalogs (read-only)
         run: python tools/akirabox_catalog_compare.py --scan-report akirabox-scan-report.json --catalog-root . --output akirabox-comparison-report.json
+
+      - name: Publish latest reports for the review dashboard
+        if: success()
+        env:
+          REPORT_BRANCH: akirabox-reports
+        run: |
+          set -euo pipefail
+          publication_dir="$RUNNER_TEMP/akirabox-report-publication"
+          git worktree add --detach "$publication_dir" HEAD
+          git -C "$publication_dir" fetch origin "$REPORT_BRANCH" || true
+          if git -C "$publication_dir" show-ref --verify --quiet "refs/remotes/origin/$REPORT_BRANCH"; then
+            git -C "$publication_dir" switch --force-create "$REPORT_BRANCH" "origin/$REPORT_BRANCH"
+          else
+            git -C "$publication_dir" switch --orphan "$REPORT_BRANCH"
+          fi
+          mkdir -p "$publication_dir/reports"
+          cp akirabox-scan-report.json akirabox-comparison-report.json "$publication_dir/reports/"
+          git -C "$publication_dir" config user.name "github-actions[bot]"
+          git -C "$publication_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git -C "$publication_dir" add reports/akirabox-scan-report.json reports/akirabox-comparison-report.json
+          if git -C "$publication_dir" diff --cached --quiet; then
+            echo "Latest reports are already published."
+          else
+            git -C "$publication_dir" commit -m "Publish latest AkiraBox scan reports"
+            git -C "$publication_dir" push origin "HEAD:$REPORT_BRANCH"
+          fi
 
       - name: Display scan and comparison reports
         if: always()
