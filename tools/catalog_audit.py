@@ -95,6 +95,7 @@ def _load_pkg_cache():
 
 
 def _save_pkg_cache(cache):
+    PKG_CACHE_PATH.parent.mkdir(parents=True, exist_ok=True)
     PKG_CACHE_PATH.write_text(
         json.dumps(cache, indent=2, ensure_ascii=False, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -192,7 +193,9 @@ def audit_catalogs():
             resolved = pkg_category
         elif exact_external:
             resolved = exact_external
-        elif title_external:
+        elif title_external and category == "games":
+            # Title-ID metadata is useful for correcting generic game entries,
+            # but must not reclassify a known DLC/update/demo/etc. record.
             resolved = title_external
         else:
             resolved = normalize(record.get("category"))
