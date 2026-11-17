@@ -5,8 +5,8 @@ from __future__ import annotations
 import argparse
 import json
 import re
-from difflib import SequenceMatcher
 import unicodedata
+from difflib import SequenceMatcher
 from pathlib import Path
 from typing import Any
 
@@ -137,12 +137,12 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         # A title ID identifies a base application, not necessarily one DLC
         # package. When several catalog entries share it, disambiguate by the
         # package name instead of treating every sibling as a match.
+        ambiguous_title_id = False
         if len(id_candidates) > 1:
-            scored = [
-                (_title_similarity(title, normalize_title(metadata.get("name"))), entry)
-                for entry in id_candidates
-                for _, metadata in [entry]
-            ]
+            scored = []
+            for entry in id_candidates:
+                _, metadata = entry
+                scored.append((_title_similarity(title, normalize_title(metadata.get("name"))), entry))
             scored.sort(key=lambda pair: pair[0], reverse=True)
             if scored and scored[0][0] >= 0.65 and (
                 len(scored) == 1 or scored[0][0] - scored[1][0] >= 0.08
@@ -153,9 +153,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                 ambiguous_title_id = True
         elif id_candidates:
             candidates = id_candidates
-            ambiguous_title_id = False
         else:
-            ambiguous_title_id = False
             # If the source filename has no region, only accept a unique title match.
             candidates = exact if region else [
                 entry for identity, entries in index.items() if identity[0] == title for entry in entries
