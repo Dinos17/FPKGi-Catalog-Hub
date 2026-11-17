@@ -21,7 +21,7 @@ dl{display:grid;grid-template-columns:minmax(125px,.42fr) 1fr;gap:7px 12px;margi
 </style></head>
 <body><main>
 <header><div><h1>AkiraBox Review</h1><p>Inspect source uploads and matching catalog records side by side.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Read-only review. Approve/reject decisions stay in this browser session and can be exported. No catalog or GitHub changes are made.</div>
+<div class="notice">Safe replacements are processed automatically through a separate catalog-update PR. This page shows only items that still need review; decisions here remain local and exportable.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Connecting to the latest AkiraBox scan…</span><button id="refresh" type="button">Refresh reports</button><button id="export" disabled>Export decisions</button></section>
 <div id="summary" class="stats"></div><div id="warning"></div><div id="filters" class="filters"></div>
 <h2 class="section-title">Scanned uploads</h2><div id="results"><div class="empty">Waiting for the latest reports from GitHub Actions.</div></div>
@@ -98,9 +98,9 @@ function render(){
  $("summary").innerHTML=cards.map(([k,v])=>'<div class="stat">'+esc(k)+'<strong>'+esc(v)+'</strong></div>').join("");
  const complete=comparison.scan_complete_for_all_categories===true;
  $("warning").innerHTML=complete?'<div class="notice good">All four categories were confirmed. Missing-entry review is available below.</div>':'<div class="notice">Partial scan: missing catalog checks are deferred. Do not treat the absence of missing entries as proof that the catalog is complete.</div>';
- const filters=["all","safe","new","outdated","matched","duplicate","unclassified"];$("filters").innerHTML=filters.map(k=>'<button data-filter="'+k+'" class="'+(filter===k?"active":"")+'">'+(k==="safe"?"Safe":pretty(k))+'</button>').join("");
+ const filters=["all","new","outdated","matched","duplicate","unclassified"];$("filters").innerHTML=filters.map(k=>'<button data-filter="'+k+'" class="'+(filter===k?"active":"")+'">'+(k==="safe"?"Safe":pretty(k))+'</button>').join("");
  $("filters").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;render();}));
- const shown=rows.filter(x=>filter==="all"||(filter==="safe"?safeIds.has(String(x.source.id)):(x.result?.status||"unclassified")===filter));
+ const shown=rows.filter(x=>!safeIds.has(String(x.source.id))&&(filter==="all"||(x.result?.status||"unclassified")===filter));
  $("results").innerHTML=shown.length?shown.map(({source:s,index,result:r})=>{
  const safe=safeIds.has(String(s.id));const duplicateSibling=rows.some(other=>String(other.source.id)!==String(s.id)&&normalizedText(String(other.source.name).replace(/\s+\(\d+\)$/,""))===normalizedText(String(s.name).replace(/\s+\(\d+\)$/,"")));const status=safe?"safe":(r?.status||"unclassified"),diffs=r?.metadata_differences||[],parsedSource=r?.source_metadata||{};
  const {category:parsedCategory,...parsedFields}=parsedSource;
