@@ -2,6 +2,8 @@
 """Read-only comparison of an AkiraBox scan with the repository catalogs."""
 from __future__ import annotations
 
+from datetime import datetime, timezone
+
 import argparse
 import json
 import re
@@ -303,6 +305,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, ha
 
     results = []
     source_seen: dict[tuple[Any, ...], str] = {}
+    source_items: dict[str, dict[str, Any]] = {}
     hash_cache: dict[str, dict[str, Any]] = {}
 
     def source_hash(file_id: Any) -> dict[str, Any]:
@@ -346,6 +349,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, ha
         if identity_key in source_seen:
             counts["duplicate"] += 1
             original_id = source_seen[identity_key]
+            original_item = source_items[original_id]
             original_hash = source_hash(original_id)
             duplicate_hash = source_hash(item.get("id"))
             if original_hash.get("status") == "available" and duplicate_hash.get("status") == "available":
@@ -365,9 +369,12 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, ha
             else:
                 verification_status = "unverified"
                 verification_reason = "A SHA-256 value was unavailable for at least one file"
+            source_items[str(item.get("id"))] = item
             results.append({
                 "status": "duplicate", "file_id": item.get("id"), "name": item.get("name"),
                 "duplicate_of_file_id": original_id,
+                "created_at": item.get("created_at"),
+                "duplicate_of_created_at": original_item.get("created_at"),
                 "binary_verification": {
                     "status": verification_status,
                     "original_sha256": original_hash.get("sha256"),
@@ -378,6 +385,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, ha
             })
             continue
         source_seen[identity_key] = str(item.get("id"))
+        source_items[str(item.get("id"))] = item
         id_candidates = title_id_index.get(source_title_id, []) if source_title_id else []
         exact = index.get((title, region), [])
         # A title ID identifies a base application, not necessarily one DLC
@@ -516,6 +524,46 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, ha
             "proposed_replacement": proposed_replacement,
             "share_url": item.get("share_url"), "reason": reason,
         })
+
+    # Auto-select only when every copy has a distinct creation timestamp
+    # and every binary hash matches the original.
+    duplicate_groups: dict[str, list[dict[str, Any]]] = {}
+    for result in results:
+        if result.get("status") == "duplicate" and result.get("duplicate_of_file_id") is not None:
+            duplicate_groups.setdefault(str(result["duplicate_of_file_id"]), []).append(result)
+
+    def parse_created_at(value: Any) -> datetime | None:
+        if not isinstance(value, str) or not value.strip():
+            return None
+        try:
+            parsed = datetime.fromisoformat(value.strip().replace("Z", "+00:00"))
+            if parsed.tzinfo is None:
+                return None
+            return parsed.astimezone(timezone.utc)
+        except ValueError:
+            return None
+
+    for original_id, duplicates in duplicate_groups.items():
+        group_items = [source_items.get(original_id, {})] + [
+            source_items.get(str(row.get("file_id")), {}) for row in duplicates
+        ]
+        timestamps = [parse_created_at(entry.get("created_at")) for entry in group_items]
+        if (
+            all(row.get("binary_verification", {}).get("status") == "verified_identical"
+                for row in duplicates)
+            and all(timestamp is not None for timestamp in timestamps)
+            and len(set(timestamps)) == len(timestamps)
+        ):
+            newest_index = max(range(len(timestamps)), key=lambda index: timestamps[index])
+            newest_item = group_items[newest_index]
+            decision = {
+                "decision": "keep_akirabox",
+                "selected_file_id": str(newest_item.get("id")),
+                "selected_file_name": newest_item.get("name"),
+                "reason": "All copies have matching SHA-256 hashes; this upload has the newest AkiraBox creation timestamp",
+            }
+            for row in duplicates:
+                row["automatic_decision"] = decision
 
     expected = {(platform, category) for platform in ("PS4", "PS5") for category in ("games", "dlc")}
     discovered = set()
