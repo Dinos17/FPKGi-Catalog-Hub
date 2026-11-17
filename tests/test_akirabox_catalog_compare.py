@@ -167,3 +167,21 @@ def test_same_visible_name_with_different_title_ids_is_not_a_source_duplicate(tm
 
     assert [item["status"] for item in report["results"]] == ["unchanged", "unchanged"]
     assert report["counts"]["duplicate"] == 0
+
+
+def test_duplicate_copy_suffix_normalizes_to_same_source_identity(tmp_path):
+    assert parse_source_details("Absolute Drift - [US] [EN] [1.02] (1).pkg")[0] == "absolute drift"
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/absolute-drift.pkg": {
+            "name": "Absolute Drift", "region": "USA", "version": "01.02", "size": 189136896,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    scan = {"errors": [], "folders": [], "files": [
+        {"id": "original", "name": "Absolute Drift - [US] [EN] [1.02].pkg", "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+        {"id": "copy", "name": "Absolute Drift - [US] [EN] [1.02] (1).pkg", "platform": "PS4", "catalog_category": "games", "size_bytes": 189136896},
+    ]}
+    report = compare_scan(scan, tmp_path)
+    assert report["counts"] == {"new": 0, "unchanged": 1, "outdated": 0, "duplicate": 1, "unclassified": 0}
+    assert report["results"][1]["duplicate_of_file_id"] == "original"
