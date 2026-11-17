@@ -1,0 +1,81 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AkiraBox Review | FPKGi Catalog Hub</title>
+<style>
+:root{color-scheme:dark;--bg:#0b0e13;--panel:#141a23;--panel2:#1b2430;--line:#2b3544;--text:#edf2f8;--muted:#98a6b8;--blue:#78b7ff;--green:#55d6a3;--red:#ff8585;--amber:#f4c66a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif}
+main{max-width:1450px;margin:auto;padding:34px 22px 70px}header{display:flex;justify-content:space-between;align-items:flex-start;gap:20px;flex-wrap:wrap;margin-bottom:25px}
+h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.04em;margin:0}p{color:var(--muted);margin:6px 0}
+a{color:var(--blue)}button,.upload{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}
+button:hover,.upload:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}
+.toolbar,.notice,.item{background:var(--panel);border:1px solid var(--line);border-radius:14px}
+.toolbar{padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:15px}
+.toolbar input[type=file]{max-width:100%}.stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 22px}
+.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:10px 14px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.25rem}
+.notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:18px 0}.filters button.active{border-color:var(--blue);color:var(--blue)}
+.item{margin:14px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:12px;padding:14px 17px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.title{font-weight:700;font-size:1.04rem}.sub{color:var(--muted);font-size:.86rem}
+.pill{font-size:.75rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;letter-spacing:.04em}
+.pill.outdated{color:var(--amber)}.pill.new{color:var(--green)}.pill.duplicate{color:var(--red)}.pill.matched{color:var(--green)}.pill.unclassified{color:var(--red)}
+.columns{display:grid;grid-template-columns:1fr 1fr}.side{padding:16px 18px;min-width:0}.side+ .side{border-left:1px solid var(--line)}.side h3{font-size:.78rem;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+dl{display:grid;grid-template-columns:minmax(110px, .38fr) 1fr;gap:7px 12px;margin:0;font-size:.9rem}dt{color:var(--muted)}dd{margin:0;overflow-wrap:anywhere}
+.diff{background:#342b18;color:#ffdb91;border:1px solid #65532e;border-radius:7px;padding:2px 6px}
+.url{overflow-wrap:anywhere}.reason{padding:12px 18px;color:var(--muted);border-top:1px solid var(--line);font-size:.88rem}
+.actions{display:flex;gap:8px;flex-wrap:wrap;padding:12px 18px;border-top:1px solid var(--line);align-items:center}
+.actions .approve.selected{border-color:var(--green);color:var(--green)}.actions .reject.selected{border-color:var(--red);color:var(--red)}
+.empty{padding:50px 20px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}
+.hidden{display:none!important}
+@media(max-width:760px){.columns{grid-template-columns:1fr}.side+.side{border-left:0;border-top:1px solid var(--line)}dl{grid-template-columns:115px 1fr}}
+</style>
+</head>
+<body><main>
+<header><div><h1>AkiraBox Review</h1><p>Compare scanned uploads against the current FPKGi catalog.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<div class="notice">Review prototype: decisions are kept only in this browser session and can be exported as JSON. Nothing is written to GitHub or to the catalog.</div>
+<section class="toolbar">
+<label class="upload">Load comparison report <input id="file" type="file" accept=".json,application/json" hidden></label>
+<button id="export" disabled>Export decisions</button>
+<span id="filename" class="sub">Choose akirabox-comparison-report.json from a completed scan.</span>
+</section>
+<div id="summary" class="stats"></div>
+<div id="filters" class="filters"></div>
+<div id="results"><div class="empty">Load a comparison report to start reviewing.</div></div>
+</main>
+<script>
+const $=id=>document.getElementById(id);
+let report=null,decisions={},filter="all";
+const esc=value=>String(value??"—").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const bytes=value=>{const n=Number(value);return Number.isFinite(n)&&n>0?(n/1073741824).toFixed(2)+" GB":"Not provided";};
+function load(payload,name){
+ if(!payload||!Array.isArray(payload.results))throw new Error("This is not an AkiraBox comparison report (results[] is missing).");
+ report=payload;decisions={};$("filename").textContent=name;$("export").disabled=false;render();
+}
+$("file").addEventListener("change",async e=>{const file=e.target.files[0];if(!file)return;try{load(JSON.parse(await file.text()),file.name)}catch(err){$("results").innerHTML='<div class="empty">'+esc(err.message)+'</div>'}});
+function setDecision(index,value){decisions[index]=value;render();}
+function render(){
+ const counts=report.counts||{};const items=report.results;
+ $("summary").innerHTML=[["Files",items.length],["New",counts.new||0],["Outdated",counts.outdated||0],["Matched",counts.matched||0],["Duplicates",counts.duplicate||0],["Unclassified",counts.unclassified||0],["Missing candidates",report.missing_candidate_count||0]].map(([k,v])=>'<div class="stat">'+esc(k)+'<strong>'+esc(v)+'</strong></div>').join("");
+ const filters=["all","outdated","new","matched","duplicate","unclassified"];
+ $("filters").innerHTML=filters.map(k=>'<button data-filter="'+k+'" class="'+(filter===k?"active":"")+'">'+k[0].toUpperCase()+k.slice(1)+'</button>').join("");
+ $("filters").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;render()}));
+ const shown=items.map((item,index)=>({item,index})).filter(x=>filter==="all"||x.item.status===filter);
+ if(!shown.length){$("results").innerHTML='<div class="empty">No records in this filter.</div>';return;}
+ $("results").innerHTML=shown.map(({item,index})=>{
+  const diffs=Array.isArray(item.metadata_differences)?item.metadata_differences:[];
+  const diffRows=diffs.map(d=>'<dt>'+esc(d.field)+'</dt><dd><span class="diff">'+esc(d.source_value)+'</span> vs <span class="diff">'+esc(d.catalog_value)+'</span></dd>').join("");
+  const decision=decisions[index]||"pending";
+  return '<article class="item"><div class="item-head"><div><div class="title">'+esc(item.name||"Unnamed upload")+'</div><div class="sub">'+esc(item.platform||"Platform unknown")+' · '+esc(item.category||"Category unknown")+' · File ID '+esc(item.file_id)+'</div></div><span class="pill '+esc(item.status)+'">'+esc(item.status)+'</span></div>'+
+  '<div class="columns"><section class="side"><h3>AkiraBox upload</h3><dl><dt>Filename</dt><dd>'+esc(item.name)+'</dd><dt>Platform / type</dt><dd>'+esc(item.platform)+' / '+esc(item.category)+'</dd><dt>Region</dt><dd>'+esc(item.region)+'</dd><dt>Version</dt><dd>'+esc(item.version)+'</dd><dt>Title ID</dt><dd>'+esc(item.title_id)+'</dd><dt>Share URL</dt><dd class="url">'+(item.share_url?'<a target="_blank" rel="noopener" href="'+esc(item.share_url)+'">'+esc(item.share_url)+'</a>':"Not provided")+'</dd></dl></section>'+
+  '<section class="side"><h3>Current catalog entry</h3><dl><dt>Catalog URL</dt><dd class="url">'+(item.catalog_url?'<a target="_blank" rel="noopener" href="'+esc(item.catalog_url)+'">'+esc(item.catalog_url)+'</a>':"No matching catalog entry")+'</dd>'+diffRows+(diffRows?"":'<dt>Metadata differences</dt><dd>None reported by scanner</dd>')+'<dt>Proposed URL</dt><dd class="url">'+(item.proposed_replacement?'<a target="_blank" rel="noopener" href="'+esc(item.proposed_replacement.to)+'">'+esc(item.proposed_replacement.to)+'</a>':"No replacement proposed")+'</dd></dl></section></div>'+
+  '<div class="reason">'+esc(item.reason||"No additional explanation.")+'</div><div class="actions"><strong>Decision: '+esc(decision)+'</strong><span style="flex:1"></span><button class="approve '+(decision==="approved"?"selected":"")+'" data-index="'+index+'" data-value="approved">Approve</button><button class="reject '+(decision==="rejected"?"selected":"")+'" data-index="'+index+'" data-value="rejected">Reject</button><button data-index="'+index+'" data-value="pending">Clear</button></div></article>';
+ }).join("");
+ $("results").querySelectorAll("[data-index][data-value]").forEach(b=>b.addEventListener("click",()=>setDecision(Number(b.dataset.index),b.dataset.value==="pending"?null:b.dataset.value)));
+}
+$("export").addEventListener("click",()=>{
+ const output={source:"akirabox-comparison-report",exported_at:new Date().toISOString(),read_only:true,decisions:Object.entries(decisions).map(([index,decision])=>({result_index:Number(index),file_id:report.results[Number(index)]?.file_id,name:report.results[Number(index)]?.name,decision}))};
+ const blob=new Blob([JSON.stringify(output,null,2)+"\n"],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="akirabox-review-decisions.json";a.click();URL.revokeObjectURL(url);
+});
+</script></body></html>
