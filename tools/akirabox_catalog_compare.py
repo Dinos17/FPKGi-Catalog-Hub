@@ -150,7 +150,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
     results = []
     source_seen: dict[tuple[Any, ...], str] = {}
     source_catalog_urls: dict[tuple[str, str], set[str]] = {}
-    counts = {"new": 0, "unchanged": 0, "outdated": 0, "duplicate": 0, "unclassified": 0}
+    counts = {"new": 0, "matched": 0, "outdated": 0, "duplicate": 0, "unclassified": 0}
     for item in scan.get("files", []):
         platform, category = item.get("platform"), item.get("catalog_category")
         if (platform, category) not in indexes or not isinstance(item.get("name"), str):
@@ -272,7 +272,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             elif not source_version or not old_version or not isinstance(new_size, int) or not isinstance(old_size, int):
                 status, reason = "unclassified", "Matched catalog entry, but version or file-size metadata is missing"
             else:
-                status, reason = "unchanged", "Matching title identity; version and file size agree"
+                status, reason = "matched", "Matching title identity; version and file size agree"
         counts[status] += 1
         results.append({
             "status": status, "file_id": item.get("id"), "name": item.get("name"),
