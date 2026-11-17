@@ -28,6 +28,19 @@ jobs:
       - name: Scan configured public folder metadata (read-only)
         run: python tools/akirabox_scanner.py --config config/akirabox_sources.json --output akirabox-scan-report.json
 
+      - name: Add scan generation timestamp
+        run: |
+          python - <<'PY'
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path("akirabox-scan-report.json")
+          report = json.loads(path.read_text(encoding="utf-8"))
+          report["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+          path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
       - name: Compare scan with GitHub catalogs (read-only)
         run: python tools/akirabox_catalog_compare.py --scan-report akirabox-scan-report.json --catalog-root . --output akirabox-comparison-report.json
 
