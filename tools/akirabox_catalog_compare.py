@@ -247,8 +247,6 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
         title_id_indexes[(platform, category)] = title_id_index
 
     results = []
-    checked_urls: dict[str, dict[str, Any]] = {}
-    check_link = link_checker or check_catalog_url
     source_seen: dict[tuple[Any, ...], str] = {}
     source_catalog_urls: dict[tuple[str, str], set[str]] = {}
     counts = {"new": 0, "matched": 0, "outdated": 0, "duplicate": 0, "unclassified": 0}
@@ -328,6 +326,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             ]
         if len(candidates) == 1:
             source_catalog_urls.setdefault((platform, category), set()).add(candidates[0][0])
+        proposed_replacement = None
         if ambiguous_title_id:
             status, reason = "unclassified", "Title ID match could not be verified against a unique package name"
         elif len(candidates) > 1:
@@ -368,21 +367,39 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
                                     catalog_filename["languages"] or None)
             add_metadata_difference("min_fw", source_metadata["min_fw"], metadata.get("min_fw"))
 
-            if catalog_url not in checked_urls:
-                checked_urls[catalog_url] = check_link(catalog_url)
-            link_check = checked_urls[catalog_url]
-            if differences or link_check["status"] == "broken":
+            # Archive.org is the source being replaced, not a URL whose
+            # availability needs to be probed. A unique identity match is
+            # enough to propose the AkiraBox share URL in this read-only report.
+            archive_catalog_url = _is_archive_url(catalog_url)
+            share_url = item.get("share_url")
+            valid_share_url = False
+            if isinstance(share_url, str):
+                try:
+                    parsed_share = urlparse(share_url)
+                    valid_share_url = (
+                        parsed_share.scheme == "https"
+                        and (parsed_share.hostname or "").lower() in {"akirabox.to", "akirabox.com"}
+                    )
+                except ValueError:
+                    valid_share_url = False
+            # Only flag an entry when a concrete AkiraBox destination exists.
+            archive_replacement = archive_catalog_url and valid_share_url
+            if archive_replacement:
+                proposed_replacement = {
+                    "from": catalog_url,
+                    "to": share_url,
+                    "status": "pending_review",
+                }
+            if differences or archive_replacement:
                 status = "outdated"
                 reasons = list(differences)
-                if link_check["status"] == "broken":
-                    reasons.append(link_check["reason"])
+                if archive_replacement:
+                    reasons.append("Archive.org catalog URL should be replaced with the AkiraBox share URL")
                 reason = ", ".join(reasons)
-            elif link_check["status"] == "inconclusive":
-                status, reason = "unclassified", link_check["reason"]
             elif not source_version or not old_version or not isinstance(new_size, int) or not isinstance(old_size, int):
                 status, reason = "unclassified", "Matched catalog entry, but version or file-size metadata is missing"
             else:
-                status, reason = "matched", "Metadata agrees and catalog download URL is reachable"
+                status, reason = "matched", "Metadata agrees; catalog URL does not require Archive.org replacement"
         counts[status] += 1
         results.append({
             "status": status, "file_id": item.get("id"), "name": item.get("name"),
@@ -390,7 +407,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             "version": source_version, "title_id": source_title_id,
             "metadata_differences": metadata_differences if candidates and len(candidates) == 1 else [],
             "catalog_url": catalog_url if candidates and len(candidates) == 1 else None,
-            "link_check": link_check if candidates and len(candidates) == 1 else None,
+            "proposed_replacement": proposed_replacement,
             "share_url": item.get("share_url"), "reason": reason,
         })
 
@@ -419,6 +436,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
         "scan_complete_for_all_categories": complete,
         "missing_check_deferred": not complete,
         "counts": counts,
+        "replacement_candidate_count": sum(1 for result in results if result.get("proposed_replacement")),
         "results": results,
         "missing_candidate_count": len(missing_candidates),
         "missing_catalog_entries": missing_candidates,

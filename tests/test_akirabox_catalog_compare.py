@@ -337,42 +337,51 @@ def test_single_dlc_title_id_candidate_accepts_exact_package_name(tmp_path):
 
 
 
-def test_broken_catalog_url_changes_metadata_match_to_outdated(tmp_path):
+def test_archive_org_catalog_entry_proposes_akirabox_replacement_without_writing(tmp_path):
+    archive_url = "https://archive.org/download/example/game.pkg"
+    share_url = "https://akirabox.to/abc123/file"
     write_catalog(tmp_path, "ps4/games.json", {
-        "https://archive.org/download/example/game.pkg": {
+        archive_url: {
             "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
         },
     })
     for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
         write_catalog(tmp_path, path, {})
     report = compare_scan({"errors": [], "folders": [], "files": [{
-        "id": "broken", "name": "Example Game - [US] [EN] [1.00].pkg",
+        "id": "replacement", "name": "Example Game - [US] [EN] [1.00].pkg",
         "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
-    }]}, tmp_path, link_checker=lambda url: {
-        "status": "broken", "http_status": 404, "reason": "Catalog URL returned HTTP 404",
-    })
-    result = report["results"][0]
-    assert result["status"] == "outdated"
-    assert result["catalog_url"] == "https://archive.org/download/example/game.pkg"
-    assert result["link_check"]["http_status"] == 404
-    assert "HTTP 404" in result["reason"]
-
-
-def test_inconclusive_catalog_url_is_not_called_matched(tmp_path):
-    write_catalog(tmp_path, "ps4/games.json", {
-        "https://archive.org/download/example/game.pkg": {
-            "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
-        },
-    })
-    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
-        write_catalog(tmp_path, path, {})
-    report = compare_scan({"errors": [], "folders": [], "files": [{
-        "id": "uncertain", "name": "Example Game - [US] [EN] [1.00].pkg",
-        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+        "share_url": share_url,
     }]}, tmp_path, link_checker=lambda url: {
         "status": "inconclusive", "http_status": 403, "reason": "HTTP 403",
     })
-    assert report["results"][0]["status"] == "unclassified"
+    result = report["results"][0]
+    assert result["status"] == "outdated"
+    assert result["catalog_url"] == archive_url
+    assert result["proposed_replacement"] == {
+        "from": archive_url, "to": share_url, "status": "pending_review",
+    }
+    assert report["replacement_candidate_count"] == 1
+    assert report["catalog_write_performed"] is False
+    assert json.loads((tmp_path / "ps4/games.json").read_text())["DATA"].keys() == {archive_url}
+
+
+def test_archive_org_access_denial_does_not_block_replacement(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/game.pkg": {
+            "name": "Example Game", "region": "USA", "version": "01.00", "size": 100,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "denied", "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+        "share_url": "https://akirabox.to/denied/file",
+    }]}, tmp_path, link_checker=lambda url: {
+        "status": "inconclusive", "http_status": 403, "reason": "HTTP 403",
+    })
+    assert report["results"][0]["status"] == "outdated"
+    assert report["results"][0]["proposed_replacement"]["to"] == "https://akirabox.to/denied/file"
 
 
 class _StubResponse(comparator.requests.Response):
