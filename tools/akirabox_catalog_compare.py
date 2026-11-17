@@ -366,6 +366,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             add_metadata_difference("language", source_metadata["languages"] or None,
                                     catalog_filename["languages"] or None)
             add_metadata_difference("min_fw", source_metadata["min_fw"], metadata.get("min_fw"))
+            add_metadata_difference("size_bytes", new_size, old_size)
 
             # Archive.org is the source being replaced, not a URL whose
             # availability needs to be probed. A unique identity match is
@@ -406,6 +407,18 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             "platform": platform, "category": category, "region": region,
             "version": source_version, "title_id": source_title_id,
             "metadata_differences": metadata_differences if candidates and len(candidates) == 1 else [],
+            "source_metadata": {
+                **source_metadata,
+                "size_bytes": source_size,
+                "file_name": item.get("name"),
+                "platform": platform,
+                "category": category,
+            },
+            "catalog_metadata": ({
+                **metadata,
+                "size_bytes": metadata.get("size"),
+                "parsed_filename_metadata": catalog_filename,
+            } if candidates and len(candidates) == 1 else None),
             "catalog_url": catalog_url if candidates and len(candidates) == 1 else None,
             "proposed_replacement": proposed_replacement,
             "share_url": item.get("share_url"), "reason": reason,
