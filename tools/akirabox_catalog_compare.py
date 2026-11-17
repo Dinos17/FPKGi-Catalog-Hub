@@ -366,6 +366,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) ->
             add_metadata_difference("language", source_metadata["languages"] or None,
                                     catalog_filename["languages"] or None)
             add_metadata_difference("min_fw", source_metadata["min_fw"], metadata.get("min_fw"))
+            add_metadata_difference("size_bytes", new_size, old_size)
 
             # Archive.org is the source being replaced, not a URL whose
             # availability needs to be probed. A unique identity match is
