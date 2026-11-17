@@ -529,7 +529,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None, ha
     # and every binary hash matches the original.
     duplicate_groups: dict[str, list[dict[str, Any]]] = {}
     for result in results:
-        if result.get("status") == "duplicate":
+        if result.get("status") == "duplicate" and result.get("duplicate_of_file_id") is not None:
             duplicate_groups.setdefault(str(result["duplicate_of_file_id"]), []).append(result)
 
     def parse_created_at(value: Any) -> datetime | None:
