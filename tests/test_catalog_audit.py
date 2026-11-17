@@ -38,7 +38,6 @@ def test_audit_moves_generic_games_record_to_external_app_category(tmp_path, mon
             }
         },
     )
-    monkeypatch.setattr(catalog_audit, "resolve_categories", lambda title_ids: {})
 
     moved = catalog_audit.audit_catalogs()
 
@@ -82,7 +81,6 @@ def test_audit_keeps_specific_category_when_external_title_id_is_generic_game(
             }
         },
     )
-    monkeypatch.setattr(catalog_audit, "resolve_categories", lambda title_ids: {})
 
     moved = catalog_audit.audit_catalogs()
 
@@ -125,13 +123,9 @@ def test_audit_uses_title_lookup_to_correct_generic_game_package(
             url: {
                 "name": "YouTube",
                 "title_id": "CUSA01116",
+                "category": "apps",
             }
         },
-    )
-    monkeypatch.setattr(
-        catalog_audit,
-        "resolve_categories",
-        lambda title_ids: {"CUSA01116": "apps"},
     )
     monkeypatch.setattr(
         catalog_audit,
@@ -171,7 +165,6 @@ def test_audit_uses_pkg_category_for_unresolved_game(
 
     monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
     monkeypatch.setattr(catalog_audit, "fetch_external_database_entries", lambda: {})
-    monkeypatch.setattr(catalog_audit, "resolve_categories", lambda title_ids: {})
     monkeypatch.setattr(
         catalog_audit,
         "extract_metadata",
@@ -216,8 +209,8 @@ def test_audit_pkg_category_overrides_stale_title_app_classification(
     )
     monkeypatch.setattr(
         catalog_audit,
-        "resolve_categories",
-        lambda title_ids: {"CUSA03291": "apps"},
+        "resolve_external_categories",
+        lambda: ({}, {"CUSA03291": "apps"}),
     )
     monkeypatch.setattr(
         catalog_audit,
