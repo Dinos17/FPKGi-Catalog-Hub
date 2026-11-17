@@ -15,6 +15,80 @@ CATALOGS = {
     ("PS5", "games"): Path("ps5/ps5-games.json"),
     ("PS5", "dlc"): Path("ps5/ps5-dlc.json"),
 }
+import requests
+from urllib.parse import urljoin, urlparse
+
+ARCHIVE_HOST = "archive.org"
+LINK_TIMEOUT_SECONDS = 15
+MAX_LINK_REDIRECTS = 5
+
+
+def _is_archive_url(url: str) -> bool:
+    parsed = urlparse(url)
+    host = (parsed.hostname or "").lower()
+    return (
+        parsed.scheme == "https"
+        and (host == ARCHIVE_HOST or host.endswith("." + ARCHIVE_HOST))
+        and parsed.username is None
+        and parsed.password is None
+    )
+
+
+def check_catalog_url(url: str, session: Any = None) -> dict[str, Any]:
+    """Check an Internet Archive URL without downloading package contents."""
+    client = session or requests.Session()
+    if not _is_archive_url(url):
+        return {"status": "inconclusive", "http_status": None,
+                "reason": "Unsupported catalog URL host or scheme"}
+
+    def request(method: str):
+        current = url
+        for _ in range(MAX_LINK_REDIRECTS + 1):
+            if not _is_archive_url(current):
+                return None, "Redirect left permitted Internet Archive hosts"
+            try:
+                response = client.request(
+                    method, current,
+                    headers={"Range": "bytes=0-0"} if method == "GET" else {},
+                    timeout=LINK_TIMEOUT_SECONDS, allow_redirects=False, stream=True,
+                )
+            except requests.RequestException as exc:
+                return None, f"Link check failed: {type(exc).__name__}"
+            if response.status_code in {301, 302, 303, 307, 308}:
+                location = response.headers.get("Location")
+                response.close()
+                if not location:
+                    return None, "Redirect response had no Location header"
+                current = urljoin(current, location)
+                continue
+            return response, None
+        return None, "Too many redirects"
+
+    response, error = request("HEAD")
+    if error or response is None:
+        return {"status": "inconclusive", "http_status": None,
+                "reason": error or "No response"}
+    status_code = response.status_code
+    response.close()
+
+    if status_code in {405, 501}:
+        response, error = request("GET")
+        if error or response is None:
+            return {"status": "inconclusive", "http_status": None,
+                    "reason": error or "No response to Range GET"}
+        status_code = response.status_code
+        response.close()
+
+    if status_code in {404, 410}:
+        return {"status": "broken", "http_status": status_code,
+                "reason": f"Catalog URL returned HTTP {status_code}"}
+    if 200 <= status_code < 400:
+        return {"status": "reachable", "http_status": status_code,
+                "reason": f"Catalog URL responded with HTTP {status_code}"}
+    return {"status": "inconclusive", "http_status": status_code,
+            "reason": f"Catalog URL check was inconclusive (HTTP {status_code})"}
+
+
 REGIONS = {"US": "USA", "USA": "USA", "EU": "EUR", "EUR": "EUR",
            "JP": "JAP", "JAP": "JAP", "ASIA": "ASIA"}
 
@@ -129,7 +203,7 @@ def _load_catalog(root: Path, relative: Path) -> dict[str, dict[str, Any]]:
     return data
 
 
-def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
+def compare_scan(scan: dict[str, Any], catalog_root: Path, link_checker=None) -> dict[str, Any]:
     catalogs = {key: _load_catalog(catalog_root, path) for key, path in CATALOGS.items()}
     indexes: dict[tuple[str, str], dict[tuple[str, str | None], list[tuple[str, dict[str, Any]]]]] = {}
     title_id_indexes: dict[tuple[str, str], dict[str, list[tuple[str, dict[str, Any]]]]] = {}
@@ -148,6 +222,8 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         title_id_indexes[(platform, category)] = title_id_index
 
     results = []
+    checked_urls: dict[str, dict[str, Any]] = {}
+    check_link = link_checker or check_catalog_url
     source_seen: dict[tuple[Any, ...], str] = {}
     source_catalog_urls: dict[tuple[str, str], set[str]] = {}
     counts = {"new": 0, "matched": 0, "outdated": 0, "duplicate": 0, "unclassified": 0}
@@ -267,18 +343,29 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                                     catalog_filename["languages"] or None)
             add_metadata_difference("min_fw", source_metadata["min_fw"], metadata.get("min_fw"))
 
-            if differences:
-                status, reason = "outdated", ", ".join(differences)
+            if catalog_url not in checked_urls:
+                checked_urls[catalog_url] = check_link(catalog_url)
+            link_check = checked_urls[catalog_url]
+            if differences or link_check["status"] == "broken":
+                status = "outdated"
+                reasons = list(differences)
+                if link_check["status"] == "broken":
+                    reasons.append(link_check["reason"])
+                reason = ", ".join(reasons)
+            elif link_check["status"] == "inconclusive":
+                status, reason = "unclassified", link_check["reason"]
             elif not source_version or not old_version or not isinstance(new_size, int) or not isinstance(old_size, int):
                 status, reason = "unclassified", "Matched catalog entry, but version or file-size metadata is missing"
             else:
-                status, reason = "matched", "Matching title identity; version and file size agree"
+                status, reason = "matched", "Metadata agrees and catalog download URL is reachable"
         counts[status] += 1
         results.append({
             "status": status, "file_id": item.get("id"), "name": item.get("name"),
             "platform": platform, "category": category, "region": region,
             "version": source_version, "title_id": source_title_id,
             "metadata_differences": metadata_differences if candidates and len(candidates) == 1 else [],
+            "catalog_url": catalog_url if candidates and len(candidates) == 1 else None,
+            "link_check": link_check if candidates and len(candidates) == 1 else None,
             "share_url": item.get("share_url"), "reason": reason,
         })
 
