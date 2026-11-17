@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import json
 import re
+from difflib import SequenceMatcher
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -66,6 +67,11 @@ def _catalog_identity(metadata: dict[str, Any]) -> tuple[str, str | None]:
     return title, region
 
 
+def _title_similarity(left: str, right: str) -> float:
+    """Return a conservative similarity score for package-name disambiguation."""
+    return SequenceMatcher(None, left, right).ratio()
+
+
 def _load_catalog(root: Path, relative: Path) -> dict[str, dict[str, Any]]:
     path = root / relative
     try:
@@ -97,8 +103,8 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         title_id_indexes[(platform, category)] = title_id_index
 
     results = []
-    source_seen: dict[tuple[str, str, str, str | None, str | None], str] = {}
-    source_identities: dict[tuple[str, str], set[tuple[str, str | None]]] = {}
+    source_seen: dict[tuple[str, str, str, str | None, str | None, str | None], str] = {}
+    source_catalog_urls: dict[tuple[str, str], set[str]] = {}
     counts = {"new": 0, "unchanged": 0, "outdated": 0, "duplicate": 0, "unclassified": 0}
     for item in scan.get("files", []):
         platform, category = item.get("platform"), item.get("catalog_category")
@@ -116,7 +122,9 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             continue
         index = indexes[(platform, category)]
         title_id_index = title_id_indexes[(platform, category)]
-        identity_key = (platform, category, title, region, source_version)
+        # Different title IDs are different products even when their visible
+        # names, regions, and versions happen to be identical.
+        identity_key = (platform, category, title, region, source_version, source_title_id)
         if identity_key in source_seen:
             counts["duplicate"] += 1
             results.append({"status": "duplicate", "file_id": item.get("id"), "name": item.get("name"),
@@ -126,23 +134,40 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         source_seen[identity_key] = str(item.get("id"))
         id_candidates = title_id_index.get(source_title_id, []) if source_title_id else []
         exact = index.get((title, region), [])
-        # Prefer the platform title ID when present; fall back to title/region
-        # for conventional filenames that do not carry a CUSA/PPSA identifier.
-        if id_candidates:
+        # A title ID identifies a base application, not necessarily one DLC
+        # package. When several catalog entries share it, disambiguate by the
+        # package name instead of treating every sibling as a match.
+        if len(id_candidates) > 1:
+            scored = [
+                (_title_similarity(title, normalize_title(metadata.get("name"))), entry)
+                for entry in id_candidates
+                for _, metadata in [entry]
+            ]
+            scored.sort(key=lambda pair: pair[0], reverse=True)
+            if scored and scored[0][0] >= 0.65 and (
+                len(scored) == 1 or scored[0][0] - scored[1][0] >= 0.08
+            ):
+                candidates = [scored[0][1]]
+            else:
+                candidates = []
+                ambiguous_title_id = True
+        elif id_candidates:
             candidates = id_candidates
+            ambiguous_title_id = False
         else:
+            ambiguous_title_id = False
             # If the source filename has no region, only accept a unique title match.
             candidates = exact if region else [
                 entry for identity, entries in index.items() if identity[0] == title for entry in entries
             ]
-        for _, matched_metadata in candidates:
-            matched_identity = _catalog_identity(matched_metadata)
-            if matched_identity[0]:
-                source_identities.setdefault((platform, category), set()).add(matched_identity)
-        if len(candidates) > 1:
+        if len(candidates) == 1:
+            source_catalog_urls.setdefault((platform, category), set()).add(candidates[0][0])
+        if ambiguous_title_id:
+            status, reason = "unclassified", "Title ID is shared by multiple catalog packages and the package name is ambiguous"
+        elif len(candidates) > 1:
             status, reason = "duplicate", "Multiple catalog entries match the available title identity"
         elif not candidates:
-            status, reason = "new", "No matching title ID or title/region in the target catalog"
+            status, reason = "new", "No unique matching title ID or title/region in the target catalog"
         else:
             _, metadata = candidates[0]
             old_version = str(metadata.get("version") or "").lstrip("0")
@@ -176,12 +201,11 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
     missing_candidates = []
     if complete:
         for (platform, category), entries in catalogs.items():
-            seen = source_identities.get((platform, category), set())
+            seen_urls = source_catalog_urls.get((platform, category), set())
             for url, metadata in entries.items():
                 if not isinstance(metadata, dict):
                     continue
-                identity = _catalog_identity(metadata)
-                if identity[0] and identity not in seen:
+                if url not in seen_urls:
                     missing_candidates.append({"platform": platform, "category": category,
                                                "name": metadata.get("name"), "region": metadata.get("region"),
                                                "catalog_url": url, "status": "not_seen_in_source"})
