@@ -44,7 +44,7 @@ function validateReport(data,kind){
  if(kind==="compare"){
   if(!isRecord(data)||!Array.isArray(data.results)||!isRecord(data.counts))throw Error("Comparison report is missing results[] or counts.");
   if(data.results.some(r=>!isRecord(r)||!(typeof r.file_id==="string"||typeof r.file_id==="number")||typeof r.status!=="string"||(r.metadata_differences!==undefined&&!Array.isArray(r.metadata_differences))||(r.source_metadata!==undefined&&r.source_metadata!==null&&!isRecord(r.source_metadata))||(r.catalog_metadata!==undefined&&r.catalog_metadata!==null&&!isRecord(r.catalog_metadata))||(r.proposed_replacement!==undefined&&r.proposed_replacement!==null&&!isRecord(r.proposed_replacement))))throw Error("Comparison report contains an invalid result record.");
-  if(data.results.some(r=>r.metadata_differences.some(d=>!isRecord(d)||typeof d.field!=="string")))throw Error("Comparison report contains invalid metadata differences.");
+  if(data.results.some(r=>(r.metadata_differences??[]).some(d=>!isRecord(d)||typeof d.field!=="string")))throw Error("Comparison report contains invalid metadata differences.");
   if(data.missing_catalog_entries!==undefined&&!Array.isArray(data.missing_catalog_entries))throw Error("Comparison missing_catalog_entries must be an array.");
   if(Array.isArray(data.missing_catalog_entries)&&data.missing_catalog_entries.some(m=>!isRecord(m)))throw Error("Comparison report contains an invalid missing-catalog record.");
  }
