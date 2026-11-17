@@ -11,7 +11,9 @@ from akirabox_catalog_compare import compare_scan, parse_source_details, parse_s
 
 
 @pytest.fixture(autouse=True)
-def stub_catalog_link_checks(monkeypatch):
+def stub_catalog_link_checks(monkeypatch, request):
+    if request.node.name.startswith("test_check_catalog_url_"):
+        return
     monkeypatch.setattr(comparator, "check_catalog_url", lambda url: {
         "status": "reachable", "http_status": 200, "reason": "test URL reachable",
     })
