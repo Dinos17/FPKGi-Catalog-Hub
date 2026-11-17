@@ -28,6 +28,9 @@ def test_audit_moves_generic_games_record_to_external_app_category(tmp_path, mon
 
     monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
     monkeypatch.setattr(
+        catalog_audit, "PKG_CACHE_PATH", tmp_path / "pkg_category_cache.json"
+    )
+    monkeypatch.setattr(
         catalog_audit,
         "fetch_external_database_entries",
         lambda: {
@@ -70,6 +73,9 @@ def test_audit_keeps_specific_category_when_external_title_id_is_generic_game(
     (ps4 / "games.json").write_text(json.dumps({"DATA": {}}), encoding="utf-8")
 
     monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        catalog_audit, "PKG_CACHE_PATH", tmp_path / "pkg_category_cache.json"
+    )
     monkeypatch.setattr(
         catalog_audit,
         "fetch_external_database_entries",
@@ -116,6 +122,9 @@ def test_audit_uses_title_lookup_to_correct_generic_game_package(
     (ps4 / "apps.json").write_text(json.dumps({"DATA": {}}), encoding="utf-8")
 
     monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        catalog_audit, "PKG_CACHE_PATH", tmp_path / "pkg_category_cache.json"
+    )
     monkeypatch.setattr(
         catalog_audit,
         "fetch_external_database_entries",
@@ -164,6 +173,9 @@ def test_audit_uses_pkg_category_for_unresolved_game(
     (ps4 / "apps.json").write_text(json.dumps({"DATA": {}}), encoding="utf-8")
 
     monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        catalog_audit, "PKG_CACHE_PATH", tmp_path / "pkg_category_cache.json"
+    )
     monkeypatch.setattr(catalog_audit, "fetch_external_database_entries", lambda: {})
     monkeypatch.setattr(
         catalog_audit,
@@ -202,6 +214,9 @@ def test_audit_pkg_category_overrides_stale_title_app_classification(
     (ps4 / "apps.json").write_text(json.dumps({"DATA": {}}), encoding="utf-8")
 
     monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        catalog_audit, "PKG_CACHE_PATH", tmp_path / "pkg_category_cache.json"
+    )
     monkeypatch.setattr(
         catalog_audit,
         "fetch_external_database_entries",
