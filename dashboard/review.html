@@ -16,8 +16,8 @@ input[type=file]{max-width:100%}.notice{padding:13px 16px;margin:14px 0;color:va
 .columns{display:grid;grid-template-columns:1fr 1fr}.side{padding:10px 12px;min-width:0}.side+.side{border-left:1px solid var(--line)}.side h3{font-size:.70rem;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:0 0 7px}
 dl{display:grid;grid-template-columns:minmax(105px,.38fr) 1fr;gap:4px 8px;margin:0;font-size:.78rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.diff{background:#342b18;color:#ffdb91;border:1px solid #65532e;border-radius:6px;padding:1px 5px}
 .reason{padding:8px 12px;color:var(--muted);border-top:1px solid var(--line);font-size:.78rem}.actions{display:flex;gap:6px;flex-wrap:wrap;padding:8px 12px;border-top:1px solid var(--line);align-items:center}.actions button{padding:6px 10px;font-size:.78rem}.approve.selected{border-color:var(--green);color:var(--green)}.reject.selected{border-color:var(--red);color:var(--red)}
-.empty{padding:45px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}.hidden{display:none!important}
-@media(max-width:760px){.columns{grid-template-columns:1fr}.side+.side{border-left:0;border-top:1px solid var(--line)}dl{grid-template-columns:115px 1fr}}
+.empty{padding:45px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}#results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.item{margin:0;min-width:0}.hidden{display:none!important}
+@media(max-width:760px){#results{grid-template-columns:1fr}.columns{grid-template-columns:1fr}.side+.side{border-left:0;border-top:1px solid var(--line)}dl{grid-template-columns:115px 1fr}}
 </style></head>
 <body><main>
 <header><div><h1>AkiraBox Review</h1><p>Inspect source uploads and matching catalog records side by side.</p></div><a href="./index.html">← Back to Catalog</a></header>
