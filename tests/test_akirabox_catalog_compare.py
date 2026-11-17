@@ -451,5 +451,5 @@ def test_check_catalog_url_does_not_consume_malformed_redirect_body():
     )
     result = comparator.check_catalog_url("https://archive.org/download/example/game.pkg", session)
     assert result["status"] == "inconclusive"
-    assert "Redirect left permitted" in result["reason"]
+    assert "Malformed redirect URL" in result["reason"]
     assert len(adapter.calls) == 1
