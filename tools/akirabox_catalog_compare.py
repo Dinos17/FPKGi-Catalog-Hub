@@ -68,6 +68,9 @@ def fetch_akirabox_sha256(file_id: str, session: Any = None) -> dict[str, Any]:
             return {"status": "unavailable", "sha256": None,
                     "reason": "AkiraBox reports no SHA-256 for this file"}
         return {"status": "available", "sha256": value.lower(), "reason": "SHA-256 read from AkiraBox file page"}
+    except requests.RequestException as exc:
+        return {"status": "unavailable", "sha256": None,
+                "reason": f"AkiraBox page body read failed: {type(exc).__name__}"}
     finally:
         response.close()
 
