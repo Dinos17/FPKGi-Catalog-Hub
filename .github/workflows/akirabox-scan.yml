@@ -38,7 +38,7 @@ jobs:
           set -euo pipefail
           publication_dir="$RUNNER_TEMP/akirabox-report-publication"
           git worktree add --detach "$publication_dir" HEAD
-          git -C "$publication_dir" fetch origin "$REPORT_BRANCH" || true
+          git -C "$publication_dir" fetch origin "$REPORT_BRANCH:refs/remotes/origin/$REPORT_BRANCH" || true
           if git -C "$publication_dir" show-ref --verify --quiet "refs/remotes/origin/$REPORT_BRANCH"; then
             git -C "$publication_dir" switch --force-create "$REPORT_BRANCH" "origin/$REPORT_BRANCH"
           else
