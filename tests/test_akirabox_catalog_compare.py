@@ -5,7 +5,7 @@ from pathlib import Path
 TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
-from akirabox_catalog_compare import compare_scan, parse_source_identity
+from akirabox_catalog_compare import compare_scan, parse_source_details, parse_source_identity
 
 
 def write_catalog(root: Path, relative: str, data: dict) -> None:
@@ -16,6 +16,67 @@ def write_catalog(root: Path, relative: str, data: dict) -> None:
 
 def test_parses_title_region_and_version():
     assert parse_source_identity("A Hat in Time - [US] [EN] [1.04].pkg") == ("a hat in time", "USA", "1.04")
+
+def test_parses_nonstandard_scene_filename_without_treating_firmware_as_version():
+    assert parse_source_details(
+        "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4.pkg"
+    ) == ("slime rancher", None, "1.00", "CUSA11650")
+
+
+def test_parses_all_names_from_the_reported_ten_file_scan():
+    names = [
+        "AVICII Invector - [US] [EN] [1.05].pkg",
+        "ASTRONEER - [US] [EN] [1.64].pkg",
+        "A Hat in Time - [US] [EN] [1.04].pkg",
+        "A Short Hike - [EU] [EN] [1.01].pkg",
+        "A Monster's Expedition - [EU] [EN] [1.03].pkg",
+        "Absolute Drift - [US] [EN] [1.02].pkg",
+        "ADR1FT - [US] [EN] [1.01].pkg",
+        "ABZU - [EU] [EN] [1.01].pkg",
+        "Absolute Drift - [US] [EN] [1.02].pkg",
+        "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4.pkg",
+    ]
+    parsed = [parse_source_details(name) for name in names]
+    assert [item[0] for item in parsed] == [
+        "avicii invector", "astroneer", "a hat in time", "a short hike",
+        "a monster s expedition", "absolute drift", "adr1ft", "abzu",
+        "absolute drift", "slime rancher",
+    ]
+    assert parsed[-1][2:] == ("1.00", "CUSA11650")
+
+
+def test_title_id_match_handles_slime_rancher_filename(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/slime.pkg": {
+            "name": "Slime Rancher", "title_id": "CUSA11650",
+            "region": "EUR", "version": "01.20", "size": 100,
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "E9Qz9AWjwzOL",
+        "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4.pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": 100,
+    }]}, tmp_path)
+    assert report["results"][0]["title_id"] == "CUSA11650"
+    assert report["results"][0]["status"] == "outdated"
+    assert report["results"][0]["reason"] == "version differs"
+
+
+def test_missing_version_or_size_is_not_claimed_unchanged(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/game.pkg": {
+            "name": "Example Game", "region": "USA", "version": "01.00",
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    report = compare_scan({"errors": [], "folders": [], "files": [{
+        "id": "missing-metadata", "name": "Example Game - [US] [EN] [1.00].pkg",
+        "platform": "PS4", "catalog_category": "games", "size_bytes": None,
+    }]}, tmp_path)
+    assert report["results"][0]["status"] == "unclassified"
 
 
 def test_classifies_new_unchanged_and_outdated_without_writing(tmp_path):
