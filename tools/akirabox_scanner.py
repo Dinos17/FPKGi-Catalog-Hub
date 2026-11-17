@@ -24,7 +24,7 @@ USER_AGENT = (
     "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
     "(KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36"
 )
-ALLOWED_CATEGORIES = {"homebrew", "apps", "emulators", "themes", "demos"}
+ALLOWED_CATEGORIES = {"homebrew", "apps", "emulators", "themes", "demos", "catalog"}
 AKIRA_HOSTS = {"akirabox.to", "akirabox.com"}
 
 
@@ -111,6 +111,18 @@ def _extract_page_data(html: str) -> tuple[dict[str, Any], dict[str, Any], dict[
     return folder, listing, pager
 
 
+def _classify_catalog_path(path: list[str]) -> tuple[str | None, str | None]:
+    """Classify paths such as PS4/Games or PS5/DLC, including nested folders."""
+    normalized = [part.strip().casefold() for part in path]
+    for index, part in enumerate(normalized):
+        if part not in {"ps4", "ps5"}:
+            continue
+        for candidate in normalized[index + 1:]:
+            if candidate in {"games", "dlc"}:
+                return part.upper(), candidate
+    return None, None
+
+
 class AkiraBoxScanner:
     def __init__(self, session: requests.Session | None = None, timeout: int = 30,
                  max_pages: int = 100, max_folders: int = 500):
@@ -129,7 +141,9 @@ class AkiraBoxScanner:
         return response.text
 
     def _scan_folder(self, folder_url: str, category: str, path: list[str],
-                     visited: set[str], result: ScanResult) -> None:
+                     visited: set[str], result: ScanResult, platform: str | None = None,
+                     inherited_catalog_category: str | None = None,
+                     platform_root: bool = False) -> None:
         folder_url = _validate_folder_url(folder_url)
         folder_id = folder_url.split("/")[-2]
         if folder_id in visited:
@@ -153,13 +167,19 @@ class AkiraBoxScanner:
             if pager["page"] != page:
                 raise ScanError(f"Requested page {page}, but AkiraBox returned page {pager['page']}")
             folder_name = folder["name"]
+            current_path = path if platform_root else path + [folder_name]
+            detected_platform, detected_category = _classify_catalog_path(current_path)
+            current_platform = platform or detected_platform
+            current_category = inherited_catalog_category or detected_category
             if folder_record is None:
                 folder_record = {
                     "id": folder_id,
                     "name": folder_name,
                     "url": folder_url,
-                    "path": path + [folder_name],
-                    "category": category,
+                    "path": current_path,
+                    "category": (current_category or "unclassified") if category == "catalog" else category,
+                    "platform": current_platform,
+                    "catalog_category": current_category,
                 }
                 result.folders.append(folder_record)
 
@@ -174,14 +194,31 @@ class AkiraBoxScanner:
                     continue
                 if kind == "folder":
                     child_url = f"https://akirabox.to/{item_id}/folder"
-                    self._scan_folder(child_url, category, path + [folder_name],
-                                      visited, result)
+                    child_catalog_category = current_category
+                    if platform_root:
+                        child_name = name.strip().casefold()
+                        if child_name not in {"games", "dlc"}:
+                            continue
+                        child_catalog_category = child_name
+                    self._scan_folder(
+                        child_url, category, current_path, visited, result,
+                        platform=current_platform,
+                        inherited_catalog_category=child_catalog_category,
+                    )
                 elif kind == "file":
                     if item.get("visibility") != "public":
                         continue
                     if any(existing["id"] == item_id for existing in result.files):
                         continue
                     extension = item.get("extension")
+                    file_path = current_path
+                    detected_platform, detected_category = _classify_catalog_path(file_path)
+                    file_platform = platform or detected_platform
+                    file_catalog_category = inherited_catalog_category or detected_category
+                    output_category = (
+                        file_catalog_category or "unclassified"
+                        if category == "catalog" else category
+                    )
                     result.files.append({
                         "id": item_id,
                         "numeric_id": item.get("numericId"),
@@ -192,8 +229,10 @@ class AkiraBoxScanner:
                         "created_at": item.get("createdAt"),
                         "parent_id": item.get("parentId"),
                         "share_url": f"https://akirabox.to/{item_id}/file",
-                        "folder_path": path + [folder_name],
-                        "category": category,
+                        "folder_path": file_path,
+                        "category": output_category,
+                        "platform": file_platform,
+                        "catalog_category": file_catalog_category,
                     })
 
             total_pages = max(1, (pager["total"] + pager["perPage"] - 1) // pager["perPage"])
@@ -212,12 +251,22 @@ class AkiraBoxScanner:
             raw_category = source.get("category", "")
             category = raw_category.lower() if isinstance(raw_category, str) else ""
             try:
-                if category not in ALLOWED_CATEGORIES:
-                    raise ScanError(
-                        f"Category '{category}' is not enabled. Allowed: {', '.join(sorted(ALLOWED_CATEGORIES))}"
-                    )
                 url = _validate_folder_url(source["url"])
-                self._scan_folder(url, category, [], visited, result)
+                raw_platform = source.get("platform")
+                if raw_platform is not None:
+                    platform = raw_platform.upper() if isinstance(raw_platform, str) else ""
+                    if platform not in {"PS4", "PS5"}:
+                        raise ScanError("Platform sources must specify 'PS4' or 'PS5'")
+                    self._scan_folder(
+                        url, "catalog", [platform], visited, result,
+                        platform=platform, platform_root=True,
+                    )
+                else:
+                    if category not in ALLOWED_CATEGORIES:
+                        raise ScanError(
+                            f"Category '{category}' is not enabled. Allowed: {', '.join(sorted(ALLOWED_CATEGORIES))}"
+                        )
+                    self._scan_folder(url, category, [], visited, result)
             except (KeyError, ScanError) as exc:
                 result.errors.append({"source": label, "error": str(exc)})
         return result
