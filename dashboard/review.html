@@ -53,7 +53,7 @@ function render(){
  $("filters").querySelectorAll("button").forEach(b=>b.addEventListener("click",()=>{filter=b.dataset.filter;render();}));
  const shown=rows.filter(x=>filter==="all"||(x.result?.status||"unclassified")===filter);
  $("results").innerHTML=shown.length?shown.map(({source:s,index,result:r})=>{
- const status=r?.status||"unclassified",diffs=r?.metadata_differences||[],sourceData={...s,folder_path:Array.isArray(s.folder_path)?s.folder_path.join(" / "):s.folder_path};
+ const status=r?.status||"unclassified",diffs=r?.metadata_differences||[],sourceData={...s,...(r?.source_metadata||{}),folder_path:Array.isArray(s.folder_path)?s.folder_path.join(" / "):s.folder_path};
  const catalog=r?.catalog_metadata||null;const changed=diffs.map(d=>d.field);
  const decision=decisions[String(s.id)]||"pending";
  const diffHtml=diffs.length?'<div class="reason"><strong>Reported differences:</strong> '+diffs.map(d=>esc(pretty(d.field))+': <span class="diff">'+esc(d.source_value)+'</span> vs <span class="diff">'+esc(d.catalog_value)+'</span>').join(" · ")+'</div>':'';
