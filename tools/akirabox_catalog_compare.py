@@ -198,7 +198,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                 _, metadata = entry
                 scored.append((_title_similarity(title, normalize_title(metadata.get("name"))), entry))
             scored.sort(key=lambda pair: pair[0], reverse=True)
-            if scored and scored[0][0] >= 0.65 and (
+            if scored and scored[0][0] >= 0.80 and (
                 len(scored) == 1 or scored[0][0] - scored[1][0] >= 0.08
             ):
                 candidates = [scored[0][1]]
@@ -211,7 +211,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                 _, metadata = entry
                 scored.append((_title_similarity(title, normalize_title(metadata.get("name"))), entry))
             scored.sort(key=lambda pair: pair[0], reverse=True)
-            if scored and scored[0][0] >= 0.65 and (
+            if scored and scored[0][0] >= 0.80 and (
                 len(scored) == 1 or scored[0][0] - scored[1][0] >= 0.08
             ):
                 candidates = [scored[0][1]]
