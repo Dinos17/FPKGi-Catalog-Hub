@@ -9,6 +9,8 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+from akirabox_catalog_compare import normalize_title
+
 CATALOGS = {
     ("PS4", "games"): Path("ps4/games.json"),
     ("PS4", "dlc"): Path("ps4/dlc.json"),
@@ -17,10 +19,6 @@ CATALOGS = {
 }
 REGIONS = {"US": "USA", "USA": "USA", "EU": "EUR", "EUR": "EUR",
            "JP": "JAP", "JAP": "JAP", "ASIA": "ASIA"}
-
-
-def normalized_text(value: Any) -> str:
-    return re.sub(r"[^a-z0-9]+", " ", str(value or "").strip().lower()).strip()
 
 
 def normalized_version(value: Any) -> tuple[int, ...] | None:
@@ -49,7 +47,9 @@ def is_akirabox_url(value: Any) -> bool:
 
 def _catalog_record_matches(actual: dict[str, Any], expected: dict[str, Any]) -> bool:
     for key in ("name", "title_id", "region", "version", "size", "min_fw"):
-        if key in expected and actual.get(key) != expected.get(key):
+        # Compare presence as well as value: a field added after the snapshot
+        # is a stale-record change, even when the snapshot omitted that field.
+        if actual.get(key) != expected.get(key):
             return False
     return True
 
@@ -72,8 +72,9 @@ def _is_upgrade(result: dict[str, Any], source: dict[str, Any]) -> bool:
         return False
 
     # Never upgrade on title-only similarity. Require a complete, exact identity.
-    source_title = normalized_text(source_meta.get("title"))
-    catalog_title = normalized_text(catalog_meta.get("name"))
+    # Use exactly the same Unicode-aware normalization as the comparator.
+    source_title = normalize_title(source_meta.get("title"))
+    catalog_title = normalize_title(catalog_meta.get("name"))
     source_id = source_meta.get("title_id")
     catalog_id = catalog_meta.get("title_id")
     source_region = REGIONS.get(str(source_meta.get("region") or "").upper())
@@ -107,16 +108,48 @@ def apply_version_upgrades(scan: dict[str, Any], comparison: dict[str, Any],
                            catalog_root: Path) -> dict[str, Any]:
     files = scan.get("files", [])
     by_id = {str(item.get("id")): item for item in files}
-    candidates = []
-    target_counts: dict[tuple[str, str, str], int] = {}
+    results = comparison.get("results", [])
+    result_by_file_id = {
+        str(result.get("file_id")): result
+        for result in results
+        if result.get("file_id") is not None
+    }
 
-    for result in comparison.get("results", []):
-        source = by_id.get(str(result.get("file_id")))
-        if not source or result.get("status") != "outdated" or not _is_upgrade(result, source):
+    # Count every scanned source targeting a catalog record before checking
+    # whether that source is otherwise eligible. The comparator reports
+    # repeated source identities as "duplicate" rows without catalog_url;
+    # inherit their original source's target so they still make it ambiguous.
+    target_by_file_id: dict[str, tuple[str, str, str]] = {}
+    for result in results:
+        file_id = result.get("file_id")
+        catalog_url = result.get("catalog_url")
+        if file_id is None or not isinstance(catalog_url, str) or not catalog_url:
             continue
-        target = (str(result.get("platform")), str(result.get("category")),
-                  str(result.get("catalog_url")))
-        target_counts[target] = target_counts.get(target, 0) + 1
+        target_by_file_id[str(file_id)] = (
+            str(result.get("platform")), str(result.get("category")), catalog_url
+        )
+
+    target_counts: dict[tuple[str, str, str], int] = {}
+    for result in results:
+        file_id = result.get("file_id")
+        if file_id is None:
+            continue
+        file_key = str(file_id)
+        target = target_by_file_id.get(file_key)
+        if target is None and result.get("status") == "duplicate":
+            original_id = result.get("duplicate_of_file_id")
+            target = target_by_file_id.get(str(original_id)) if original_id is not None else None
+        if target is not None:
+            target_counts[target] = target_counts.get(target, 0) + 1
+
+    candidates = []
+    for result in results:
+        source = by_id.get(str(result.get("file_id")))
+        if not source or result.get("status") != "outdated":
+            continue
+        target = target_by_file_id.get(str(result.get("file_id")))
+        if target is None or not _is_upgrade(result, source):
+            continue
         candidates.append((result, source, target))
 
     changed: dict[Path, dict[str, Any]] = {}
