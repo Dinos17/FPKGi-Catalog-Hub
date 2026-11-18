@@ -11,6 +11,7 @@ permissions:
 concurrency:
   group: akirabox-catalog-scan
   cancel-in-progress: false
+  queue: max
 
 jobs:
   record-rejection:
