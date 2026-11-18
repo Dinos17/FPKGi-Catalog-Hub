@@ -1,0 +1,74 @@
+name: Record AkiraBox Rejections
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+
+concurrency:
+  group: akirabox-catalog-scan
+  cancel-in-progress: false
+  queue: max
+
+jobs:
+  record-rejection:
+    if: github.event.issue.user.login == 'Dinos17' && startsWith(github.event.issue.title, 'AkiraBox rejection:')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+
+      - name: Prepare existing rejection records
+        env:
+          REPORT_BRANCH: akirabox-reports
+          REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
+        run: |
+          set -euo pipefail
+          git fetch origin "$REPORT_BRANCH:refs/remotes/origin/$REPORT_BRANCH"
+          if git cat-file -e "origin/$REPORT_BRANCH:reports/akirabox-rejections.json" 2>/dev/null; then
+            git show "origin/$REPORT_BRANCH:reports/akirabox-rejections.json" > "$REPORT_PATH"
+          fi
+
+      - name: Validate and record the rejection
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+          REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
+        run: |
+          set -euo pipefail
+          python tools/akirabox_rejections.py \
+            --event-path "$EVENT_PATH" \
+            --report-path "$REPORT_PATH" \
+            --expected-actor "Dinos17"
+
+      - name: Publish rejection record to report branch
+        env:
+          REPORT_BRANCH: akirabox-reports
+          REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
+        run: |
+          set -euo pipefail
+          git switch --force-create "$REPORT_BRANCH" "origin/$REPORT_BRANCH"
+          mkdir -p reports
+          cp "$REPORT_PATH" reports/akirabox-rejections.json
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/akirabox-rejections.json
+          if git diff --cached --quiet; then
+            echo "Rejection record was already published."
+          else
+            git commit -m "Record rejected AkiraBox upload"
+            git push origin "HEAD:$REPORT_BRANCH"
+          fi
+
+      - name: Confirm saved rejection on the issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" \
+            --repo "$GITHUB_REPOSITORY" \
+            --body "Rejection recorded. The upload is now listed as **REJECTED — MANUAL DELETION REQUIRED** in the AkiraBox Review dashboard. No catalog entry or AkiraBox file was changed."
