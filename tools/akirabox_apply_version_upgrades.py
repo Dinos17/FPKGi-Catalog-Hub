@@ -109,12 +109,6 @@ def apply_version_upgrades(scan: dict[str, Any], comparison: dict[str, Any],
     files = scan.get("files", [])
     by_id = {str(item.get("id")): item for item in files}
     results = comparison.get("results", [])
-    result_by_file_id = {
-        str(result.get("file_id")): result
-        for result in results
-        if result.get("file_id") is not None
-    }
-
     # Count every scanned source targeting a catalog record before checking
     # whether that source is otherwise eligible. The comparator reports
     # repeated source identities as "duplicate" rows without catalog_url;
