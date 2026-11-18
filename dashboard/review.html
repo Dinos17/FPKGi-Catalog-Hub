@@ -156,7 +156,7 @@ function render(){
    const source=scan.files.find(item=>String(item.id)===String(b.dataset.id));
    if(!source)return;
    const payload={file_id:String(source.id),name:String(source.name||""),share_url:String(source.share_url||""),scan_generated_at:String(scan.generated_at||scan.scanned_at||"")};
-   const body="Please record this AkiraBox upload as rejected and add it to the manual-deletion list.\\n\\n<!-- akirabox-rejection:v1\\n"+JSON.stringify(payload)+"\\n-->";
+   const body="Please record this AkiraBox upload as rejected and add it to the manual-deletion list.\n\n<!-- akirabox-rejection:v1\n"+JSON.stringify(payload)+"\n-->";
    const issueUrl=new URL("https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new");
    issueUrl.searchParams.set("title","AkiraBox rejection: "+payload.name);
    issueUrl.searchParams.set("body",body);
