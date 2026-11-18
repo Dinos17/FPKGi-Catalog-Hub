@@ -148,14 +148,12 @@ function isSafeReplacement(result,source,allRows){
  return true;
 }
 function render(){
- const ready=!!(scan&&comparison);$("export").disabled=!ready;
- if(!ready){$("summary").innerHTML="";$("results").innerHTML='<div class="empty">The file ID links each scanned upload to its comparison result.</div>';return;}
+ renderRejected();
+ const ready=!!(scan&&comparison);$("export").disabled=!(ready&&rejectionStatus==="available");
+ if(!ready||rejectionStatus!=="available"){$("summary").innerHTML="";$("results").innerHTML='<div class="empty">Review suggestions are hidden until the scan, comparison and saved rejection status are all verified.</div>';return;}
  const byId=new Map(comparison.results.filter(r=>r.file_id!==undefined&&r.file_id!==null).map(r=>[String(r.file_id),r]));
  const rows=scan.files.map((source,index)=>({source,index,result:byId.get(String(source.id))||null}));
  const safeIds=new Set(rows.filter(row=>isSafeReplacement(row.result,row.source,rows)).map(row=>String(row.source.id)));
- const rejectedIds=new Set(rejections.map(item=>String(item.file_id)));
- const rejectedUrls=new Set(rejections.map(item=>String(item.share_url)));
- const isRejectedSource=source=>rejectedIds.has(String(source.id))||rejectedUrls.has(String(source.share_url||""));
  const counts=comparison.counts||{};const cards=[["Scanned files",scan.file_count??scan.files.length],["Folders",scan.folder_count??scan.folders.length],["Safe replacements",safeIds.size],["New",counts.new||0],["Needs review",rows.filter(row=>!safeIds.has(String(row.source.id))&&!isRejectedSource(row.source)&&(!row.result||["new","outdated","unclassified"].includes(row.result.status))).length],["Duplicates",counts.duplicate||0],["Unclassified",counts.unclassified||0]];
  $("summary").innerHTML=cards.map(([k,v])=>'<div class="stat">'+esc(k)+'<strong>'+esc(v)+'</strong></div>').join("");
  const complete=comparison.scan_complete_for_all_categories===true;
