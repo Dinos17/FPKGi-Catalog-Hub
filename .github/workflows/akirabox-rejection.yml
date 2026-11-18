@@ -28,7 +28,7 @@ jobs:
           REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
         run: |
           set -euo pipefail
-          git fetch origin "$REPORT_BRANCH"
+          git fetch origin "$REPORT_BRANCH:refs/remotes/origin/$REPORT_BRANCH"
           if git cat-file -e "origin/$REPORT_BRANCH:reports/akirabox-rejections.json" 2>/dev/null; then
             git show "origin/$REPORT_BRANCH:reports/akirabox-rejections.json" > "$REPORT_PATH"
           fi
