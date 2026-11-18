@@ -18,6 +18,8 @@ def make_event(
         "name": "Example Game.pkg",
         "share_url": url,
         "scan_generated_at": "2026-11-17T23:53:20Z",
+        "platform": "PS4",
+        "catalog_category": "games",
     }
     body = (
         "Please record this rejected upload.\n\n"
@@ -91,3 +93,50 @@ def test_rejection_requires_expected_title_and_open_issue(tmp_path):
                 tmp_path / "rejections.json",
                 expected_actor="Dinos17",
             )
+
+
+
+def test_parser_handles_filename_containing_json_and_comment_delimiters():
+    payload = {
+        "file_id": "abc123",
+        "name": "Demo} --> Trial.pkg",
+        "share_url": "https://akirabox.to/abc123/file",
+        "platform": "PS4",
+        "catalog_category": "games",
+    }
+    body = "<!-- akirabox-rejection:v1\n" + json.dumps(payload) + "\n-->"
+    assert parse_rejection_body(body)["name"] == "Demo} --> Trial.pkg"
+
+
+def test_parser_requires_share_url_path_to_match_file_id():
+    event = make_event(url="https://akirabox.to/different-id/file")
+    with pytest.raises(ValueError, match="matching HTTPS"):
+        parse_rejection_body(event["issue"]["body"])
+
+
+def test_retry_same_issue_preserves_original_timestamp_and_provenance(tmp_path):
+    path = tmp_path / "rejections.json"
+    first = make_event()
+    first["issue"]["number"] = 42
+    first_now = datetime(2026, 11, 18, tzinfo=timezone.utc)
+    record_issue(first, path, "Dinos17", now=first_now)
+
+    retry_now = datetime(2026, 11, 19, tzinfo=timezone.utc)
+    saved = record_issue(first, path, "Dinos17", now=retry_now)
+    assert saved["rejected_at"] == "2026-11-18T00:00:00Z"
+    assert saved["issue_number"] == 42
+
+
+def test_older_issue_cannot_replace_newer_rejection_provenance(tmp_path):
+    path = tmp_path / "rejections.json"
+    newer = make_event()
+    newer["issue"]["number"] = 43
+    newer["issue"]["html_url"] = "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/43"
+    record_issue(newer, path, "Dinos17", now=datetime(2026, 11, 19, tzinfo=timezone.utc))
+
+    older = make_event()
+    older["issue"]["number"] = 42
+    older["issue"]["html_url"] = "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/42"
+    saved = record_issue(older, path, "Dinos17", now=datetime(2026, 11, 18, tzinfo=timezone.utc))
+    assert saved["issue_number"] == 43
+    assert saved["issue_url"].endswith("/43")
