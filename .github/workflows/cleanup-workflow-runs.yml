@@ -39,15 +39,18 @@ jobs:
 
           def gh_api(*args, allow_404=False):
               for attempt in range(max_attempts):
-                  result = subprocess.run(
-                      ["gh", "api", *args],
-                      capture_output=True,
-                      text=True,
-                  )
-                  if result.returncode == 0:
-                      return result.stdout
-
-                  error = (result.stderr or result.stdout).strip()
+                  try:
+                      result = subprocess.run(
+                          ["gh", "api", *args],
+                          capture_output=True,
+                          text=True,
+                          timeout=60,
+                      )
+                      if result.returncode == 0:
+                          return result.stdout
+                      error = (result.stderr or result.stdout).strip()
+                  except subprocess.TimeoutExpired:
+                      error = "GitHub CLI request timed out after 60 seconds"
                   if allow_404 and ("HTTP 404" in error or "404 Not Found" in error):
                       return None
 
