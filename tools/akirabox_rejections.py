@@ -30,7 +30,7 @@ def parse_rejection_body(body: str) -> dict:
         raise ValueError("AkiraBox rejection payload is not valid JSON.") from exc
 
     suffix = text[payload_end:]
-    closing = re.match(r"\s*-->\s*", suffix)
+    closing = re.match(r"\s*--!?>\s*", suffix)
     if not closing:
         raise ValueError("AkiraBox rejection payload is missing its closing marker.")
 
