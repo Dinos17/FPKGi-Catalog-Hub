@@ -2,7 +2,7 @@
   "scanner": "akirabox",
   "read_only": true,
   "folder_count": 3,
-  "file_count": 13,
+  "file_count": 12,
   "folders": [
     {
       "id": "Z9dzBXkvgmk1",
@@ -255,26 +255,8 @@
       "category": "games",
       "platform": "PS4",
       "catalog_category": "games"
-    },
-    {
-      "id": "E9Qz9AWjwzOL",
-      "numeric_id": 942670,
-      "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4",
-      "extension": "pkg",
-      "size_bytes": 611123200,
-      "visibility": "public",
-      "created_at": "2026-11-16T15:33:53.000Z",
-      "parent_id": 942665,
-      "share_url": "https://akirabox.to/E9Qz9AWjwzOL/file",
-      "folder_path": [
-        "PS4",
-        "Games"
-      ],
-      "category": "games",
-      "platform": "PS4",
-      "catalog_category": "games"
     }
   ],
   "errors": [],
-  "generated_at": "2026-11-18T16:08:32Z"
+  "generated_at": "2026-11-18T16:18:36Z"
 }

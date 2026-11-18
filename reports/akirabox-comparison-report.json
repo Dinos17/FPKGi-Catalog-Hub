@@ -7,11 +7,11 @@
   "counts": {
     "new": 0,
     "matched": 12,
-    "outdated": 1,
+    "outdated": 0,
     "duplicate": 0,
     "unclassified": 0
   },
-  "replacement_candidate_count": 1,
+  "replacement_candidate_count": 0,
   "results": [
     {
       "status": "matched",
@@ -492,74 +492,6 @@
       "proposed_replacement": null,
       "share_url": "https://akirabox.to/ZvqzlKwYO3aD/file",
       "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
-    },
-    {
-      "status": "outdated",
-      "file_id": "E9Qz9AWjwzOL",
-      "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4",
-      "platform": "PS4",
-      "category": "games",
-      "region": null,
-      "version": "1.00",
-      "title_id": "CUSA11650",
-      "metadata_differences": [
-        {
-          "field": "version",
-          "source_value": "1.00",
-          "catalog_value": "01.20"
-        },
-        {
-          "field": "min_fw",
-          "source_value": "5.05",
-          "catalog_value": "9.00"
-        },
-        {
-          "field": "size_bytes",
-          "source_value": 611123200,
-          "catalog_value": 802226176
-        }
-      ],
-      "source_metadata": {
-        "title": "slime rancher",
-        "region": null,
-        "version": "1.00",
-        "title_id": "CUSA11650",
-        "languages": [],
-        "min_fw": "5.05",
-        "size_bytes": 611123200,
-        "file_name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4",
-        "platform": "PS4",
-        "category": "games"
-      },
-      "catalog_metadata": {
-        "title_id": "CUSA11650",
-        "region": "EUR",
-        "name": "Slime Rancher",
-        "version": "01.20",
-        "release": "11-15-2013",
-        "size": 802226176,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA11650.png",
-        "size_bytes": 802226176,
-        "parsed_filename_metadata": {
-          "title": "slime rancher",
-          "region": "EUR",
-          "version": "1.20",
-          "title_id": null,
-          "languages": [
-            "EN"
-          ],
-          "min_fw": null
-        }
-      },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-s/Slime%20Rancher%20-%20[EU]%20[EN]%20[1.20].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-s/Slime%20Rancher%20-%20[EU]%20[EN]%20[1.20].pkg",
-        "to": "https://akirabox.to/E9Qz9AWjwzOL/file",
-        "status": "pending_review"
-      },
-      "share_url": "https://akirabox.to/E9Qz9AWjwzOL/file",
-      "reason": "version differs, file size differs, Archive.org catalog URL should be replaced with the AkiraBox share URL"
     }
   ],
   "missing_candidate_count": 0,
