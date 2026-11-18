@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "records": [
+    {
+      "file_id": "E9Qz9AWjwzOL",
+      "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4",
+      "share_url": "https://akirabox.to/E9Qz9AWjwzOL/file",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "scan_generated_at": "2026-11-17T23:53:20Z",
+      "status": "manual_deletion_required",
+      "rejected_at": "2026-11-18T16:12:24.791804Z",
+      "issue_number": 38,
+      "issue_url": "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/38"
+    }
+  ]
+}
