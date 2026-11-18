@@ -9,7 +9,7 @@ permissions:
   issues: write
 
 concurrency:
-  group: akirabox-rejection-records
+  group: akirabox-catalog-scan
   cancel-in-progress: false
 
 jobs:
