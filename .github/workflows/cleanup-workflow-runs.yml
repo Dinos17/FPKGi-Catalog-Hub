@@ -29,7 +29,6 @@ jobs:
           import json
           import os
           import subprocess
-          import sys
           import time
 
           repo = os.environ["REPO"]
@@ -57,9 +56,9 @@ jobs:
                       marker in lowered
                       for marker in (
                           "429", "500", "502", "503", "504",
-                          "timeout", "timed out", "connection reset",
-                          "connection refused", "temporarily unavailable",
-                          "tls handshake",
+                          "rate limit", "timeout", "timed out",
+                          "connection reset", "connection refused",
+                          "temporarily unavailable", "tls handshake",
                       )
                   )
                   if not transient or attempt == max_attempts - 1:
