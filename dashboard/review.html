@@ -195,7 +195,7 @@ function render(){
   if(value==="rejected"||value==="keep_catalog"){
    const source=scan.files.find(item=>String(item.id)===String(b.dataset.id));
    if(!source)return;
-   const payload={file_id:String(source.id),name:String(source.name||""),share_url:String(source.share_url||""),scan_generated_at:String(scan.generated_at||scan.scanned_at||"")};
+   const payload={file_id:String(source.id),name:String(source.name||""),share_url:String(source.share_url||""),platform:String(source.platform||""),catalog_category:String(source.catalog_category||source.category||""),scan_generated_at:String(scan.generated_at||scan.scanned_at||"")};
    const body="Please record this AkiraBox upload as rejected and add it to the manual-deletion list.\n\n<!-- akirabox-rejection:v1\n"+JSON.stringify(payload)+"\n-->";
    const issueUrl=new URL("https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new");
    issueUrl.searchParams.set("title","AkiraBox rejection: "+payload.name);
@@ -206,11 +206,28 @@ function render(){
   if(value==="pending")delete decisions[b.dataset.id];else decisions[b.dataset.id]=value;
   render();
  }));
- const rejectedHtml=rejections.length?rejections.slice().sort((a,b)=>String(b.rejected_at||"").localeCompare(String(a.rejected_at||""))).map(item=>'<article class="item"><div class="item-head"><div class="title">'+esc(item.name)+'</div><span class="pill rejected">REJECTED — MANUAL DELETION REQUIRED</span></div><div class="side"><dl><dt>AkiraBox file ID</dt><dd>'+esc(item.file_id)+'</dd><dt>Upload link</dt><dd>'+linkOrText(item.share_url)+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd><dt>GitHub record</dt><dd>'+(item.issue_url?linkOrText(item.issue_url):"—")+'</dd></dl></div><div class="reason">Open the AkiraBox link, locate this upload and delete it manually. The catalog was not changed.</div></article>').join(""):'<div class="empty">No rejected uploads are recorded.</div>';
- $("rejected").innerHTML=rejectedHtml;
  const missing=comparison.missing_catalog_entries||[];
  $("missing").innerHTML=!complete?'<div class="empty">Deferred: PS4/Games, PS4/DLC, PS5/Games and PS5/DLC must all be confirmed before missing entries can be assessed.</div>':missing.length?'<div class="item"><div class="item-head"><strong>'+missing.length+' catalog entries not seen in the source scan</strong></div><div class="side"><dl>'+missing.map((m,i)=>'<dt>'+esc(m.platform+' / '+m.category)+'</dt><dd>'+esc(m.name)+' · '+linkOrText(m.catalog_url)+'</dd>').join("")+'</dl></div><div class="reason">These entries are flagged for manual review only. Nothing is deleted or changed.</div></div>':'<div class="empty">No missing catalog candidates were reported in this complete scan.</div>';
 }
-$("export").addEventListener("click",()=>{const output={source:"akirabox-review-dashboard",exported_at:new Date().toISOString(),read_only:true,scan_complete_for_all_categories:comparison.scan_complete_for_all_categories===true,rejected_uploads:rejections, safe_replacements:comparison.results.filter(r=>{const source=scan.files.find(f=>String(f.id)===String(r.file_id));return source&&isSafeReplacement(r,source,scan.files.map(source=>({source})));}).map(r=>({file_id:r.file_id,name:r.name,proposed_url:r.proposed_replacement.to})),decisions:Object.entries(decisions).map(([file_id,decision])=>({file_id,decision,name:scan.files.find(f=>String(f.id)===file_id)?.name}))};const blob=new Blob([JSON.stringify(output,null,2)+"\n"],{type:"application/json"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="akirabox-review-decisions.json";a.click();URL.revokeObjectURL(url);});
+$("export").addEventListener("click",()=>{
+ if(!scan||!comparison||rejectionStatus!=="available")return;
+ const output={
+  source:"akirabox-review-dashboard",
+  exported_at:new Date().toISOString(),
+  read_only:true,
+  scan_complete_for_all_categories:comparison.scan_complete_for_all_categories===true,
+  rejected_uploads:rejections,
+  safe_replacements:comparison.results.filter(r=>{
+   const source=scan.files.find(f=>String(f.id)===String(r.file_id));
+   return source&&!isRejectedSource(source)&&isSafeReplacement(r,source,scan.files.map(source=>({source})));
+  }).map(r=>({file_id:r.file_id,name:r.name,proposed_url:r.proposed_replacement.to})),
+  decisions:Object.entries(decisions).filter(([file_id])=>{
+   const source=scan.files.find(f=>String(f.id)===file_id);
+   return source&&!isRejectedSource(source);
+  }).map(([file_id,decision])=>({file_id,decision,name:scan.files.find(f=>String(f.id)===file_id)?.name}))
+ };
+ const blob=new Blob([JSON.stringify(output,null,2)+"\n"],{type:"application/json"});
+ const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="akirabox-review-decisions.json";a.click();URL.revokeObjectURL(url);
+});
 loadReports();
 </script></body></html>
