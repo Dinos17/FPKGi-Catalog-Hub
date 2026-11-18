@@ -6,6 +6,7 @@ on:
 concurrency:
   group: akirabox-catalog-scan
   cancel-in-progress: false
+  queue: max
 
 permissions:
   contents: write
