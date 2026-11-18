@@ -12,7 +12,7 @@ button,.upload{border:1px solid var(--line);background:var(--panel2);color:var(-
 input[type=file]{max-width:100%}.notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
 .stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
 .item{margin:8px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.title{font-weight:700;font-size:1.08rem;overflow-wrap:anywhere}.sub{color:var(--muted);font-size:.88rem}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase}.pill.outdated{color:var(--amber)}.pill.new,.pill.matched{color:var(--green)}.pill.duplicate,.pill.unclassified{color:var(--red)}
+.title{font-weight:700;font-size:1.08rem;overflow-wrap:anywhere}.sub{color:var(--muted);font-size:.88rem}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase}.pill.outdated{color:var(--amber)}.pill.new,.pill.matched{color:var(--green)}.pill.duplicate,.pill.unclassified,.pill.rejected{color:var(--red)}
 .columns{display:grid;grid-template-columns:1fr 1fr}.side{padding:11px 12px;min-width:0}.side+.side{border-left:1px solid var(--line);border-top:0}.side h3{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
 dl{display:grid;grid-template-columns:minmax(88px,.36fr) 1fr;gap:5px 8px;margin:0;font-size:.86rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.diff{background:#342b18;color:#ffdb91;border:1px solid #65532e;border-radius:6px;padding:1px 5px}
 .reason{padding:9px 12px;color:var(--muted);border-top:1px solid var(--line);font-size:.86rem;line-height:1.45}.actions{display:flex;gap:8px;flex-wrap:wrap;padding:10px 15px;border-top:1px solid var(--line);align-items:center}.actions button{padding:7px 12px;font-size:.86rem}.approve.selected{border-color:var(--green);color:var(--green)}.reject.selected{border-color:var(--red);color:var(--red)}
@@ -21,14 +21,15 @@ dl{display:grid;grid-template-columns:minmax(88px,.36fr) 1fr;gap:5px 8px;margin:
 </style></head>
 <body><main>
 <header><div><h1>AkiraBox Review</h1><p>Inspect source uploads and matching catalog records side by side.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Safe replacements are processed automatically through a separate catalog-update PR. This page shows only items that still need review; decisions here remain local and exportable.</div>
+<div class="notice">Safe replacements are processed automatically through a separate catalog-update PR. Reject opens a GitHub confirmation issue; after you submit it, the rejection is saved permanently and the upload moves to the manual-deletion list.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Connecting to the latest AkiraBox scan…</span><button id="refresh" type="button">Refresh reports</button><button id="export" disabled>Export decisions</button></section>
 <div id="summary" class="stats"></div><div id="warning"></div>
 <h2 class="section-title">Scanned uploads</h2><div id="results"><div class="empty">Waiting for the latest reports from GitHub Actions.</div></div>
+<h2 class="section-title">Rejected uploads — manual deletion required</h2><div id="rejected"><div class="empty">No rejected uploads are recorded.</div></div>
 <h2 class="section-title">Catalog entries not seen in AkiraBox</h2><div id="missing"><div class="empty">Missing-entry checks remain deferred until all four source categories are scanned.</div></div>
 </main>
 <script>
-const $=id=>document.getElementById(id);let scan=null,comparison=null,decisions={};
+const $=id=>document.getElementById(id);let scan=null,comparison=null,decisions={},rejections=[];
 const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/akirabox-reports/reports/";
 const esc=v=>String(v===null||v===undefined||v===""?"—":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pretty=k=>String(k).replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
@@ -55,14 +56,23 @@ async function fetchReport(filename,kind){
  if(!response.ok)throw Error(filename+" could not be loaded (HTTP "+response.status+").");
  return validateReport(await response.json(),kind);
 }
+async function fetchRejections(){
+ const response=await fetch(REPORT_BASE+"akirabox-rejections.json?v="+Date.now(),{cache:"no-store"});
+ if(response.status===404)return [];
+ if(!response.ok)throw Error("Rejection records could not be loaded (HTTP "+response.status+").");
+ const data=await response.json();
+ if(!isRecord(data)||data.schema_version!==1||!Array.isArray(data.records))throw Error("Rejection report has an invalid format.");
+ return data.records.filter(item=>isRecord(item)&&item.file_id!==undefined&&typeof item.share_url==="string");
+}
 async function loadReports(){
  const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading latest scan and comparison reports…";
  try{
-  const [nextScan,nextComparison]=await Promise.all([
+  const [nextScan,nextComparison,nextRejections]=await Promise.all([
    fetchReport("akirabox-scan-report.json","scan"),
-   fetchReport("akirabox-comparison-report.json","compare")
+   fetchReport("akirabox-comparison-report.json","compare"),
+   fetchRejections()
   ]);
-  scan=nextScan;comparison=nextComparison;decisions={};
+  scan=nextScan;comparison=nextComparison;rejections=nextRejections;decisions={};
   for(const row of comparison.results){
    const automatic=row.automatic_decision;
    if(automatic?.decision==="keep_akirabox"&&automatic.selected_file_id!==undefined){
@@ -72,7 +82,7 @@ async function loadReports(){
   $("sourceStatus").textContent="Latest reports loaded automatically · "+(scan.generated_at||scan.scanned_at||"scan timestamp unavailable");
   $("warning").textContent="";render();
  }catch(error){
-  scan=null;comparison=null;decisions={};render();
+  scan=null;comparison=null;decisions={};rejections=[];render();
   $("sourceStatus").textContent="Could not load the latest reports: "+error.message;
   const notice=document.createElement("div");notice.className="notice";notice.textContent="Run the AkiraBox Read-Only Scan workflow first. If it has already run, check that its report-publication step succeeded."; $("warning").replaceChildren(notice);
  }finally{button.disabled=false;}
@@ -101,11 +111,14 @@ function render(){
  const byId=new Map(comparison.results.filter(r=>r.file_id!==undefined&&r.file_id!==null).map(r=>[String(r.file_id),r]));
  const rows=scan.files.map((source,index)=>({source,index,result:byId.get(String(source.id))||null}));
  const safeIds=new Set(rows.filter(row=>isSafeReplacement(row.result,row.source,rows)).map(row=>String(row.source.id)));
- const counts=comparison.counts||{};const cards=[["Scanned files",scan.file_count??scan.files.length],["Folders",scan.folder_count??scan.folders.length],["Safe replacements",safeIds.size],["New",counts.new||0],["Needs review",rows.filter(row=>!safeIds.has(String(row.source.id))&&(!row.result||["new","outdated","unclassified"].includes(row.result.status))).length],["Duplicates",counts.duplicate||0],["Unclassified",counts.unclassified||0]];
+ const rejectedIds=new Set(rejections.map(item=>String(item.file_id)));
+ const rejectedUrls=new Set(rejections.map(item=>String(item.share_url)));
+ const isRejectedSource=source=>rejectedIds.has(String(source.id))||rejectedUrls.has(String(source.share_url||""));
+ const counts=comparison.counts||{};const cards=[["Scanned files",scan.file_count??scan.files.length],["Folders",scan.folder_count??scan.folders.length],["Safe replacements",safeIds.size],["New",counts.new||0],["Needs review",rows.filter(row=>!safeIds.has(String(row.source.id))&&!isRejectedSource(row.source)&&(!row.result||["new","outdated","unclassified"].includes(row.result.status))).length],["Duplicates",counts.duplicate||0],["Unclassified",counts.unclassified||0]];
  $("summary").innerHTML=cards.map(([k,v])=>'<div class="stat">'+esc(k)+'<strong>'+esc(v)+'</strong></div>').join("");
  const complete=comparison.scan_complete_for_all_categories===true;
  $("warning").innerHTML=complete?'<div class="notice good">All four categories were confirmed. Missing-entry review is available below.</div>':'<div class="notice">Partial scan: missing catalog checks are deferred. Do not treat the absence of missing entries as proof that the catalog is complete.</div>';
- const shown=rows.filter(x=>{const status=x.result?.status||"unclassified";return !safeIds.has(String(x.source.id))&&status!=="matched";});
+ const shown=rows.filter(x=>{const status=x.result?.status||"unclassified";return !safeIds.has(String(x.source.id))&&!isRejectedSource(x.source)&&status!=="matched";});
  $("results").innerHTML=shown.length?shown.map(({source:s,index,result:r})=>{
  const safe=safeIds.has(String(s.id));const duplicateSibling=rows.some(other=>String(other.source.id)!==String(s.id)&&normalizedText(String(other.source.name).replace(/\s+\(\d+\)$/,""))===normalizedText(String(s.name).replace(/\s+\(\d+\)$/,"")));const status=safe?"safe":(r?.status||"unclassified"),diffs=r?.metadata_differences||[],parsedSource=r?.source_metadata||{};
  const catalog=r?.catalog_metadata||null;
@@ -137,7 +150,24 @@ function render(){
  const proposal=r?.proposed_replacement;
  return '<article class="item"><div class="item-head"><div class="title">'+esc(s.name)+'</div><span class="pill '+esc(status)+'">'+(safe?"SAFE REPLACEMENT":esc(status))+'</span></div><div class="columns"><section class="side"><h3>AkiraBox source</h3><dl>'+fieldRows(sourceData)+'</dl></section><section class="side"><h3>Current catalog</h3><dl>'+(catalog?fieldRows(catalogData):'<dt>Catalog record</dt><dd>'+(r?esc(r.reason):'No comparison record found')+'</dd>')+'</dl></section></div>'+(r?.status==="duplicate"?'<section class="side"><h3>Existing AkiraBox entry — duplicate of</h3>'+(duplicateData?'<dl>'+fieldRows(duplicateData)+'</dl>':'<p class="muted">The referenced earlier entry was not found in the current scan report.</p>')+(binaryVerification?'<p class="reason"><strong>Binary verification:</strong> '+esc(binaryVerificationLabels[binaryVerification.status]||binaryVerification.status)+(binaryVerification.original_sha256?'<br>Existing SHA-256: '+esc(binaryVerification.original_sha256):'')+(binaryVerification.duplicate_sha256?'<br>This upload SHA-256: '+esc(binaryVerification.duplicate_sha256):'')+'</p>':'')+(automaticDecision?'<p class="reason"><strong>Automatically selected:</strong> Keep AkiraBox — '+esc(automaticDecision.selected_file_name||automaticDecision.selected_file_id)+'<br>'+esc(automaticDecision.reason)+'</p>':'')+'<p class="reason">Choose which source should be preferred for this title: <strong>Keep AkiraBox</strong> selects this scanned AkiraBox upload as the preferred source; <strong>Keep Catalog</strong> retains the existing catalog entry and declines this scanned upload. These are review decisions only: neither action edits the catalog or deletes an AkiraBox file.</p></section>':'')+(proposal?'<section class="side"><h3>Proposed replacement</h3><dl>'+fieldRows({proposed_url:proposal.to})+'</dl></section>':'')+(safe?"":'<div class="actions"><strong>Decision: '+esc(decision==="keep_akirabox"?"Keep AkiraBox":decision==="keep_catalog"?"Keep Catalog":decision)+'</strong><span style="flex:1"></span>'+(r?.status==="duplicate"?'<button class="approve '+(decision==="keep_akirabox"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="keep_akirabox">Keep AkiraBox</button><button class="reject '+(decision==="keep_catalog"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="keep_catalog">Keep Catalog</button>':'<button class="approve '+(decision==="approved"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="approved">Approve</button><button class="reject '+(decision==="rejected"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="rejected">Reject</button>')+'<button data-id="'+esc(s.id)+'" data-value="pending">Clear</button></div>')+'</article>';
  }).join(""):'<div class="empty">No uploads currently require manual review.</div>';
- $("results").querySelectorAll("[data-id][data-value]").forEach(b=>b.addEventListener("click",()=>{if(b.dataset.value==="pending")delete decisions[b.dataset.id];else decisions[b.dataset.id]=b.dataset.value;render();}));
+ $("results").querySelectorAll("[data-id][data-value]").forEach(b=>b.addEventListener("click",()=>{
+  const value=b.dataset.value;
+  if(value==="rejected"||value==="keep_catalog"){
+   const source=scan.files.find(item=>String(item.id)===String(b.dataset.id));
+   if(!source)return;
+   const payload={file_id:String(source.id),name:String(source.name||""),share_url:String(source.share_url||""),scan_generated_at:String(scan.generated_at||scan.scanned_at||"")};
+   const body="Please record this AkiraBox upload as rejected and add it to the manual-deletion list.\\n\\n<!-- akirabox-rejection:v1\\n"+JSON.stringify(payload)+"\\n-->";
+   const issueUrl=new URL("https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new");
+   issueUrl.searchParams.set("title","AkiraBox rejection: "+payload.name);
+   issueUrl.searchParams.set("body",body);
+   window.location.assign(issueUrl.toString());
+   return;
+  }
+  if(value==="pending")delete decisions[b.dataset.id];else decisions[b.dataset.id]=value;
+  render();
+ }));
+ const rejectedHtml=rejections.length?rejections.slice().sort((a,b)=>String(b.rejected_at||"").localeCompare(String(a.rejected_at||""))).map(item=>'<article class="item"><div class="item-head"><div class="title">'+esc(item.name)+'</div><span class="pill rejected">REJECTED — MANUAL DELETION REQUIRED</span></div><div class="side"><dl><dt>AkiraBox file ID</dt><dd>'+esc(item.file_id)+'</dd><dt>Upload link</dt><dd>'+linkOrText(item.share_url)+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd><dt>GitHub record</dt><dd>'+(item.issue_url?linkOrText(item.issue_url):"—")+'</dd></dl></div><div class="reason">Open the AkiraBox link, locate this upload and delete it manually. The catalog was not changed.</div></article>').join(""):'<div class="empty">No rejected uploads are recorded.</div>';
+ $("rejected").innerHTML=rejectedHtml;
  const missing=comparison.missing_catalog_entries||[];
  $("missing").innerHTML=!complete?'<div class="empty">Deferred: PS4/Games, PS4/DLC, PS5/Games and PS5/DLC must all be confirmed before missing entries can be assessed.</div>':missing.length?'<div class="item"><div class="item-head"><strong>'+missing.length+' catalog entries not seen in the source scan</strong></div><div class="side"><dl>'+missing.map((m,i)=>'<dt>'+esc(m.platform+' / '+m.category)+'</dt><dd>'+esc(m.name)+' · '+linkOrText(m.catalog_url)+'</dd>').join("")+'</dl></div><div class="reason">These entries are flagged for manual review only. Nothing is deleted or changed.</div></div>':'<div class="empty">No missing catalog candidates were reported in this complete scan.</div>';
 }
