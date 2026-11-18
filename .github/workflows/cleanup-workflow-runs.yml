@@ -6,9 +6,14 @@ on:
 permissions:
   actions: write
 
+concurrency:
+  group: cleanup-workflow-runs
+  cancel-in-progress: false
+
 jobs:
   cleanup:
     runs-on: ubuntu-24.04
+    timeout-minutes: 30
 
     steps:
       - name: Delete old workflow runs
@@ -19,21 +24,110 @@ jobs:
         run: |
           set -euo pipefail
 
-          while true; do
-            ids="$(gh api \
-              "repos/$REPO/actions/runs?per_page=100" \
-              --jq '.workflow_runs[].id' |
-              grep -v "^$CURRENT_RUN_ID$" |
-              head -100)"
+          python3 - <<'PY'
+          import concurrent.futures
+          import json
+          import os
+          import subprocess
+          import sys
+          import time
 
-            [ -z "$ids" ] && break
+          repo = os.environ["REPO"]
+          current_run_id = int(os.environ["CURRENT_RUN_ID"])
+          batch_size = 25
+          max_workers = 3
+          max_attempts = 5
 
-            while read -r id; do
-              [ -z "$id" ] && continue
-              gh api --method DELETE \
-                "repos/$REPO/actions/runs/$id"
-              echo "Deleted workflow run $id"
-            done <<< "$ids"
-          done
+          def gh_api(*args, allow_404=False):
+              for attempt in range(max_attempts):
+                  result = subprocess.run(
+                      ["gh", "api", *args],
+                      capture_output=True,
+                      text=True,
+                  )
+                  if result.returncode == 0:
+                      return result.stdout
 
-          echo "Cleanup complete."
+                  error = (result.stderr or result.stdout).strip()
+                  if allow_404 and ("HTTP 404" in error or "404 Not Found" in error):
+                      return None
+
+                  lowered = error.lower()
+                  transient = any(
+                      marker in lowered
+                      for marker in (
+                          "429", "500", "502", "503", "504",
+                          "timeout", "timed out", "connection reset",
+                          "connection refused", "temporarily unavailable",
+                          "tls handshake",
+                      )
+                  )
+                  if not transient or attempt == max_attempts - 1:
+                      raise RuntimeError(error or "GitHub API request failed")
+
+                  delay = min(2 ** (attempt + 1), 30)
+                  print(
+                      f"Temporary GitHub API error; retrying in {delay}s "
+                      f"(attempt {attempt + 2}/{max_attempts}).",
+                      flush=True,
+                  )
+                  time.sleep(delay)
+
+          def delete_run(run_id):
+              gh_api(
+                  "--silent",
+                  "--method", "DELETE",
+                  f"repos/{repo}/actions/runs/{run_id}",
+                  allow_404=True,
+              )
+              return run_id
+
+          deleted = 0
+
+          while True:
+              response = gh_api(
+                  f"repos/{repo}/actions/runs?per_page=100&page=1"
+              )
+              runs = json.loads(response).get("workflow_runs", [])
+              ids = [
+                  int(run["id"])
+                  for run in runs
+                  if int(run["id"]) != current_run_id
+              ][:batch_size]
+
+              if not ids:
+                  break
+
+              print(
+                  f"Deleting batch of {len(ids)} workflow runs "
+                  f"(completed: {deleted}).",
+                  flush=True,
+              )
+
+              failures = []
+              with concurrent.futures.ThreadPoolExecutor(
+                  max_workers=max_workers
+              ) as executor:
+                  futures = {
+                      executor.submit(delete_run, run_id): run_id
+                      for run_id in ids
+                  }
+                  for future in concurrent.futures.as_completed(futures):
+                      run_id = futures[future]
+                      try:
+                          future.result()
+                          print(f"Deleted workflow run {run_id}", flush=True)
+                          deleted += 1
+                      except Exception as exc:
+                          failures.append((run_id, str(exc)))
+
+              if failures:
+                  details = "; ".join(
+                      f"{run_id}: {error}" for run_id, error in failures
+                  )
+                  raise RuntimeError(
+                      f"{len(failures)} deletion(s) failed after retries: {details}"
+                  )
+
+          print(f"Cleanup complete. Deleted {deleted} workflow runs.")
+          PY
