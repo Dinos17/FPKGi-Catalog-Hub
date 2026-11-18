@@ -2,11 +2,18 @@
 name: Deploy static content to Pages
 
 on:
-  # Runs on pushes targeting the default branch
+  # Deploy the dashboard after catalog changes on the default branch.
   push:
     branches: ["main"]
 
-  # Allows you to run this workflow manually from the Actions tab
+  # Refresh the deployed dashboard after every completed AkiraBox scan,
+  # because the scan publishes its latest reports to the akirabox-reports branch.
+  workflow_run:
+    workflows: ["AkiraBox Scan and Automatic Duplicate Cleanup"]
+    types: [completed]
+    branches: ["main"]
+
+  # Allows you to run this workflow manually from the Actions tab.
   workflow_dispatch:
 
 # Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
