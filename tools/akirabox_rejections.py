@@ -62,10 +62,6 @@ def parse_rejection_body(body: str) -> dict:
 
     platform = str(payload.get("platform") or "").strip().upper()
     category = str(payload.get("catalog_category") or payload.get("category") or "").strip().lower()
-    if platform not in {"PS4", "PS5"}:
-        raise ValueError("Rejection payload has an unsupported platform.")
-    if category not in {"games", "dlc"}:
-        raise ValueError("Rejection payload has an unsupported catalog category.")
 
     return {
         "file_id": file_id,
