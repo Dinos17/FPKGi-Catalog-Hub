@@ -60,36 +60,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00362.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Amnesia%20The%20Bunker%20-%20[US]%20[EN]%20[1.81].pkg": {
-      "title_id": "CUSA40994",
-      "region": "USA",
-      "name": "Amnesia: The Bunker",
-      "version": "01.81",
-      "release": "11-15-2013",
-      "size": 9105637376,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA40994.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Ancestors%20Legacy%20-%20[EU]%20[EN]%20[1.05].pkg": {
-      "title_id": "CUSA14954",
-      "region": "EUR",
-      "name": "Ancestors Legacy",
-      "version": "01.05",
-      "release": "11-15-2013",
-      "size": 12358320128,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14954.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Ancestors%20The%20Humankind%20Odyssey%20-%20[EU]%20[EN]%20[1.01].pkg": {
-      "title_id": "CUSA13248",
-      "region": "EUR",
-      "name": "Ancestors: The Humankind Odyssey",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 4941742080,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13248.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-a/Another%20World%20-%20[EU]%20[EN]%20[1.00].pkg": {
       "title_id": "CUSA00602",
       "region": "EUR",
@@ -99,26 +69,6 @@
       "size": 150667264,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00602.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Ashen%20-%20[US]%20[EN]%20[1.00].pkg": {
-      "title_id": "CUSA14332",
-      "region": "USA",
-      "name": "Ashen",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 6271598592,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14332.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20Chronicles%20Trilogy%20-%20[EU]%20[EN]%20[1.02].pkg": {
-      "title_id": "CUSA03440",
-      "region": "EUR",
-      "name": "Assassin’s Creed® Chronicles Trilogy",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 11250958336,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03440.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20III%20-%20[EU]%20[EN]%20[1.03].pkg": {
       "title_id": "CUSA11560",
@@ -170,16 +120,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05625.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20Rogue%20-%20[EU]%20[EN]%20[1.01].pkg": {
-      "title_id": "CUSA10123",
-      "region": "EUR",
-      "name": "Assassin's Creed® Rogue",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 8224833536,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10123.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20Syndicate%20-%20[EU]%20[EN]%20[1.52].pkg": {
       "title_id": "CUSA02376",
       "region": "EUR",
@@ -230,46 +170,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01830.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Assetto%20Corsa%20Competizione%20-%20[EU]%20[EN]%20[1.12].pkg": {
-      "title_id": "CUSA17266",
-      "region": "EUR",
-      "name": "Assetto Corsa Competizione",
-      "version": "01.12",
-      "release": "11-15-2013",
-      "size": 11574640640,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA17266.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.1%20-%20[EU]%20[EN]%20[1.01].pkg": {
-      "title_id": "CUSA07214",
-      "region": "EUR",
-      "name": "Atari Flashback Classics vol.1",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 281083904,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07214.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.2%20-%20[EU]%20[EN]%20[1.00].pkg": {
-      "title_id": "CUSA07213",
-      "region": "EUR",
-      "name": "Atari Flashback Classics vol.2",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 287309824,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07213.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.3%20-%20[US]%20[EN]%20[1.04].pkg": {
-      "title_id": "CUSA09458",
-      "region": "USA",
-      "name": "Atari Flashback Classics vol.3",
-      "version": "01.04",
-      "release": "11-15-2013",
-      "size": 97386496,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09458.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-a/Atomfall%20-%20[US]%20[EN]%20[1.22].pkg": {
       "title_id": "CUSA42503",
       "region": "USA",
@@ -309,26 +209,6 @@
       "size": 13694533632,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03804.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Axiom%20Verge%20-%20[US]%20[EN]%20[1.07].pkg": {
-      "title_id": "CUSA01230",
-      "region": "USA",
-      "name": "Axiom Verge",
-      "version": "01.07",
-      "release": "11-15-2013",
-      "size": 172097536,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01230.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Axiom%20Verge%202%20-%20[US]%20[EN]%20[1.03].pkg": {
-      "title_id": "CUSA29346",
-      "region": "USA",
-      "name": "Axiom Verge 2",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 208404480,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29346.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-b/BALAN%20WONDERWORLD%20-%20[EU]%20[EN]%20[1.01].pkg": {
       "title_id": "CUSA24813",
@@ -1519,16 +1399,6 @@
       "size": 34894381056,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00003.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dandara%20-%20[US]%20[EN]%20[1.17].pkg": {
-      "title_id": "CUSA10749",
-      "region": "USA",
-      "name": "Dandara",
-      "version": "01.17",
-      "release": "11-15-2013",
-      "size": 534249472,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10749.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Dangerous%20Golf%20-%20[EU]%20[EN]%20[1.02].pkg": {
       "title_id": "CUSA04398",
@@ -8729,6 +8599,136 @@
       "size": 2452226048,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02480.png"
+    },
+    "https://akirabox.to/E9Qz9Ak2DzOL/file": {
+      "title_id": "CUSA10749",
+      "region": "USA",
+      "name": "Dandara",
+      "version": "01.17",
+      "release": "11-15-2013",
+      "size": 534249472,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10749.png"
+    },
+    "https://akirabox.to/qPez45a29GOY/file": {
+      "title_id": "CUSA01230",
+      "region": "USA",
+      "name": "Axiom Verge",
+      "version": "01.07",
+      "release": "11-15-2013",
+      "size": 172097536,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01230.png"
+    },
+    "https://akirabox.to/qw1zeKYvemXy/file": {
+      "title_id": "CUSA29346",
+      "region": "USA",
+      "name": "Axiom Verge 2",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 208404480,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29346.png"
+    },
+    "https://akirabox.to/l76mZ97XjGan/file": {
+      "title_id": "CUSA17266",
+      "region": "EUR",
+      "name": "Assetto Corsa Competizione",
+      "version": "01.12",
+      "release": "11-15-2013",
+      "size": 11574640640,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA17266.png"
+    },
+    "https://akirabox.to/qw1zeKYaemXy/file": {
+      "title_id": "CUSA09458",
+      "region": "USA",
+      "name": "Atari Flashback Classics vol.3",
+      "version": "01.04",
+      "release": "11-15-2013",
+      "size": 97386496,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09458.png"
+    },
+    "https://akirabox.to/1RgzR0NR8mbp/file": {
+      "title_id": "CUSA07213",
+      "region": "EUR",
+      "name": "Atari Flashback Classics vol.2",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 287309824,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07213.png"
+    },
+    "https://akirabox.to/9QWmpOoJAGEB/file": {
+      "title_id": "CUSA07214",
+      "region": "EUR",
+      "name": "Atari Flashback Classics vol.1",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 281083904,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07214.png"
+    },
+    "https://akirabox.to/2WVGrvVjqGkx/file": {
+      "title_id": "CUSA10123",
+      "region": "EUR",
+      "name": "Assassin's Creed® Rogue",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 8224833536,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10123.png"
+    },
+    "https://akirabox.to/qLQ365xYQm19/file": {
+      "title_id": "CUSA03440",
+      "region": "EUR",
+      "name": "Assassin’s Creed® Chronicles Trilogy",
+      "version": "01.02",
+      "release": "11-15-2013",
+      "size": 11250958336,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03440.png"
+    },
+    "https://akirabox.to/vgKGxBLZ238Q/file": {
+      "title_id": "CUSA14332",
+      "region": "USA",
+      "name": "Ashen",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 6271598592,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14332.png"
+    },
+    "https://akirabox.to/qw1zeKYBvmXy/file": {
+      "title_id": "CUSA14954",
+      "region": "EUR",
+      "name": "Ancestors Legacy",
+      "version": "01.05",
+      "release": "11-15-2013",
+      "size": 12358320128,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14954.png"
+    },
+    "https://akirabox.to/0rpmvgLaL3Rg/file": {
+      "title_id": "CUSA13248",
+      "region": "EUR",
+      "name": "Ancestors: The Humankind Odyssey",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 4941742080,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13248.png"
+    },
+    "https://akirabox.to/0KezkKA6gzD1/file": {
+      "title_id": "CUSA40994",
+      "region": "USA",
+      "name": "Amnesia: The Bunker",
+      "version": "01.81",
+      "release": "11-15-2013",
+      "size": 9105637376,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA40994.png"
     }
   }
 }
