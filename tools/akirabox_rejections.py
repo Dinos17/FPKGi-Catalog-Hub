@@ -8,46 +8,71 @@ import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 
-MARKER = re.compile(
-    r"<!--\s*akirabox-rejection:v1\s*(\{.*?\})\s*-->",
-    re.DOTALL,
-)
+MARKER_START = "<!-- akirabox-rejection:v1"
 ALLOWED_HOSTS = {"akirabox.to", "akirabox.com"}
 
 
 def parse_rejection_body(body: str) -> dict:
-    match = MARKER.search(body or "")
-    if not match:
+    text = body or ""
+    marker_at = text.find(MARKER_START)
+    if marker_at < 0:
         raise ValueError("Issue body is missing the AkiraBox rejection payload.")
+
+    payload_start = marker_at + len(MARKER_START)
+    while payload_start < len(text) and text[payload_start].isspace():
+        payload_start += 1
     try:
-        payload = json.loads(match.group(1))
+        payload, payload_end = json.JSONDecoder().raw_decode(text, payload_start)
     except json.JSONDecodeError as exc:
         raise ValueError("AkiraBox rejection payload is not valid JSON.") from exc
 
-    required = ("file_id", "name", "share_url")
+    suffix = text[payload_end:]
+    closing = re.match(r"\s*-->\s*", suffix)
+    if not closing:
+        raise ValueError("AkiraBox rejection payload is missing its closing marker.")
+
     if not isinstance(payload, dict):
         raise ValueError("AkiraBox rejection payload must be an object.")
+
+    required = ("file_id", "name", "share_url")
     for key in required:
         value = payload.get(key)
-        if not isinstance(value, (str, int)) or not str(value).strip():
+        if not isinstance(value, (str, int)) or isinstance(value, bool) or not str(value).strip():
             raise ValueError(f"AkiraBox rejection payload has no valid {key}.")
 
-    parsed = urlparse(str(payload["share_url"]))
+    file_id = str(payload["file_id"]).strip()
+    name = str(payload["name"]).strip()
+    share_url = str(payload["share_url"]).strip()
+    parsed = urlparse(share_url)
+    path_parts = [unquote(part) for part in parsed.path.split("/") if part]
     if (
         parsed.scheme != "https"
-        or parsed.hostname not in ALLOWED_HOSTS
+        or (parsed.hostname or "").lower() not in ALLOWED_HOSTS
         or parsed.username is not None
         or parsed.password is not None
+        or parsed.port not in (None, 443)
+        or path_parts != [file_id, "file"]
+        or parsed.query
+        or parsed.fragment
     ):
-        raise ValueError("Rejected upload URL must be an HTTPS AkiraBox file URL.")
+        raise ValueError("Rejected upload URL must be the matching HTTPS AkiraBox file URL.")
+
+    platform = str(payload.get("platform") or "").strip().upper()
+    category = str(payload.get("catalog_category") or payload.get("category") or "").strip().lower()
+    if platform not in {"PS4", "PS5"}:
+        raise ValueError("Rejection payload has an unsupported platform.")
+    if category not in {"games", "dlc"}:
+        raise ValueError("Rejection payload has an unsupported catalog category.")
 
     return {
-        "file_id": str(payload["file_id"]),
-        "name": str(payload["name"]),
-        "share_url": str(payload["share_url"]),
+        "file_id": file_id,
+        "name": name,
+        "share_url": share_url,
+        "platform": platform,
+        "catalog_category": category,
         "scan_generated_at": str(payload.get("scan_generated_at") or ""),
     }
 
@@ -100,18 +125,29 @@ def record_issue(
     )
     if existing_index is None:
         report["records"].append(record)
+        saved_record = record
     else:
-        report["records"][existing_index] = {
-            **report["records"][existing_index],
-            **record,
-        }
+        existing = report["records"][existing_index]
+        existing_issue = existing.get("issue_number")
+        incoming_issue = record.get("issue_number")
+        # A retry of the same issue is a true no-op. An older issue must not
+        # overwrite the provenance or timestamp of a newer rejection.
+        if existing_issue == incoming_issue or (
+            isinstance(existing_issue, int)
+            and isinstance(incoming_issue, int)
+            and existing_issue > incoming_issue
+        ):
+            saved_record = existing
+        else:
+            report["records"][existing_index] = record
+            saved_record = record
 
     report_path.parent.mkdir(parents=True, exist_ok=True)
     report_path.write_text(
         json.dumps(report, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
-    return record
+    return saved_record
 
 
 def main() -> int:
