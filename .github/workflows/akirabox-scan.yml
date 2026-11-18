@@ -2,6 +2,8 @@ name: AkiraBox Scan and Automatic Duplicate Cleanup
 
 on:
   workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *' # Every 6 hours (UTC)
 
 concurrency:
   group: akirabox-catalog-scan
