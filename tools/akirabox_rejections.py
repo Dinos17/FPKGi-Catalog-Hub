@@ -12,7 +12,7 @@ from urllib.parse import urlparse
 
 
 MARKER = re.compile(
-    r"<!--\\s*akirabox-rejection:v1\\s*(\\{.*?\\})\\s*-->",
+    r"<!--\s*akirabox-rejection:v1\s*(\{.*?\})\s*-->",
     re.DOTALL,
 )
 ALLOWED_HOSTS = {"akirabox.to", "akirabox.com"}
