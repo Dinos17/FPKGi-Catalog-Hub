@@ -6,15 +6,717 @@
   "missing_check_deferred": true,
   "counts": {
     "new": 0,
-    "matched": 12,
-    "outdated": 1,
+    "matched": 13,
+    "outdated": 13,
     "duplicate": 0,
     "unclassified": 0
   },
-  "replacement_candidate_count": 1,
+  "replacement_candidate_count": 13,
   "results": [
     {
       "status": "outdated",
+      "file_id": "E9Qz9Ak2DzOL",
+      "name": "Dandara - [US] [EN] [1.17]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.17",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "dandara",
+        "region": "USA",
+        "version": "1.17",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 534249472,
+        "file_name": "Dandara - [US] [EN] [1.17]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA10749",
+        "region": "USA",
+        "name": "Dandara",
+        "version": "01.17",
+        "release": "11-15-2013",
+        "size": 534249472,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10749.png",
+        "size_bytes": 534249472,
+        "parsed_filename_metadata": {
+          "title": "dandara",
+          "region": "USA",
+          "version": "1.17",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dandara%20-%20[US]%20[EN]%20[1.17].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-d/Dandara%20-%20[US]%20[EN]%20[1.17].pkg",
+        "to": "https://akirabox.to/E9Qz9Ak2DzOL/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/E9Qz9Ak2DzOL/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "qPez45a29GOY",
+      "name": "Axiom Verge - [US] [EN] [1.07]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.07",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "axiom verge",
+        "region": "USA",
+        "version": "1.07",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 172097536,
+        "file_name": "Axiom Verge - [US] [EN] [1.07]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA01230",
+        "region": "USA",
+        "name": "Axiom Verge",
+        "version": "01.07",
+        "release": "11-15-2013",
+        "size": 172097536,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01230.png",
+        "size_bytes": 172097536,
+        "parsed_filename_metadata": {
+          "title": "axiom verge",
+          "region": "USA",
+          "version": "1.07",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Axiom%20Verge%20-%20[US]%20[EN]%20[1.07].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Axiom%20Verge%20-%20[US]%20[EN]%20[1.07].pkg",
+        "to": "https://akirabox.to/qPez45a29GOY/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/qPez45a29GOY/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "qw1zeKYvemXy",
+      "name": "Axiom Verge 2 - [US] [EN] [1.03]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.03",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "axiom verge 2",
+        "region": "USA",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 208404480,
+        "file_name": "Axiom Verge 2 - [US] [EN] [1.03]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA29346",
+        "region": "USA",
+        "name": "Axiom Verge 2",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 208404480,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29346.png",
+        "size_bytes": 208404480,
+        "parsed_filename_metadata": {
+          "title": "axiom verge 2",
+          "region": "USA",
+          "version": "1.03",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Axiom%20Verge%202%20-%20[US]%20[EN]%20[1.03].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Axiom%20Verge%202%20-%20[US]%20[EN]%20[1.03].pkg",
+        "to": "https://akirabox.to/qw1zeKYvemXy/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/qw1zeKYvemXy/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "l76mZ97XjGan",
+      "name": "Assetto Corsa Competizione - [EU] [EN] [1.12]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.12",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "assetto corsa competizione",
+        "region": "EUR",
+        "version": "1.12",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 11574640640,
+        "file_name": "Assetto Corsa Competizione - [EU] [EN] [1.12]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA17266",
+        "region": "EUR",
+        "name": "Assetto Corsa Competizione",
+        "version": "01.12",
+        "release": "11-15-2013",
+        "size": 11574640640,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA17266.png",
+        "size_bytes": 11574640640,
+        "parsed_filename_metadata": {
+          "title": "assetto corsa competizione",
+          "region": "EUR",
+          "version": "1.12",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Assetto%20Corsa%20Competizione%20-%20[EU]%20[EN]%20[1.12].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Assetto%20Corsa%20Competizione%20-%20[EU]%20[EN]%20[1.12].pkg",
+        "to": "https://akirabox.to/l76mZ97XjGan/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/l76mZ97XjGan/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "qw1zeKYaemXy",
+      "name": "Atari Flashback Classics vol.3 - [US] [EN] [1.04]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.04",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "atari flashback classics vol 3",
+        "region": "USA",
+        "version": "1.04",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 97386496,
+        "file_name": "Atari Flashback Classics vol.3 - [US] [EN] [1.04]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA09458",
+        "region": "USA",
+        "name": "Atari Flashback Classics vol.3",
+        "version": "01.04",
+        "release": "11-15-2013",
+        "size": 97386496,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09458.png",
+        "size_bytes": 97386496,
+        "parsed_filename_metadata": {
+          "title": "atari flashback classics vol 3",
+          "region": "USA",
+          "version": "1.04",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.3%20-%20[US]%20[EN]%20[1.04].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.3%20-%20[US]%20[EN]%20[1.04].pkg",
+        "to": "https://akirabox.to/qw1zeKYaemXy/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/qw1zeKYaemXy/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "1RgzR0NR8mbp",
+      "name": "Atari Flashback Classics vol.2 - [EU] [EN] [1.00]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.00",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "atari flashback classics vol 2",
+        "region": "EUR",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 287309824,
+        "file_name": "Atari Flashback Classics vol.2 - [EU] [EN] [1.00]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA07213",
+        "region": "EUR",
+        "name": "Atari Flashback Classics vol.2",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 287309824,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07213.png",
+        "size_bytes": 287309824,
+        "parsed_filename_metadata": {
+          "title": "atari flashback classics vol 2",
+          "region": "EUR",
+          "version": "1.00",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.2%20-%20[EU]%20[EN]%20[1.00].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.2%20-%20[EU]%20[EN]%20[1.00].pkg",
+        "to": "https://akirabox.to/1RgzR0NR8mbp/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/1RgzR0NR8mbp/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "9QWmpOoJAGEB",
+      "name": "Atari Flashback Classics vol.1 - [EU] [EN] [1.01]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "atari flashback classics vol 1",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 281083904,
+        "file_name": "Atari Flashback Classics vol.1 - [EU] [EN] [1.01]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA07214",
+        "region": "EUR",
+        "name": "Atari Flashback Classics vol.1",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 281083904,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07214.png",
+        "size_bytes": 281083904,
+        "parsed_filename_metadata": {
+          "title": "atari flashback classics vol 1",
+          "region": "EUR",
+          "version": "1.01",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.1%20-%20[EU]%20[EN]%20[1.01].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Atari%20Flashback%20Classics%20vol.1%20-%20[EU]%20[EN]%20[1.01].pkg",
+        "to": "https://akirabox.to/9QWmpOoJAGEB/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/9QWmpOoJAGEB/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "2WVGrvVjqGkx",
+      "name": "Assassin's Creed Rogue - [EU] [EN] [1.01]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "assassin s creed rogue",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 8224833536,
+        "file_name": "Assassin's Creed Rogue - [EU] [EN] [1.01]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA10123",
+        "region": "EUR",
+        "name": "Assassin's Creed® Rogue",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 8224833536,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10123.png",
+        "size_bytes": 8224833536,
+        "parsed_filename_metadata": {
+          "title": "assassin s creed rogue",
+          "region": "EUR",
+          "version": "1.01",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20Rogue%20-%20[EU]%20[EN]%20[1.01].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20Rogue%20-%20[EU]%20[EN]%20[1.01].pkg",
+        "to": "https://akirabox.to/2WVGrvVjqGkx/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/2WVGrvVjqGkx/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "qLQ365xYQm19",
+      "name": "Assassin's Creed Chronicles Trilogy - [EU] [EN] [1.02]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.02",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "assassin s creed chronicles trilogy",
+        "region": "EUR",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 11250958336,
+        "file_name": "Assassin's Creed Chronicles Trilogy - [EU] [EN] [1.02]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA03440",
+        "region": "EUR",
+        "name": "Assassin’s Creed® Chronicles Trilogy",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 11250958336,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03440.png",
+        "size_bytes": 11250958336,
+        "parsed_filename_metadata": {
+          "title": "assassin s creed chronicles trilogy",
+          "region": "EUR",
+          "version": "1.02",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20Chronicles%20Trilogy%20-%20[EU]%20[EN]%20[1.02].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20Chronicles%20Trilogy%20-%20[EU]%20[EN]%20[1.02].pkg",
+        "to": "https://akirabox.to/qLQ365xYQm19/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/qLQ365xYQm19/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "vgKGxBLZ238Q",
+      "name": "Ashen - [US] [EN] [1.00]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.00",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "ashen",
+        "region": "USA",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 6271598592,
+        "file_name": "Ashen - [US] [EN] [1.00]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA14332",
+        "region": "USA",
+        "name": "Ashen",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 6271598592,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14332.png",
+        "size_bytes": 6271598592,
+        "parsed_filename_metadata": {
+          "title": "ashen",
+          "region": "USA",
+          "version": "1.00",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Ashen%20-%20[US]%20[EN]%20[1.00].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Ashen%20-%20[US]%20[EN]%20[1.00].pkg",
+        "to": "https://akirabox.to/vgKGxBLZ238Q/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/vgKGxBLZ238Q/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "qw1zeKYBvmXy",
+      "name": "Ancestors Legacy - [EU] [EN] [1.05]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.05",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "ancestors legacy",
+        "region": "EUR",
+        "version": "1.05",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 12358320128,
+        "file_name": "Ancestors Legacy - [EU] [EN] [1.05]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA14954",
+        "region": "EUR",
+        "name": "Ancestors Legacy",
+        "version": "01.05",
+        "release": "11-15-2013",
+        "size": 12358320128,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14954.png",
+        "size_bytes": 12358320128,
+        "parsed_filename_metadata": {
+          "title": "ancestors legacy",
+          "region": "EUR",
+          "version": "1.05",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Ancestors%20Legacy%20-%20[EU]%20[EN]%20[1.05].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Ancestors%20Legacy%20-%20[EU]%20[EN]%20[1.05].pkg",
+        "to": "https://akirabox.to/qw1zeKYBvmXy/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/qw1zeKYBvmXy/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "0rpmvgLaL3Rg",
+      "name": "Ancestors The Humankind Odyssey - [EU] [EN] [1.01]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "EUR",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "ancestors the humankind odyssey",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 4941742080,
+        "file_name": "Ancestors The Humankind Odyssey - [EU] [EN] [1.01]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA13248",
+        "region": "EUR",
+        "name": "Ancestors: The Humankind Odyssey",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 4941742080,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13248.png",
+        "size_bytes": 4941742080,
+        "parsed_filename_metadata": {
+          "title": "ancestors the humankind odyssey",
+          "region": "EUR",
+          "version": "1.01",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Ancestors%20The%20Humankind%20Odyssey%20-%20[EU]%20[EN]%20[1.01].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Ancestors%20The%20Humankind%20Odyssey%20-%20[EU]%20[EN]%20[1.01].pkg",
+        "to": "https://akirabox.to/0rpmvgLaL3Rg/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/0rpmvgLaL3Rg/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "outdated",
+      "file_id": "0KezkKA6gzD1",
+      "name": "Amnesia The Bunker - [US] [EN] [1.81]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.81",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "amnesia the bunker",
+        "region": "USA",
+        "version": "1.81",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 9105637376,
+        "file_name": "Amnesia The Bunker - [US] [EN] [1.81]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA40994",
+        "region": "USA",
+        "name": "Amnesia: The Bunker",
+        "version": "01.81",
+        "release": "11-15-2013",
+        "size": 9105637376,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA40994.png",
+        "size_bytes": 9105637376,
+        "parsed_filename_metadata": {
+          "title": "amnesia the bunker",
+          "region": "USA",
+          "version": "1.81",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Amnesia%20The%20Bunker%20-%20[US]%20[EN]%20[1.81].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Amnesia%20The%20Bunker%20-%20[US]%20[EN]%20[1.81].pkg",
+        "to": "https://akirabox.to/0KezkKA6gzD1/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/0KezkKA6gzD1/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
+    {
+      "status": "matched",
       "file_id": "LK0G1a4Q9G91",
       "name": "Amplitude - [US] [EN] [1.01]",
       "platform": "PS4",
@@ -46,26 +748,12 @@
         "size": 2452226048,
         "min_fw": "9.00",
         "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02480.png",
-        "size_bytes": 2452226048,
-        "parsed_filename_metadata": {
-          "title": "amplitude",
-          "region": "USA",
-          "version": "1.01",
-          "title_id": null,
-          "languages": [
-            "EN"
-          ],
-          "min_fw": null
-        }
+        "size_bytes": 2452226048
       },
-      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Amplitude%20-%20[US]%20[EN]%20[1.01].pkg",
-      "proposed_replacement": {
-        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Amplitude%20-%20[US]%20[EN]%20[1.01].pkg",
-        "to": "https://akirabox.to/LK0G1a4Q9G91/file",
-        "status": "pending_review"
-      },
+      "catalog_url": "https://akirabox.to/LK0G1a4Q9G91/file",
+      "proposed_replacement": null,
       "share_url": "https://akirabox.to/LK0G1a4Q9G91/file",
-      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+      "reason": "Metadata agrees; catalog URL does not require Archive.org replacement"
     },
     {
       "status": "matched",

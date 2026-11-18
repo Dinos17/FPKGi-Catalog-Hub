@@ -2,7 +2,7 @@
   "scanner": "akirabox",
   "read_only": true,
   "folder_count": 3,
-  "file_count": 13,
+  "file_count": 26,
   "folders": [
     {
       "id": "Z9dzBXkvgmk1",
@@ -40,6 +40,240 @@
     }
   ],
   "files": [
+    {
+      "id": "E9Qz9Ak2DzOL",
+      "numeric_id": 952270,
+      "name": "Dandara - [US] [EN] [1.17]",
+      "extension": "pkg",
+      "size_bytes": 534249472,
+      "visibility": "public",
+      "created_at": "2026-11-18T22:44:31.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/E9Qz9Ak2DzOL/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qPez45a29GOY",
+      "numeric_id": 952267,
+      "name": "Axiom Verge - [US] [EN] [1.07]",
+      "extension": "pkg",
+      "size_bytes": 172097536,
+      "visibility": "public",
+      "created_at": "2026-11-18T22:25:16.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qPez45a29GOY/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qw1zeKYvemXy",
+      "numeric_id": 952266,
+      "name": "Axiom Verge 2 - [US] [EN] [1.03]",
+      "extension": "pkg",
+      "size_bytes": 208404480,
+      "visibility": "public",
+      "created_at": "2026-11-18T22:19:44.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qw1zeKYvemXy/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "l76mZ97XjGan",
+      "numeric_id": 952263,
+      "name": "Assetto Corsa Competizione - [EU] [EN] [1.12]",
+      "extension": "pkg",
+      "size_bytes": 11574640640,
+      "visibility": "public",
+      "created_at": "2026-11-18T22:11:45.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/l76mZ97XjGan/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qw1zeKYaemXy",
+      "numeric_id": 952222,
+      "name": "Atari Flashback Classics vol.3 - [US] [EN] [1.04]",
+      "extension": "pkg",
+      "size_bytes": 97386496,
+      "visibility": "public",
+      "created_at": "2026-11-18T21:39:23.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qw1zeKYaemXy/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "1RgzR0NR8mbp",
+      "numeric_id": 952217,
+      "name": "Atari Flashback Classics vol.2 - [EU] [EN] [1.00]",
+      "extension": "pkg",
+      "size_bytes": 287309824,
+      "visibility": "public",
+      "created_at": "2026-11-18T21:34:35.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/1RgzR0NR8mbp/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "9QWmpOoJAGEB",
+      "numeric_id": 952213,
+      "name": "Atari Flashback Classics vol.1 - [EU] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 281083904,
+      "visibility": "public",
+      "created_at": "2026-11-18T21:22:58.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/9QWmpOoJAGEB/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "2WVGrvVjqGkx",
+      "numeric_id": 952206,
+      "name": "Assassin's Creed Rogue - [EU] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 8224833536,
+      "visibility": "public",
+      "created_at": "2026-11-18T21:13:22.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/2WVGrvVjqGkx/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qLQ365xYQm19",
+      "numeric_id": 952188,
+      "name": "Assassin's Creed Chronicles Trilogy - [EU] [EN] [1.02]",
+      "extension": "pkg",
+      "size_bytes": 11250958336,
+      "visibility": "public",
+      "created_at": "2026-11-18T20:33:24.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qLQ365xYQm19/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "vgKGxBLZ238Q",
+      "numeric_id": 952052,
+      "name": "Ashen - [US] [EN] [1.00]",
+      "extension": "pkg",
+      "size_bytes": 6271598592,
+      "visibility": "public",
+      "created_at": "2026-11-18T19:29:06.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/vgKGxBLZ238Q/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "qw1zeKYBvmXy",
+      "numeric_id": 952022,
+      "name": "Ancestors Legacy - [EU] [EN] [1.05]",
+      "extension": "pkg",
+      "size_bytes": 12358320128,
+      "visibility": "public",
+      "created_at": "2026-11-18T19:01:19.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/qw1zeKYBvmXy/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "0rpmvgLaL3Rg",
+      "numeric_id": 951947,
+      "name": "Ancestors The Humankind Odyssey - [EU] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 4941742080,
+      "visibility": "public",
+      "created_at": "2026-11-18T17:53:24.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/0rpmvgLaL3Rg/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
+    {
+      "id": "0KezkKA6gzD1",
+      "numeric_id": 951916,
+      "name": "Amnesia The Bunker - [US] [EN] [1.81]",
+      "extension": "pkg",
+      "size_bytes": 9105637376,
+      "visibility": "public",
+      "created_at": "2026-11-18T17:32:48.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/0KezkKA6gzD1/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
     {
       "id": "LK0G1a4Q9G91",
       "numeric_id": 951827,
@@ -276,5 +510,5 @@
     }
   ],
   "errors": [],
-  "generated_at": "2026-11-18T17:27:57Z"
+  "generated_at": "2026-11-18T23:56:47Z"
 }
