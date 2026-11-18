@@ -140,3 +140,10 @@ def test_older_issue_cannot_replace_newer_rejection_provenance(tmp_path):
     saved = record_issue(older, path, "Dinos17", now=datetime(2026, 11, 18, tzinfo=timezone.utc))
     assert saved["issue_number"] == 43
     assert saved["issue_url"].endswith("/43")
+
+
+@pytest.mark.parametrize("terminator", ["-->", "--!>"])
+def test_parser_accepts_valid_html_comment_terminators(terminator):
+    event = make_event()
+    body = event["issue"]["body"].rsplit("-->", 1)[0] + terminator
+    assert parse_rejection_body(body)["file_id"] == "abc123"
