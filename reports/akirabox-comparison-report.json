@@ -7,12 +7,66 @@
   "counts": {
     "new": 0,
     "matched": 12,
-    "outdated": 0,
+    "outdated": 1,
     "duplicate": 0,
     "unclassified": 0
   },
-  "replacement_candidate_count": 0,
+  "replacement_candidate_count": 1,
   "results": [
+    {
+      "status": "outdated",
+      "file_id": "LK0G1a4Q9G91",
+      "name": "Amplitude - [US] [EN] [1.01]",
+      "platform": "PS4",
+      "category": "games",
+      "region": "USA",
+      "version": "1.01",
+      "title_id": null,
+      "metadata_differences": [],
+      "source_metadata": {
+        "title": "amplitude",
+        "region": "USA",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2452226048,
+        "file_name": "Amplitude - [US] [EN] [1.01]",
+        "platform": "PS4",
+        "category": "games"
+      },
+      "catalog_metadata": {
+        "title_id": "CUSA02480",
+        "region": "USA",
+        "name": "Amplitude",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 2452226048,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02480.png",
+        "size_bytes": 2452226048,
+        "parsed_filename_metadata": {
+          "title": "amplitude",
+          "region": "USA",
+          "version": "1.01",
+          "title_id": null,
+          "languages": [
+            "EN"
+          ],
+          "min_fw": null
+        }
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Amplitude%20-%20[US]%20[EN]%20[1.01].pkg",
+      "proposed_replacement": {
+        "from": "https://archive.org/download/ps4-fpkg-collection-english-a/Amplitude%20-%20[US]%20[EN]%20[1.01].pkg",
+        "to": "https://akirabox.to/LK0G1a4Q9G91/file",
+        "status": "pending_review"
+      },
+      "share_url": "https://akirabox.to/LK0G1a4Q9G91/file",
+      "reason": "Archive.org catalog URL should be replaced with the AkiraBox share URL"
+    },
     {
       "status": "matched",
       "file_id": "rk9zK0aeqG0l",

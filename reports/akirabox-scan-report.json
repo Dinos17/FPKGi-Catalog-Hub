@@ -2,7 +2,7 @@
   "scanner": "akirabox",
   "read_only": true,
   "folder_count": 3,
-  "file_count": 12,
+  "file_count": 13,
   "folders": [
     {
       "id": "Z9dzBXkvgmk1",
@@ -40,6 +40,24 @@
     }
   ],
   "files": [
+    {
+      "id": "LK0G1a4Q9G91",
+      "numeric_id": 951827,
+      "name": "Amplitude - [US] [EN] [1.01]",
+      "extension": "pkg",
+      "size_bytes": 2452226048,
+      "visibility": "public",
+      "created_at": "2026-11-18T16:41:47.000Z",
+      "parent_id": 942665,
+      "share_url": "https://akirabox.to/LK0G1a4Q9G91/file",
+      "folder_path": [
+        "PS4",
+        "Games"
+      ],
+      "category": "games",
+      "platform": "PS4",
+      "catalog_category": "games"
+    },
     {
       "id": "rk9zK0aeqG0l",
       "numeric_id": 949664,
@@ -258,5 +276,5 @@
     }
   ],
   "errors": [],
-  "generated_at": "2026-11-18T16:18:36Z"
+  "generated_at": "2026-11-18T17:13:47Z"
 }

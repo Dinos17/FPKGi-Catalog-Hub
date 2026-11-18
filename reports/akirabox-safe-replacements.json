@@ -1,5 +1,15 @@
 {
-  "applied_count": 0,
-  "applied": [],
+  "applied_count": 1,
+  "applied": [
+    {
+      "file_id": "LK0G1a4Q9G91",
+      "name": "Amplitude - [US] [EN] [1.01]",
+      "platform": "PS4",
+      "category": "games",
+      "old_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Amplitude%20-%20[US]%20[EN]%20[1.01].pkg",
+      "new_url": "https://akirabox.to/LK0G1a4Q9G91/file",
+      "catalog_file": "ps4/games.json"
+    }
+  ],
   "skipped": []
 }
