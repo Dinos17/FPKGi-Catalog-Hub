@@ -51,6 +51,7 @@ jobs:
                       error = (result.stderr or result.stdout).strip()
                   except subprocess.TimeoutExpired:
                       error = "GitHub CLI request timed out after 60 seconds"
+
                   if allow_404 and ("HTTP 404" in error or "404 Not Found" in error):
                       return None
 
@@ -84,35 +85,44 @@ jobs:
               )
               return run_id
 
-          deleted = 0
-
+          # Snapshot all run IDs before deleting. This avoids pagination shifting
+          # when runs are removed and ensures skipped 403 runs cannot block progress.
+          run_ids = []
+          page = 1
           while True:
               response = gh_api(
-                  f"repos/{repo}/actions/runs?per_page=100&page=1"
+                  f"repos/{repo}/actions/runs?per_page=100&page={page}"
               )
               runs = json.loads(response).get("workflow_runs", [])
-              ids = [
+              run_ids.extend(
                   int(run["id"])
                   for run in runs
                   if int(run["id"]) != current_run_id
-              ][:batch_size]
-
-              if not ids:
+              )
+              if len(runs) < 100:
                   break
+              page += 1
 
+          print(f"Found {len(run_ids)} workflow runs to process.", flush=True)
+
+          deleted = 0
+          skipped_403 = []
+          failures = []
+
+          for offset in range(0, len(run_ids), batch_size):
+              batch = run_ids[offset:offset + batch_size]
               print(
-                  f"Deleting batch of {len(ids)} workflow runs "
-                  f"(completed: {deleted}).",
+                  f"Processing batch of {len(batch)} "
+                  f"(deleted: {deleted}, skipped 403: {len(skipped_403)}).",
                   flush=True,
               )
 
-              failures = []
               with concurrent.futures.ThreadPoolExecutor(
                   max_workers=max_workers
               ) as executor:
                   futures = {
                       executor.submit(delete_run, run_id): run_id
-                      for run_id in ids
+                      for run_id in batch
                   }
                   for future in concurrent.futures.as_completed(futures):
                       run_id = futures[future]
@@ -121,15 +131,40 @@ jobs:
                           print(f"Deleted workflow run {run_id}", flush=True)
                           deleted += 1
                       except Exception as exc:
-                          failures.append((run_id, str(exc)))
+                          error = str(exc)
+                          if "HTTP 403" in error or "403 Forbidden" in error:
+                              skipped_403.append(run_id)
+                              print(
+                                  f"Skipped workflow run {run_id}: GitHub returned "
+                                  f"HTTP 403 (insufficient permission or protected run).",
+                                  flush=True,
+                              )
+                          else:
+                              failures.append((run_id, error))
+                              print(
+                                  f"Failed workflow run {run_id}: {error}",
+                                  flush=True,
+                              )
 
-              if failures:
-                  details = "; ".join(
-                      f"{run_id}: {error}" for run_id, error in failures
-                  )
-                  raise RuntimeError(
-                      f"{len(failures)} deletion(s) failed after retries: {details}"
-                  )
+          print(
+              f"Cleanup finished. Deleted: {deleted}; "
+              f"skipped (HTTP 403): {len(skipped_403)}; "
+              f"other failures: {len(failures)}.",
+              flush=True,
+          )
 
-          print(f"Cleanup complete. Deleted {deleted} workflow runs.")
+          if skipped_403:
+              print(
+                  "Runs skipped due to HTTP 403: "
+                  + ", ".join(str(run_id) for run_id in skipped_403),
+                  flush=True,
+              )
+
+          if failures:
+              details = "; ".join(
+                  f"{run_id}: {error}" for run_id, error in failures
+              )
+              raise RuntimeError(
+                  f"{len(failures)} non-403 deletion(s) failed after retries: {details}"
+              )
           PY
