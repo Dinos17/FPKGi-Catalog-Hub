@@ -120,3 +120,55 @@ def test_rejects_stale_catalog_record(tmp_path):
     report = apply_version_upgrades(scan, comparison, tmp_path)
     assert report["applied_count"] == 0
     assert OLD_URL in json.loads(path.read_text())["DATA"]
+
+
+def test_rejects_catalog_field_added_after_comparison_snapshot(tmp_path):
+    scan, comparison = make_case(tmp_path)
+    del comparison["results"][0]["catalog_metadata"]["min_fw"]
+    report = apply_version_upgrades(scan, comparison, tmp_path)
+    assert report["applied_count"] == 0
+    assert OLD_URL in json.loads((tmp_path / "ps4/games.json").read_text())["DATA"]
+
+
+def test_uses_comparator_unicode_title_normalization(tmp_path):
+    scan, comparison = make_case(tmp_path)
+    path = tmp_path / "ps4/games.json"
+    payload = json.loads(path.read_text())
+    payload["DATA"][OLD_URL]["name"] = "Café Game"
+    path.write_text(json.dumps(payload, ensure_ascii=False))
+    comparison["results"][0]["catalog_metadata"]["name"] = "Café Game"
+    comparison["results"][0]["source_metadata"]["title"] = "cafe game"
+    scan["files"][0]["name"] = "Cafe Game_CUSA12345_v1.05_[US]_[EN].pkg"
+    report = apply_version_upgrades(scan, comparison, tmp_path)
+    data = json.loads(path.read_text())["DATA"]
+    assert report["applied_count"] == 1
+    assert data[NEW_URL]["version"] == "1.05"
+
+
+def test_rejects_valid_upgrade_when_other_candidate_fails_eligibility(tmp_path):
+    scan, comparison = make_case(tmp_path)
+    second = dict(scan["files"][0], id="file-2", name="Different Game_CUSA99999_v1.05_[US]_[EN].pkg")
+    scan["files"].append(second)
+    second_result = dict(comparison["results"][0])
+    second_result.update({
+        "file_id": "file-2",
+        "source_metadata": dict(comparison["results"][0]["source_metadata"], title_id="CUSA99999"),
+    })
+    comparison["results"].append(second_result)
+    report = apply_version_upgrades(scan, comparison, tmp_path)
+    assert report["applied_count"] == 0
+    assert OLD_URL in json.loads((tmp_path / "ps4/games.json").read_text())["DATA"]
+
+
+def test_duplicate_source_identity_counts_as_ambiguous_target(tmp_path):
+    scan, comparison = make_case(tmp_path)
+    second = dict(scan["files"][0], id="file-2")
+    scan["files"].append(second)
+    comparison["results"].append({
+        "status": "duplicate",
+        "file_id": "file-2",
+        "duplicate_of_file_id": "file-1",
+    })
+    report = apply_version_upgrades(scan, comparison, tmp_path)
+    assert report["applied_count"] == 0
+    assert OLD_URL in json.loads((tmp_path / "ps4/games.json").read_text())["DATA"]
