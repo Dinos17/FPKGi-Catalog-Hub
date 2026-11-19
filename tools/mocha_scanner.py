@@ -67,7 +67,11 @@ class MochaApiClient:
             timeout = max(1, min(TIMEOUT_SECONDS, remaining))
             try:
                 response = self.session.get(
-                    url, params=params, timeout=timeout, allow_redirects=False
+                    url,
+                    params=params,
+                    timeout=(timeout, timeout),
+                    allow_redirects=False,
+                    stream=True,
                 )
             except (requests.Timeout, requests.ConnectionError) as exc:
                 if attempt >= MAX_RETRIES:
@@ -95,11 +99,22 @@ class MochaApiClient:
                         delay = None
                 if delay is None:
                     delay = 2 ** attempt
-                if delay < 0 or delay > 60 or time.monotonic() + max(delay, 1) >= deadline:
+                # An HTTP-date in the past means retry immediately.
+                delay = max(0, delay)
+                if delay > 60 or time.monotonic() + delay >= deadline:
                     response.close()
                     raise ScanBudgetReached("Mocha rate-limit retry exceeds the scan safety budget")
                 response.close()
-                time.sleep(max(delay, 1))
+                if delay:
+                    time.sleep(delay)
+                continue
+
+            if 500 <= response.status_code < 600 and attempt < MAX_RETRIES:
+                response.close()
+                delay = min(2 ** attempt, 8)
+                if time.monotonic() + delay >= deadline:
+                    raise ScanBudgetReached("Global scan time budget reached")
+                time.sleep(delay)
                 continue
 
             if optional and response.status_code in OPTIONAL_ROUTE_STATUSES:
@@ -111,7 +126,17 @@ class MochaApiClient:
                 raise ScanError(f"Mocha API route {route} returned HTTP {status}")
 
             try:
-                payload = response.json()
+                chunks = []
+                for chunk in response.iter_content(chunk_size=1):
+                    if time.monotonic() >= deadline:
+                        raise ScanBudgetReached("Global scan time budget reached while reading API response")
+                    if chunk:
+                        chunks.append(chunk)
+                if time.monotonic() >= deadline:
+                    raise ScanBudgetReached("Global scan time budget reached while reading API response")
+                payload = json.loads(b"".join(chunks))
+            except ScanBudgetReached:
+                raise
             except ValueError as exc:
                 raise ScanError(f"Mocha API route {route} returned invalid JSON") from exc
             finally:
@@ -271,6 +296,8 @@ class MochaScanner:
             path = queue.popleft()
             if path in visited:
                 continue
+            if len(visited) >= self.max_folders:
+                raise ScanBudgetReached("Global folder safety limit reached")
             visited.add(path)
             page_files, child_folders, pages = self._list_folder(
                 path, deadline=deadline, remaining_pages=self.max_pages - total_pages
