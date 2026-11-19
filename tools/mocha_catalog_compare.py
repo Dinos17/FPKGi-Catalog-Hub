@@ -4,9 +4,11 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 from collections import defaultdict
 from pathlib import Path
 from typing import Any
+from urllib.parse import unquote, urlparse
 
 try:
     from .akirabox_catalog_compare import normalize_title, parse_source_metadata
@@ -47,27 +49,56 @@ def _region(value: Any) -> str | None:
     return REGIONS.get(value.strip().upper())
 
 
+def _clean_title(value: Any) -> str:
+    """Remove a trailing unbracketed version token left in title-only filenames."""
+    if not isinstance(value, str):
+        return ""
+    cleaned = re.sub(r"\s+v?\d+(?:\s+\d+)+$", "", value, flags=re.IGNORECASE)
+    return normalize_title(cleaned)
+
+
+def _title_similarity(left: str, right: str) -> float:
+    left_tokens, right_tokens = set(left.split()), set(right.split())
+    if not left_tokens or not right_tokens:
+        return 0.0
+    return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
+
+
 def _catalog_candidates(
     source: dict[str, Any],
     entries: list[tuple[str, dict[str, Any]]],
+    *,
+    category: str,
 ) -> list[tuple[str, dict[str, Any]]]:
     title_id = source.get("title_id")
-    title = source.get("title") or ""
+    title = _clean_title(source.get("title"))
     region = source.get("region")
+
     if title_id:
-        by_id = [(url, meta) for url, meta in entries
-                 if str(meta.get("title_id") or "").upper() == title_id]
-        if len(by_id) > 1 and title:
-            narrowed = [(url, meta) for url, meta in by_id
-                        if normalize_title(meta.get("name")) == title]
-            if narrowed:
-                by_id = narrowed
-        return by_id
+        by_id = [
+            (url, meta) for url, meta in entries
+            if str(meta.get("title_id") or "").strip().upper() == title_id
+        ]
+        if not by_id:
+            return []
+        # A title ID identifies the base application, not an individual DLC.
+        # Require a sufficiently close package-name match for every category.
+        scored = [
+            (_title_similarity(title, _clean_title(meta.get("name"))), (url, meta))
+            for url, meta in by_id
+        ]
+        scored.sort(key=lambda pair: pair[0], reverse=True)
+        if not scored or scored[0][0] < 0.80:
+            return []
+        if len(scored) > 1 and scored[0][0] - scored[1][0] < 0.08:
+            return []
+        return [scored[0][1]]
+
     if not title:
         return []
     matches = []
     for url, meta in entries:
-        if normalize_title(meta.get("name")) != title:
+        if _clean_title(meta.get("name")) != title:
             continue
         if region and _region(meta.get("region")) != region:
             continue
@@ -75,18 +106,32 @@ def _catalog_candidates(
     return matches
 
 
-def _identity_key(item: dict[str, Any], parsed: dict[str, Any]) -> tuple[Any, ...] | None:
-    # A same-name/size match is only a candidate. Mocha exposes no SHA-256,
-    # so this key must never be treated as proof of binary identity.
-    identity = parsed.get("title_id") or parsed.get("title")
-    if not identity or not parsed.get("version"):
+def _catalog_filename_metadata(url: str) -> dict[str, Any] | None:
+    filename = unquote(urlparse(url).path.rsplit("/", 1)[-1])
+    if filename.casefold() in {"file", "download"} or not filename.lower().endswith((".pkg", ".zip")):
         return None
+    return parse_source_metadata(filename)
+
+
+def _normalized_version(value: Any) -> str | None:
+    if value is None or str(value).strip() == "":
+        return None
+    return str(value).strip().lstrip("0") or "0"
+
+
+def _identity_key(item: dict[str, Any], parsed: dict[str, Any]) -> tuple[Any, ...] | None:
+    # Include package title as well as title ID: DLCs commonly share a base-game ID.
+    title = _clean_title(parsed.get("title"))
+    title_id = parsed.get("title_id")
+    if not title and not title_id:
+        return None
+    version = _normalized_version(parsed.get("version"))
     size = item.get("size_bytes")
-    if not isinstance(size, int):
+    if version is None or not isinstance(size, int):
         return None
     return (
-        item.get("platform"), item.get("catalog_category"), identity,
-        parsed.get("region"), parsed.get("version"), tuple(parsed.get("languages") or ()),
+        item.get("platform"), item.get("catalog_category"), title, title_id,
+        parsed.get("region"), version, tuple(parsed.get("languages") or ()),
         parsed.get("min_fw"), size,
     )
 
@@ -100,8 +145,8 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         raise ValueError("Unexpected scan report write state")
 
     catalogs = _load_catalogs(catalog_root)
-    counts = {"matched": 0, "metadata_difference": 0, "new": 0,
-              "ambiguous": 0, "unclassified": 0, "possible_duplicate": 0}
+    counts = {"matched": 0, "metadata_difference": 0, "unverified": 0,
+              "new": 0, "ambiguous": 0, "unclassified": 0, "possible_duplicate": 0}
     rows: list[dict[str, Any]] = []
     duplicate_groups: dict[tuple[Any, ...], list[str]] = defaultdict(list)
 
@@ -124,39 +169,82 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             continue
 
         parsed = parse_source_metadata(name)
-        candidates = _catalog_candidates(parsed, catalogs[target])
+        parsed["title"] = _clean_title(parsed.get("title"))
+        candidates = _catalog_candidates(parsed, catalogs[target], category=category)
         status = "new"
         reason = "No unique catalog identity match"
         catalog_url = None
         catalog_metadata = None
-        differences = []
+        differences: list[str] = []
+        unavailable: list[str] = []
 
         if len(candidates) > 1:
             status = "ambiguous"
             reason = "Multiple catalog records match the available title identity"
         elif len(candidates) == 1:
             catalog_url, catalog_metadata = candidates[0]
-            source_version = parsed.get("version")
-            catalog_version = catalog_metadata.get("version")
-            if source_version and catalog_version:
-                if str(source_version).lstrip("0") != str(catalog_version).lstrip("0"):
-                    differences.append("version")
+            catalog_filename = _catalog_filename_metadata(catalog_url)
+
+            source_version = _normalized_version(parsed.get("version"))
+            catalog_version = _normalized_version(catalog_metadata.get("version"))
+            if source_version is None or catalog_version is None:
+                unavailable.append("version")
+            elif source_version != catalog_version:
+                differences.append("version")
+
             source_size = item.get("size_bytes")
             catalog_size = catalog_metadata.get("size")
-            if isinstance(source_size, int) and isinstance(catalog_size, int) and source_size != catalog_size:
+            if not isinstance(source_size, int) or not isinstance(catalog_size, int):
+                unavailable.append("size_bytes")
+            elif source_size != catalog_size:
                 differences.append("size_bytes")
-            if parsed.get("title_id") and catalog_metadata.get("title_id"):
-                if parsed["title_id"] != str(catalog_metadata["title_id"]).upper():
+
+            source_title_id = parsed.get("title_id")
+            catalog_title_id = catalog_metadata.get("title_id")
+            if source_title_id and catalog_title_id:
+                if source_title_id != str(catalog_title_id).strip().upper():
                     differences.append("title_id")
-            if parsed.get("region") and _region(catalog_metadata.get("region")):
-                if parsed["region"] != _region(catalog_metadata.get("region")):
+            elif source_title_id or catalog_title_id:
+                unavailable.append("title_id")
+
+            source_region = parsed.get("region")
+            catalog_region = _region(catalog_metadata.get("region"))
+            if source_region and catalog_region:
+                if source_region != catalog_region:
                     differences.append("region")
+            elif source_region and not catalog_region:
+                unavailable.append("region")
+
+            source_min_fw = parsed.get("min_fw")
+            catalog_min_fw = catalog_metadata.get("min_fw")
+            if source_min_fw is not None:
+                if catalog_min_fw is None:
+                    unavailable.append("min_fw")
+                elif str(source_min_fw).strip() != str(catalog_min_fw).strip():
+                    differences.append("min_fw")
+
+            source_languages = sorted(parsed.get("languages") or [])
+            catalog_languages = []
+            if catalog_filename:
+                catalog_languages = sorted(catalog_filename.get("languages") or [])
+            elif isinstance(catalog_metadata.get("languages"), list):
+                catalog_languages = sorted(str(x).upper() for x in catalog_metadata["languages"])
+            if source_languages:
+                if not catalog_languages:
+                    unavailable.append("languages")
+                elif source_languages != catalog_languages:
+                    differences.append("languages")
+
             if differences:
                 status = "metadata_difference"
                 reason = "Source metadata differs in: " + ", ".join(differences)
+            elif unavailable:
+                status = "unverified"
+                reason = "Catalog identity candidate found, but comparison metadata is unavailable: " + ", ".join(unavailable)
             else:
                 status = "matched"
-                reason = "Available identity and metadata agree"
+                reason = "Available identity and comparison metadata agree"
+
         counts[status] += 1
 
         key = _identity_key(item, parsed)
@@ -178,6 +266,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             "catalog_url": catalog_url,
             "catalog_metadata": catalog_metadata,
             "metadata_differences": differences,
+            "unavailable_metadata": unavailable,
             "reason": reason,
         })
 
@@ -188,9 +277,9 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         possible_duplicates.append({
             "file_ids": file_ids,
             "identity": {
-                "platform": key[0], "category": key[1], "title_id_or_title": key[2],
-                "region": key[3], "version": key[4], "languages": list(key[5]),
-                "min_fw": key[6], "size_bytes": key[7],
+                "platform": key[0], "category": key[1], "title": key[2],
+                "title_id": key[3], "region": key[4], "version": key[5],
+                "languages": list(key[6]), "min_fw": key[7], "size_bytes": key[8],
             },
             "binary_verification": "unavailable_no_sha256_from_mocha",
             "automatic_cleanup": False,
