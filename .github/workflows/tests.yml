@@ -23,6 +23,13 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Verify hash-locked Mocha runtime dependencies
+        run: |
+          python -m venv "$RUNNER_TEMP/mocha-lock-check"
+          "$RUNNER_TEMP/mocha-lock-check/bin/python" -m pip install \
+            --disable-pip-version-check --require-hashes \
+            -r tools/mocha-requirements.lock
+
       - name: Install test dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
 
