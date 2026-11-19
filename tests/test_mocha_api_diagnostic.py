@@ -1,6 +1,6 @@
 import pytest
 
-from tools.mocha_api_diagnostic import DiagnosticError, MochaDiagnostic
+from tools.mocha_api_diagnostic import DiagnosticError, MochaDiagnostic, safe_http_diagnostics
 
 
 class FakeResponse:
@@ -88,3 +88,34 @@ def test_diagnostic_rejects_missing_next_cursor():
 
     with pytest.raises(DiagnosticError, match="no cursor"):
         diagnostic.list_folder("")
+
+
+
+def test_http_error_diagnostics_expose_only_allowlisted_metadata():
+    class ErrorResponse:
+        status_code = 404
+        headers = {
+            "Content-Type": "application/json; charset=utf-8",
+            "Server": "edge-gateway",
+            "X-Request-Id": "req-123",
+        }
+
+        def json(self):
+            return {
+                "code": "ROUTE_NOT_FOUND",
+                "message": "private filename.pkg and /private/account/path",
+                "token": "do-not-print-this",
+            }
+
+    report = safe_http_diagnostics(ErrorResponse())
+    rendered = str(report)
+
+    assert report["http_status"] == 404
+    assert report["content_type"] == "application/json"
+    assert report["server"] == "edge-gateway"
+    assert report["request_id"] == "req-123"
+    assert report["body_format"] == "json_object"
+    assert report["error_code"] == "ROUTE_NOT_FOUND"
+    assert "private filename.pkg" not in rendered
+    assert "/private/account/path" not in rendered
+    assert "do-not-print-this" not in rendered
