@@ -17,7 +17,7 @@ from urllib.parse import quote
 
 import requests
 
-API_BASE = "https://api.mocha.my"
+API_BASE = "https://api.mocha.my/api"
 TIMEOUT = 30
 PAGE_LIMIT = 100
 MAX_PAGES_PER_FOLDER = 1000
