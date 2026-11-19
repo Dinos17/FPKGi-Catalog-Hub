@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AkiraBox Review | FPKGi Catalog Hub</title>
+<title>FPKGi Catalog Review</title>
 <style>
 :root{color-scheme:dark;--bg:#0b0e13;--panel:#141a23;--panel2:#1b2430;--line:#2b3544;--text:#edf2f8;--muted:#98a6b8;--blue:#78b7ff;--green:#55d6a3;--red:#ff8585;--amber:#f4c66a}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif}main{max-width:1500px;margin:auto;padding:32px 20px 70px}
@@ -20,17 +20,17 @@ dl{display:grid;grid-template-columns:minmax(88px,.36fr) 1fr;gap:5px 8px;margin:
 @media(max-width:760px){#results{grid-template-columns:1fr}.columns{grid-template-columns:1fr}.side+.side{border-left:0;border-top:1px solid var(--line)}dl{grid-template-columns:115px 1fr}}
 </style></head>
 <body><main>
-<header><div><h1>AkiraBox Review</h1><p>Inspect source uploads and matching catalog records side by side.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Safe replacements are processed automatically through a separate catalog-update PR. Reject and Keep Catalog open a prefilled GitHub issue. Only the repository owner can record it; wait for the workflow confirmation before treating it as saved. The dashboard checks the live catalog before telling you whether manual deletion is safe.</div>
-<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Connecting to the latest AkiraBox scan…</span><button id="refresh" type="button">Refresh reports</button><button id="export" disabled>Export decisions</button></section>
-<div id="summary" class="stats"></div><div id="warning"></div>
-<h2 class="section-title">Scanned uploads</h2><div id="results"><div class="empty">Waiting for the latest reports from GitHub Actions.</div></div>
+<header><div><h1>FPKGi Catalog Review</h1><p>Mocha scan overview and legacy AkiraBox review records.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays aggregate Mocha counts only; file names, IDs, folder paths, and detailed inventory are deliberately not published. Possible duplicates are review candidates, never automatic cleanup. The AkiraBox sections below show legacy reports and separately recorded manual rejections.</div>
+<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading legacy AkiraBox reports…</span><button id="refresh" type="button">Refresh reports</button><button id="export" disabled>Export legacy decisions</button></section>
+<h2 class="section-title">Latest Mocha scan overview</h2><div id="mochaOverview"><div class="empty">Loading the latest sanitized Mocha summary…</div></div><div id="summary" class="stats"></div><div id="warning"></div>
+<h2 class="section-title">Legacy AkiraBox scanned uploads</h2><div id="results"><div class="empty">Waiting for the latest reports from GitHub Actions.</div></div>
 <h2 class="section-title">Rejected uploads — manual deletion required</h2><div id="rejected"><div class="empty">No rejected uploads are recorded.</div></div>
-<h2 class="section-title">Catalog entries not seen in AkiraBox</h2><div id="missing"><div class="empty">Missing-entry checks remain deferred until all four source categories are scanned.</div></div>
+<h2 class="section-title">Legacy AkiraBox catalog comparison</h2><div id="missing"><div class="empty">Missing-entry checks remain deferred until all four source categories are scanned.</div></div>
 </main>
 <script>
 const $=id=>document.getElementById(id);let scan=null,comparison=null,decisions={},rejections=[],rejectionStatus="loading",catalogUrls=null,catalogStatus="loading";
-const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/akirabox-reports/reports/";
+const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/akirabox-reports/reports/";\nasync function loadMochaSummary(){\n const root=$("mochaOverview");\n root.innerHTML='<div class="empty">Loading the latest sanitized Mocha summary…</div>';\n try{\n  const response=await fetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now(),{cache:"no-store"});\n  if(!response.ok)throw Error("Mocha summary unavailable (HTTP "+response.status+").");\n  const data=await response.json();\n  if(!isRecord(data)||data.schema_version!==1||data.scanner!=="mocha"||typeof data.scan_complete!=="boolean"||!isRecord(data.counts)||!isRecord(data.permissions))throw Error("Mocha summary has an invalid format.");\n  const numeric=(value)=>Number.isSafeInteger(value)&&value>=0?value:"Not available";\n  const cards=[["Scan status",data.scan_complete?"Complete":"Incomplete"],["Folders",numeric(data.folder_count)],["Files",numeric(data.file_count)],["Listing pages",numeric(data.listing_page_count)],["Possible duplicate groups",numeric(data.possible_duplicate_groups)]];\n  const countLabels={matched:"Matched",metadata_difference:"Metadata differences",unverified:"Unverified",new:"New candidates",ambiguous:"Ambiguous",unclassified:"Unclassified",possible_duplicate:"Possible duplicate groups"};\n  const countRows=Object.entries(countLabels).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(numeric(data.counts[key]))+'</dd>').join("");\n  const permissionRows=["can_use_api","can_create_hotlinks","profile_can_use_api","profile_can_create_hotlinks"].map(key=>{const value=data.permissions[key];return '<dt>'+esc(pretty(key))+'</dt><dd>'+esc(typeof value==="boolean"?value:"Not reported")+'</dd>';}).join("");\n  const cardsHtml=cards.map(([label,value])=>'<div class="stat">'+esc(label)+'<strong>'+esc(value)+'</strong></div>').join("");\n  root.innerHTML='<div class="stats">'+cardsHtml+'</div><article class="item"><div class="item-head"><strong>Sanitized scan details</strong><span class="pill '+(data.scan_complete?"matched":"unclassified")+'">'+(data.scan_complete?"COMPLETE":"INCOMPLETE")+'</span></div><div class="columns"><section class="side"><h3>Catalog comparison</h3><dl>'+countRows+'</dl></section><section class="side"><h3>Mocha account capabilities</h3><dl>'+permissionRows+'</dl></section></div><div class="reason">Generated: '+esc(data.generated_at||"Unknown")+' · Catalog commit: '+esc(data.catalog_commit||"Unknown")+' · Snapshot consistency: '+esc(data.snapshot_consistency||"Unknown")+'<br>Automatic cleanup: disabled. Detailed inventory published: no.</div></article>';\n }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+' The last successful summary may not be available yet.</div>'; }\n}\n
 const esc=v=>String(v===null||v===undefined||v===""?"—":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const pretty=k=>String(k).replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
 function linkOrText(v){const s=String(v??"");return /^https:\/\//i.test(s)?'<a href="'+esc(s)+'" target="_blank" rel="noopener noreferrer">'+esc(s)+'</a>':esc(s);}
@@ -98,7 +98,7 @@ function renderRejected(){
 }
 async function loadReports(){
  const button=$("refresh");button.disabled=true;
- $("sourceStatus").textContent="Loading latest scan, comparison and rejection reports…";
+ $("sourceStatus").textContent="Loading legacy AkiraBox reports and rejection records…";\n loadMochaSummary();
  rejectionStatus="loading";catalogStatus="loading";catalogUrls=null;renderRejected();
  const [scanResult,comparisonResult,rejectionResult,catalogResult]=await Promise.allSettled([
   fetchReport("akirabox-scan-report.json","scan"),
@@ -118,10 +118,10 @@ async function loadReports(){
    const automatic=row.automatic_decision;
    if(automatic?.decision==="keep_akirabox"&&automatic.selected_file_id!==undefined)decisions[String(automatic.selected_file_id)]="keep_akirabox";
   }
-  $("sourceStatus").textContent="Latest scan and comparison loaded · "+(scan.generated_at||scan.scanned_at||"scan timestamp unavailable");
+  $("sourceStatus").textContent="Legacy AkiraBox reports loaded · "+(scan.generated_at||scan.scanned_at||"timestamp unavailable");
  }else{
   decisions={};
-  $("sourceStatus").textContent="Scan/comparison unavailable: "+[scanResult,comparisonResult].filter(x=>x.status==="rejected").map(x=>x.reason?.message||String(x.reason)).join("; ");
+  $("sourceStatus").textContent="Legacy AkiraBox reports unavailable: "+[scanResult,comparisonResult].filter(x=>x.status==="rejected").map(x=>x.reason?.message||String(x.reason)).join("; ");
  }
  renderRejected();
  render();
@@ -129,7 +129,7 @@ async function loadReports(){
  if(rejectionStatus!=="available")warnings.push("Rejection status could not be verified. Review suggestions and export are disabled until it loads.");
  if(catalogStatus!=="available")warnings.push("Live catalog verification failed. Rejected uploads will be marked DO NOT DELETE.");
  if(scan&&comparison&&comparison.scan_complete_for_all_categories!==true)warnings.push("Partial scan: missing catalog checks are deferred until all four source categories are confirmed.");
- if(!scan||!comparison)warnings.push("The latest scan and comparison reports could not both be loaded.");
+ if(!scan||!comparison)warnings.push("Legacy AkiraBox scan and comparison reports could not both be loaded. The Mocha overview is shown separately above.");
  $("warning").innerHTML=warnings.map(message=>'<div class="notice">'+esc(message)+'</div>').join("");
  button.disabled=false;
 }
