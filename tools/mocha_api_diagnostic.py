@@ -84,6 +84,10 @@ class DiagnosticError(RuntimeError):
     pass
 
 
+class ScanBudgetReached(DiagnosticError):
+    pass
+
+
 class MochaDiagnostic:
     def __init__(self, api_key: str, session: requests.Session | None = None):
         self.session = session or requests.Session()
@@ -93,14 +97,26 @@ class MochaDiagnostic:
             "User-Agent": "FPKGi-Catalog-Hub-Mocha-Diagnostic/1.0",
         })
 
-    def get_json(self, path: str, params: dict[str, str] | None = None, *, allow_not_found: bool = False) -> dict[str, Any] | None:
+    def get_json(
+        self, path: str, params: dict[str, str] | None = None, *,
+        allow_not_found: bool = False, deadline: float | None = None
+    ) -> dict[str, Any] | None:
         url = API_BASE + path
         for attempt in range(MAX_RETRIES + 1):
+            remaining = None if deadline is None else deadline - time.monotonic()
+            if remaining is not None and remaining <= 0:
+                raise ScanBudgetReached("Global scan time budget reached")
+            request_timeout = TIMEOUT if remaining is None else max(1, min(TIMEOUT, remaining))
             try:
-                response = self.session.get(url, params=params, timeout=TIMEOUT)
+                response = self.session.get(url, params=params, timeout=request_timeout)
             except (requests.Timeout, requests.ConnectionError) as exc:
+                if deadline is not None and time.monotonic() >= deadline:
+                    raise ScanBudgetReached("Global scan time budget reached") from exc
                 if attempt < MAX_RETRIES:
-                    time.sleep(min(2 ** attempt, 8))
+                    delay = min(2 ** attempt, 8)
+                    if deadline is not None and time.monotonic() + delay >= deadline:
+                        raise ScanBudgetReached("Global scan time budget reached") from exc
+                    time.sleep(delay)
                     continue
                 raise DiagnosticError(
                     f"Network request failed after retries ({type(exc).__name__})"
@@ -124,6 +140,9 @@ class MochaDiagnostic:
                 if delay > 60:
                     response.close()
                     raise DiagnosticError("API rate limit requested a retry delay beyond the safety limit")
+                if deadline is not None and time.monotonic() + max(delay, 1) >= deadline:
+                    response.close()
+                    raise ScanBudgetReached("Global scan time budget reached")
                 response.close()
                 time.sleep(max(delay, 1))
                 continue
@@ -169,11 +188,14 @@ class MochaDiagnostic:
                 return file_count, folders, pages, False, "Per-folder pagination safety limit reached"
             if pages >= remaining_pages:
                 return file_count, folders, pages, False, "Global page budget reached"
-            pages += 1
             params = {"path": path, "limit": str(PAGE_LIMIT)}
             if cursor:
                 params["cursor"] = cursor
-            payload = self.get_json("/files", params)
+            try:
+                payload = self.get_json("/files", params, deadline=deadline)
+            except ScanBudgetReached as exc:
+                return file_count, folders, pages, False, str(exc)
+            pages += 1
 
             files = payload.get("files")
             child_folders = payload.get("folders")
@@ -224,11 +246,33 @@ class MochaDiagnostic:
         return parent + "/" + folder
 
     def run(self) -> dict[str, Any]:
-        # These account-summary routes are present in the desktop client, but
-        # may be unavailable on some API deployments. File listing is the
-        # capability that matters for this read-only scanner diagnostic.
-        me = self.get_json("/auth/me", allow_not_found=True)
-        profile = self.get_json("/profile/summary", allow_not_found=True)
+        # The API does not expose a snapshot token, so the report is a traversal
+        # diagnostic rather than a transactionally consistent account snapshot.
+        deadline = time.monotonic() + MAX_SCAN_SECONDS
+        # These account-summary routes may be unavailable on some deployments.
+        try:
+            me = self.get_json("/auth/me", allow_not_found=True, deadline=deadline)
+            profile = self.get_json("/profile/summary", allow_not_found=True, deadline=deadline)
+        except ScanBudgetReached as exc:
+            return {
+                "diagnostic": "mocha_api",
+                "read_only": True,
+                "authentication": "not_verified",
+                "permissions": {
+                    "can_use_api": None,
+                    "can_create_hotlinks": None,
+                    "profile_can_use_api": None,
+                    "profile_can_create_hotlinks": None,
+                },
+                "account_summary_available": False,
+                "folder_count": 0,
+                "file_count": 0,
+                "listing_page_count": 0,
+                "scan_complete": False,
+                "snapshot_consistency": "not_guaranteed_by_api",
+                "details_suppressed": True,
+                "error": str(exc),
+            }
 
         permissions = {
             "can_use_api": me.get("canUseApi") if me else None,
@@ -243,7 +287,6 @@ class MochaDiagnostic:
         total_pages = 0
         folder_count = 0
         scan_error = None
-        deadline = time.monotonic() + MAX_SCAN_SECONDS
 
         while queue:
             if time.monotonic() >= deadline:
