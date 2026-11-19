@@ -54,7 +54,7 @@ def test_diagnostic_walks_nested_folders_and_all_pages():
     session = FakeSession(responses)
     report = MochaDiagnostic("test-key", session=session).run()
 
-    assert report["authentication"] == "success"
+    assert report["authentication"] == "verified_by_file_listing"
     assert report["folder_count"] == 3
     assert report["file_count"] == 1
     assert report["listing_page_count"] == 4
