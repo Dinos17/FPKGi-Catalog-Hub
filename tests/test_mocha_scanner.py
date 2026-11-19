@@ -42,6 +42,7 @@ class FakeSession:
         self.expected_paths = list(expected_paths or [])
 
     def get(self, url, **kwargs):
+        assert kwargs.get("allow_redirects") is False
         self.calls.append((url, kwargs))
         if url.endswith("/files") and self.expected_paths:
             expected = self.expected_paths.pop(0)
@@ -58,7 +59,7 @@ def payload(files=None, folders=None, *, has_more=False, cursor=None):
     }
 
 
-def file_row(file_id="f1", name="Example_Game_CUSA12345_v1.00_[US]_[EN].pkg",
+def file_row(file_id="f1", name="Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg",
              path="PS4/Games", size=1234, **extra):
     return {
         "id": file_id,
@@ -142,6 +143,36 @@ def test_scanner_retries_transient_server_errors():
     assert len(session.calls) == 2
 
 
+def test_scanner_retries_http_408():
+    session = FakeSession([FakeResponse(status=408), FakeResponse({"canUseApi": True})])
+    scanner = MochaScanner("test-key", session, max_seconds=10)
+    assert scanner.client.get_json("/auth/me", deadline=time.monotonic() + 10) == {"canUseApi": True}
+    assert len(session.calls) == 2
+
+
+def test_scanner_rejects_oversized_response():
+    class OversizedResponse(FakeResponse):
+        def iter_content(self, chunk_size=1):
+            yield b"x" * (10 * 1024 * 1024 + 1)
+
+    session = FakeSession([OversizedResponse({})])
+    scanner = MochaScanner("test-key", session, max_seconds=10)
+    with pytest.raises(ScanError, match="maximum allowed size"):
+        scanner.client.get_json("/auth/me", deadline=time.monotonic() + 10)
+
+
+def test_optional_profile_permission_error_does_not_block_file_scan():
+    session = FakeSession([
+        FakeResponse({"canUseApi": True, "canCreateHotlinks": False}),
+        FakeResponse(status=403),
+        FakeResponse(payload()),
+    ], expected_paths=[""])
+    report = MochaScanner("test-key", session, max_seconds=10).run()
+    assert report["scan_complete"] is True
+    assert report["account_summary_available"] is True
+    assert report["permissions"]["profile_can_use_api"] is None
+
+
 def test_scanner_retries_expired_http_date_immediately():
     expired = format_datetime(datetime.now(timezone.utc) - timedelta(seconds=5), usegmt=True)
     session = FakeSession([
@@ -202,7 +233,7 @@ def test_comparison_matches_exact_catalog_entry_and_rejects_wrong_title(tmp_path
     write_catalog(tmp_path, "ps4/games.json", {
         catalog_url: {
             "name": "Example Game", "title_id": "CUSA12345",
-            "region": "USA", "version": "01.00", "size": 1234,
+            "region": "USA", "version": "01.00", "size": 1234, "min_fw": "9.00",
         },
     })
     for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
@@ -210,7 +241,7 @@ def test_comparison_matches_exact_catalog_entry_and_rejects_wrong_title(tmp_path
 
     before = {p: p.read_bytes() for p in tmp_path.rglob("*.json")}
     report = compare_scan(make_complete_scan([{
-        "id": "f1", "name": "Example_Game_CUSA12345_v1.00_[US]_[EN].pkg",
+        "id": "f1", "name": "Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg",
         "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
         "catalog_category": "games", "folder_path": "PS4/Games",
     }]), tmp_path)
