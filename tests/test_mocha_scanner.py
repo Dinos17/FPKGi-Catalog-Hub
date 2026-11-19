@@ -292,7 +292,7 @@ def test_unbracketed_version_suffix_does_not_prevent_title_match(tmp_path):
         "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
         "catalog_category": "games", "folder_path": "PS4/Games",
     }]), tmp_path)
-    assert report["results"][0]["status"] == "unverified"
+    assert report["results"][0]["status"] == "matched"
 
 
 def test_possible_duplicate_is_not_verified_or_cleaned_and_catalogs_unchanged(tmp_path):
