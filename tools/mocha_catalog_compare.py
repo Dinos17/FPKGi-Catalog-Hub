@@ -154,7 +154,9 @@ def _identity_key(item: dict[str, Any], parsed: dict[str, Any]) -> tuple[Any, ..
     )
 
 
-def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
+def compare_scan(
+    scan: dict[str, Any], catalog_root: Path, catalog_commit: str | None = None
+) -> dict[str, Any]:
     if scan.get("scanner") != "mocha":
         raise ValueError("Input is not a Mocha scan report")
     if scan.get("scan_complete") is not True:
@@ -315,6 +317,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         "read_only": True,
         "scan_complete": True,
         "snapshot_consistency": scan.get("snapshot_consistency"),
+        "catalog_commit": catalog_commit,
         "catalog_write_performed": False,
         "mocha_files_deleted": False,
         "hotlink_creation_available": scan.get("permissions", {}).get("can_create_hotlinks"),
@@ -329,13 +332,14 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--scan-report", type=Path, required=True)
     parser.add_argument("--catalog-root", type=Path, default=Path("."))
+    parser.add_argument("--catalog-commit", default=None)
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     try:
         scan = json.loads(args.scan_report.read_text(encoding="utf-8"))
         if not isinstance(scan, dict):
             raise ValueError("Mocha scan report must be a JSON object")
-        report = compare_scan(scan, args.catalog_root)
+        report = compare_scan(scan, args.catalog_root, args.catalog_commit)
     except (OSError, json.JSONDecodeError, ValueError) as exc:
         print(f"ERROR: {exc}", file=__import__("sys").stderr)
         return 2
