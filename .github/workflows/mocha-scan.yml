@@ -30,16 +30,29 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Install pinned dependencies
-        run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
+      - name: Create isolated test environment
+        run: python -m venv "$RUNNER_TEMP/test-venv"
+
+      - name: Install test dependencies (no Mocha secret in this environment)
+        run: |
+          "$RUNNER_TEMP/test-venv/bin/python" -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
 
       - name: Run repository tests
-        run: python -m pytest -q
+        run: "$RUNNER_TEMP/test-venv/bin/python" -m pytest -q
+
+      - name: Create isolated Mocha runtime
+        run: python -m venv "$RUNNER_TEMP/mocha-venv"
+
+      - name: Install hash-verified Mocha dependencies
+        run: |
+          "$RUNNER_TEMP/mocha-venv/bin/python" -m pip install \
+            --disable-pip-version-check --require-hashes \
+            -r tools/mocha-requirements.lock
 
       - name: Scan Mocha folders and file metadata
         env:
           MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
-        run: python tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
+        run: "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
 
       - name: Refresh catalog snapshot from main
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
