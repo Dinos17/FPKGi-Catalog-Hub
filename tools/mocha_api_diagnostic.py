@@ -22,9 +22,17 @@ TIMEOUT = 30
 PAGE_LIMIT = 100
 MAX_PAGES_PER_FOLDER = 1000
 MAX_FOLDERS = 5000
+MAX_TOTAL_PAGES = 1000
+MAX_SCAN_SECONDS = 600
 
 MAX_RETRIES = 3
-SAFE_ERROR_CODE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+SAFE_REQUEST_ID = re.compile(
+    r"^(?:[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|[0-9a-fA-F]{16,32}-[0-9a-fA-F]{1,8})$"
+)
+SAFE_ERROR_CODES = frozenset({
+    "ROUTE_NOT_FOUND", "UNAUTHORIZED", "FORBIDDEN", "NOT_FOUND",
+    "RATE_LIMITED", "TOO_MANY_REQUESTS", "INTERNAL_ERROR",
+})
 
 
 def safe_http_diagnostics(response: requests.Response) -> dict[str, Any]:
@@ -34,16 +42,20 @@ def safe_http_diagnostics(response: requests.Response) -> dict[str, Any]:
         "http_status": response.status_code,
         "content_type": headers.get("Content-Type", "").split(";", 1)[0][:80] or None,
         "server": headers.get("Server", "")[:80] or None,
-        "request_id": (
-            headers.get("X-Request-Id")
-            or headers.get("X-Correlation-Id")
-            or headers.get("CF-Ray")
-            or None
-        ),
+        "request_id": None,
         "allow": headers.get("Allow", "")[:120] or None,
         "body_format": "unknown",
         "error_code": None,
     }
+    request_id = (
+        headers.get("X-Request-Id")
+        or headers.get("X-Correlation-Id")
+        or headers.get("CF-Ray")
+        or ""
+    )
+    if SAFE_REQUEST_ID.fullmatch(request_id):
+        details["request_id"] = request_id
+
     try:
         payload = response.json()
     except (ValueError, requests.RequestException):
@@ -57,7 +69,7 @@ def safe_http_diagnostics(response: requests.Response) -> dict[str, Any]:
         details["body_format"] = "json_object"
         for key in ("code", "errorCode", "error_code", "type"):
             value = payload.get(key)
-            if isinstance(value, str) and SAFE_ERROR_CODE.fullmatch(value):
+            if isinstance(value, str) and value in SAFE_ERROR_CODES:
                 details["error_code"] = value
                 break
     elif isinstance(payload, list):
@@ -123,7 +135,9 @@ class MochaDiagnostic:
 
         raise DiagnosticError("API rate-limit retries were exhausted")
 
-    def list_folder(self, path: str) -> tuple[int, list[str], int]:
+    def list_folder(
+        self, path: str, *, remaining_pages: int, deadline: float
+    ) -> tuple[int, list[str], int, bool, str | None]:
         cursor = ""
         seen_cursors: set[str] = set()
         file_count = 0
@@ -131,9 +145,13 @@ class MochaDiagnostic:
         pages = 0
 
         while True:
+            if time.monotonic() >= deadline:
+                return file_count, folders, pages, False, "Global scan time budget reached"
+            if pages >= MAX_PAGES_PER_FOLDER:
+                return file_count, folders, pages, False, "Per-folder pagination safety limit reached"
+            if pages >= remaining_pages:
+                return file_count, folders, pages, False, "Global page budget reached"
             pages += 1
-            if pages > MAX_PAGES_PER_FOLDER:
-                raise DiagnosticError("Pagination safety limit reached")
             params = {"path": path, "limit": str(PAGE_LIMIT)}
             if cursor:
                 params["cursor"] = cursor
@@ -171,7 +189,7 @@ class MochaDiagnostic:
                 raise DiagnosticError("API did not provide a valid hasMore flag")
             break
 
-        return file_count, folders, pages
+        return file_count, folders, pages, True, None
 
     @staticmethod
     def child_path(parent: str, folder: str) -> str:
@@ -205,25 +223,40 @@ class MochaDiagnostic:
         total_files = 0
         total_pages = 0
         folder_count = 0
+        scan_error = None
+        deadline = time.monotonic() + MAX_SCAN_SECONDS
 
         while queue:
+            if time.monotonic() >= deadline:
+                scan_error = "Global scan time budget reached"
+                break
+            if total_pages >= MAX_TOTAL_PAGES:
+                scan_error = "Global page budget reached"
+                break
             path = queue.popleft()
             if path in visited:
                 continue
             if len(visited) >= MAX_FOLDERS:
-                raise DiagnosticError("Folder safety limit reached")
+                scan_error = "Folder safety limit reached"
+                break
             visited.add(path)
             folder_count += 1
 
-            files, children, pages = self.list_folder(path)
+            files, children, pages, folder_complete, folder_error = self.list_folder(
+                path, remaining_pages=MAX_TOTAL_PAGES - total_pages, deadline=deadline
+            )
             total_files += files
             total_pages += pages
             for child in children:
                 child_path = self.child_path(path, child)
                 if child_path not in visited:
                     queue.append(child_path)
+            if not folder_complete:
+                scan_error = folder_error or "Folder scan incomplete"
+                break
 
-        return {
+        complete = not queue and scan_error is None
+        report = {
             "diagnostic": "mocha_api",
             "read_only": True,
             "authentication": "verified_by_file_listing",
@@ -232,9 +265,12 @@ class MochaDiagnostic:
             "folder_count": folder_count,
             "file_count": total_files,
             "listing_page_count": total_pages,
-            "scan_complete": True,
+            "scan_complete": complete,
             "details_suppressed": True,
         }
+        if scan_error:
+            report["error"] = scan_error
+        return report
 
 
 def main() -> int:
