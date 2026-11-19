@@ -53,7 +53,7 @@ def _clean_title(value: Any) -> str:
     """Remove a trailing unbracketed version token left in title-only filenames."""
     if not isinstance(value, str):
         return ""
-    cleaned = re.sub(r"\s+v?\d+(?:\s+\d+)+$", "", value, flags=re.IGNORECASE)
+    cleaned = re.sub(r"[_\s-]+v?\d+(?:\.\d+)+$", "", value, flags=re.IGNORECASE)
     return normalize_title(cleaned)
 
 
@@ -104,10 +104,9 @@ def _catalog_candidates(
                 key=lambda pair: pair[0],
                 reverse=True,
             )
-            best_score = scored[0][0]
-            if best_score >= 0.92:
-                tied = [row for score, row in scored if best_score - score < 0.08]
-                return [(row[0], row[1]) for row in tied]
+            exact = [row for row in by_id if title and row[2] == title]
+            if exact:
+                return [(row[0], row[1]) for row in exact]
             plausible = [row for score, row in scored if score >= 0.60]
             if plausible:
                 return [(row[0], row[1]) for row in plausible]
@@ -258,7 +257,7 @@ def compare_scan(
                     _clean_title(parsed.get("title")),
                     _clean_title(catalog_metadata.get("name")),
                 )
-                if title_similarity < 0.92:
+                if title_similarity < 1.0:
                     unavailable.append("package_title_identity")
 
             if differences:
