@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import sys
 import time
 from collections import deque
@@ -21,7 +22,49 @@ TIMEOUT = 30
 PAGE_LIMIT = 100
 MAX_PAGES_PER_FOLDER = 1000
 MAX_FOLDERS = 5000
+
 MAX_RETRIES = 3
+SAFE_ERROR_CODE = re.compile(r"^[A-Za-z0-9_.-]{1,64}$")
+
+
+def safe_http_diagnostics(response: requests.Response) -> dict[str, Any]:
+    """Return allowlisted HTTP metadata only; never expose response bodies."""
+    headers = response.headers
+    details: dict[str, Any] = {
+        "http_status": response.status_code,
+        "content_type": headers.get("Content-Type", "").split(";", 1)[0][:80] or None,
+        "server": headers.get("Server", "")[:80] or None,
+        "request_id": (
+            headers.get("X-Request-Id")
+            or headers.get("X-Correlation-Id")
+            or headers.get("CF-Ray")
+            or None
+        ),
+        "allow": headers.get("Allow", "")[:120] or None,
+        "body_format": "unknown",
+        "error_code": None,
+    }
+    try:
+        payload = response.json()
+    except (ValueError, requests.RequestException):
+        body = getattr(response, "text", "") or ""
+        details["body_format"] = "html" if "<html" in body[:512].lower() else (
+            "text" if body else "empty_or_unreadable"
+        )
+        return details
+
+    if isinstance(payload, dict):
+        details["body_format"] = "json_object"
+        for key in ("code", "errorCode", "error_code", "type"):
+            value = payload.get(key)
+            if isinstance(value, str) and SAFE_ERROR_CODE.fullmatch(value):
+                details["error_code"] = value
+                break
+    elif isinstance(payload, list):
+        details["body_format"] = "json_array"
+    else:
+        details["body_format"] = "json_scalar"
+    return details
 
 
 class DiagnosticError(RuntimeError):
@@ -59,9 +102,12 @@ class MochaDiagnostic:
                 response.close()
                 return None
             if response.status_code >= 400:
-                status = response.status_code
+                details = safe_http_diagnostics(response)
                 response.close()
-                raise DiagnosticError(f"API endpoint {path} returned HTTP {status}")
+                raise DiagnosticError(
+                    f"API endpoint {path} returned HTTP {details['http_status']}; "
+                    f"safe_response_metadata={json.dumps(details, sort_keys=True)}"
+                )
 
             try:
                 payload = response.json()
