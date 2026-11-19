@@ -64,47 +64,65 @@ def _title_similarity(left: str, right: str) -> float:
     return len(left_tokens & right_tokens) / len(left_tokens | right_tokens)
 
 
+def _build_catalog_indexes(
+    catalogs: dict[tuple[str, str], list[tuple[str, dict[str, Any]]]],
+) -> dict[tuple[str, str], dict[str, Any]]:
+    indexes = {}
+    for key, entries in catalogs.items():
+        by_id: dict[str, list[tuple[str, dict[str, Any], str, str | None]]] = defaultdict(list)
+        by_title: dict[str, list[tuple[str, dict[str, Any], str, str | None]]] = defaultdict(list)
+        for url, meta in entries:
+            title = _clean_title(meta.get("name"))
+            region = _region(meta.get("region"))
+            row = (url, meta, title, region)
+            title_id = str(meta.get("title_id") or "").strip().upper()
+            if title_id:
+                by_id[title_id].append(row)
+            if title:
+                by_title[title].append(row)
+        indexes[key] = {"by_id": by_id, "by_title": by_title}
+    return indexes
+
+
 def _catalog_candidates(
     source: dict[str, Any],
-    entries: list[tuple[str, dict[str, Any]]],
-    *,
-    category: str,
+    indexes: dict[str, Any],
 ) -> list[tuple[str, dict[str, Any]]]:
-    title_id = source.get("title_id")
+    title_id = str(source.get("title_id") or "").strip().upper()
     title = _clean_title(source.get("title"))
-    region = source.get("region")
+    region = _region(source.get("region"))
 
     if title_id:
-        by_id = [
-            (url, meta) for url, meta in entries
-            if str(meta.get("title_id") or "").strip().upper() == title_id
-        ]
-        if not by_id:
+        by_id = list(indexes["by_id"].get(title_id, []))
+        if by_id:
+            if region:
+                regional = [row for row in by_id if row[3] == region]
+                if regional:
+                    by_id = regional
+            scored = sorted(
+                ((_title_similarity(title, row[2]), row) for row in by_id),
+                key=lambda pair: pair[0],
+                reverse=True,
+            )
+            best_score = scored[0][0]
+            if best_score >= 0.92:
+                tied = [row for score, row in scored if best_score - score < 0.08]
+                return [(row[0], row[1]) for row in tied]
+            plausible = [row for score, row in scored if score >= 0.60]
+            if plausible:
+                return [(row[0], row[1]) for row in plausible]
             return []
-        # A title ID identifies the base application, not an individual DLC.
-        # Require a sufficiently close package-name match for every category.
-        scored = [
-            (_title_similarity(title, _clean_title(meta.get("name"))), (url, meta))
-            for url, meta in by_id
-        ]
-        scored.sort(key=lambda pair: pair[0], reverse=True)
-        if not scored or scored[0][0] < 0.80:
-            return []
-        if len(scored) > 1 and scored[0][0] - scored[1][0] < 0.08:
-            return []
-        return [scored[0][1]]
 
     if not title:
         return []
-    matches = []
-    for url, meta in entries:
-        if _clean_title(meta.get("name")) != title:
-            continue
-        if region and _region(meta.get("region")) != region:
-            continue
-        matches.append((url, meta))
-    return matches
-
+    matches = indexes["by_title"].get(title, [])
+    if region:
+        regional = [row for row in matches if row[3] == region]
+        if regional:
+            matches = regional
+        else:
+            matches = [row for row in matches if row[3] is None]
+    return [(row[0], row[1]) for row in matches]
 
 def _catalog_filename_metadata(url: str) -> dict[str, Any] | None:
     filename = unquote(urlparse(url).path.rsplit("/", 1)[-1])
@@ -145,6 +163,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         raise ValueError("Unexpected scan report write state")
 
     catalogs = _load_catalogs(catalog_root)
+    catalog_indexes = _build_catalog_indexes(catalogs)
     counts = {"matched": 0, "metadata_difference": 0, "unverified": 0,
               "new": 0, "ambiguous": 0, "unclassified": 0, "possible_duplicate": 0}
     rows: list[dict[str, Any]] = []
@@ -170,7 +189,7 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
 
         parsed = parse_source_metadata(name)
         parsed["title"] = _clean_title(parsed.get("title"))
-        candidates = _catalog_candidates(parsed, catalogs[target], category=category)
+        candidates = _catalog_candidates(parsed, catalog_indexes[target])
         status = "new"
         reason = "No unique catalog identity match"
         catalog_url = None
@@ -207,21 +226,19 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             elif source_title_id or catalog_title_id:
                 unavailable.append("title_id")
 
-            source_region = parsed.get("region")
+            source_region = _region(parsed.get("region"))
             catalog_region = _region(catalog_metadata.get("region"))
-            if source_region and catalog_region:
-                if source_region != catalog_region:
-                    differences.append("region")
-            elif source_region and not catalog_region:
+            if source_region is None or catalog_region is None:
                 unavailable.append("region")
+            elif source_region != catalog_region:
+                differences.append("region")
 
             source_min_fw = parsed.get("min_fw")
             catalog_min_fw = catalog_metadata.get("min_fw")
-            if source_min_fw is not None:
-                if catalog_min_fw is None:
-                    unavailable.append("min_fw")
-                elif str(source_min_fw).strip() != str(catalog_min_fw).strip():
-                    differences.append("min_fw")
+            if source_min_fw is None or catalog_min_fw is None:
+                unavailable.append("min_fw")
+            elif str(source_min_fw).strip() != str(catalog_min_fw).strip():
+                differences.append("min_fw")
 
             source_languages = sorted(parsed.get("languages") or [])
             catalog_languages = []
@@ -229,11 +246,18 @@ def compare_scan(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
                 catalog_languages = sorted(catalog_filename.get("languages") or [])
             elif isinstance(catalog_metadata.get("languages"), list):
                 catalog_languages = sorted(str(x).upper() for x in catalog_metadata["languages"])
-            if source_languages:
-                if not catalog_languages:
-                    unavailable.append("languages")
-                elif source_languages != catalog_languages:
-                    differences.append("languages")
+            if not source_languages or not catalog_languages:
+                unavailable.append("languages")
+            elif source_languages != catalog_languages:
+                differences.append("languages")
+
+            if parsed.get("title_id"):
+                title_similarity = _title_similarity(
+                    _clean_title(parsed.get("title")),
+                    _clean_title(catalog_metadata.get("name")),
+                )
+                if title_similarity < 0.92:
+                    unavailable.append("package_title_identity")
 
             if differences:
                 status = "metadata_difference"
