@@ -327,6 +327,78 @@ def test_unbracketed_version_suffix_does_not_prevent_title_match(tmp_path):
     assert report["results"][0]["catalog_url"] == "https://archive.org/example.pkg"
 
 
+def test_title_match_falls_back_when_title_id_is_absent_from_catalog(tmp_path):
+    url = "https://archive.org/download/example/Example_Game_CUSA99999_v1.00_[US]_[EN]_[9.00].pkg"
+    write_catalog(tmp_path, "ps4/games.json", {
+        url: {"name": "Example Game", "title_id": "CUSA99999", "region": "USA",
+              "version": "1.00", "size": 1234, "min_fw": "9.00"},
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "fallback", "name": "Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    assert report["results"][0]["catalog_url"] == url
+    assert report["results"][0]["status"] == "metadata_difference"
+    assert "title_id" in report["results"][0]["metadata_differences"]
+
+
+def test_similar_package_title_is_not_reported_as_a_match(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/example.pkg": {
+            "name": "Example Game Deluxe", "title_id": "CUSA12345",
+            "region": "USA", "version": "1.00", "size": 1234, "min_fw": "9.00",
+        },
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "similar", "name": "Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    assert report["results"][0]["status"] == "unverified"
+
+
+def test_source_region_disambiguates_same_title_id_catalog_entries(tmp_path):
+    us_url = "https://archive.org/us/Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg"
+    eu_url = "https://archive.org/eu/Example_Game_CUSA12345_v1.00_[EU]_[EN]_[9.00].pkg"
+    write_catalog(tmp_path, "ps4/games.json", {
+        us_url: {"name": "Example Game", "title_id": "CUSA12345", "region": "USA",
+                 "version": "1.00", "size": 1234, "min_fw": "9.00"},
+        eu_url: {"name": "Example Game", "title_id": "CUSA12345", "region": "EUR",
+                 "version": "1.00", "size": 1234, "min_fw": "9.00"},
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "eu", "name": "Example_Game_CUSA12345_v1.00_[EU]_[EN]_[9.00].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    assert report["results"][0]["catalog_url"] == eu_url
+    assert report["results"][0]["status"] == "matched"
+
+
+def test_missing_source_region_is_reported_as_unverified(tmp_path):
+    url = "https://archive.org/example/Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg"
+    write_catalog(tmp_path, "ps4/games.json", {
+        url: {"name": "Example Game", "title_id": "CUSA12345", "region": "USA",
+              "version": "1.00", "size": 1234, "min_fw": "9.00"},
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "no-region", "name": "Example_Game_CUSA12345_v1.00_[EN]_[9.00].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    assert report["results"][0]["status"] == "unverified"
+    assert "region" in report["results"][0]["unavailable_metadata"]
+
+
 def test_possible_duplicate_is_not_verified_or_cleaned_and_catalogs_unchanged(tmp_path):
     write_empty_catalogs(tmp_path)
     before = {p: p.read_bytes() for p in tmp_path.rglob("*.json")}
