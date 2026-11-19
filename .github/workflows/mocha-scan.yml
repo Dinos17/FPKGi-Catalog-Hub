@@ -41,11 +41,22 @@ jobs:
           MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
         run: python tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
 
+      - name: Refresh catalog snapshot from main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          path: catalog-snapshot
+          persist-credentials: false
+
+      - name: Record catalog snapshot commit
+        run: echo "CATALOG_COMMIT=$(git -C catalog-snapshot rev-parse HEAD)" >> "$GITHUB_ENV"
+
       - name: Compare Mocha metadata with current catalogs
         run: |
           python tools/mocha_catalog_compare.py \
             --scan-report "$RUNNER_TEMP/mocha-scan-report.json" \
-            --catalog-root . \
+            --catalog-root catalog-snapshot \
+            --catalog-commit "$CATALOG_COMMIT" \
             --output "$RUNNER_TEMP/mocha-comparison-report.json"
 
       # Detailed Mocha inventory is intentionally not uploaded: this is a public repository,
