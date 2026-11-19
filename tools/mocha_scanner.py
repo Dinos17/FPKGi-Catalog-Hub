@@ -303,8 +303,6 @@ class MochaScanner:
         while queue:
             if time.monotonic() >= deadline:
                 raise ScanBudgetReached("Global scan time budget reached")
-            if len(visited) >= self.max_folders:
-                raise ScanBudgetReached("Global folder safety limit reached")
             path = queue.popleft()
             if path in visited:
                 continue
