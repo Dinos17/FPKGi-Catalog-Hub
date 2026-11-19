@@ -179,7 +179,10 @@ class MochaDiagnostic:
         parent = parent.strip().strip("/")
         if not parent:
             return folder
-        if folder == parent or folder.startswith(parent + "/"):
+        # Folder names returned by the listing API are relative to the
+        # requested parent. Preserve an already-qualified descendant path,
+        # but do not treat a repeated relative name as the parent itself.
+        if folder.startswith(parent + "/"):
             return folder
         return parent + "/" + folder
 
