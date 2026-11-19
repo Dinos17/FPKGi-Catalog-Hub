@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import time
+from email.utils import parsedate_to_datetime
 from collections import deque
 from pathlib import Path
 from typing import Any
@@ -86,8 +87,13 @@ class MochaApiClient:
             if response.status_code == 429 and attempt < MAX_RETRIES:
                 retry_after = response.headers.get("Retry-After", "").strip()
                 try:
-                    delay = int(retry_after) if retry_after else 2 ** attempt
+                    delay = int(retry_after) if retry_after else None
                 except ValueError:
+                    try:
+                        delay = int(parsedate_to_datetime(retry_after).timestamp() - time.time())
+                    except (TypeError, ValueError, OverflowError):
+                        delay = None
+                if delay is None:
                     delay = 2 ** attempt
                 if delay < 0 or delay > 60 or time.monotonic() + max(delay, 1) >= deadline:
                     response.close()
