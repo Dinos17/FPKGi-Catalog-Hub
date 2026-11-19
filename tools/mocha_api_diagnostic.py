@@ -37,7 +37,7 @@ class MochaDiagnostic:
             "User-Agent": "FPKGi-Catalog-Hub-Mocha-Diagnostic/1.0",
         })
 
-    def get_json(self, path: str, params: dict[str, str] | None = None) -> dict[str, Any]:
+    def get_json(self, path: str, params: dict[str, str] | None = None, *, allow_not_found: bool = False) -> dict[str, Any] | None:
         url = API_BASE + path
         for attempt in range(MAX_RETRIES + 1):
             try:
@@ -55,6 +55,9 @@ class MochaDiagnostic:
                 time.sleep(delay)
                 continue
 
+            if response.status_code == 404 and allow_not_found:
+                response.close()
+                return None
             if response.status_code >= 400:
                 status = response.status_code
                 response.close()
@@ -135,14 +138,17 @@ class MochaDiagnostic:
         return parent + "/" + folder
 
     def run(self) -> dict[str, Any]:
-        me = self.get_json("/auth/me")
-        profile = self.get_json("/profile/summary")
+        # These account-summary routes are present in the desktop client, but
+        # may be unavailable on some API deployments. File listing is the
+        # capability that matters for this read-only scanner diagnostic.
+        me = self.get_json("/auth/me", allow_not_found=True)
+        profile = self.get_json("/profile/summary", allow_not_found=True)
 
         permissions = {
-            "can_use_api": me.get("canUseApi"),
-            "can_create_hotlinks": me.get("canCreateHotlinks"),
-            "profile_can_use_api": profile.get("canUseApi"),
-            "profile_can_create_hotlinks": profile.get("canCreateHotlinks"),
+            "can_use_api": me.get("canUseApi") if me else None,
+            "can_create_hotlinks": me.get("canCreateHotlinks") if me else None,
+            "profile_can_use_api": profile.get("canUseApi") if profile else None,
+            "profile_can_create_hotlinks": profile.get("canCreateHotlinks") if profile else None,
         }
 
         queue = deque([""])
@@ -171,9 +177,9 @@ class MochaDiagnostic:
         return {
             "diagnostic": "mocha_api",
             "read_only": True,
-            "authentication": "success",
+            "authentication": "verified_by_file_listing",
             "permissions": permissions,
-            "account_summary_available": True,
+            "account_summary_available": bool(me or profile),
             "folder_count": folder_count,
             "file_count": total_files,
             "listing_page_count": total_pages,
