@@ -21,11 +21,13 @@ class FakeSession:
         self.responses = responses
         self.headers = {}
         self.calls = []
+        self.urls = []
 
     def get(self, url, params=None, timeout=None):
         key = (url.rsplit("/", 1)[-1], (params or {}).get("path", ""),
                (params or {}).get("cursor", ""))
         self.calls.append(key)
+        self.urls.append(url)
         payload = self.responses[key]
         return FakeResponse(payload)
 
@@ -54,6 +56,7 @@ def test_diagnostic_walks_nested_folders_and_all_pages():
     session = FakeSession(responses)
     report = MochaDiagnostic("test-key", session=session).run()
 
+    assert all(url.startswith("https://api.mocha.my/api/") for url in session.urls)
     assert report["authentication"] == "verified_by_file_listing"
     assert report["folder_count"] == 3
     assert report["file_count"] == 1
