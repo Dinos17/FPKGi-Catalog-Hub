@@ -25,7 +25,9 @@ MAX_RETRIES = 3
 MAX_TOTAL_PAGES = 1000
 MAX_FOLDERS = 5000
 MAX_SCAN_SECONDS = 600
+MAX_RESPONSE_BYTES = 10 * 1024 * 1024
 OPTIONAL_ROUTE_STATUSES = {404, 405, 501}
+OPTIONAL_PROFILE_STATUSES = {403, 404, 405, 501}
 
 
 class ScanError(RuntimeError):
@@ -64,12 +66,15 @@ class MochaApiClient:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise ScanBudgetReached("Global scan time budget reached")
-            timeout = max(0.001, min(TIMEOUT_SECONDS, remaining))
+            connect_timeout = max(0.001, min(TIMEOUT_SECONDS, remaining))
+            # A short read timeout bounds slow-drip stalls; the deadline is also
+            # checked between streamed chunks below.
+            read_timeout = max(0.001, min(1.0, remaining))
             try:
                 response = self.session.get(
                     url,
                     params=params,
-                    timeout=(timeout, timeout),
+                    timeout=(connect_timeout, read_timeout),
                     allow_redirects=False,
                     stream=True,
                 )
@@ -109,7 +114,7 @@ class MochaApiClient:
                     time.sleep(delay)
                 continue
 
-            if 500 <= response.status_code < 600 and attempt < MAX_RETRIES:
+            if (response.status_code == 408 or 500 <= response.status_code < 600) and attempt < MAX_RETRIES:
                 response.close()
                 delay = min(2 ** attempt, 8)
                 if time.monotonic() + delay >= deadline:
@@ -117,7 +122,10 @@ class MochaApiClient:
                 time.sleep(delay)
                 continue
 
-            if optional and response.status_code in OPTIONAL_ROUTE_STATUSES:
+            if optional and (
+                response.status_code in OPTIONAL_ROUTE_STATUSES
+                or (route == "/profile/summary" and response.status_code in OPTIONAL_PROFILE_STATUSES)
+            ):
                 response.close()
                 return None
             if response.status_code >= 400:
@@ -127,10 +135,14 @@ class MochaApiClient:
 
             try:
                 chunks = []
-                for chunk in response.iter_content(chunk_size=1):
+                response_bytes = 0
+                for chunk in response.iter_content(chunk_size=64 * 1024):
                     if time.monotonic() >= deadline:
                         raise ScanBudgetReached("Global scan time budget reached while reading API response")
                     if chunk:
+                        response_bytes += len(chunk)
+                        if response_bytes > MAX_RESPONSE_BYTES:
+                            raise ScanError("Mocha API response exceeded the maximum allowed size")
                         chunks.append(chunk)
                 if time.monotonic() >= deadline:
                     raise ScanBudgetReached("Global scan time budget reached while reading API response")
