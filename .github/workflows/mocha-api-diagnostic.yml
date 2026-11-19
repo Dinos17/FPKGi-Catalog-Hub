@@ -1,0 +1,71 @@
+name: Mocha API Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mocha-api-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Install diagnostic dependency
+        run: python -m pip install --disable-pip-version-check "requests==2.32.5"
+
+      - name: Run read-only Mocha API diagnostic
+        env:
+          MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
+        run: |
+          set -euo pipefail
+          python tools/mocha_api_diagnostic.py | tee "$RUNNER_TEMP/mocha-diagnostic.json"
+
+      - name: Add safe summary
+        if: always()
+        env:
+          REPORT_PATH: ${{ runner.temp }}/mocha-diagnostic.json
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path(os.environ["REPORT_PATH"])
+          if not path.is_file():
+              print("Mocha diagnostic did not produce a report.")
+              raise SystemExit(0)
+          try:
+              report = json.loads(path.read_text(encoding="utf-8"))
+          except (OSError, json.JSONDecodeError):
+              print("Mocha diagnostic report could not be parsed.")
+              raise SystemExit(0)
+
+          fields = (
+              "authentication", "folder_count", "file_count",
+              "listing_page_count", "scan_complete"
+          )
+          print("### Mocha API diagnostic")
+          for field in fields:
+              if field in report:
+                  print(f"- **{field.replace('_', ' ').title()}:** {report[field]}")
+          permissions = report.get("permissions")
+          if isinstance(permissions, dict):
+              for key, value in permissions.items():
+                  print(f"- **{key.replace('_', ' ').title()}:** {value}")
+          if report.get("error"):
+              print(f"- **Error:** {report['error']}")
+          print("- File names, IDs, paths, URLs and credentials were suppressed.")
+          PY
