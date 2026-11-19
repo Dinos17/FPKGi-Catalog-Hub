@@ -53,7 +53,7 @@ def _clean_title(value: Any) -> str:
     """Remove a trailing unbracketed version token left in title-only filenames."""
     if not isinstance(value, str):
         return ""
-    cleaned = re.sub(r"[_\s-]+v?\d+(?:\.\d+)+$", "", value, flags=re.IGNORECASE)
+    cleaned = re.sub(r"[_\s-]+v?\d+(?:[._\s-]+\d+)+$", "", value, flags=re.IGNORECASE)
     return normalize_title(cleaned)
 
 
