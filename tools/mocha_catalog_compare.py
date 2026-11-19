@@ -8,7 +8,10 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-try:\n    from .akirabox_catalog_compare import normalize_title, parse_source_metadata\nexcept ImportError:  # Running as a script from the tools directory.\n    from akirabox_catalog_compare import normalize_title, parse_source_metadata
+try:
+    from .akirabox_catalog_compare import normalize_title, parse_source_metadata
+except ImportError:  # Running as a script from the tools directory.
+    from akirabox_catalog_compare import normalize_title, parse_source_metadata
 
 CATALOGS = {
     ("PS4", "games"): Path("ps4/games.json"),
