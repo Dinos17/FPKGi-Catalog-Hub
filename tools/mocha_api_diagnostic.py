@@ -8,6 +8,7 @@ from __future__ import annotations
 
 import json
 import os
+from email.utils import parsedate_to_datetime
 import re
 import sys
 import time
@@ -97,20 +98,37 @@ class MochaDiagnostic:
         for attempt in range(MAX_RETRIES + 1):
             try:
                 response = self.session.get(url, params=params, timeout=TIMEOUT)
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                if attempt < MAX_RETRIES:
+                    time.sleep(min(2 ** attempt, 8))
+                    continue
+                raise DiagnosticError(
+                    f"Network request failed after retries ({type(exc).__name__})"
+                ) from exc
             except requests.RequestException as exc:
                 raise DiagnosticError(f"Network request failed ({type(exc).__name__})") from exc
 
             if response.status_code == 429 and attempt < MAX_RETRIES:
-                retry_after = response.headers.get("Retry-After", "")
-                try:
-                    delay = min(max(int(retry_after), 1), 30)
-                except ValueError:
+                retry_after = response.headers.get("Retry-After", "").strip()
+                delay = None
+                if retry_after:
+                    try:
+                        delay = int(retry_after)
+                    except ValueError:
+                        try:
+                            delay = int(parsedate_to_datetime(retry_after).timestamp() - time.time())
+                        except (TypeError, ValueError, OverflowError):
+                            delay = None
+                if delay is None:
                     delay = 2 ** attempt
+                if delay > 60:
+                    response.close()
+                    raise DiagnosticError("API rate limit requested a retry delay beyond the safety limit")
                 response.close()
-                time.sleep(delay)
+                time.sleep(max(delay, 1))
                 continue
 
-            if response.status_code == 404 and allow_not_found:
+            if response.status_code in (404, 405, 501) and allow_not_found:
                 response.close()
                 return None
             if response.status_code >= 400:
@@ -170,9 +188,10 @@ class MochaDiagnostic:
                     raise DiagnosticError("File metadata is missing required fields")
 
             for folder in child_folders:
-                if not isinstance(folder, str) or not folder.strip():
+                if not isinstance(folder, str) or not folder.strip("/"):
                     raise DiagnosticError("Folder listing contains an invalid folder name")
-                folders.append(folder.strip())
+                # Preserve whitespace: it may be part of the actual folder name.
+                folders.append(folder)
 
             file_count += len(files)
             has_more = payload.get("hasMore")
@@ -193,8 +212,8 @@ class MochaDiagnostic:
 
     @staticmethod
     def child_path(parent: str, folder: str) -> str:
-        folder = folder.strip().strip("/")
-        parent = parent.strip().strip("/")
+        folder = folder.strip("/")
+        parent = parent.strip("/")
         if not parent:
             return folder
         # Folder names returned by the listing API are relative to the
@@ -265,7 +284,10 @@ class MochaDiagnostic:
             "folder_count": folder_count,
             "file_count": total_files,
             "listing_page_count": total_pages,
+            # The API does not expose a snapshot token; counts can change while
+            # the traversal is running even when every page was visited.
             "scan_complete": complete,
+            "snapshot_consistency": "not_guaranteed_by_api",
             "details_suppressed": True,
         }
         if scan_error:
