@@ -1,25 +1,29 @@
 name: Mocha API Diagnostic
 
 on:
+  # Manual runs are restricted to the trusted default branch. Pull requests
+  # are covered by the repository's ordinary test and validation workflows.
   workflow_dispatch:
-  pull_request:
-    branches: [main]
 
 permissions:
   contents: read
 
+# Unique groups prevent GitHub from replacing another queued diagnostic run.
 concurrency:
-  group: mocha-api-diagnostic
+  group: mocha-api-diagnostic-${{ github.run_id }}
   cancel-in-progress: false
 
 jobs:
   diagnostic:
-    if: github.event_name == 'workflow_dispatch' || github.event.pull_request.head.repo.full_name == github.repository
+    if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - name: Check out repository
+      - name: Check out trusted default-branch code
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -47,28 +51,30 @@ jobs:
           from pathlib import Path
 
           path = Path(os.environ["REPORT_PATH"])
+          summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
           if not path.is_file():
-              print("Mocha diagnostic did not produce a report.")
+              summary.write_text("### Mocha API diagnostic\\n\\nDiagnostic did not produce a report.\\n", encoding="utf-8")
               raise SystemExit(0)
           try:
               report = json.loads(path.read_text(encoding="utf-8"))
           except (OSError, json.JSONDecodeError):
-              print("Mocha diagnostic report could not be parsed.")
+              summary.write_text("### Mocha API diagnostic\\n\\nDiagnostic report could not be parsed.\\n", encoding="utf-8")
               raise SystemExit(0)
 
+          lines = ["### Mocha API diagnostic", ""]
           fields = (
               "authentication", "folder_count", "file_count",
               "listing_page_count", "scan_complete"
           )
-          print("### Mocha API diagnostic")
           for field in fields:
               if field in report:
-                  print(f"- **{field.replace('_', ' ').title()}:** {report[field]}")
+                  lines.append(f"- **{field.replace('_', ' ').title()}:** {report[field]}")
           permissions = report.get("permissions")
           if isinstance(permissions, dict):
               for key, value in permissions.items():
-                  print(f"- **{key.replace('_', ' ').title()}:** {value}")
+                  lines.append(f"- **{key.replace('_', ' ').title()}:** {value}")
           if report.get("error"):
-              print(f"- **Error:** {report['error']}")
-          print("- File names, IDs, paths, URLs and credentials were suppressed.")
+              lines.append(f"- **Error:** {report['error']}")
+          lines.extend(["", "- File names, IDs, paths, URLs and credentials were suppressed."])
+          summary.write_text("\\n".join(lines) + "\\n", encoding="utf-8")
           PY
