@@ -207,7 +207,7 @@ def compare_scan(
             catalog_filename = _catalog_filename_metadata(catalog_url)
 
             source_version = _normalized_version(parsed.get("version"))
-            catalog_version = _normalized_version(catalog_metadata.get("version"))
+            catalog_version = _normalized_version(catalog_metadata.get("version")) or _normalized_version((catalog_filename or {}).get("version"))
             if source_version is None or catalog_version is None:
                 unavailable.append("version")
             elif source_version != catalog_version:
@@ -229,14 +229,14 @@ def compare_scan(
                 unavailable.append("title_id")
 
             source_region = _region(parsed.get("region"))
-            catalog_region = _region(catalog_metadata.get("region"))
+            catalog_region = _region(catalog_metadata.get("region")) or _region((catalog_filename or {}).get("region"))
             if source_region is None or catalog_region is None:
                 unavailable.append("region")
             elif source_region != catalog_region:
                 differences.append("region")
 
             source_min_fw = parsed.get("min_fw")
-            catalog_min_fw = catalog_metadata.get("min_fw")
+            catalog_min_fw = catalog_metadata.get("min_fw") or (catalog_filename or {}).get("min_fw")
             if source_min_fw is None or catalog_min_fw is None:
                 unavailable.append("min_fw")
             elif str(source_min_fw).strip() != str(catalog_min_fw).strip():
