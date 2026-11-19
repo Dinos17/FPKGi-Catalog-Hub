@@ -66,7 +66,7 @@ jobs:
 
       - name: Compare Mocha metadata with current catalogs
         run: |
-          python tools/mocha_catalog_compare.py \
+          "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_catalog_compare.py \
             --scan-report "$RUNNER_TEMP/mocha-scan-report.json" \
             --catalog-root catalog-snapshot \
             --catalog-commit "$CATALOG_COMMIT" \
