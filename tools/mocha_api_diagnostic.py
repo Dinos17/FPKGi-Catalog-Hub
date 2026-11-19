@@ -58,7 +58,7 @@ class MochaDiagnostic:
             if response.status_code >= 400:
                 status = response.status_code
                 response.close()
-                raise DiagnosticError(f"API returned HTTP {status}")
+                raise DiagnosticError(f"API endpoint {path} returned HTTP {status}")
 
             try:
                 payload = response.json()
