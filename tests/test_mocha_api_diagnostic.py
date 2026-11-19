@@ -1,3 +1,5 @@
+import time
+
 import pytest
 
 from tools.mocha_api_diagnostic import DiagnosticError, MochaDiagnostic, safe_http_diagnostics
@@ -100,7 +102,7 @@ def test_diagnostic_rejects_repeated_pagination_cursor():
     diagnostic = MochaDiagnostic("test-key", session=FakeSession(responses))
 
     with pytest.raises(DiagnosticError, match="cursor repeated"):
-        diagnostic.list_folder("")
+        diagnostic.list_folder("", remaining_pages=100, deadline=time.monotonic() + 10)
 
 
 def test_diagnostic_rejects_missing_next_cursor():
@@ -116,31 +118,77 @@ def test_diagnostic_rejects_missing_next_cursor():
 
 
 
-def test_http_error_diagnostics_expose_only_allowlisted_metadata():
-    class ErrorResponse:
+def test_get_json_http_error_exposes_only_validated_metadata():
+    class ErrorResponse(FakeResponse):
+        def __init__(self):
+            super().__init__({
+                "code": "private-token-123",
+                "message": "private filename.pkg and /private/account/path",
+                "token": "do-not-print-this",
+            }, status_code=403)
+            self.headers = {
+                "Content-Type": "application/json; charset=utf-8",
+                "Server": "edge-gateway",
+                "X-Request-Id": "private-request-token",
+            }
+
+    class ErrorSession:
+        def __init__(self):
+            self.headers = {}
+
+        def get(self, url, params=None, timeout=None):
+            return ErrorResponse()
+
+    diagnostic = MochaDiagnostic("test-key", session=ErrorSession())
+    with pytest.raises(DiagnosticError) as caught:
+        diagnostic.get_json("/files")
+
+    rendered = str(caught.value)
+    assert "HTTP 403" in rendered
+    assert '"http_status": 403' in rendered
+    assert '"request_id": null' in rendered
+    assert '"error_code": null' in rendered
+    assert "private-token-123" not in rendered
+    assert "private-request-token" not in rendered
+    assert "private filename.pkg" not in rendered
+    assert "/private/account/path" not in rendered
+    assert "do-not-print-this" not in rendered
+
+
+def test_safe_http_diagnostics_accepts_only_known_safe_metadata():
+    class SafeResponse:
         status_code = 404
         headers = {
             "Content-Type": "application/json; charset=utf-8",
             "Server": "edge-gateway",
-            "X-Request-Id": "req-123",
+            "X-Request-Id": "123e4567-e89b-12d3-a456-426614174000",
         }
 
         def json(self):
-            return {
-                "code": "ROUTE_NOT_FOUND",
-                "message": "private filename.pkg and /private/account/path",
-                "token": "do-not-print-this",
-            }
+            return {"code": "ROUTE_NOT_FOUND", "message": "not exposed"}
 
-    report = safe_http_diagnostics(ErrorResponse())
-    rendered = str(report)
-
+    report = safe_http_diagnostics(SafeResponse())
     assert report["http_status"] == 404
     assert report["content_type"] == "application/json"
     assert report["server"] == "edge-gateway"
-    assert report["request_id"] == "req-123"
+    assert report["request_id"] == "123e4567-e89b-12d3-a456-426614174000"
     assert report["body_format"] == "json_object"
     assert report["error_code"] == "ROUTE_NOT_FOUND"
-    assert "private filename.pkg" not in rendered
-    assert "/private/account/path" not in rendered
-    assert "do-not-print-this" not in rendered
+
+
+def test_global_page_budget_returns_partial_report(monkeypatch):
+    import tools.mocha_api_diagnostic as diagnostic_module
+
+    monkeypatch.setattr(diagnostic_module, "MAX_TOTAL_PAGES", 1)
+    responses = {
+        ("me", "", ""): {"canUseApi": True},
+        ("summary", "", ""): {"canUseApi": True},
+        ("files", "", ""): {
+            "files": [], "folders": [], "hasMore": True, "nextCursor": "next"
+        },
+    }
+    report = MochaDiagnostic("test-key", session=FakeSession(responses)).run()
+
+    assert report["scan_complete"] is False
+    assert report["listing_page_count"] == 1
+    assert report["error"] == "Global page budget reached"
