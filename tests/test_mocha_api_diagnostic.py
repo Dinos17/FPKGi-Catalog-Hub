@@ -66,6 +66,28 @@ def test_diagnostic_walks_nested_folders_and_all_pages():
     assert "private-id" not in str(report)
 
 
+def test_diagnostic_traverses_repeated_relative_folder_name():
+    responses = {
+        ("me", "", ""): {"canUseApi": True, "canCreateHotlinks": False},
+        ("summary", "", ""): {"canUseApi": True, "canCreateHotlinks": False},
+        ("files", "", ""): {
+            "files": [], "folders": ["PS4"], "hasMore": False, "nextCursor": None
+        },
+        ("files", "PS4", ""): {
+            "files": [], "folders": ["PS4"], "hasMore": False, "nextCursor": None
+        },
+        ("files", "PS4/PS4", ""): {
+            "files": [], "folders": [], "hasMore": False, "nextCursor": None
+        },
+    }
+    session = FakeSession(responses)
+    report = MochaDiagnostic("test-key", session=session).run()
+
+    assert ("files", "PS4/PS4", "") in session.calls
+    assert report["folder_count"] == 3
+    assert report["scan_complete"] is True
+
+
 def test_diagnostic_rejects_repeated_pagination_cursor():
     responses = {
         ("files", "", ""): {
