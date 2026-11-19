@@ -53,18 +53,18 @@ jobs:
           path = Path(os.environ["REPORT_PATH"])
           summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
           if not path.is_file():
-              summary.write_text("### Mocha API diagnostic\\n\\nDiagnostic did not produce a report.\\n", encoding="utf-8")
+              summary.write_text("### Mocha API diagnostic\n\nDiagnostic did not produce a report.\n", encoding="utf-8")
               raise SystemExit(0)
           try:
               report = json.loads(path.read_text(encoding="utf-8"))
           except (OSError, json.JSONDecodeError):
-              summary.write_text("### Mocha API diagnostic\\n\\nDiagnostic report could not be parsed.\\n", encoding="utf-8")
+              summary.write_text("### Mocha API diagnostic\n\nDiagnostic report could not be parsed.\n", encoding="utf-8")
               raise SystemExit(0)
 
           lines = ["### Mocha API diagnostic", ""]
           fields = (
               "authentication", "folder_count", "file_count",
-              "listing_page_count", "scan_complete"
+              "listing_page_count", "scan_complete", "snapshot_consistency"
           )
           for field in fields:
               if field in report:
@@ -76,5 +76,5 @@ jobs:
           if report.get("error"):
               lines.append(f"- **Error:** {report['error']}")
           lines.extend(["", "- File names, IDs, paths, URLs and credentials were suppressed."])
-          summary.write_text("\\n".join(lines) + "\\n", encoding="utf-8")
+          summary.write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
