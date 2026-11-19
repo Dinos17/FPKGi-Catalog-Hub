@@ -48,6 +48,15 @@ jobs:
             --catalog-root . \
             --output "$RUNNER_TEMP/mocha-comparison-report.json"
 
+      - name: Upload detailed comparison report
+        if: always() && hashFiles('${{ runner.temp }}/mocha-comparison-report.json') != ''
+        uses: actions/upload-artifact@65c4c4a1ddee5b72f698fdd19549f0f0fb45cf08
+        with:
+          name: mocha-catalog-review-${{ github.run_id }}
+          path: ${{ runner.temp }}/mocha-comparison-report.json
+          if-no-files-found: warn
+          retention-days: 7
+
       - name: Publish aggregate scan summary
         if: always()
         env:
