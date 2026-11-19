@@ -137,6 +137,18 @@ class MochaApiClient:
                 payload = json.loads(b"".join(chunks))
             except ScanBudgetReached:
                 raise
+            except (requests.Timeout, requests.ConnectionError) as exc:
+                response.close()
+                if attempt >= MAX_RETRIES:
+                    raise ScanError(f"Mocha response read failed after retries ({type(exc).__name__})") from exc
+                delay = min(2 ** attempt, 8)
+                if time.monotonic() + delay >= deadline:
+                    raise ScanBudgetReached("Global scan time budget reached") from exc
+                time.sleep(delay)
+                continue
+            except requests.RequestException as exc:
+                response.close()
+                raise ScanError(f"Mocha response read failed ({type(exc).__name__})") from exc
             except ValueError as exc:
                 raise ScanError(f"Mocha API route {route} returned invalid JSON") from exc
             finally:
