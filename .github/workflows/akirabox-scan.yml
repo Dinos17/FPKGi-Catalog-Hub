@@ -5,7 +5,6 @@ on:
   schedule:
     - cron: '0 */6 * * *'
 
-# Keep each scan independent; do not replace an already queued run.
 concurrency:
   group: mocha-catalog-scan-${{ github.run_id }}
   cancel-in-progress: false
@@ -14,15 +13,17 @@ permissions:
   contents: read
 
 jobs:
-  scan:
+  tests:
     if: github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     timeout-minutes: 15
+    permissions:
+      contents: read
     steps:
-      - name: Check out trusted main branch
+      - name: Check out the exact workflow commit
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: main
+          ref: ${{ github.sha }}
           persist-credentials: false
 
       - name: Set up Python
@@ -30,15 +31,32 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Create isolated test environment
-        run: python -m venv "$RUNNER_TEMP/test-venv"
-
-      - name: Install test dependencies (no Mocha secret in this environment)
-        run: |
-          "$RUNNER_TEMP/test-venv/bin/python" -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
+      - name: Install test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
 
       - name: Run repository tests
-        run: "$RUNNER_TEMP/test-venv/bin/python" -m pytest -q
+        run: python -m pytest -q
+
+  scan:
+    if: github.ref == 'refs/heads/main'
+    needs: tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+    outputs:
+      summary_json: ${{ steps.export.outputs.summary_json }}
+    steps:
+      - name: Check out the exact workflow and catalog commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
 
       - name: Create isolated Mocha runtime
         run: python -m venv "$RUNNER_TEMP/mocha-venv"
@@ -54,89 +72,138 @@ jobs:
           MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
         run: "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
 
-      - name: Refresh catalog snapshot from main
-        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          ref: main
-          path: catalog-snapshot
-          persist-credentials: false
-
-      - name: Record catalog snapshot commit
-        run: echo "CATALOG_COMMIT=$(git -C catalog-snapshot rev-parse HEAD)" >> "$GITHUB_ENV"
-
-      - name: Compare Mocha metadata with current catalogs
+      - name: Compare against catalogs from the same commit
         run: |
           "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_catalog_compare.py \
             --scan-report "$RUNNER_TEMP/mocha-scan-report.json" \
-            --catalog-root catalog-snapshot \
-            --catalog-commit "$CATALOG_COMMIT" \
+            --catalog-root . \
+            --catalog-commit "$GITHUB_SHA" \
             --output "$RUNNER_TEMP/mocha-comparison-report.json"
 
-      # Detailed Mocha inventory is intentionally not uploaded: this is a public repository,
-      # and GitHub Actions artifacts are visible to repository readers. Only sanitized counts
-      # are published in the step summary below.
-
-      - name: Publish aggregate scan summary
+      - name: Create sanitized dashboard summary
+        id: export
         if: always()
         env:
           SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
           COMPARISON_REPORT: ${{ runner.temp }}/mocha-comparison-report.json
+          CATALOG_COMMIT: ${{ github.sha }}
         run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          def read_json(name):
+              path = Path(os.environ[name])
+              try:
+                  value = json.loads(path.read_text(encoding="utf-8"))
+              except (OSError, json.JSONDecodeError):
+                  return {}
+              return value if isinstance(value, dict) else {}
+
+          scan = read_json("SCAN_REPORT")
+          comparison = read_json("COMPARISON_REPORT")
+          counts_in = comparison.get("counts")
+          counts = {}
+          if isinstance(counts_in, dict):
+              for key in ("matched", "metadata_difference", "unverified", "new",
+                          "ambiguous", "unclassified", "possible_duplicate"):
+                  value = counts_in.get(key)
+                  counts[key] = value if type(value) is int and value >= 0 else None
+
+          permissions_in = scan.get("permissions")
+          permissions = {}
+          if isinstance(permissions_in, dict):
+              for key in ("can_use_api", "can_create_hotlinks",
+                          "profile_can_use_api", "profile_can_create_hotlinks"):
+                  value = permissions_in.get(key)
+                  permissions[key] = value if type(value) is bool else None
+
+          summary = {
+              "schema_version": 1,
+              "scanner": "mocha",
+              "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+              "catalog_commit": os.environ["CATALOG_COMMIT"],
+              "scan_complete": scan.get("scan_complete") is True,
+              "authentication": "verified_by_file_listing" if scan.get("authentication") == "verified_by_file_listing" else "not_verified",
+              "folder_count": scan.get("folder_count") if type(scan.get("folder_count")) is int and scan["folder_count"] >= 0 else None,
+              "file_count": scan.get("file_count") if type(scan.get("file_count")) is int and scan["file_count"] >= 0 else None,
+              "listing_page_count": scan.get("listing_page_count") if type(scan.get("listing_page_count")) is int and scan["listing_page_count"] >= 0 else None,
+              "snapshot_consistency": "not_guaranteed_by_api",
+              "permissions": permissions,
+              "comparison_available": bool(comparison.get("comparison") == "mocha_catalog" and isinstance(counts_in, dict)),
+              "counts": counts,
+              "possible_duplicate_groups": (
+                  len(comparison.get("possible_duplicates", []))
+                  if isinstance(comparison.get("possible_duplicates"), list) else None
+              ),
+              "automatic_cleanup": False,
+              "details_published": False,
+          }
+
+          compact = json.dumps(summary, separators=(",", ":"), ensure_ascii=True)
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write("summary_json=" + compact + "\n")
+
+          lines = [
+              "### Mocha scan and catalog comparison",
+              "",
+              f"- **Scan complete:** {summary['scan_complete']}",
+              f"- **Folders:** {summary['folder_count']}",
+              f"- **Files:** {summary['file_count']}",
+              f"- **Listing pages:** {summary['listing_page_count']}",
+              f"- **Catalog commit:** {summary['catalog_commit']}",
+              f"- **Possible duplicate groups:** {summary['possible_duplicate_groups']}",
+              "- **Automatic cleanup:** disabled",
+              "- **Detailed inventory publication:** disabled; only aggregate counts are published",
+          ]
+          for key, value in permissions.items():
+              lines.append(f"- **{key.replace('_', ' ').title()}:** {value}")
+          Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
+          PY
+
+  publish-dashboard-summary:
+    if: needs.scan.result == 'success' && github.ref == 'refs/heads/main'
+    needs: scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Check out the dashboard reports branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: akirabox-reports
+          path: reports-branch
+          fetch-depth: 0
+
+      - name: Publish only the sanitized Mocha summary
+        working-directory: reports-branch
+        env:
+          SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
+        run: |
+          set -euo pipefail
           python - <<'PY'
           import json
           import os
           from pathlib import Path
 
-          summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
-          lines = ["### Mocha scan and catalog comparison", ""]
-
-          scan_path = Path(os.environ["SCAN_REPORT"])
-          if scan_path.is_file():
-              try:
-                  scan = json.loads(scan_path.read_text(encoding="utf-8"))
-              except (OSError, json.JSONDecodeError):
-                  scan = {}
-              lines.extend([
-                  f"- **Authentication:** {scan.get('authentication', 'not verified')}",
-                  f"- **Folders:** {scan.get('folder_count', 'not available')}",
-                  f"- **Files:** {scan.get('file_count', 'not available')}",
-                  f"- **Listing pages:** {scan.get('listing_page_count', 'not available')}",
-                  f"- **Scan complete:** {scan.get('scan_complete', False)}",
-                  f"- **Snapshot consistency:** {scan.get('snapshot_consistency', 'unknown')}",
-              ])
-              permissions = scan.get("permissions") or {}
-              if isinstance(permissions, dict):
-                  lines.append(f"- **API access:** {permissions.get('can_use_api', 'unknown')}")
-                  lines.append(f"- **Hotlink creation:** {permissions.get('can_create_hotlinks', 'unknown')}")
-              if scan.get("error"):
-                  lines.append(f"- **Scan error:** {scan['error']}")
-          else:
-              lines.append("- **Scan report:** not produced")
-
-          comparison_path = Path(os.environ["COMPARISON_REPORT"])
-          if comparison_path.is_file():
-              try:
-                  comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
-              except (OSError, json.JSONDecodeError):
-                  comparison = {}
-              counts = comparison.get("counts")
-              if isinstance(counts, dict):
-                  lines.extend(["", "**Catalog comparison**"])
-                  for key, value in counts.items():
-                      lines.append(f"- {key.replace('_', ' ').title()}: {value}")
-                  lines.append(
-                      f"- Possible duplicate groups: {len(comparison.get('possible_duplicates', []))}"
-                  )
-                  lines.append("- Automatic cleanup: disabled; Mocha SHA-256 is unavailable")
-              else:
-                  lines.extend(["", "- **Catalog comparison:** unavailable"])
-          else:
-              lines.extend(["", "- **Catalog comparison:** not run"])
-
-          lines.extend([
-              "",
-              "File names, file IDs, folder paths, API responses, and credentials are not included in this summary.",
-              "No Mocha files or catalog entries are modified by this workflow.",
-          ])
-          summary.write_text("\n".join(lines) + "\n", encoding="utf-8")
+          summary = json.loads(os.environ["SUMMARY_JSON"])
+          if summary.get("schema_version") != 1 or summary.get("scanner") != "mocha":
+              raise SystemExit("Refusing to publish an invalid Mocha summary.")
+          if summary.get("details_published") is not False or summary.get("automatic_cleanup") is not False:
+              raise SystemExit("Refusing to publish a summary with unsafe flags.")
+          target = Path("reports/mocha-scan-summary.json")
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
           PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add reports/mocha-scan-summary.json
+          if git diff --cached --quiet; then
+            echo "Mocha dashboard summary is already current."
+          else
+            git commit -m "Publish sanitized Mocha scan summary"
+            git push origin HEAD:akirabox-reports
+          fi
