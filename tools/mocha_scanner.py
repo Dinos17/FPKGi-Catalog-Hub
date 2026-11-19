@@ -64,7 +64,7 @@ class MochaApiClient:
             remaining = deadline - time.monotonic()
             if remaining <= 0:
                 raise ScanBudgetReached("Global scan time budget reached")
-            timeout = max(1, min(TIMEOUT_SECONDS, remaining))
+            timeout = max(0.001, min(TIMEOUT_SECONDS, remaining))
             try:
                 response = self.session.get(
                     url,
