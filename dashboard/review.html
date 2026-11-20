@@ -35,6 +35,14 @@ let rejections=[],rejectionStatus="loading",catalogUrls=null,catalogStatus="load
 const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const pretty=value=>String(value).replace(/_/g," ").replace(/\b\w/g,char=>char.toUpperCase());
 const isRecord=value=>value!==null&&typeof value==="object"&&!Array.isArray(value);
+function safeLink(value){
+ const text=String(value??"");
+ try{
+  const url=new URL(text);
+  if(url.protocol==="https:")return '<a href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">'+esc(text)+'</a>';
+ }catch{}
+ return esc(text);
+}
 function numeric(value){return Number.isSafeInteger(value)&&value>=0?value:"Not available";}
 async function loadMochaSummary(){
  const root=$("mochaOverview");
@@ -86,7 +94,7 @@ function renderRejected(){
   if(catalogStatus!=="available")safety='<div class="reason"><strong>CATALOG CHECK UNAVAILABLE — DO NOT DELETE.</strong> The live catalog could not be verified. Refresh and try again.</div>';
   else if(referenced)safety='<div class="reason"><strong>CATALOG CONFLICT — DO NOT DELETE.</strong> The current catalog still references this exact AkiraBox URL. Update the catalog through the normal reviewed catalog process before deleting this upload.</div>';
   else safety='<div class="reason"><strong>Not currently referenced by the live catalog.</strong> You can open AkiraBox, locate this upload and delete it manually if you still want it removed. No file is deleted automatically.</div>';
-  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed upload")+'</div><span class="pill">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>AkiraBox file ID</dt><dd>'+esc(item.file_id)+'</dd><dt>Upload link</dt><dd><a href="'+esc(item.share_url)+'" target="_blank" rel="noopener noreferrer">'+esc(item.share_url)+'</a></dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd><dt>GitHub record</dt><dd>'+(item.issue_url?'<a href="'+esc(item.issue_url)+'" target="_blank" rel="noopener noreferrer">Open issue</a>':"—")+'</dd></dl></div>'+safety+'</article>';
+  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed upload")+'</div><span class="pill">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>AkiraBox file ID</dt><dd>'+esc(item.file_id)+'</dd><dt>Upload link</dt><dd>'+safeLink(item.share_url)+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd><dt>GitHub record</dt><dd>'+(item.issue_url?''+safeLink(item.issue_url)+'':"—")+'</dd></dl></div>'+safety+'</article>';
  }).join("");
 }
 async function loadReports(){
