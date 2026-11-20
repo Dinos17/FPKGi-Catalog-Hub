@@ -6,10 +6,10 @@ on:
   push:
     branches: ["main"]
 
-  # Refresh the deployed dashboard after every completed AkiraBox scan,
-  # because the scan publishes its latest reports to the akirabox-reports branch.
+  # Refresh the deployed dashboard after every completed Mocha scan,
+  # because the scan publishes its sanitized summary to the akirabox-reports branch.
   workflow_run:
-    workflows: ["AkiraBox Scan and Automatic Duplicate Cleanup"]
+    workflows: ["Mocha Scan and Duplicate Review (Read-Only)"]
     types: [completed]
     branches: ["main"]
 
