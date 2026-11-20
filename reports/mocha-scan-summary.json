@@ -10,12 +10,12 @@
     "new": 1,
     "possible_duplicate": 0,
     "unclassified": 0,
-    "unverified": 25
+    "unverified": 26
   },
   "details_published": false,
-  "file_count": 28,
+  "file_count": 29,
   "folder_count": 4,
-  "generated_at": "2026-11-20T16:35:54Z",
+  "generated_at": "2026-11-20T23:44:48Z",
   "listing_page_count": 4,
   "permissions": {
     "can_create_hotlinks": false,
@@ -25,7 +25,7 @@
   },
   "possible_duplicate_groups": 0,
   "scan_complete": true,
-  "scan_observed_at": "2026-11-20T16:35:54.031553Z",
+  "scan_observed_at": "2026-11-20T23:44:48.627511Z",
   "scanner": "mocha",
   "schema_version": 1,
   "snapshot_consistency": "not_guaranteed_by_api"
