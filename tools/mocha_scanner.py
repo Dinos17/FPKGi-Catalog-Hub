@@ -344,7 +344,7 @@ class MochaScanner:
                 all_files.append(item)
 
         # Capture inventory observation time before any downstream catalog comparison.
-        scan_observed_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+        scan_observed_at = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
         complete = not queue
         return {
             "scanner": "mocha",
