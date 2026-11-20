@@ -70,7 +70,8 @@ jobs:
       - name: Scan Mocha folders and file metadata
         env:
           MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
-        run: "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
+        run: |
+          "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
 
       - name: Compare against catalogs from the same commit
         run: |
