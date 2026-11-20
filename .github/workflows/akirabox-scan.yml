@@ -194,7 +194,7 @@ jobs:
             git fetch origin akirabox-reports
             git reset --hard FETCH_HEAD
 
-            python - <<'PY'
+            if python - <<'PY'
             import json
             import os
             import re
@@ -289,10 +289,13 @@ jobs:
             target.parent.mkdir(parents=True, exist_ok=True)
             target.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\\n", encoding="utf-8")
             PY
-            validation_status=$?
-            if [ "$validation_status" -eq 10 ]; then
-              exit 0
-            elif [ "$validation_status" -ne 0 ]; then
+            then
+              :
+            else
+              validation_status=$?
+              if [ "$validation_status" -eq 10 ]; then
+                exit 0
+              fi
               exit "$validation_status"
             fi
 
