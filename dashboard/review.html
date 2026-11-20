@@ -44,6 +44,15 @@ function safeLink(value){
  return esc(text);
 }
 function numeric(value){return Number.isSafeInteger(value)&&value>=0?value:"Not available";}
+function akiraboxFileId(value){
+ try{
+  const parsed=new URL(value);
+  if(!["akirabox.to","akirabox.com"].includes(parsed.hostname.toLowerCase()))return null;
+  const parts=parsed.pathname.split("/").filter(Boolean).map(part=>decodeURIComponent(part));
+  if(parts.length!==2||parts[1]!=="file"||!parts[0]||parts[0].includes("/"))return null;
+  return parts[0];
+ }catch{return null;}
+}
 async function loadMochaSummary(){
  const root=$("mochaOverview");
  root.innerHTML='<div class="empty">Loading the latest sanitized Mocha summary…</div>';
@@ -78,7 +87,7 @@ async function fetchCatalogReferences(){
   if(!isRecord(data)||!isRecord(data.DATA))throw Error(path+" has an invalid catalog format.");
   Object.keys(data.DATA).forEach(url=>{
    urls.add(url);
-   try{const parsed=new URL(url),parts=parsed.pathname.split("/").filter(Boolean);if(["akirabox.to","akirabox.com"].includes(parsed.hostname.toLowerCase())&&parts.length===2&&parts[1]==="file")fileIds.add(parts[0]);}catch{}
+   const fileId=akiraboxFileId(url);if(fileId!==null)fileIds.add(fileId);
   });
  }));
  return {urls,fileIds};
