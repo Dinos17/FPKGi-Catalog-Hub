@@ -81,7 +81,7 @@ function renderRejected(){
  if(rejectionStatus!=="available"){root.innerHTML='<div class="notice">Rejection status is unavailable. Do not delete any AkiraBox files based on this page.</div>';return;}
  if(!rejections.length){root.innerHTML='<div class="empty">No rejected uploads are recorded.</div>';return;}
  root.innerHTML=rejections.slice().sort((a,b)=>String(b.rejected_at||"").localeCompare(String(a.rejected_at||""))).map(item=>{
-  const referenced=catalogUrls instanceof Object?(catalogUrls.urls.has(String(item.share_url))||catalogUrls.fileIds.has(String(item.file_id))):null;
+  const referenced=catalogUrls&&catalogUrls.urls instanceof Set&&catalogUrls.fileIds instanceof Set?(catalogUrls.urls.has(String(item.share_url))||catalogUrls.fileIds.has(String(item.file_id))):null;
   let safety;
   if(catalogStatus!=="available")safety='<div class="reason"><strong>CATALOG CHECK UNAVAILABLE — DO NOT DELETE.</strong> The live catalog could not be verified. Refresh and try again.</div>';
   else if(referenced)safety='<div class="reason"><strong>CATALOG CONFLICT — DO NOT DELETE.</strong> The current catalog still references this exact AkiraBox URL. Update the catalog through the normal reviewed catalog process before deleting this upload.</div>';
@@ -92,9 +92,8 @@ function renderRejected(){
 async function loadReports(){
  const button=$("refresh");button.disabled=true;
  $("sourceStatus").textContent="Loading Mocha summary, rejection records and live catalog references…";
- loadMochaSummary();
  rejectionStatus="loading";catalogStatus="loading";catalogUrls=null;renderRejected();
- const [rejectionResult,catalogResult]=await Promise.allSettled([fetchRejections(),fetchCatalogReferences()]);
+ const [mochaResult,rejectionResult,catalogResult]=await Promise.allSettled([loadMochaSummary(),fetchRejections(),fetchCatalogReferences()]);
  if(rejectionResult.status==="fulfilled"){rejections=rejectionResult.value;rejectionStatus="available";}else{rejections=[];rejectionStatus="unavailable";}
  if(catalogResult.status==="fulfilled"){catalogUrls=catalogResult.value;catalogStatus="available";}else{catalogUrls=null;catalogStatus="unavailable";}
  renderRejected();
