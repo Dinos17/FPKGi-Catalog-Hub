@@ -6,7 +6,7 @@ on:
     - cron: '0 */6 * * *'
 
 concurrency:
-  group: mocha-catalog-scan-${{ github.run_id }}
+  group: mocha-catalog-scan
   cancel-in-progress: false
 
 permissions:
@@ -73,7 +73,7 @@ jobs:
         run: |
           "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
 
-      - name: Upload private Mocha inventory artifact
+      - name: Upload Mocha inventory artifact (public repository)
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mocha-file-inventory
