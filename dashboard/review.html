@@ -45,13 +45,17 @@ function safeLink(value){
 }
 function numeric(value){return Number.isSafeInteger(value)&&value>=0?value:"Not available";}
 function akiraboxFileId(value){
- try{
-  const parsed=new URL(value);
-  if(!["akirabox.to","akirabox.com"].includes(parsed.hostname.toLowerCase()))return null;
-  const parts=parsed.pathname.split("/").filter(Boolean).map(part=>decodeURIComponent(part));
-  if(parts.length!==2||parts[1]!=="file"||!parts[0]||parts[0].includes("/"))return null;
-  return parts[0];
- }catch{return null;}
+ let parsed;
+ try{parsed=new URL(value);}catch{return null;}
+ if(!["akirabox.to","akirabox.com"].includes(parsed.hostname.toLowerCase()))return null;
+ const rawParts=parsed.pathname.split("/").filter(Boolean);
+ if(rawParts.length!==2)return null;
+ let parts;
+ try{parts=rawParts.map(part=>decodeURIComponent(part));}
+ catch{throw Error("An AkiraBox catalog URL has malformed path encoding; deletion conflicts cannot be verified.");}
+ if(parts[1]!=="file")return null;
+ if(!parts[0]||parts[0].includes("/"))throw Error("An AkiraBox catalog URL has an invalid encoded file ID; deletion conflicts cannot be verified.");
+ return parts[0];
 }
 async function loadMochaSummary(){
  const root=$("mochaOverview");
