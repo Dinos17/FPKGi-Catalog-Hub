@@ -11,6 +11,7 @@ import json
 import os
 import sys
 import time
+from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from collections import deque
 from pathlib import Path
@@ -342,9 +343,12 @@ class MochaScanner:
                 item["extension"] = Path(item["name"]).suffix.lower().lstrip(".") or None
                 all_files.append(item)
 
+        # Capture inventory observation time before any downstream catalog comparison.
+        scan_observed_at = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
         complete = not queue
         return {
             "scanner": "mocha",
+            "scan_observed_at": scan_observed_at,
             "read_only": True,
             "authentication": "verified_by_file_listing",
             "permissions": permissions,
