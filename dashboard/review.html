@@ -1,60 +1,77 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AkiraBox Review | FPKGi Catalog Hub</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FPKGi Catalog Review</title>
 <style>
 :root{color-scheme:dark;--bg:#0b0e13;--panel:#141a23;--panel2:#1b2430;--line:#2b3544;--text:#edf2f8;--muted:#98a6b8;--blue:#78b7ff;--green:#55d6a3;--red:#ff8585;--amber:#f4c66a}
-*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif}main{max-width:1500px;margin:auto;padding:32px 20px 70px}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:32px 20px 70px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:22px}h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.04em;margin:0}p,.muted{color:var(--muted);margin:6px 0}a{color:var(--blue)}
-.toolbar,.notice,.item{background:var(--panel);border:1px solid var(--line);border-radius:14px}.toolbar{padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-button,.upload{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover,.upload:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}
-input[type=file]{max-width:100%}.notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
+.toolbar,.notice,.item{background:var(--panel);border:1px solid var(--line);border-radius:14px}.toolbar{padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0}
+button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}
+.notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
 .stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
-.item{margin:8px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:9px 12px;border-bottom:1px solid var(--line);flex-wrap:wrap}
-.title{font-weight:700;font-size:1.08rem;overflow-wrap:anywhere}.sub{color:var(--muted);font-size:.88rem}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase}.pill.outdated{color:var(--amber)}.pill.new,.pill.matched{color:var(--green)}.pill.duplicate,.pill.unclassified,.pill.rejected{color:var(--red)}
-.columns{display:grid;grid-template-columns:1fr 1fr}.side{padding:11px 12px;min-width:0}.side+.side{border-left:1px solid var(--line);border-top:0}.side h3{font-size:.78rem;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 8px}
-dl{display:grid;grid-template-columns:minmax(88px,.36fr) 1fr;gap:5px 8px;margin:0;font-size:.86rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.diff{background:#342b18;color:#ffdb91;border:1px solid #65532e;border-radius:6px;padding:1px 5px}
-.reason{padding:9px 12px;color:var(--muted);border-top:1px solid var(--line);font-size:.86rem;line-height:1.45}.actions{display:flex;gap:8px;flex-wrap:wrap;padding:10px 15px;border-top:1px solid var(--line);align-items:center}.actions button{padding:7px 12px;font-size:.86rem}.approve.selected{border-color:var(--green);color:var(--green)}.reject.selected{border-color:var(--red);color:var(--red)}
-.empty{padding:45px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}#results{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;align-items:start}.item{margin:0;min-width:0}.hidden{display:none!important}
-@media(max-width:760px){#results{grid-template-columns:1fr}.columns{grid-template-columns:1fr}.side+.side{border-left:0;border-top:1px solid var(--line)}dl{grid-template-columns:115px 1fr}}
-</style></head>
+.item{margin:8px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}.title{font-weight:700;overflow-wrap:anywhere}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;color:var(--red)}
+.side{padding:12px 13px}dl{display:grid;grid-template-columns:minmax(110px,.36fr) 1fr;gap:5px 8px;margin:0;font-size:.9rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.reason{padding:10px 13px;color:var(--muted);border-top:1px solid var(--line);font-size:.88rem}
+.empty{padding:38px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}
+@media(max-width:650px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}
+</style>
+</head>
 <body><main>
-<header><div><h1>AkiraBox Review</h1><p>Inspect source uploads and matching catalog records side by side.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Safe replacements are processed automatically through a separate catalog-update PR. Reject and Keep Catalog open a prefilled GitHub issue. Only the repository owner can record it; wait for the workflow confirmation before treating it as saved. The dashboard checks the live catalog before telling you whether manual deletion is safe.</div>
-<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Connecting to the latest AkiraBox scan…</span><button id="refresh" type="button">Refresh reports</button><button id="export" disabled>Export decisions</button></section>
-<div id="summary" class="stats"></div><div id="warning"></div>
-<h2 class="section-title">Scanned uploads</h2><div id="results"><div class="empty">Waiting for the latest reports from GitHub Actions.</div></div>
-<h2 class="section-title">Rejected uploads — manual deletion required</h2><div id="rejected"><div class="empty">No rejected uploads are recorded.</div></div>
-<h2 class="section-title">Catalog entries not seen in AkiraBox</h2><div id="missing"><div class="empty">Missing-entry checks remain deferred until all four source categories are scanned.</div></div>
+<header><div><h1>FPKGi Catalog Review</h1><p>Sanitized Mocha scan overview and manually recorded AkiraBox rejections.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays aggregate counts only; filenames, file IDs, folder paths and detailed inventory are not published. Possible duplicates are review candidates, never automatic cleanup. AkiraBox rejection records remain separate and require manual deletion.</div>
+<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading reports…</span><button id="refresh" type="button">Refresh reports</button></section>
+<h2 class="section-title">Latest Mocha scan overview</h2>
+<div id="mochaOverview"><div class="empty">Loading the latest sanitized Mocha summary…</div></div>
+<h2 class="section-title">Rejected AkiraBox uploads — manual deletion required</h2>
+<div id="rejected"><div class="empty">Loading saved rejection records…</div></div>
+<div id="warning"></div>
 </main>
 <script>
-const $=id=>document.getElementById(id);let scan=null,comparison=null,decisions={},rejections=[],rejectionStatus="loading",catalogUrls=null,catalogStatus="loading";
+const $=id=>document.getElementById(id);
 const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/akirabox-reports/reports/";
-const esc=v=>String(v===null||v===undefined||v===""?"—":v).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const pretty=k=>String(k).replace(/_/g," ").replace(/\b\w/g,c=>c.toUpperCase());
-function linkOrText(v){const s=String(v??"");return /^https:\/\//i.test(s)?'<a href="'+esc(s)+'" target="_blank" rel="noopener noreferrer">'+esc(s)+'</a>':esc(s);}
-function fieldRows(obj,highlightKeys=[]){if(!obj||typeof obj!=="object")return '<dt>Record</dt><dd>Not available</dd>';return Object.entries(obj).filter(([,v])=>v!==undefined).map(([k,v])=>{const value=v===null?"—":Array.isArray(v)?v.join(", "):typeof v==="object"?JSON.stringify(v,null,2):String(v);const rendered=highlightKeys.includes(k)?'<span class="diff">'+esc(value)+'</span>':(String(k).toLowerCase().includes("url")&&typeof v==="string"?linkOrText(v):esc(value));return '<dt>'+esc(pretty(k))+'</dt><dd>'+rendered+'</dd>';}).join("")||'<dt>Metadata</dt><dd>No fields supplied</dd>';}
-const loadGeneration={scan:0,compare:0};
-function isRecord(value){return value!==null&&typeof value==="object"&&!Array.isArray(value);}
-function validateReport(data,kind){
- if(kind==="scan"){
-  if(!isRecord(data)||!Array.isArray(data.files)||!Array.isArray(data.folders))throw Error("Scan report is missing files[] or folders[].");
-  if(data.files.some(item=>!isRecord(item)||item.id===undefined||item.id===null||!(typeof item.id==="string"||typeof item.id==="number")))throw Error("Scan report contains a file without a valid ID.");
- }
- if(kind==="compare"){
-  if(!isRecord(data)||!Array.isArray(data.results)||!isRecord(data.counts))throw Error("Comparison report is missing results[] or counts.");
-  if(data.results.some(r=>!isRecord(r)||!(typeof r.file_id==="string"||typeof r.file_id==="number")||typeof r.status!=="string"||(r.metadata_differences!==undefined&&!Array.isArray(r.metadata_differences))||(r.source_metadata!==undefined&&r.source_metadata!==null&&!isRecord(r.source_metadata))||(r.catalog_metadata!==undefined&&r.catalog_metadata!==null&&!isRecord(r.catalog_metadata))||(r.proposed_replacement!==undefined&&r.proposed_replacement!==null&&!isRecord(r.proposed_replacement))))throw Error("Comparison report contains an invalid result record.");
-  if(data.results.some(r=>(r.metadata_differences??[]).some(d=>!isRecord(d)||typeof d.field!=="string")))throw Error("Comparison report contains invalid metadata differences.");
-  if(data.missing_catalog_entries!==undefined&&!Array.isArray(data.missing_catalog_entries))throw Error("Comparison missing_catalog_entries must be an array.");
-  if(Array.isArray(data.missing_catalog_entries)&&data.missing_catalog_entries.some(m=>!isRecord(m)))throw Error("Comparison report contains an invalid missing-catalog record.");
- }
- return data;
+let rejections=[],rejectionStatus="loading",catalogUrls=null,catalogStatus="loading";
+const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const pretty=value=>String(value).replace(/_/g," ").replace(/\b\w/g,char=>char.toUpperCase());
+const isRecord=value=>value!==null&&typeof value==="object"&&!Array.isArray(value);
+function safeLink(value){
+ const text=String(value??"");
+ try{
+  const url=new URL(text);
+  if(url.protocol==="https:")return '<a href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">'+esc(text)+'</a>';
+ }catch{}
+ return esc(text);
 }
-async function fetchReport(filename,kind){
- const response=await fetch(REPORT_BASE+filename+"?v="+Date.now(),{cache:"no-store"});
- if(!response.ok)throw Error(filename+" could not be loaded (HTTP "+response.status+").");
- return validateReport(await response.json(),kind);
+function numeric(value){return Number.isSafeInteger(value)&&value>=0?value:"Not available";}
+function akiraboxFileId(value){
+ let parsed;
+ try{parsed=new URL(value);}catch{return null;}
+ if(!["akirabox.to","akirabox.com"].includes(parsed.hostname.toLowerCase()))return null;
+ const rawParts=parsed.pathname.split("/").filter(Boolean);
+ if(rawParts.length!==2)return null;
+ let parts;
+ try{parts=rawParts.map(part=>decodeURIComponent(part));}
+ catch{throw Error("An AkiraBox catalog URL has malformed path encoding; deletion conflicts cannot be verified.");}
+ if(parts[1]!=="file")return null;
+ if(!parts[0]||parts[0].includes("/"))throw Error("An AkiraBox catalog URL has an invalid encoded file ID; deletion conflicts cannot be verified.");
+ return parts[0];
+}
+async function loadMochaSummary(){
+ const root=$("mochaOverview");
+ root.innerHTML='<div class="empty">Loading the latest sanitized Mocha summary…</div>';
+ try{
+  const response=await fetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now(),{cache:"no-store"});
+  if(!response.ok)throw Error("Mocha summary unavailable (HTTP "+response.status+").");
+  const data=await response.json();
+  if(!isRecord(data)||data.schema_version!==1||data.scanner!=="mocha"||typeof data.scan_complete!=="boolean"||!isRecord(data.counts)||!isRecord(data.permissions))throw Error("Mocha summary has an invalid format.");
+  const cards=[["Scan status",data.scan_complete?"Complete":"Incomplete"],["Folders",numeric(data.folder_count)],["Files",numeric(data.file_count)],["Listing pages",numeric(data.listing_page_count)],["Possible duplicate groups",numeric(data.possible_duplicate_groups)]];
+  const countLabels={matched:"Matched",metadata_difference:"Metadata differences",unverified:"Unverified",new:"New candidates",ambiguous:"Ambiguous",unclassified:"Unclassified",possible_duplicate:"Possible duplicate groups"};
+  const countRows=Object.entries(countLabels).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(numeric(data.counts[key]))+'</dd>').join("");
+  const permissionRows=["can_use_api","can_create_hotlinks","profile_can_use_api","profile_can_create_hotlinks"].map(key=>{const value=data.permissions[key];return '<dt>'+esc(pretty(key))+'</dt><dd>'+esc(typeof value==="boolean"?value:"Not reported")+'</dd>';}).join("");
+  const cardsHtml=cards.map(([label,value])=>'<div class="stat">'+esc(label)+'<strong>'+esc(value)+'</strong></div>').join("");
+  root.innerHTML='<div class="stats">'+cardsHtml+'</div><article class="item"><div class="item-head"><strong>Sanitized scan details</strong><span class="pill">'+(data.scan_complete?"COMPLETE":"INCOMPLETE")+'</span></div><div class="side"><h3>Catalog comparison</h3><dl>'+countRows+'</dl><h3>Mocha account capabilities</h3><dl>'+permissionRows+'</dl></div><div class="reason">Generated: '+esc(data.generated_at||"Unknown")+' · Catalog commit: '+esc(data.catalog_commit||"Unknown")+' · Snapshot consistency: '+esc(data.snapshot_consistency||"Unknown")+'<br>Automatic cleanup: disabled. Detailed inventory published: no.</div></article>';
+ }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+' The last successful summary may not be available yet.</div>';}
 }
 async function fetchRejections(){
  const response=await fetch(REPORT_BASE+"akirabox-rejections.json?v="+Date.now(),{cache:"no-store"});
@@ -66,7 +83,7 @@ async function fetchRejections(){
 }
 async function fetchCatalogReferences(){
  const paths=["ps4/games.json","ps4/dlc.json","ps5/ps5-games.json","ps5/ps5-dlc.json"];
- const urls=new Set();const fileIds=new Set();
+ const urls=new Set(),fileIds=new Set();
  await Promise.all(paths.map(async path=>{
   const response=await fetch("https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/"+path+"?v="+Date.now(),{cache:"no-store"});
   if(!response.ok)throw Error(path+" could not be checked (HTTP "+response.status+").");
@@ -74,13 +91,10 @@ async function fetchCatalogReferences(){
   if(!isRecord(data)||!isRecord(data.DATA))throw Error(path+" has an invalid catalog format.");
   Object.keys(data.DATA).forEach(url=>{
    urls.add(url);
-   try{const parsed=new URL(url);const parts=parsed.pathname.split("/").filter(Boolean);if(["akirabox.to","akirabox.com"].includes(parsed.hostname.toLowerCase())&&parts.length===2&&parts[1]==="file")fileIds.add(parts[0]);}catch{}
+   const fileId=akiraboxFileId(url);if(fileId!==null)fileIds.add(fileId);
   });
  }));
  return {urls,fileIds};
-}
-function isRejectedSource(source){
- return rejections.some(item=>String(item.file_id)===String(source.id)||String(item.share_url)===String(source.share_url||""));
 }
 function renderRejected(){
  const root=$("rejected");
@@ -88,150 +102,31 @@ function renderRejected(){
  if(rejectionStatus!=="available"){root.innerHTML='<div class="notice">Rejection status is unavailable. Do not delete any AkiraBox files based on this page.</div>';return;}
  if(!rejections.length){root.innerHTML='<div class="empty">No rejected uploads are recorded.</div>';return;}
  root.innerHTML=rejections.slice().sort((a,b)=>String(b.rejected_at||"").localeCompare(String(a.rejected_at||""))).map(item=>{
-  const referenced=catalogUrls&&catalogUrls.urls instanceof Set?(catalogUrls.urls.has(String(item.share_url))||catalogUrls.fileIds.has(String(item.file_id))):null;
+  const referenced=catalogUrls&&catalogUrls.urls instanceof Set&&catalogUrls.fileIds instanceof Set?(catalogUrls.urls.has(String(item.share_url))||catalogUrls.fileIds.has(String(item.file_id))):null;
   let safety;
   if(catalogStatus!=="available")safety='<div class="reason"><strong>CATALOG CHECK UNAVAILABLE — DO NOT DELETE.</strong> The live catalog could not be verified. Refresh and try again.</div>';
   else if(referenced)safety='<div class="reason"><strong>CATALOG CONFLICT — DO NOT DELETE.</strong> The current catalog still references this exact AkiraBox URL. Update the catalog through the normal reviewed catalog process before deleting this upload.</div>';
-  else safety='<div class="reason"><strong>Not currently referenced by the live catalog.</strong> You can now open AkiraBox, locate this upload and delete it manually if you still want it removed. No file is deleted automatically.</div>';
-  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name)+'</div><span class="pill rejected">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>AkiraBox file ID</dt><dd>'+esc(item.file_id)+'</dd><dt>Upload link</dt><dd>'+linkOrText(item.share_url)+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd><dt>GitHub record</dt><dd>'+(item.issue_url?linkOrText(item.issue_url):"—")+'</dd></dl></div>'+safety+'</article>';
+  else safety='<div class="reason"><strong>Not currently referenced by the live catalog.</strong> You can open AkiraBox, locate this upload and delete it manually if you still want it removed. No file is deleted automatically.</div>';
+  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed upload")+'</div><span class="pill">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>AkiraBox file ID</dt><dd>'+esc(item.file_id)+'</dd><dt>Upload link</dt><dd>'+safeLink(item.share_url)+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd><dt>GitHub record</dt><dd>'+(item.issue_url?''+safeLink(item.issue_url)+'':"—")+'</dd></dl></div>'+safety+'</article>';
  }).join("");
 }
 async function loadReports(){
  const button=$("refresh");button.disabled=true;
- $("sourceStatus").textContent="Loading latest scan, comparison and rejection reports…";
+ $("sourceStatus").textContent="Loading Mocha summary, rejection records and live catalog references…";
  rejectionStatus="loading";catalogStatus="loading";catalogUrls=null;renderRejected();
- const [scanResult,comparisonResult,rejectionResult,catalogResult]=await Promise.allSettled([
-  fetchReport("akirabox-scan-report.json","scan"),
-  fetchReport("akirabox-comparison-report.json","compare"),
-  fetchRejections(),
-  fetchCatalogReferences()
- ]);
- scan=scanResult.status==="fulfilled"?scanResult.value:null;
- comparison=comparisonResult.status==="fulfilled"?comparisonResult.value:null;
- if(rejectionResult.status==="fulfilled"){rejections=rejectionResult.value;rejectionStatus="available";}
- else{rejections=[];rejectionStatus="unavailable";}
- if(catalogResult.status==="fulfilled"){catalogUrls=catalogResult.value;catalogStatus="available";}
- else{catalogUrls=null;catalogStatus="unavailable";}
- if(scan&&comparison){
-  decisions={};
-  for(const row of comparison.results){
-   const automatic=row.automatic_decision;
-   if(automatic?.decision==="keep_akirabox"&&automatic.selected_file_id!==undefined)decisions[String(automatic.selected_file_id)]="keep_akirabox";
-  }
-  $("sourceStatus").textContent="Latest scan and comparison loaded · "+(scan.generated_at||scan.scanned_at||"scan timestamp unavailable");
- }else{
-  decisions={};
-  $("sourceStatus").textContent="Scan/comparison unavailable: "+[scanResult,comparisonResult].filter(x=>x.status==="rejected").map(x=>x.reason?.message||String(x.reason)).join("; ");
- }
+ const [mochaResult,rejectionResult,catalogResult]=await Promise.allSettled([loadMochaSummary(),fetchRejections(),fetchCatalogReferences()]);
+ if(rejectionResult.status==="fulfilled"){rejections=rejectionResult.value;rejectionStatus="available";}else{rejections=[];rejectionStatus="unavailable";}
+ if(catalogResult.status==="fulfilled"){catalogUrls=catalogResult.value;catalogStatus="available";}else{catalogUrls=null;catalogStatus="unavailable";}
  renderRejected();
- render();
  const warnings=[];
- if(rejectionStatus!=="available")warnings.push("Rejection status could not be verified. Review suggestions and export are disabled until it loads.");
- if(catalogStatus!=="available")warnings.push("Live catalog verification failed. Rejected uploads will be marked DO NOT DELETE.");
- if(scan&&comparison&&comparison.scan_complete_for_all_categories!==true)warnings.push("Partial scan: missing catalog checks are deferred until all four source categories are confirmed.");
- if(!scan||!comparison)warnings.push("The latest scan and comparison reports could not both be loaded.");
+ if(rejectionStatus!=="available")warnings.push("Rejection status could not be verified. Do not delete any upload based on this dashboard.");
+ if(catalogStatus!=="available")warnings.push("Live catalog verification failed. Rejected uploads are marked DO NOT DELETE.");
  $("warning").innerHTML=warnings.map(message=>'<div class="notice">'+esc(message)+'</div>').join("");
+ $("sourceStatus").textContent="Dashboard data refreshed.";
  button.disabled=false;
 }
 $("refresh").addEventListener("click",loadReports);
-function normalizedVersion(value){return String(value??"").trim().replace(/^0+(?=\d)/,"");}
-function normalizedText(value){return String(value??"").trim().toLowerCase().replace(/[^a-z0-9]+/g," ").trim();}
-function isSafeReplacement(result,source,allRows){
- if(!result||!source||result.status!=="outdated"||!isRecord(result.proposed_replacement)||!Array.isArray(result.metadata_differences)||result.metadata_differences.length!==0)return false;
- const from=result.proposed_replacement.from,to=result.proposed_replacement.to;
- if(typeof from!=="string"||!/^https:\/\//i.test(from)||typeof to!=="string"||!/^https:\/\//i.test(to)||from!==result.catalog_url||to!==source.share_url)return false;
- try{const destination=new URL(to);if(!["akirabox.to","akirabox.com"].includes(destination.hostname.toLowerCase()))return false;}catch{return false;}
- const sm=result.source_metadata,cm=result.catalog_metadata,parsed=cm?.parsed_filename_metadata;
- if(!isRecord(sm)||!isRecord(cm)||!isRecord(parsed))return false;
- const sourceSize=sm.size_bytes??source.size_bytes,catalogSize=cm.size_bytes??cm.size;
- if(!Number.isFinite(Number(sourceSize))||Number(sourceSize)<=0||Number(sourceSize)!==Number(catalogSize))return false;
- if(normalizedText(sm.title)!==normalizedText(parsed.title)||normalizedText(sm.region)!==normalizedText(parsed.region)||normalizedVersion(sm.version)!==normalizedVersion(parsed.version))return false;
- if(normalizedText(sm.platform)!==normalizedText(source.platform)||normalizedText(sm.category)!==normalizedText(source.catalog_category??source.category))return false;
- const identity=normalizedText(String(source.name).replace(/\s+\(\d+\)$/,""));
- if(allRows.some(other=>String(other.source.id)!==String(source.id)&&normalizedText(String(other.source.name).replace(/\s+\(\d+\)$/,""))===identity))return false;
- return true;
-}
-function render(){
- renderRejected();
- const ready=!!(scan&&comparison);$("export").disabled=!(ready&&rejectionStatus==="available");
- if(!ready||rejectionStatus!=="available"){$("summary").innerHTML="";$("results").innerHTML='<div class="empty">Review suggestions are hidden until the scan, comparison and saved rejection status are all verified.</div>';return;}
- const byId=new Map(comparison.results.filter(r=>r.file_id!==undefined&&r.file_id!==null).map(r=>[String(r.file_id),r]));
- const rows=scan.files.map((source,index)=>({source,index,result:byId.get(String(source.id))||null}));
- const safeIds=new Set(rows.filter(row=>isSafeReplacement(row.result,row.source,rows)).map(row=>String(row.source.id)));
- const counts=comparison.counts||{};const cards=[["Scanned files",scan.file_count??scan.files.length],["Folders",scan.folder_count??scan.folders.length],["Safe replacements",safeIds.size],["New",counts.new||0],["Needs review",rows.filter(row=>!safeIds.has(String(row.source.id))&&!isRejectedSource(row.source)&&(!row.result||["new","outdated","unclassified"].includes(row.result.status))).length],["Duplicates",counts.duplicate||0],["Unclassified",counts.unclassified||0]];
- $("summary").innerHTML=cards.map(([k,v])=>'<div class="stat">'+esc(k)+'<strong>'+esc(v)+'</strong></div>').join("");
- const complete=comparison.scan_complete_for_all_categories===true;
- $("warning").innerHTML=complete?'<div class="notice good">All four categories were confirmed. Missing-entry review is available below.</div>':'<div class="notice">Partial scan: missing catalog checks are deferred. Do not treat the absence of missing entries as proof that the catalog is complete.</div>';
- const shown=rows.filter(x=>{const status=x.result?.status||"unclassified";return !safeIds.has(String(x.source.id))&&!isRejectedSource(x.source)&&status!=="matched";});
- $("results").innerHTML=shown.length?shown.map(({source:s,index,result:r})=>{
- const safe=safeIds.has(String(s.id));const duplicateSibling=rows.some(other=>String(other.source.id)!==String(s.id)&&normalizedText(String(other.source.name).replace(/\s+\(\d+\)$/,""))===normalizedText(String(s.name).replace(/\s+\(\d+\)$/,"")));const status=safe?"safe":(r?.status||"unclassified"),diffs=r?.metadata_differences||[],parsedSource=r?.source_metadata||{};
- const catalog=r?.catalog_metadata||null;
- const duplicateOf=r?.status==="duplicate"?rows.find(other=>String(other.source.id)===String(r.duplicate_of_file_id)):null;
- const duplicateData=duplicateOf?{name:duplicateOf.source.name,file_size:duplicateOf.source.size_bytes,download_url:duplicateOf.source.share_url}:null;
- const binaryVerification=r?.binary_verification||null;
- const binaryVerificationLabels={verified_identical:"Confirmed identical — matching SHA-256",different:"Not identical — SHA-256 values differ",unverified:"Unverified — AkiraBox did not provide both hashes",not_checked:"Not checked"};
- const decision=decisions[String(s.id)]||"pending";
- const automaticDecision=r?.automatic_decision||null;
- const sourceData={
-  name:s.name,
-  region:parsedSource.region,
-  version:parsedSource.version,
-  languages:parsedSource.languages,
-  minimum_firmware:parsedSource.min_fw,
-  file_size:parsedSource.size_bytes??s.size_bytes,
-  download_url:s.share_url
- };
- const catalogData=catalog?{
-  title:catalog.title,
-  title_id:catalog.title_id,
-  region:catalog.region,
-  version:catalog.version,
-  languages:catalog.languages??catalog.parsed_filename_metadata?.languages,
-  minimum_firmware:catalog.min_fw,
-  file_size:catalog.size_bytes??catalog.size,
-  current_url:r?.catalog_url
- }:null;
- const proposal=r?.proposed_replacement;
- return '<article class="item"><div class="item-head"><div class="title">'+esc(s.name)+'</div><span class="pill '+esc(status)+'">'+(safe?"SAFE REPLACEMENT":esc(status))+'</span></div><div class="columns"><section class="side"><h3>AkiraBox source</h3><dl>'+fieldRows(sourceData)+'</dl></section><section class="side"><h3>Current catalog</h3><dl>'+(catalog?fieldRows(catalogData):'<dt>Catalog record</dt><dd>'+(r?esc(r.reason):'No comparison record found')+'</dd>')+'</dl></section></div>'+(r?.status==="duplicate"?'<section class="side"><h3>Existing AkiraBox entry — duplicate of</h3>'+(duplicateData?'<dl>'+fieldRows(duplicateData)+'</dl>':'<p class="muted">The referenced earlier entry was not found in the current scan report.</p>')+(binaryVerification?'<p class="reason"><strong>Binary verification:</strong> '+esc(binaryVerificationLabels[binaryVerification.status]||binaryVerification.status)+(binaryVerification.original_sha256?'<br>Existing SHA-256: '+esc(binaryVerification.original_sha256):'')+(binaryVerification.duplicate_sha256?'<br>This upload SHA-256: '+esc(binaryVerification.duplicate_sha256):'')+'</p>':'')+(automaticDecision?'<p class="reason"><strong>Automatically selected:</strong> Keep AkiraBox — '+esc(automaticDecision.selected_file_name||automaticDecision.selected_file_id)+'<br>'+esc(automaticDecision.reason)+'</p>':'')+'<p class="reason">Choose which source should be preferred for this title: <strong>Keep AkiraBox</strong> selects this scanned AkiraBox upload as the preferred source; <strong>Keep Catalog</strong> retains the existing catalog entry and declines this scanned upload. These are review decisions only: neither action edits the catalog or deletes an AkiraBox file.</p></section>':'')+(proposal?'<section class="side"><h3>Proposed replacement</h3><dl>'+fieldRows({proposed_url:proposal.to})+'</dl></section>':'')+(safe?"":'<div class="actions"><strong>Decision: '+esc(decision==="keep_akirabox"?"Keep AkiraBox":decision==="keep_catalog"?"Keep Catalog":decision)+'</strong><span style="flex:1"></span>'+(r?.status==="duplicate"?'<button class="approve '+(decision==="keep_akirabox"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="keep_akirabox">Keep AkiraBox</button><button class="reject '+(decision==="keep_catalog"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="keep_catalog">Keep Catalog</button>':'<button class="approve '+(decision==="approved"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="approved">Approve</button><button class="reject '+(decision==="rejected"?"selected":"")+'" data-id="'+esc(s.id)+'" data-value="rejected">Reject</button>')+'<button data-id="'+esc(s.id)+'" data-value="pending">Clear</button></div>')+'</article>';
- }).join(""):'<div class="empty">No uploads currently require manual review.</div>';
- $("results").querySelectorAll("[data-id][data-value]").forEach(b=>b.addEventListener("click",()=>{
-  const value=b.dataset.value;
-  if(value==="rejected"||value==="keep_catalog"){
-   const source=scan.files.find(item=>String(item.id)===String(b.dataset.id));
-   if(!source)return;
-   const payload={file_id:String(source.id),name:String(source.name||""),share_url:String(source.share_url||""),platform:String(source.platform||""),catalog_category:String(source.catalog_category||source.category||""),scan_generated_at:String(scan.generated_at||scan.scanned_at||"")};
-   const body="Please record this AkiraBox upload as rejected and add it to the manual-deletion list.\n\n<!-- akirabox-rejection:v1\n"+JSON.stringify(payload)+"\n-->";
-   const issueUrl=new URL("https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new");
-   issueUrl.searchParams.set("title","AkiraBox rejection: "+payload.name);
-   issueUrl.searchParams.set("body",body);
-   window.location.assign(issueUrl.toString());
-   return;
-  }
-  if(value==="pending")delete decisions[b.dataset.id];else decisions[b.dataset.id]=value;
-  render();
- }));
- const missing=comparison.missing_catalog_entries||[];
- $("missing").innerHTML=!complete?'<div class="empty">Deferred: PS4/Games, PS4/DLC, PS5/Games and PS5/DLC must all be confirmed before missing entries can be assessed.</div>':missing.length?'<div class="item"><div class="item-head"><strong>'+missing.length+' catalog entries not seen in the source scan</strong></div><div class="side"><dl>'+missing.map((m,i)=>'<dt>'+esc(m.platform+' / '+m.category)+'</dt><dd>'+esc(m.name)+' · '+linkOrText(m.catalog_url)+'</dd>').join("")+'</dl></div><div class="reason">These entries are flagged for manual review only. Nothing is deleted or changed.</div></div>':'<div class="empty">No missing catalog candidates were reported in this complete scan.</div>';
-}
-$("export").addEventListener("click",()=>{
- if(!scan||!comparison||rejectionStatus!=="available")return;
- const output={
-  source:"akirabox-review-dashboard",
-  exported_at:new Date().toISOString(),
-  read_only:true,
-  scan_complete_for_all_categories:comparison.scan_complete_for_all_categories===true,
-  rejected_uploads:rejections,
-  safe_replacements:comparison.results.filter(r=>{
-   const source=scan.files.find(f=>String(f.id)===String(r.file_id));
-   return source&&!isRejectedSource(source)&&isSafeReplacement(r,source,scan.files.map(source=>({source})));
-  }).map(r=>({file_id:r.file_id,name:r.name,proposed_url:r.proposed_replacement.to})),
-  decisions:Object.entries(decisions).filter(([file_id])=>{
-   const source=scan.files.find(f=>String(f.id)===file_id);
-   return source&&!isRejectedSource(source);
-  }).map(([file_id,decision])=>({file_id,decision,name:scan.files.find(f=>String(f.id)===file_id)?.name}))
- };
- const blob=new Blob([JSON.stringify(output,null,2)+"\n"],{type:"application/json"});
- const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download="akirabox-review-decisions.json";a.click();URL.revokeObjectURL(url);
-});
 loadReports();
-</script></body></html>
+</script>
+</body>
+</html>

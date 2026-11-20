@@ -129,6 +129,18 @@ def test_scanner_preserves_whitespace_in_folder_names():
     assert MochaScanner.child_path("PS4", " Games ") == "PS4/ Games "
 
 
+def test_scanner_records_timezone_aware_inventory_observation_time():
+    session = FakeSession([
+        FakeResponse({}),
+        FakeResponse({}),
+        FakeResponse(payload()),
+    ], expected_paths=[""])
+    report = MochaScanner("test-key", session, max_seconds=10).run()
+
+    observed_at = datetime.fromisoformat(report["scan_observed_at"].replace("Z", "+00:00"))
+    assert observed_at.tzinfo is not None
+
+
 def test_scanner_rejects_redirects_instead_of_forwarding_credentials():
     session = FakeSession([FakeResponse(status=302, headers={"Location": "https://evil.example/"})])
     scanner = MochaScanner("test-key", session, max_seconds=10)
