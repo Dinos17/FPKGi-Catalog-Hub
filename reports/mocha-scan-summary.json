@@ -15,7 +15,7 @@
   "details_published": false,
   "file_count": 28,
   "folder_count": 4,
-  "generated_at": "2026-11-20T15:58:02Z",
+  "generated_at": "2026-11-20T16:35:54Z",
   "listing_page_count": 4,
   "permissions": {
     "can_create_hotlinks": false,
@@ -25,7 +25,7 @@
   },
   "possible_duplicate_groups": 0,
   "scan_complete": true,
-  "scan_observed_at": "2026-11-20T15:58:01.813608Z",
+  "scan_observed_at": "2026-11-20T16:35:54.031553Z",
   "scanner": "mocha",
   "schema_version": 1,
   "snapshot_consistency": "not_guaranteed_by_api"
