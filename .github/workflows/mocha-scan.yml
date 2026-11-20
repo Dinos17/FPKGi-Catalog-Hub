@@ -168,7 +168,7 @@ jobs:
               f"- **Catalog commit:** {summary['catalog_commit']}",
               f"- **Possible duplicate groups:** {summary['possible_duplicate_groups']}",
               "- **Automatic cleanup:** disabled",
-              "- **Detailed inventory publication:** disabled; only aggregate counts are published",
+              "- **Dashboard inventory publication:** disabled; only aggregate counts are published (a separate one-day Actions artifact contains the detailed inventory)",
           ]
           for key, value in permissions.items():
               lines.append(f"- **{key.replace('_', ' ').title()}:** {value}")
