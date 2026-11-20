@@ -125,6 +125,7 @@ jobs:
               "schema_version": 1,
               "scanner": "mocha",
               "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
+              "scan_observed_at": scan.get("scan_observed_at"),
               "catalog_commit": os.environ["CATALOG_COMMIT"],
               "scan_complete": scan.get("scan_complete") is True,
               "authentication": "verified_by_file_listing" if scan.get("authentication") == "verified_by_file_listing" else "not_verified",
@@ -191,7 +192,10 @@ jobs:
           # Fetch and publish against the latest reports-branch tip. If another
           # workflow advances the branch, retry from that tip without force-pushing.
           for attempt in 1 2 3; do
-            git fetch origin akirabox-reports
+            if ! git fetch origin akirabox-reports; then
+              echo "Could not fetch akirabox-reports on attempt $attempt/3; retrying without reset or push." >&2
+              continue
+            fi
             git reset --hard FETCH_HEAD
 
             if python - <<'PY'
@@ -204,7 +208,7 @@ jobs:
 
           summary = json.loads(os.environ["SUMMARY_JSON"])
           allowed = {
-              "schema_version", "scanner", "generated_at", "catalog_commit",
+              "schema_version", "scanner", "generated_at", "scan_observed_at", "catalog_commit",
               "scan_complete", "authentication", "folder_count", "file_count",
               "listing_page_count", "snapshot_consistency", "permissions",
               "comparison_available", "counts", "possible_duplicate_groups",
@@ -217,14 +221,19 @@ jobs:
               raise SystemExit("Refusing to publish an unsupported summary schema.")
           if summary["scanner"] != "mocha":
               raise SystemExit("Refusing to publish a summary from an unknown scanner.")
-          if not isinstance(summary["generated_at"], str):
-              raise SystemExit("Refusing to publish a summary without a generation timestamp.")
-          try:
-              generated_at = datetime.fromisoformat(summary["generated_at"].replace("Z", "+00:00"))
-              if generated_at.tzinfo is None:
+          def parse_aware_timestamp(value):
+              if not isinstance(value, str):
+                  raise ValueError("timestamp is missing or is not a string")
+              parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+              if parsed.tzinfo is None:
                   raise ValueError("timestamp has no timezone")
-          except ValueError as exc:
-              raise SystemExit("Refusing to publish an invalid generation timestamp.") from exc
+              return parsed
+
+          try:
+              generated_at = parse_aware_timestamp(summary["generated_at"])
+              scan_observed_at = parse_aware_timestamp(summary["scan_observed_at"])
+          except (KeyError, ValueError) as exc:
+              raise SystemExit("Refusing to publish an invalid generation or scan-observation timestamp.") from exc
           if not isinstance(summary["catalog_commit"], str) or not re.fullmatch(r"[0-9a-f]{40}", summary["catalog_commit"]):
               raise SystemExit("Refusing to publish an invalid catalog commit.")
           if type(summary["scan_complete"]) is not bool:
@@ -271,19 +280,18 @@ jobs:
                   stderr=subprocess.DEVNULL,
               )
               current = json.loads(current_bytes)
-          except (subprocess.CalledProcessError, json.JSONDecodeError):
+          except (subprocess.CalledProcessError, json.JSONDecodeError, UnicodeDecodeError):
               current = None
 
           if current is not None:
-              current_time_text = current.get("generated_at") if isinstance(current, dict) else None
+              current_time_text = current.get("scan_observed_at") if isinstance(current, dict) else None
               try:
-                  current_time = datetime.fromisoformat(current_time_text.replace("Z", "+00:00"))
-                  if current_time.tzinfo is None:
-                      raise ValueError("timestamp has no timezone")
-              except (AttributeError, ValueError):
-                  raise SystemExit("Existing dashboard summary has an invalid generation timestamp.")
-              if generated_at <= current_time:
-                  print("Incoming summary is not newer; preserving the current dashboard summary.")
+                  current_time = parse_aware_timestamp(current_time_text)
+              except (AttributeError, KeyError, TypeError, ValueError):
+                  print("Warning: existing dashboard summary has no valid scan-observation timestamp; replacing it with the validated incoming summary.", file=__import__("sys").stderr)
+                  current = None
+              if current is not None and scan_observed_at <= current_time:
+                  print("Incoming scan observation is not newer; preserving the current dashboard summary.")
                   raise SystemExit(10)
 
           target.parent.mkdir(parents=True, exist_ok=True)
