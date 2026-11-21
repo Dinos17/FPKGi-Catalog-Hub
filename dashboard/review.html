@@ -19,7 +19,7 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 </style>
 </head>
 <body><main>
-<header><div><h1>FPKGi Catalog Review</h1><p>Sanitized Mocha scan overview and manually recorded AkiraBox rejections.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<header><div><h1>FPKGi Catalog Review</h1><p>Mocha scan overview, uploaded-file inventory and manually recorded AkiraBox rejections.</p></div><a href="./index.html">← Back to Catalog</a></header>
 <div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays uploaded file names and basic metadata (folder, size, upload date and platform); it does not publish file IDs, API paths, download links or checksums. Possible duplicates are review candidates, never automatic cleanup. AkiraBox rejection records remain separate and require manual deletion.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading reports…</span><button id="refresh" type="button">Refresh reports</button></section>
 <h2 class="section-title">Latest Mocha scan overview</h2>
@@ -72,7 +72,7 @@ async function loadMochaSummary(){
   const countRows=Object.entries(countLabels).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(numeric(data.counts[key]))+'</dd>').join("");
   const permissionRows=["can_use_api","can_create_hotlinks","profile_can_use_api","profile_can_create_hotlinks"].map(key=>{const value=data.permissions[key];return '<dt>'+esc(pretty(key))+'</dt><dd>'+esc(typeof value==="boolean"?value:"Not reported")+'</dd>';}).join("");
   const cardsHtml=cards.map(([label,value])=>'<div class="stat">'+esc(label)+'<strong>'+esc(value)+'</strong></div>').join("");
-  root.innerHTML='<div class="stats">'+cardsHtml+'</div><article class="item"><div class="item-head"><strong>Sanitized scan details</strong><span class="pill">'+(data.scan_complete?"COMPLETE":"INCOMPLETE")+'</span></div><div class="side"><h3>Catalog comparison</h3><dl>'+countRows+'</dl><h3>Mocha account capabilities</h3><dl>'+permissionRows+'</dl></div><div class="reason">Generated: '+esc(data.generated_at||"Unknown")+' · Catalog commit: '+esc(data.catalog_commit||"Unknown")+' · Snapshot consistency: '+esc(data.snapshot_consistency||"Unknown")+'<br>Automatic cleanup: disabled. Detailed inventory published: no.</div></article>';
+  root.innerHTML='<div class="stats">'+cardsHtml+'</div><article class="item"><div class="item-head"><strong>Sanitized scan details</strong><span class="pill">'+(data.scan_complete?"COMPLETE":"INCOMPLETE")+'</span></div><div class="side"><h3>Catalog comparison</h3><dl>'+countRows+'</dl><h3>Mocha account capabilities</h3><dl>'+permissionRows+'</dl></div><div class="reason">Generated: '+esc(data.generated_at||"Unknown")+' · Catalog commit: '+esc(data.catalog_commit||"Unknown")+' · Snapshot consistency: '+esc(data.snapshot_consistency||"Unknown")+'<br>Automatic cleanup: disabled. File inventory is metadata-only.</div></article>';
  }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+' The last successful summary may not be available yet.</div>';}
 }
 function formatBytes(value){
@@ -134,7 +134,7 @@ function renderRejected(){
 }
 async function loadReports(){
  const button=$("refresh");button.disabled=true;
- $("sourceStatus").textContent="Loading Mocha summary, rejection records and live catalog references…";
+ $("sourceStatus").textContent="Loading Mocha summary, file inventory, rejection records and live catalog references…";
  rejectionStatus="loading";catalogStatus="loading";catalogUrls=null;renderRejected();
  const [mochaResult,inventoryResult,rejectionResult,catalogResult]=await Promise.allSettled([loadMochaSummary(),loadMochaInventory(),fetchRejections(),fetchCatalogReferences()]);
  if(rejectionResult.status==="fulfilled"){rejections=rejectionResult.value;rejectionStatus="available";}else{rejections=[];rejectionStatus="unavailable";}
