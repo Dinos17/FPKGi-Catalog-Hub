@@ -27,9 +27,6 @@ table{width:100%;border-collapse:collapse;margin-top:10px}th,td{text-align:left;
 <div id="mochaOverview"><div class="empty">Loading the latest sanitized Mocha summary…</div></div>
 <h2 class="section-title">Uploaded files</h2>
 <div id="mochaInventory"><div class="empty">Loading uploaded-file inventory…</div></div>
-<h2 class="section-title">Legacy AkiraBox rejection queue</h2>
-<div class="notice">This section is retained for rejection records created by the existing AkiraBox workflow. Verify the upload and current catalog manually before deleting anything. The dashboard does not delete files or perform catalog-conflict checks.</div>
-<div id="rejected"><div class="empty">Loading saved rejection records…</div></div>
 <div id="warning"></div>
 </main>
 <script>
@@ -101,33 +98,11 @@ async function loadMochaInventory(){
   return true;
  }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';return false;}
 }
-function safeExternalLink(value){
- try{const url=new URL(String(value));if(url.protocol!=="https:")return esc(value);return '<a href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">'+esc(value)+'</a>';}
- catch{return esc(value);}
-}
-async function loadRejections(){
- const root=$("rejected");root.innerHTML='<div class="empty">Loading saved rejection records…</div>';
- try{
-  const {response,data}=await fetchReport(REPORT_BASE+"akirabox-rejections.json?v="+Date.now());
-  if(response.status===404){root.innerHTML='<div class="empty">No rejected uploads are recorded.</div>';return true;}
-  if(!response.ok)throw Error("Rejection records unavailable (HTTP "+response.status+").");
-  if(!isRecord(data)||data.schema_version!==1||!Array.isArray(data.records))throw Error("Rejection report has an invalid format.");
-  for(const item of data.records){
-   if(!isRecord(item)||typeof item.file_id!=="string"||typeof item.share_url!=="string"||!item.share_url)throw Error("Rejection report contains an invalid record.");
-   const link=new URL(item.share_url);if(link.protocol!=="https:")throw Error("Rejection report contains a non-HTTPS upload link.");
-   for(const key of ["name","platform","catalog_category","rejected_at","issue_url"])if(item[key]!==undefined&&item[key]!==null&&typeof item[key]!=="string")throw Error("Rejection report contains invalid "+key+" metadata.");
-   if(item.issue_url){const issue=new URL(item.issue_url);if(issue.protocol!=="https:")throw Error("Rejection report contains an invalid issue link.");}
-  }
-  if(!data.records.length){root.innerHTML='<div class="empty">No rejected uploads are recorded.</div>';return true;}
-  root.innerHTML=data.records.slice().sort((a,b)=>String(b.rejected_at||"").localeCompare(String(a.rejected_at||""))).map(item=>'<article class="item"><div class="item-head"><strong class="title">'+esc(item.name||"Unnamed upload")+'</strong><span class="pill incomplete">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>Platform / category</dt><dd>'+esc([item.platform,item.catalog_category].filter(Boolean).join(" / ")||"Not recorded")+'</dd><dt>Upload link</dt><dd>'+safeExternalLink(item.share_url)+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"Unknown")+'</dd><dt>GitHub issue</dt><dd>'+(item.issue_url?safeExternalLink(item.issue_url):"Not linked")+'</dd></dl></div><div class="reason">Manual review required. Check the current catalog yourself before deleting this upload. No automatic deletion is performed.</div></article>').join("");
-  return true;
- }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+' Do not delete any upload based on an unavailable rejection report.</div>';return false;}
-}
 async function loadReports(){
  const button=$("refresh");button.disabled=true;
- $("sourceStatus").textContent="Loading Mocha reports and legacy rejection records…";
+ $("sourceStatus").textContent="Loading Mocha reports…";
  try{
-  const results=await Promise.allSettled([loadMochaSummary(),loadMochaInventory(),loadRejections()]);
+  const results=await Promise.allSettled([loadMochaSummary(),loadMochaInventory()]);
   const failed=results.some(result=>result.status==="rejected"||result.value!==true);
   $("sourceStatus").textContent=failed?"Refresh finished with unavailable data.":"All reports refreshed successfully.";
   $("warning").innerHTML=failed?'<div class="notice">One or more report sections could not be loaded or validated. See the affected section for details.</div>':"";
