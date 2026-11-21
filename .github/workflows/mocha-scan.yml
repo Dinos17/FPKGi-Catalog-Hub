@@ -73,13 +73,49 @@ jobs:
         run: |
           "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
 
-      - name: Upload Mocha inventory artifact (public repository)
+      - name: Create sanitized public inventory artifact
+        if: always()
+        env:
+          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
+          PUBLIC_INVENTORY: ${{ runner.temp }}/mocha-public-inventory.json
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          source = Path(os.environ['SCAN_REPORT'])
+          try:
+              scan = json.loads(source.read_text(encoding='utf-8'))
+          except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+              raise SystemExit(f'Cannot create inventory artifact: {exc}')
+          if not isinstance(scan, dict) or scan.get('scanner') != 'mocha' or scan.get('scan_complete') is not True:
+              raise SystemExit('Refusing to create an artifact from an incomplete scan.')
+          files = scan.get('files')
+          if not isinstance(files, list) or type(scan.get('file_count')) is not int or scan['file_count'] != len(files):
+              raise SystemExit('Invalid inventory file count.')
+          public_files = []
+          for item in files:
+              if not isinstance(item, dict): raise SystemExit('Invalid inventory entry.')
+              name, folder = item.get('name'), item.get('folder_path')
+              size, created = item.get('size_bytes'), item.get('created_at')
+              platform, category, extension = item.get('platform'), item.get('catalog_category'), item.get('extension')
+              if not isinstance(name, str) or not name or not isinstance(folder, str): raise SystemExit('Invalid name or folder.')
+              if size is not None and (type(size) is not int or size < 0): raise SystemExit('Invalid size.')
+              if created is not None and not isinstance(created, str): raise SystemExit('Invalid upload timestamp.')
+              if any(v is not None and not isinstance(v, str) for v in (platform, category, extension)): raise SystemExit('Invalid classification.')
+              public_files.append({'name':name,'folder_path':folder,'size_bytes':size,'created_at':created,'platform':platform,'catalog_category':category,'extension':extension})
+          public = {'schema_version':1,'scanner':'mocha','scan_observed_at':scan.get('scan_observed_at'),'file_count':len(public_files),'files':public_files}
+          if not isinstance(public['scan_observed_at'], str): raise SystemExit('Missing scan timestamp.')
+          Path(os.environ['PUBLIC_INVENTORY']).write_text(json.dumps(public, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          PY
+
+      - name: Upload sanitized Mocha inventory artifact (public repository)
         id: inventory_upload
         continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: mocha-file-inventory
-          path: ${{ runner.temp }}/mocha-scan-report.json
+          path: ${{ runner.temp }}/mocha-public-inventory.json
           if-no-files-found: error
           retention-days: 1
 
@@ -168,7 +204,7 @@ jobs:
               f"- **Catalog commit:** {summary['catalog_commit']}",
               f"- **Possible duplicate groups:** {summary['possible_duplicate_groups']}",
               "- **Automatic cleanup:** disabled",
-              "- **Dashboard inventory publication:** disabled; only aggregate counts are published (a separate one-day Actions artifact contains the detailed inventory)",
+              "- **Dashboard inventory publication:** pending sanitized inventory validation in the publisher job",
           ]
           for key, value in permissions.items():
               lines.append(f"- **{key.replace('_', ' ').title()}:** {value}")
@@ -181,10 +217,10 @@ jobs:
           ARTIFACT_UPLOAD_OUTCOME: ${{ steps.inventory_upload.outcome }}
         run: |
           if [ "$ARTIFACT_UPLOAD_OUTCOME" = "success" ]; then
-            echo "- **Inventory artifact upload:** succeeded (1-day retention; publicly accessible)" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Sanitized inventory artifact upload:** succeeded (1-day retention; publicly accessible)" >> "$GITHUB_STEP_SUMMARY"
           else
             echo "::warning::Mocha inventory artifact upload failed; catalog comparison and dashboard publication will continue."
-            echo "- **Inventory artifact upload:** FAILED; catalog comparison and dashboard publication continued" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **Sanitized inventory artifact upload:** FAILED; aggregate summary publication will continue" >> "$GITHUB_STEP_SUMMARY"
           fi
 
   publish-dashboard-summary:
@@ -201,11 +237,19 @@ jobs:
           ref: akirabox-reports
           path: reports-branch
           fetch-depth: 0
+      - name: Download this run's sanitized Mocha inventory
+        id: inventory_download
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mocha-file-inventory
+          path: ${{ runner.temp }}/mocha-inventory
 
       - name: Publish only the sanitized Mocha summary
         working-directory: reports-branch
         env:
           SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
+          INVENTORY_JSON: ${{ runner.temp }}/mocha-inventory/mocha-public-inventory.json
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -316,8 +360,33 @@ jobs:
                   print("Incoming scan observation is not newer; preserving the current dashboard summary.")
                   raise SystemExit(10)
 
+          inventory = None
+          inventory_path = Path(os.environ['INVENTORY_JSON'])
+          try:
+              candidate = json.loads(inventory_path.read_text(encoding='utf-8'))
+              required = {'schema_version','scanner','scan_observed_at','file_count','files'}
+              if not isinstance(candidate, dict) or set(candidate) != required: raise ValueError('unexpected inventory schema')
+              if candidate['schema_version'] != 1 or candidate['scanner'] != 'mocha': raise ValueError('unsupported inventory schema')
+              if candidate['scan_observed_at'] != summary['scan_observed_at']: raise ValueError('scan timestamps differ')
+              if type(candidate['file_count']) is not int or candidate['file_count'] != summary['file_count']: raise ValueError('file counts differ')
+              if not isinstance(candidate['files'], list) or len(candidate['files']) != candidate['file_count']: raise ValueError('invalid files list')
+              keys = {'name','folder_path','size_bytes','created_at','platform','catalog_category','extension'}
+              for item in candidate['files']:
+                  if not isinstance(item, dict) or set(item) != keys: raise ValueError('invalid inventory entry')
+                  if not isinstance(item['name'], str) or not item['name'] or not isinstance(item['folder_path'], str): raise ValueError('invalid name or folder')
+                  if item['size_bytes'] is not None and (type(item['size_bytes']) is not int or item['size_bytes'] < 0): raise ValueError('invalid size')
+                  for key in ('created_at','platform','catalog_category','extension'):
+                      if item[key] is not None and not isinstance(item[key], str): raise ValueError('invalid ' + key)
+              inventory = candidate
+          except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
+              print('Sanitized inventory unavailable; publishing aggregate summary only: ' + str(exc), file=__import__('sys').stderr)
+          summary['details_published'] = inventory is not None
           target.parent.mkdir(parents=True, exist_ok=True)
-          target.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          if inventory is not None:
+              inventory_target = Path('reports/mocha-file-inventory.json')
+              inventory_target.write_text(json.dumps(inventory, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          print('Inventory publication: ' + ('published' if inventory is not None else 'unavailable; old inventory will be hidden by dashboard timestamp validation'))
           PY
             then
               :
@@ -330,6 +399,7 @@ jobs:
             fi
 
             git add reports/mocha-scan-summary.json
+            if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
               exit 0
