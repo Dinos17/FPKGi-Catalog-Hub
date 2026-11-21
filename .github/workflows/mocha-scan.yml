@@ -398,7 +398,8 @@ jobs:
               exit "$validation_status"
             fi
 
-            git add reports/mocha-scan-summary.json reports/mocha-file-inventory.json
+            git add reports/mocha-scan-summary.json
+            if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
               exit 0
