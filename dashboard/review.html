@@ -122,27 +122,9 @@ async function fetchRejections(){
  if(!response.ok)throw Error("Rejection records could not be loaded (HTTP "+response.status+").");
  const data=await response.json();
  if(!isRecord(data)||data.schema_version!==1||!Array.isArray(data.records))throw Error("Rejection report has an invalid format.");
- return data.records.filter(item=>isRecord(item)&&item.file_id!==undefined&&typeof item.share_url==="string");
-}
-async function fetchCatalogReferences(){
- const paths=["ps4/apps.json","ps4/demos.json","ps4/dlc.json","ps4/emulators.json","ps4/games.json","ps4/homebrew.json","ps4/ps1.json","ps4/ps2.json","ps4/psp.json","ps4/themes.json","ps4/updates.json","ps5/ps5-apps.json","ps5/ps5-demos.json","ps5/ps5-dlc.json","ps5/ps5-emulators.json","ps5/ps5-games.json","ps5/ps5-homebrew.json","ps5/ps5-themes.json","ps5/ps5-updates.json"];
- const urls=new Set(),fileIds=new Set();
- const commitResponse=await boundedFetch("https://api.github.com/repos/Dinos17/FPKGi-Catalog-Hub/commits/main");
- if(!commitResponse.ok)throw Error("Catalog revision could not be resolved (HTTP "+commitResponse.status+").");
- const commitData=await commitResponse.json();
- if(!isRecord(commitData)||typeof commitData.sha!=="string"||! /^[0-9a-f]{40}$/i.test(commitData.sha))throw Error("Catalog revision response is invalid.");
- const catalogCommit=commitData.sha;
- await Promise.all(paths.map(async path=>{
-  const response=await boundedFetch("https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/"+catalogCommit+"/"+path+"?v="+Date.now());
-  if(!response.ok)throw Error(path+" could not be checked (HTTP "+response.status+").");
-  const data=await response.json();
-  if(!isRecord(data)||!isRecord(data.DATA))throw Error(path+" has an invalid catalog format.");
-  Object.keys(data.DATA).forEach(url=>{
-   urls.add(url);
-   const fileId=akiraboxFileId(url);if(fileId!==null)fileIds.add(fileId);
-  });
- }));
- return {urls,fileIds};
+ const safeKeys=["name","platform","catalog_category","scan_generated_at","rejected_at","status"];
+ return data.records.filter(item=>isRecord(item)&&typeof item.name==="string"&&item.name.trim())
+  .map(item=>Object.fromEntries(safeKeys.filter(key=>typeof item[key]==="string").map(key=>[key,item[key]])));
 }
 function renderRejected(){
  const root=$("rejected");
@@ -150,25 +132,20 @@ function renderRejected(){
  if(rejectionStatus!=="available"){root.innerHTML='<div class="notice">Rejection status is unavailable. Do not delete any AkiraBox files based on this page.</div>';return;}
  if(!rejections.length){root.innerHTML='<div class="empty">No rejected uploads are recorded.</div>';return;}
  root.innerHTML=rejections.slice().sort((a,b)=>String(b.rejected_at||"").localeCompare(String(a.rejected_at||""))).map(item=>{
-  const referenced=catalogUrls&&catalogUrls.urls instanceof Set&&catalogUrls.fileIds instanceof Set?(catalogUrls.urls.has(String(item.share_url))||catalogUrls.fileIds.has(String(item.file_id))):null;
-  let safety;
-  if(catalogStatus!=="available")safety='<div class="reason"><strong>CATALOG CHECK UNAVAILABLE — DO NOT DELETE.</strong> The live catalog could not be verified. Refresh and try again.</div>';
-  else if(referenced)safety='<div class="reason"><strong>CATALOG CONFLICT — DO NOT DELETE.</strong> The current catalog still references this exact AkiraBox URL. Update the catalog through the normal reviewed catalog process before deleting this upload.</div>';
-  else safety='<div class="reason"><strong>Not currently referenced by the live catalog.</strong> You can open AkiraBox, locate this upload and delete it manually if you still want it removed. No file is deleted automatically.</div>';
-  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed upload")+'</div><span class="pill">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>AkiraBox file ID</dt><dd>'+esc(item.file_id)+'</dd><dt>Upload link</dt><dd>'+safeLink(item.share_url)+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd><dt>GitHub record</dt><dd>'+(item.issue_url?''+safeLink(item.issue_url)+'':"—")+'</dd></dl></div>'+safety+'</article>';
+  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed upload")+'</div><span class="pill">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform||"Unknown")+'</dd><dt>Category</dt><dd>'+esc(item.catalog_category||"Unknown")+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd></dl></div><div class="reason"><strong>CATALOG REFERENCE NOT VERIFIED — DO NOT DELETE.</strong> This public report intentionally contains no AkiraBox file ID, share URL or issue link. Verify the catalog through an authorized private process before considering deletion.</div></article>';
  }).join("");
 }
 async function loadReports(){
  const button=$("refresh");button.disabled=true;
- $("sourceStatus").textContent="Loading Mocha summary, file inventory, rejection records and live catalog references…";
+ $("sourceStatus").textContent="Loading Mocha summary, file inventory and sanitized rejection records…";
  rejectionStatus="loading";catalogStatus="loading";catalogUrls=null;renderRejected();
- const [mochaResult,inventoryResult,rejectionResult,catalogResult]=await Promise.allSettled([loadMochaSummary(),loadMochaInventory(),fetchRejections(),fetchCatalogReferences()]);
+ const [mochaResult,inventoryResult,rejectionResult]=await Promise.allSettled([loadMochaSummary(),loadMochaInventory(),fetchRejections()]);
  if(rejectionResult.status==="fulfilled"){rejections=rejectionResult.value;rejectionStatus="available";}else{rejections=[];rejectionStatus="unavailable";}
- if(catalogResult.status==="fulfilled"){catalogUrls=catalogResult.value;catalogStatus="available";}else{catalogUrls=null;catalogStatus="unavailable";}
+ catalogUrls=null;catalogStatus="unavailable";
  renderRejected();
  const warnings=[];
  if(rejectionStatus!=="available")warnings.push("Rejection status could not be verified. Do not delete any upload based on this dashboard.");
- if(catalogStatus!=="available")warnings.push("Live catalog verification failed. Rejected uploads are marked DO NOT DELETE.");
+ if(catalogStatus!=="available"&&rejections.length)warnings.push("Catalog references are not verified by this public dashboard. Do not delete rejected uploads based on these records.");
  const mochaOk=mochaResult.status==="fulfilled"&&mochaResult.value!==false;
  const inventoryOk=inventoryResult.status==="fulfilled"&&inventoryResult.value!==false;
  if(!mochaOk)warnings.push("Mocha summary could not be refreshed successfully.");
