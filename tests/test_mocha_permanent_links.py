@@ -155,7 +155,8 @@ def test_persists_each_success_and_skips_it_on_later_invocations():
     assert first["created_count"] == 1
     assert second["results"][0]["status"] == "already_created"
     assert len(session.calls) == 1
-    assert persisted[0]["files"]["file-1"]["token"] == "sample-token"
+    assert persisted[0]["files"]["file-1"]["status"] == "in_progress"
+    assert persisted[-1]["files"]["file-1"]["token"] == "sample-token"
 
 
 def test_unknown_outcome_is_persisted_and_never_retried_automatically():
