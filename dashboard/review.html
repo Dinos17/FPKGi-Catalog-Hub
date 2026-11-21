@@ -20,7 +20,7 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 </head>
 <body><main>
 <header><div><h1>FPKGi Catalog Review</h1><p>Mocha scan overview, uploaded-file inventory and manually recorded AkiraBox rejections.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays uploaded file names and basic metadata (folder, size, upload date and platform); it does not publish file IDs, API paths, download links or checksums. Possible duplicates are review candidates, never automatic cleanup. AkiraBox rejection records remain separate and require manual deletion.</div>
+<div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays uploaded file names and basic metadata (folder, size, upload date and platform); it does not publish file IDs, API paths, download links or checksums. Possible duplicates are review candidates, never automatic cleanup. Current and previous inventory versions may remain accessible in this public repository's Git history. AkiraBox rejection records remain separate and require manual deletion.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading reports…</span><button id="refresh" type="button">Refresh reports</button></section>
 <h2 class="section-title">Latest Mocha scan overview</h2>
 <div id="mochaOverview"><div class="empty">Loading the latest sanitized Mocha summary…</div></div>
@@ -66,7 +66,7 @@ async function loadMochaSummary(){
   const response=await fetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now(),{cache:"no-store"});
   if(!response.ok)throw Error("Mocha summary unavailable (HTTP "+response.status+").");
   const data=await response.json();
-  if(!isRecord(data)||data.schema_version!==1||data.scanner!=="mocha"||typeof data.scan_complete!=="boolean"||!isRecord(data.counts)||!isRecord(data.permissions))throw Error("Mocha summary has an invalid format.");
+  if(!isRecord(data)||data.schema_version!==1||data.scanner!=="mocha"||typeof data.scan_complete!=="boolean"||!Number.isSafeInteger(data.file_count)||data.file_count<0||typeof data.details_published!=="boolean"||!isRecord(data.counts)||!isRecord(data.permissions))throw Error("Mocha summary has an invalid format.");
   const cards=[["Scan status",data.scan_complete?"Complete":"Incomplete"],["Folders",numeric(data.folder_count)],["Files",numeric(data.file_count)],["Listing pages",numeric(data.listing_page_count)],["Possible duplicate groups",numeric(data.possible_duplicate_groups)]];
   const countLabels={matched:"Matched",metadata_difference:"Metadata differences",unverified:"Unverified",new:"New candidates",ambiguous:"Ambiguous",unclassified:"Unclassified",possible_duplicate:"Possible duplicate groups"};
   const countRows=Object.entries(countLabels).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(numeric(data.counts[key]))+'</dd>').join("");
