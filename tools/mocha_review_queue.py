@@ -1,4 +1,4 @@
-"""Conservative review-queue safety helpers for Mocha scan reports."""
+"""Review-queue classification helpers for Mocha scan reports."""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -6,10 +6,17 @@ from typing import Any
 
 
 def near_duplicate_file_ids(rows: list[dict[str, Any]]) -> set[str]:
-    """Flag matched uploads sharing core identity while optional tags may differ."""
+    """Flag uploads sharing core identity, even when optional metadata conflicts.
+
+    Optional tags such as languages and minimum firmware are deliberately not
+    part of the grouping key. Both matched and metadata_difference rows matter:
+    a conflict on one optional field must not let its matching counterpart pass
+    the duplicate check.
+    """
     groups: dict[tuple[Any, ...], list[str]] = defaultdict(list)
+    eligible_statuses = {"matched", "metadata_difference"}
     for row in rows:
-        if not isinstance(row, dict) or row.get("status") != "matched":
+        if not isinstance(row, dict) or row.get("status") not in eligible_statuses:
             continue
         source = row.get("source_metadata")
         if not isinstance(source, dict):
@@ -27,7 +34,19 @@ def near_duplicate_file_ids(rows: list[dict[str, Any]]) -> set[str]:
 
 
 def can_silently_clear_match(
-    status: str, is_duplicate: bool, binary_integrity_verified: Any
+    status: str,
+    is_duplicate: bool,
+    binary_integrity_verified: Any = None,
+    snapshot_consistency: str = "not_guaranteed_by_api",
 ) -> bool:
-    """Only cryptographically verified, unique matches may leave human review."""
-    return status == "matched" and not is_duplicate and binary_integrity_verified is True
+    """Clear only a unique metadata match from a stable, complete inventory.
+
+    This is a metadata-classification decision, not binary-integrity approval.
+    A changing or snapshot-inconsistent listing cannot establish uniqueness,
+    so such matches stay available for human review.
+    """
+    return (
+        status == "matched"
+        and not is_duplicate
+        and snapshot_consistency == "stable"
+    )
