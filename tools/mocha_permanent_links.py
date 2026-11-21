@@ -263,6 +263,7 @@ def main(argv: list[str] | None = None) -> int:
 
     args.output.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
     args.state.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    os.chmod(args.state.parent, 0o700)
     lock_path = args.state.with_name(args.state.name + ".lock")
     lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
     os.fchmod(lock_fd, 0o600)
@@ -281,6 +282,7 @@ def main(argv: list[str] | None = None) -> int:
                 state = json.loads(args.state.read_text(encoding="utf-8"))
                 if not isinstance(state, dict) or not isinstance(state.get("files"), dict):
                     raise ValueError("invalid state structure")
+                os.chmod(args.state, 0o600)
             except (OSError, ValueError) as exc:
                 print(f"ERROR: cannot read state file: {exc}", file=sys.stderr)
                 return 2
