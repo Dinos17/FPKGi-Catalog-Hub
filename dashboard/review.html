@@ -45,7 +45,7 @@ function metadataHtml(data,fields){
 function decisionUrl(item,action){
  if(!item.created_at||!item.name||!item.platform||!item.category)return null;
  const payload={schema_version:1,action,name:item.name,platform:item.platform,category:item.category,created_at:item.created_at};
- const body="Please record this Mocha review decision.\\n\\n<!-- FPKGI_REVIEW_DECISION\\n"+JSON.stringify(payload)+"\\n-->";
+ const body="Please record this Mocha review decision.\n\n<!-- FPKGI_REVIEW_DECISION\n"+JSON.stringify(payload)+"\n-->";
  const title="FPKGi review decision: "+action.toUpperCase()+" — "+item.name;
  return "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new?"+new URLSearchParams({title,body}).toString();
 }
