@@ -47,6 +47,7 @@ class FakeSession:
         self.headers = {}
 
     def get(self, url, timeout, allow_redirects=True):
+        assert allow_redirects is False, "Automatic redirects must remain disabled"
         if url not in self.pages:
             raise AssertionError(f"Unexpected URL requested: {url}")
         response = self.pages[url]
