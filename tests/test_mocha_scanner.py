@@ -10,6 +10,7 @@ import pytest
 
 from tools.mocha_scanner import MochaScanner, ScanBudgetReached, ScanError
 from tools.mocha_catalog_compare import compare_scan
+from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
 
 
 class FakeResponse:
@@ -410,13 +411,40 @@ def test_metadata_match_is_not_binary_approval(tmp_path):
     assert "binary contents are not cryptographically verified" in row["reason"]
 
 
-def test_review_workflow_silently_clears_exact_matches_without_claiming_binary_approval():
-    workflow = (Path(__file__).parents[1] / ".github/workflows/mocha-scan.yml").read_text(encoding="utf-8")
-    assert "status == 'matched' and not is_duplicate:" in workflow
-    assert "automatically_cleared += 1" in workflow
-    assert "binary_verified = row.get('binary_integrity_verified')" in workflow
-    assert "This is queue triage only: it does NOT" in workflow
-    assert "Possible duplicates and every non-matched status remain for review." in workflow
+def test_only_binary_verified_unique_matches_can_be_silently_cleared():
+    assert can_silently_clear_match("matched", False, True) is True
+    assert can_silently_clear_match("matched", False, False) is False
+    assert can_silently_clear_match("matched", True, True) is False
+    assert can_silently_clear_match("metadata_difference", False, True) is False
+    assert can_silently_clear_match("new", False, True) is False
+
+
+def test_near_duplicate_matches_with_different_optional_tags_stay_flagged():
+    rows = [
+        {
+            "file_id": "one", "status": "matched", "platform": "PS4", "category": "games",
+            "source_metadata": {
+                "title": "Example Game", "title_id": "CUSA12345", "region": "USA",
+                "version": "1.00", "size_bytes": 1234, "languages": ["EN"], "min_fw": "5.05",
+            },
+        },
+        {
+            "file_id": "two", "status": "matched", "platform": "PS4", "category": "games",
+            "source_metadata": {
+                "title": "Example Game", "title_id": "CUSA12345", "region": "USA",
+                "version": "1.00", "size_bytes": 1234, "languages": ["EN", "FR"], "min_fw": "6.72",
+            },
+        },
+        {
+            "file_id": "three", "status": "matched", "platform": "PS4", "category": "games",
+            "source_metadata": {
+                "title": "Different Game", "title_id": "CUSA99999", "region": "USA",
+                "version": "1.00", "size_bytes": 1234,
+            },
+        },
+    ]
+    assert near_duplicate_file_ids(rows) == {"one", "two"}
+
 
 def test_missing_comparison_critical_metadata_is_unverified(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
