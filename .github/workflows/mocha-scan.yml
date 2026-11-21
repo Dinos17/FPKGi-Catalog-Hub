@@ -414,11 +414,13 @@ jobs:
             fi
 
             if python - <<'PY'
+          import hashlib
           import json
           import os
           import re
           import subprocess
           import sys
+          import unicodedata
           from datetime import datetime
           from pathlib import Path
 
@@ -542,7 +544,217 @@ jobs:
           if inventory is not None:
               inventory_target = Path('reports/mocha-file-inventory.json')
               inventory_target.write_text(json.dumps(inventory, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+
+          # Publish only entries that genuinely require a human decision.
+          # Exact catalog matches are auto-cleared; prior owner rejections stay resolved.
+          review_queue = None
+          try:
+              raw_dir = Path(os.environ['RAW_REPORT_DIR'])
+              raw_scan = json.loads((raw_dir / 'mocha-scan-report.json').read_text(encoding='utf-8'))
+              raw_comparison = json.loads((raw_dir / 'mocha-comparison-report.json').read_text(encoding='utf-8'))
+              approved_paths = {
+                  'ps4/games': ('PS4', 'games'), 'ps4/dlc': ('PS4', 'dlc'),
+                  'ps5/games': ('PS5', 'games'), 'ps5/dlc': ('PS5', 'dlc'),
+              }
+              if (raw_scan.get('scanner') != 'mocha' or raw_scan.get('scan_complete') is not True
+                      or raw_comparison.get('comparison') != 'mocha_catalog'
+                      or raw_comparison.get('catalog_commit') != summary['catalog_commit']
+                      or raw_scan.get('scan_observed_at') != summary['scan_observed_at']):
+                  raise ValueError('raw scan/comparison snapshot does not match the published summary')
+
+              # Rejection records are already sanitized on akirabox-reports.
+              # Require the source file and validate it; never silently forget prior decisions.
+              rejection_path = Path('reports/akirabox-rejections.json')
+              rejection_report = json.loads(rejection_path.read_text(encoding='utf-8'))
+              if (not isinstance(rejection_report, dict) or rejection_report.get('schema_version') != 1
+                      or not isinstance(rejection_report.get('records'), list)):
+                  raise ValueError('saved rejection report has an unsupported format')
+
+              def normalize_rejection_name(value):
+                  if not isinstance(value, str) or not value.strip():
+                      raise ValueError('rejection record has no valid filename')
+                  normalized = unicodedata.normalize('NFKC', value).strip().casefold()
+                  return normalized[:-4] if normalized.endswith('.pkg') else normalized
+
+              rejected = {}
+              for record in rejection_report['records']:
+                  if not isinstance(record, dict):
+                      raise ValueError('saved rejection report contains a malformed record')
+                  if record.get('status') != 'manual_deletion_required':
+                      continue
+                  platform = record.get('platform')
+                  category = record.get('catalog_category')
+                  if platform not in {'PS4', 'PS5'} or category not in {'games', 'dlc'}:
+                      raise ValueError('saved rejection record has an invalid platform/category')
+                  try:
+                      rejected_at = datetime.fromisoformat(
+                          record['rejected_at'].replace('Z', '+00:00')
+                      )
+                  except (KeyError, AttributeError, TypeError, ValueError) as exc:
+                      raise ValueError('saved rejection record has an invalid rejection timestamp') from exc
+                  if rejected_at.tzinfo is None:
+                      raise ValueError('saved rejection timestamp has no timezone')
+                  key = (platform, category, normalize_rejection_name(record.get('name')))
+                  rejected.setdefault(key, []).append(rejected_at)
+
+              # Prior owner decisions are durable and scoped to one exact upload.
+              decisions_path = Path('reports/mocha-review-decisions.json')
+              if decisions_path.exists():
+                  decisions_report = json.loads(decisions_path.read_text(encoding='utf-8'))
+              else:
+                  decisions_report = {'schema_version': 1, 'records': []}
+              if (not isinstance(decisions_report, dict) or decisions_report.get('schema_version') != 1
+                      or not isinstance(decisions_report.get('records'), list)):
+                  raise ValueError('saved Mocha review decisions have an unsupported format')
+              resolved_decisions = set()
+              for decision in decisions_report['records']:
+                  if not isinstance(decision, dict) or decision.get('status') != 'resolved':
+                      raise ValueError('saved Mocha review decision is malformed')
+                  decision_key = decision.get('decision_key')
+                  if not isinstance(decision_key, str) or not re.fullmatch(r'[0-9a-f]{64}', decision_key):
+                      raise ValueError('saved Mocha review decision has an invalid identity key')
+                  if decision.get('action') not in {'keep', 'reject', 'resolve'}:
+                      raise ValueError('saved Mocha review decision has an invalid action')
+                  resolved_decisions.add(decision_key)
+
+              def stable_decision_key(platform, category, name, created_text):
+                  if not all(isinstance(value, str) and value.strip() for value in
+                             (platform, category, name, created_text)):
+                      return None
+                  try:
+                      uploaded = datetime.fromisoformat(created_text.replace('Z', '+00:00'))
+                  except ValueError:
+                      return None
+                  if uploaded.tzinfo is None:
+                      return None
+                  identity = chr(0).join((
+                      platform, category,
+                      unicodedata.normalize('NFKC', name).strip().casefold(),
+                      uploaded.astimezone(__import__('datetime').timezone.utc).isoformat(),
+                  ))
+                  return hashlib.sha256(identity.encode('utf-8')).hexdigest()
+
+              allowed_ids = set()
+              scan_files_by_id = {}
+              for item in raw_scan.get('files', []):
+                  if not isinstance(item, dict):
+                      raise ValueError('malformed scan file')
+                  folder = item.get('folder_path')
+                  classification = approved_paths.get(folder.strip('/').casefold()) if isinstance(folder, str) else None
+                  if classification and (item.get('platform'), item.get('catalog_category')) == classification:
+                      if item.get('id') is not None:
+                          file_id = str(item['id'])
+                          allowed_ids.add(file_id)
+                          scan_files_by_id[file_id] = item
+
+              comparison_rows = raw_comparison.get('results')
+              if not isinstance(comparison_rows, list):
+                  raise ValueError('comparison results are missing')
+              expected_ids = {
+                  str(item['id']) for item in raw_scan.get('files', [])
+                  if isinstance(item, dict) and item.get('id') is not None
+                  and item.get('extension') == 'pkg'
+                  and isinstance(item.get('folder_path'), str)
+                  and approved_paths.get(item['folder_path'].strip('/').casefold()) ==
+                      (item.get('platform'), item.get('catalog_category'))
+              }
+              result_ids = {
+                  str(row['file_id']) for row in comparison_rows
+                  if isinstance(row, dict) and row.get('file_id') is not None
+                  and str(row['file_id']) in allowed_ids
+              }
+              if result_ids != expected_ids:
+                  raise ValueError('comparison does not cover every approved package file')
+
+              duplicate_ids = set()
+              for group in raw_comparison.get('possible_duplicates', []):
+                  if not isinstance(group, dict) or not isinstance(group.get('file_ids'), list):
+                      raise ValueError('malformed possible-duplicate group')
+                  group_ids = {str(value) for value in group['file_ids']}
+                  if not group_ids.issubset(allowed_ids):
+                      raise ValueError('duplicate group contains an out-of-scope file')
+                  duplicate_ids.update(group_ids)
+
+              entries = []
+              auto_approved = 0
+              previously_rejected = 0
+              previously_decided = 0
+              source_fields = ('title', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size_bytes')
+              catalog_fields = ('name', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size')
+              for row in raw_comparison.get('results', []):
+                  if not isinstance(row, dict) or row.get('file_id') is None or str(row['file_id']) not in allowed_ids:
+                      continue
+                  status = row.get('status')
+                  if status not in {'matched', 'metadata_difference', 'unverified', 'new', 'ambiguous', 'unclassified'}:
+                      raise ValueError('unknown comparison status')
+                  file_id = str(row['file_id'])
+                  scan_item = scan_files_by_id[file_id]
+                  is_duplicate = file_id in duplicate_ids
+
+                  # Suppress only the same exact filename in the same category when
+                  # Mocha's upload timestamp proves it predates the recorded rejection.
+                  # A later re-upload with the same filename remains eligible for review.
+                  rejection_key = (
+                      row.get('platform'), row.get('category'),
+                      normalize_rejection_name(row.get('name')),
+                  )
+                  matching_rejections = rejected.get(rejection_key, [])
+                  created_text = scan_item.get('created_at')
+                  if matching_rejections and isinstance(created_text, str):
+                      try:
+                          created_at = datetime.fromisoformat(created_text.replace('Z', '+00:00'))
+                      except ValueError:
+                          created_at = None
+                      if created_at is not None and created_at.tzinfo is not None and any(
+                              created_at <= rejected_at for rejected_at in matching_rejections):
+                          previously_rejected += 1
+                          continue
+
+                  decision_key = stable_decision_key(
+                      row.get('platform'), row.get('category'), row.get('name'), created_text
+                  )
+                  if decision_key is not None and decision_key in resolved_decisions:
+                      previously_decided += 1
+                      continue
+
+                  if status == 'matched' and not is_duplicate:
+                      auto_approved += 1
+                      continue
+                  source_meta = row.get('source_metadata') if isinstance(row.get('source_metadata'), dict) else {}
+                  catalog_meta = row.get('catalog_metadata') if isinstance(row.get('catalog_metadata'), dict) else {}
+                  entries.append({
+                      'name': row.get('name') if isinstance(row.get('name'), str) else 'Unnamed file',
+                      'created_at': created_text if isinstance(created_text, str) else '',
+                      'decision_key': decision_key or '',
+                      'folder_path': row.get('folder_path') if isinstance(row.get('folder_path'), str) else '',
+                      'platform': row.get('platform') if isinstance(row.get('platform'), str) else '',
+                      'category': row.get('category') if isinstance(row.get('category'), str) else '',
+                      'status': 'possible_duplicate' if is_duplicate else status,
+                      'reason': row.get('reason') if isinstance(row.get('reason'), str) else 'Manual verification required',
+                      'metadata_differences': row.get('metadata_differences') if isinstance(row.get('metadata_differences'), list) else [],
+                      'unavailable_metadata': row.get('unavailable_metadata') if isinstance(row.get('unavailable_metadata'), list) else [],
+                      'source_metadata': {key: source_meta[key] for key in source_fields if key in source_meta},
+                      'catalog_metadata': {key: catalog_meta[key] for key in catalog_fields if key in catalog_meta},
+                  })
+              review_queue = {
+                  'schema_version': 1, 'scanner': 'mocha',
+                  'scan_observed_at': summary['scan_observed_at'],
+                  'catalog_commit': summary['catalog_commit'],
+                  'auto_approved_count': auto_approved,
+                  'previously_rejected_count': previously_rejected,
+                  'previously_decided_count': previously_decided,
+                  'pending_count': len(entries),
+                  'entries': entries,
+              }
+              Path('reports/mocha-review-queue.json').write_text(
+                  json.dumps(review_queue, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
+              )
+          except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
+              print('Human-review queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
+              review_queue = None
+
           print('Inventory publication: ' + ('published' if inventory is not None else 'unavailable; old inventory will be hidden by dashboard timestamp validation'))
+          print('Human-review queue: ' + ('published' if review_queue is not None else 'unavailable; dashboard must not treat it as empty'))
           PY
             then
               :
@@ -565,6 +777,7 @@ jobs:
               fi
             done
             if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
+            if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
               exit 0
