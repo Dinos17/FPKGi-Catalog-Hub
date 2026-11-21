@@ -7,9 +7,12 @@ on:
   issues:
     types: [opened]
 
+# Scans are queued independently from rejection issues. Each issue number gets
+# its own group, so a scan cannot replace a rejection and distinct rejections
+# cannot replace one another.
 concurrency:
-  group: akirabox-operations
-  cancel-in-progress: false
+  group: ${{ github.event_name == 'issues' && format('akirabox-rejection-{0}', github.event.issue.number) || 'akirabox-scan' }}
+  queue: max
 
 permissions:
   contents: read
@@ -20,12 +23,15 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     permissions:
-      contents: write
+      contents: read
+    outputs:
+      scan_outcome: ${{ steps.scan.outcome }}
     steps:
-      - name: Check out repository
+      - name: Check out repository without retaining credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: main
+          persist-credentials: false
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -38,13 +44,18 @@ jobs:
       - name: Run repository tests
         run: python -m pytest -q
 
+      # A source-level error still produces a useful partial report. Continue
+      # so that report is timestamped, compared, and published as incomplete.
       - name: Scan configured AkiraBox folders (read-only)
+        id: scan
+        continue-on-error: true
         run: python tools/akirabox_scanner.py --config config/akirabox_sources.json --output "$RUNNER_TEMP/akirabox-scan-report.json"
 
-      - name: Add scan generation timestamp
+      - name: Verify scan report exists and add generation timestamp
         env:
           SCAN_REPORT: ${{ runner.temp }}/akirabox-scan-report.json
         run: |
+          set -euo pipefail
           python - <<'PY'
           import json
           import os
@@ -53,32 +64,25 @@ jobs:
 
           path = Path(os.environ["SCAN_REPORT"])
           report = json.loads(path.read_text(encoding="utf-8"))
+          if not isinstance(report, dict) or report.get("scanner") != "akirabox":
+              raise SystemExit("Scanner did not produce a valid AkiraBox report.")
           report["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+          report["scan_complete"] = not bool(report.get("errors"))
           path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           PY
 
       - name: Compare scan with GitHub catalogs (read-only)
         run: python tools/akirabox_catalog_compare.py --scan-report "$RUNNER_TEMP/akirabox-scan-report.json" --catalog-root . --output "$RUNNER_TEMP/akirabox-comparison-report.json"
 
-      - name: Publish scan reports to the reports branch only
-        env:
-          REPORT_BRANCH: akirabox-reports
-        run: |
-          set -euo pipefail
-          publication_dir="$RUNNER_TEMP/akirabox-report-publication"
-          git fetch origin "$REPORT_BRANCH:refs/remotes/origin/$REPORT_BRANCH"
-          git worktree add --detach "$publication_dir" "origin/$REPORT_BRANCH"
-          mkdir -p "$publication_dir/reports"
-          cp "$RUNNER_TEMP/akirabox-scan-report.json" "$RUNNER_TEMP/akirabox-comparison-report.json" "$publication_dir/reports/"
-          git -C "$publication_dir" config user.name "github-actions[bot]"
-          git -C "$publication_dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "$publication_dir" add reports/akirabox-scan-report.json reports/akirabox-comparison-report.json
-          if git -C "$publication_dir" diff --cached --quiet; then
-            echo "Latest AkiraBox reports are already published."
-          else
-            git -C "$publication_dir" commit -m "Publish latest AkiraBox scan reports"
-            git -C "$publication_dir" push origin "HEAD:$REPORT_BRANCH"
-          fi
+      - name: Upload scan reports for isolated publication
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: akirabox-scan-reports
+          path: |
+            ${{ runner.temp }}/akirabox-scan-report.json
+            ${{ runner.temp }}/akirabox-comparison-report.json
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Display scan and comparison summary
         if: always()
@@ -93,6 +97,59 @@ jobs:
           done
           echo "Catalog files and AkiraBox files are not modified by this workflow." >> "$GITHUB_STEP_SUMMARY"
 
+  publish-scan-reports:
+    if: needs.scan.result == 'success'
+    needs: scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out reports branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: akirabox-reports
+          path: reports-branch
+          fetch-depth: 0
+
+      - name: Download scan reports
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: akirabox-scan-reports
+          path: ${{ runner.temp }}/akirabox-scan-reports
+
+      - name: Publish reports with bounded non-fast-forward retries
+        working-directory: reports-branch
+        env:
+          REPORT_BRANCH: akirabox-reports
+          REPORT_DIR: ${{ runner.temp }}/akirabox-scan-reports
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            git fetch origin "$REPORT_BRANCH"
+            git reset --hard FETCH_HEAD
+            mkdir -p reports
+            cp "$REPORT_DIR/akirabox-scan-report.json" "$REPORT_DIR/akirabox-comparison-report.json" reports/
+            git add reports/akirabox-scan-report.json reports/akirabox-comparison-report.json
+
+            if git diff --cached --quiet; then
+              echo "Latest AkiraBox reports are already published."
+              exit 0
+            fi
+
+            git commit -m "Publish latest AkiraBox scan reports"
+            if git push origin "HEAD:$REPORT_BRANCH"; then
+              exit 0
+            fi
+            echo "Reports branch advanced; retrying from its latest tip (attempt $attempt/3)." >&2
+          done
+
+          echo "Could not publish AkiraBox reports after 3 attempts." >&2
+          exit 1
+
   record-rejection:
     if: github.event_name == 'issues' && github.event.issue.user.login == 'Dinos17' && startsWith(github.event.issue.title, 'AkiraBox rejection:')
     runs-on: ubuntu-latest
@@ -106,20 +163,15 @@ jobs:
         with:
           ref: main
 
-      - name: Set up Python
-        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: "3.12"
-
-      - name: Prepare existing rejection records
+      - name: Prepare rejection publisher
         env:
           REPORT_BRANCH: akirabox-reports
           REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
         run: |
           set -euo pipefail
-          git fetch origin "$REPORT_BRANCH:refs/remotes/origin/$REPORT_BRANCH"
-          if git cat-file -e "origin/$REPORT_BRANCH:reports/akirabox-rejections.json" 2>/dev/null; then
-            git show "origin/$REPORT_BRANCH:reports/akirabox-rejections.json" > "$REPORT_PATH"
+          git fetch origin "$REPORT_BRANCH"
+          if git cat-file -e "FETCH_HEAD:reports/akirabox-rejections.json" 2>/dev/null; then
+            git show "FETCH_HEAD:reports/akirabox-rejections.json" > "$REPORT_PATH"
           fi
 
       - name: Validate and record the rejection
@@ -133,24 +185,47 @@ jobs:
             --report-path "$REPORT_PATH" \
             --expected-actor "Dinos17"
 
-      - name: Publish rejection record to reports branch
+      - name: Publish rejection record with bounded retries
         env:
           REPORT_BRANCH: akirabox-reports
           REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
         run: |
           set -euo pipefail
-          git switch --force-create "$REPORT_BRANCH" "origin/$REPORT_BRANCH"
-          mkdir -p reports
-          cp "$REPORT_PATH" reports/akirabox-rejections.json
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add reports/akirabox-rejections.json
-          if git diff --cached --quiet; then
-            echo "Rejection record was already published."
-          else
+
+          for attempt in 1 2 3; do
+            git fetch origin "$REPORT_BRANCH"
+            git reset --hard "FETCH_HEAD"
+            mkdir -p reports
+            if git cat-file -e "HEAD:reports/akirabox-rejections.json" 2>/dev/null; then
+              git show "HEAD:reports/akirabox-rejections.json" > "$REPORT_PATH.current"
+              cp "$REPORT_PATH.current" "$REPORT_PATH"
+            else
+              rm -f "$REPORT_PATH"
+            fi
+
+            python tools/akirabox_rejections.py \
+              --event-path "$GITHUB_EVENT_PATH" \
+              --report-path "$REPORT_PATH" \
+              --expected-actor "Dinos17"
+            cp "$REPORT_PATH" reports/akirabox-rejections.json
+            git add reports/akirabox-rejections.json
+
+            if git diff --cached --quiet; then
+              echo "Rejection record is already published."
+              exit 0
+            fi
+
             git commit -m "Record rejected AkiraBox upload"
-            git push origin "HEAD:$REPORT_BRANCH"
-          fi
+            if git push origin "HEAD:$REPORT_BRANCH"; then
+              exit 0
+            fi
+            echo "Reports branch advanced; retrying rejection publication (attempt $attempt/3)." >&2
+          done
+
+          echo "Could not publish rejection record after 3 attempts." >&2
+          exit 1
 
       - name: Confirm saved rejection on the issue
         env:
