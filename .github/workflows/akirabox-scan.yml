@@ -1,0 +1,143 @@
+name: AkiraBox Scan (Read-Only)
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 */6 * * *'
+
+concurrency:
+  group: akirabox-scan
+  queue: max
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    outputs:
+      scan_outcome: ${{ steps.scan.outcome }}
+    steps:
+      - name: Check out repository without retaining credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Install scanner and test dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
+
+      - name: Run repository tests
+        run: python -m pytest -q
+
+      - name: Scan configured AkiraBox folders (read-only)
+        id: scan
+        continue-on-error: true
+        run: python tools/akirabox_scanner.py --config config/akirabox_sources.json --output "$RUNNER_TEMP/akirabox-scan-report.json"
+
+      - name: Verify scan report exists and add generation timestamp
+        env:
+          SCAN_REPORT: ${{ runner.temp }}/akirabox-scan-report.json
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          path = Path(os.environ["SCAN_REPORT"])
+          report = json.loads(path.read_text(encoding="utf-8"))
+          if not isinstance(report, dict) or report.get("scanner") != "akirabox":
+              raise SystemExit("Scanner did not produce a valid AkiraBox report.")
+          report["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
+          report["scan_complete"] = not bool(report.get("errors"))
+          path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
+      - name: Compare scan with GitHub catalogs (read-only)
+        run: python tools/akirabox_catalog_compare.py --scan-report "$RUNNER_TEMP/akirabox-scan-report.json" --catalog-root . --output "$RUNNER_TEMP/akirabox-comparison-report.json"
+
+      - name: Upload scan reports for isolated publication
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: akirabox-scan-reports
+          path: |
+            ${{ runner.temp }}/akirabox-scan-report.json
+            ${{ runner.temp }}/akirabox-comparison-report.json
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Display scan and comparison summary
+        if: always()
+        run: |
+          for report in "$RUNNER_TEMP/akirabox-scan-report.json" "$RUNNER_TEMP/akirabox-comparison-report.json"; do
+            if [ -f "$report" ]; then
+              echo "## AkiraBox report: $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
+              echo >> "$GITHUB_STEP_SUMMARY"
+              cat "$report" | tee -a "$GITHUB_STEP_SUMMARY"
+              echo >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+          echo "Catalog files and AkiraBox files are not modified by this workflow." >> "$GITHUB_STEP_SUMMARY"
+
+  publish-scan-reports:
+    if: needs.scan.result == 'success'
+    needs: scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - name: Check out reports branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: akirabox-reports
+          path: reports-branch
+          fetch-depth: 0
+
+      - name: Download scan reports
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: akirabox-scan-reports
+          path: ${{ runner.temp }}/akirabox-scan-reports
+
+      - name: Publish reports with bounded non-fast-forward retries
+        working-directory: reports-branch
+        env:
+          REPORT_BRANCH: akirabox-reports
+          REPORT_DIR: ${{ runner.temp }}/akirabox-scan-reports
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          for attempt in 1 2 3; do
+            git fetch origin "$REPORT_BRANCH"
+            git reset --hard FETCH_HEAD
+            mkdir -p reports
+            cp "$REPORT_DIR/akirabox-scan-report.json" "$REPORT_DIR/akirabox-comparison-report.json" reports/
+            git add reports/akirabox-scan-report.json reports/akirabox-comparison-report.json
+
+            if git diff --cached --quiet; then
+              echo "Latest AkiraBox reports are already published."
+              exit 0
+            fi
+
+            git commit -m "Publish latest AkiraBox scan reports"
+            if git push origin "HEAD:$REPORT_BRANCH"; then
+              exit 0
+            fi
+            echo "Reports branch advanced; retrying from its latest tip (attempt $attempt/3)." >&2
+          done
+
+          echo "Could not publish AkiraBox reports after 3 attempts." >&2
+          exit 1
