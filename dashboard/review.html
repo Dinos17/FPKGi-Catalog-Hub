@@ -66,9 +66,9 @@ async function loadQueue(){
   if(!queueResponse.ok)throw Error("Review queue is unavailable (HTTP "+queueResponse.status+").");
   const summary=await summaryResponse.json(),queue=await queueResponse.json();
   if(!isRecord(summary)||summary.schema_version!==1||summary.scanner!=="mocha"||summary.scan_complete!==true)throw Error("Latest scan is incomplete or has an invalid format; no decisions can be made.");
-  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.entries)||!Number.isSafeInteger(queue.pending_count)||queue.pending_count!==queue.entries.length||!Number.isSafeInteger(queue.auto_approved_count))throw Error("Review queue has an invalid format.");
+  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.entries)||!Number.isSafeInteger(queue.pending_count)||queue.pending_count!==queue.entries.length||!Number.isSafeInteger(queue.auto_approved_count)||!Number.isSafeInteger(queue.previously_rejected_count)||queue.previously_rejected_count<0)throw Error("Review queue has an invalid format.");
   if(queue.scan_observed_at!==summary.scan_observed_at||queue.catalog_commit!==summary.catalog_commit)throw Error("Review queue does not match the latest scan. Waiting for matching publication.");
-  $("queueStats").innerHTML='<div class="stats"><div class="stat">Automatically cleared<strong>'+queue.auto_approved_count+'</strong></div><div class="stat">Needs human review<strong>'+queue.pending_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
+  $("queueStats").innerHTML='<div class="stats"><div class="stat">Automatically cleared<strong>'+queue.auto_approved_count+'</strong></div><div class="stat">Previously rejected (hidden)<strong>'+queue.previously_rejected_count+'</strong></div><div class="stat">Needs human review<strong>'+queue.pending_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
   $("reviewQueue").innerHTML=queue.entries.length?queue.entries.map(renderEntry).join(""):'<div class="empty">No entries need a human decision. All eligible entries were automatically cleared.</div>';
   $("sourceStatus").textContent="Review queue refreshed successfully.";
  }catch(error){
