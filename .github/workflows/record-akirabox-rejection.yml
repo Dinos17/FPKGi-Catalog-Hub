@@ -71,7 +71,6 @@ jobs:
                   safe_records.append(safe)
           path.write_text(json.dumps({"schema_version": 1, "records": safe_records}, indent=2, ensure_ascii=False) + chr(10), encoding="utf-8")
           PY
-          gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "This AkiraBox rejection was recorded. The original upload identifier and share URL have been removed from the issue body. The dashboard records the filename and rejection metadata only. Catalog references have not been verified; do not delete the upload based on this record."
 
       - name: Publish sanitized rejection record
         env:
@@ -97,3 +96,10 @@ jobs:
           done
           echo "Could not publish rejection records after 3 attempts." >&2
           exit 1
+
+      - name: Remove private upload payload from the public issue
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh issue edit "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "This AkiraBox rejection was recorded. The original upload identifier and share URL have been removed from the issue body. The dashboard records the filename and rejection metadata only. Catalog references have not been verified; do not delete the upload based on this record."
