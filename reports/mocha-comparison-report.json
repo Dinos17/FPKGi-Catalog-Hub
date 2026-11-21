@@ -3,15 +3,15 @@
   "read_only": true,
   "scan_complete": true,
   "snapshot_consistency": "not_guaranteed_by_api",
-  "catalog_commit": "f075a247373ecab7c312e2fdc89415289e2b2aba",
+  "catalog_commit": "e1d7b9ebb2058042f49daed4049a7b4bd7fe7e82",
   "catalog_write_performed": false,
   "mocha_files_deleted": false,
   "hotlink_creation_available": false,
   "automatic_duplicate_cleanup_enabled": false,
   "counts": {
-    "matched": 0,
+    "matched": 33,
     "metadata_difference": 2,
-    "unverified": 33,
+    "unverified": 0,
     "new": 1,
     "ambiguous": 0,
     "unclassified": 0,
@@ -20,7 +20,7 @@
   "possible_duplicates": [],
   "results": [
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "d5ac3913-802b-4d68-9803-8f5c07c7640e",
       "name": "DEAD RISING - [US] [EN] [1.00].pkg",
       "folder_path": "PS4/Games",
@@ -54,10 +54,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "275ced47-e1f6-49eb-9cbb-2646a433da5a",
       "name": "Death's Door - [US] [EN] [1.01].pkg",
       "folder_path": "PS4/Games",
@@ -91,10 +92,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "ee03801c-39e2-4198-805e-2d355416d744",
       "name": "Dead Rising 2 - [US] [EN] [1.02].pkg",
       "folder_path": "PS4/Games",
@@ -128,10 +130,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "9fe21b94-44e6-4734-96dc-7f9ced5943a2",
       "name": "Dead Rising 2 Off The Record - [US] [EN] [1.02].pkg",
       "folder_path": "PS4/Games",
@@ -165,10 +168,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "1b599ddb-ea73-4680-b89b-2f51fa900c4f",
       "name": "Deadpool - [US] [EN] [1.00].pkg",
       "folder_path": "PS4/Games",
@@ -202,10 +206,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "fa672bed-20ff-47e8-ad5b-6dd70f48db7b",
       "name": "Darksiders Genesis - [EU] [EN] [1.03].pkg",
       "folder_path": "PS4/Games",
@@ -239,10 +244,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "980d9000-e6ca-447a-834b-991fe53737e5",
       "name": "Dead Nation - [US] [EN] [1.03].pkg",
       "folder_path": "PS4/Games",
@@ -276,10 +282,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "a01e7e32-0c1e-4c8c-b86d-abdf9d3eb5dd",
       "name": "Deadlight - [EU] [EN] [1.02].pkg",
       "folder_path": "PS4/Games",
@@ -313,10 +320,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "4adc0462-f041-406e-98f7-b0a488b4cd27",
       "name": "DRAGON BALL XENOVERSE - [EU] [EN] [1.07].pkg",
       "folder_path": "PS4/Games",
@@ -350,10 +358,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "64ee80c4-e8d5-4f6a-a063-4313cf3c9462",
       "name": "DRAGON QUEST BUILDERS 2 - [US] [EN] [1.04].pkg",
       "folder_path": "PS4/Games",
@@ -387,10 +396,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "bc5b38bc-2f13-49ad-8863-1db53e5a20ee",
       "name": "DRAGON BALL FighterZ - [EU] [EN] [1.38].pkg",
       "folder_path": "PS4/Games",
@@ -424,10 +434,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "349dd16d-6435-4dc7-8fc6-a52335457330",
       "name": "DREDGE - [EU] [EN] [1.08].pkg",
       "folder_path": "PS4/Games",
@@ -461,10 +472,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "21626d29-275f-4a38-9636-e4aa21daef1c",
       "name": "DRAGON QUEST BUILDERS - [EU] [EN] [1.00].pkg",
       "folder_path": "PS4/Games",
@@ -498,10 +510,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "09307cb7-f7e1-4dc5-bd3b-41315e2f2ab0",
       "name": "Darksiders II - [EU] [EN] [1.02].pkg",
       "folder_path": "PS4/Games",
@@ -535,10 +548,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "85f4711e-8289-4369-91cc-c3291966a25c",
       "name": "Dead Island - [EU] [EN] [1.03].pkg",
       "folder_path": "PS4/Games",
@@ -572,10 +586,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "3f5b502a-dea5-46f7-a2b6-02c78a1dcfa8",
       "name": "DOOM (1993) - [EU] [EN] [1.09].pkg",
       "folder_path": "PS4/Games",
@@ -609,7 +624,8 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
       "status": "new",
@@ -634,10 +650,11 @@
       "catalog_metadata": null,
       "metadata_differences": [],
       "unavailable_metadata": [],
+      "binary_integrity_verified": false,
       "reason": "No unique catalog identity match"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "42cdaefd-4529-4534-b7b7-39424351fc1a",
       "name": "Dead Cells - [EU] [EN] [1.51].pkg",
       "folder_path": "PS4/Games",
@@ -671,10 +688,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "18db01aa-7bf2-43d5-9fe5-6487e98ab283",
       "name": "DAVE THE DIVER - [EU] [EN] [1.23].pkg",
       "folder_path": "PS4/Games",
@@ -708,10 +726,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "b27bca7f-809f-4785-9f67-aa2d19541919",
       "name": "Darkwood - [US] [EN] [1.06].pkg",
       "folder_path": "PS4/Games",
@@ -745,10 +764,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "cf5cbc6a-c64d-4318-8b76-dd8123d60a34",
       "name": "Day of the Tentacle - [EU] [EN] [1.03].pkg",
       "folder_path": "PS4/Games",
@@ -782,10 +802,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "8ac4b920-32a3-41d0-a35e-cb77f1d77f62",
       "name": "Dangerous Golf - [EU] [EN] [1.02].pkg",
       "folder_path": "PS4/Games",
@@ -819,10 +840,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "b66e57a6-8e4a-4270-85e0-67d41f9aaf04",
       "name": "Assetto Corsa Competizione - [EU] [EN] [1.12].pkg",
       "folder_path": "PS4/Games",
@@ -857,7 +879,8 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
       "status": "metadata_difference",
@@ -896,10 +919,11 @@
         "title_id",
         "min_fw"
       ],
+      "binary_integrity_verified": false,
       "reason": "Source metadata differs in: size_bytes"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "1c2e6aa7-4001-4a4d-9ea2-c1dd4a48ce3a",
       "name": "Dandara - [US] [EN] [1.17].pkg",
       "folder_path": "PS4/Games",
@@ -934,10 +958,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "6f9ae722-9884-4593-a381-1b9af6e161f0",
       "name": "Axiom Verge - [US] [EN] [1.07].pkg",
       "folder_path": "PS4/Games",
@@ -972,10 +997,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "707ea418-8d79-4ac3-88ac-446d4e6e8250",
       "name": "Assassin's Creed Chronicles Trilogy - [EU] [EN] [1.02].pkg",
       "folder_path": "PS4/Games",
@@ -1010,10 +1036,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "7d47d884-f2ba-4e63-b31b-68220894edb7",
       "name": "Axiom Verge 2 - [US] [EN] [1.03].pkg",
       "folder_path": "PS4/Games",
@@ -1048,10 +1075,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "330ecc5d-cf60-43d3-999d-d371876efab2",
       "name": "Atari Flashback Classics vol.3 - [US] [EN] [1.04].pkg",
       "folder_path": "PS4/Games",
@@ -1086,10 +1114,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "33e5181d-62be-46fe-9ac2-c5e38412349d",
       "name": "Atari Flashback Classics vol.2 - [EU] [EN] [1.00].pkg",
       "folder_path": "PS4/Games",
@@ -1124,10 +1153,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "f6f8b3bc-77de-4c95-b20d-e955893566e2",
       "name": "Atari Flashback Classics vol.1 - [EU] [EN] [1.01].pkg",
       "folder_path": "PS4/Games",
@@ -1162,10 +1192,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "c3e01874-4721-4d1d-a9ef-b6a00df721ed",
       "name": "Ashen - [US] [EN] [1.00].pkg",
       "folder_path": "PS4/Games",
@@ -1200,10 +1231,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "e88e57b1-e174-4fe1-9bdc-289a98890905",
       "name": "Ancestors The Humankind Odyssey - [EU] [EN] [1.01].pkg",
       "folder_path": "PS4/Games",
@@ -1238,10 +1270,11 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "651e7072-b52c-4467-9ce5-c5fd4140e64b",
       "name": "Another World - [EU] [EN] [1.00].pkg",
       "folder_path": "PS4/Games",
@@ -1275,10 +1308,11 @@
         "title_id",
         "min_fw"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
-      "status": "unverified",
+      "status": "matched",
       "file_id": "2c3c5427-3331-4eb5-acc2-a1a2511952e2",
       "name": "Amplitude - [US] [EN] [1.01].pkg",
       "folder_path": "PS4/Games",
@@ -1313,7 +1347,8 @@
         "min_fw",
         "languages"
       ],
-      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+      "binary_integrity_verified": false,
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
       "status": "metadata_difference",
@@ -1352,6 +1387,7 @@
         "region",
         "languages"
       ],
+      "binary_integrity_verified": false,
       "reason": "Source metadata differs in: version, size_bytes, min_fw"
     }
   ]
