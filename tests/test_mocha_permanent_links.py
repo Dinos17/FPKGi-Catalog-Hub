@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import json
 import os
+import stat
 from pathlib import Path
 
 import pytest
 import requests
 
+import tools.mocha_permanent_links as permanent_links
 from tools.mocha_permanent_links import (
     MAX_RESPONSE_BYTES,
     MochaPermanentLinkClient,
@@ -176,3 +178,59 @@ def test_private_json_writer_sets_owner_only_permissions(tmp_path: Path):
     _write_private_json(path, {"token": "secret"})
     assert json.loads(path.read_text()) == {"token": "secret"}
     assert os.stat(path).st_mode & 0o777 == 0o600
+
+
+
+def test_absolute_deadline_interrupts_blocking_post(monkeypatch):
+    import time
+
+    monkeypatch.setattr(permanent_links, "OVERALL_TIMEOUT_SECONDS", 0.05)
+
+    class SlowSession(FakeSession):
+        def post(self, url, **kwargs):
+            time.sleep(0.2)
+            return success("file-1")
+
+    client = MochaPermanentLinkClient("test-key", SlowSession([]))
+    with pytest.raises(PermanentLinkError, match="overall deadline") as error:
+        client.create("file-1")
+    assert error.value.outcome_unknown is True
+
+
+def test_invalid_file_ids_are_rejected_instead_of_silently_dropped():
+    client = MochaPermanentLinkClient("test-key", FakeSession([]))
+    with pytest.raises(PermanentLinkError, match="Every Mocha file ID"):
+        create_links(["file-1", "  "], client)
+
+
+def test_bare_state_filename_does_not_change_working_directory_permissions(
+    tmp_path: Path, monkeypatch
+):
+    monkeypatch.chdir(tmp_path)
+    monkeypatch.setenv("MOCHA_API_KEY", "test-key")
+
+    class FakeClient:
+        def __init__(self, api_key):
+            assert api_key == "test-key"
+
+        def create(self, file_id):
+            return {
+                "file_id": file_id,
+                "token": "private-token",
+                "is_permanent_link": True,
+                "creation_confirmed": True,
+            }
+
+    monkeypatch.setattr(permanent_links, "MochaPermanentLinkClient", FakeClient)
+    before = stat.S_IMODE(tmp_path.stat().st_mode)
+
+    result = permanent_links.main([
+        "--file-id", "file-1",
+        "--output", "report.json",
+        "--state", "state.json",
+    ])
+
+    assert result == 0
+    assert stat.S_IMODE(tmp_path.stat().st_mode) == before
+    assert stat.S_IMODE(Path("state.json").stat().st_mode) == 0o600
+    assert stat.S_IMODE(Path("report.json").stat().st_mode) == 0o600
