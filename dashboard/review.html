@@ -12,150 +12,71 @@ header{display:flex;justify-content:space-between;align-items:flex-start;gap:18p
 button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}
 .notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
 .stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
-.item{margin:8px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}.title{font-weight:700;overflow-wrap:anywhere}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;color:var(--red)}
+.item{margin:10px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}.title{font-weight:700;overflow-wrap:anywhere}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;color:var(--red)}
 .side{padding:12px 13px}dl{display:grid;grid-template-columns:minmax(110px,.36fr) 1fr;gap:5px 8px;margin:0;font-size:.9rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.reason{padding:10px 13px;color:var(--muted);border-top:1px solid var(--line);font-size:.88rem}
-.empty{padding:38px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}
-@media(max-width:650px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 13px}.compare>section{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px}.compare h3{margin:0 0 8px;font-size:.95rem}.empty{padding:38px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}
+@media(max-width:650px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}.compare{grid-template-columns:1fr}}
 </style>
 </head>
 <body><main>
-<header><div><h1>FPKGi Catalog Review</h1><p>Mocha scan overview, uploaded-file inventory and manually recorded AkiraBox rejections.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays uploaded file names and basic metadata (folder, size, upload date and platform); it does not publish file IDs, API paths, download links or checksums. Possible duplicates are review candidates, never automatic cleanup. Current and previous inventory versions may remain accessible in this public repository's Git history. AkiraBox rejection records remain separate and require manual deletion.</div>
-<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading reports…</span><button id="refresh" type="button">Refresh reports</button></section>
-<h2 class="section-title">Latest Mocha scan overview</h2>
-<div id="mochaOverview"><div class="empty">Loading the latest sanitized Mocha summary…</div></div>
-<h2 class="section-title">Uploaded Mocha files</h2>
-<div id="mochaInventory"><div class="empty">Loading uploaded file inventory…</div></div>
-<h2 class="section-title">Rejected AkiraBox uploads — manual deletion required</h2>
-<div id="rejected"><div class="empty">Loading saved rejection records…</div></div>
+<header><div><h1>FPKGi Catalog Review</h1><p>Only unresolved Mocha entries that require a human decision.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<div class="notice">Exact catalog matches are automatically cleared and do not appear below. Possible duplicates, metadata differences, uncertain identities and new candidates remain here for human review. This page does not expose Mocha file IDs, share URLs, API paths or download links. No catalog entry or uploaded file is changed by opening this page.</div>
+<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
+<div id="queueStats"></div>
+<h2 class="section-title">Needs your decision</h2>
+<div id="reviewQueue"><div class="empty">Loading unresolved entries…</div></div>
 <div id="warning"></div>
 </main>
 <script>
 const $=id=>document.getElementById(id);
 const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/akirabox-reports/reports/";
-let rejections=[],rejectionStatus="loading",catalogUrls=null,catalogStatus="loading",inventoryPage=0;
 async function boundedFetch(url){
- const controller=new AbortController();
- const timeout=setTimeout(()=>controller.abort(),15000);
- try{return await fetch(url,{cache:"no-store",signal:controller.signal});}
- finally{clearTimeout(timeout);}
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+ try{return await fetch(url,{cache:"no-store",signal:controller.signal});}finally{clearTimeout(timeout);}
 }
 const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const pretty=value=>String(value).replace(/_/g," ").replace(/\b\w/g,char=>char.toUpperCase());
 const isRecord=value=>value!==null&&typeof value==="object"&&!Array.isArray(value);
-function safeLink(value){
- const text=String(value??"");
+function metadataHtml(data,fields){
+ if(!isRecord(data)||!Object.keys(data).length)return '<p class="muted">No catalog candidate available.</p>';
+ return '<dl>'+fields.filter(([key])=>Object.prototype.hasOwnProperty.call(data,key)).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(Array.isArray(data[key])?data[key].join(", "):data[key])+'</dd>').join("")+'</dl>';
+}
+function renderEntry(item){
+ const status=pretty(item.status||"needs review");
+ const sourceFields=[["title","Title"],["title_id","Title ID"],["region","Region"],["languages","Languages"],["version","Version"],["min_fw","Minimum firmware"],["size_bytes","Size (bytes)"]];
+ const catalogFields=[["name","Catalog title"],["title_id","Title ID"],["region","Region"],["languages","Languages"],["version","Version"],["min_fw","Minimum firmware"],["size","Catalog size"]];
+ const differences=Array.isArray(item.metadata_differences)?item.metadata_differences:[];
+ const unavailable=Array.isArray(item.unavailable_metadata)?item.unavailable_metadata:[];
+ return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed file")+'</div><span class="pill">'+esc(status)+'</span></div>'+
+ '<div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform||"Unknown")+'</dd><dt>Category</dt><dd>'+esc(item.category||"Unknown")+'</dd><dt>Folder</dt><dd>'+esc(item.folder_path||"Unknown")+'</dd></dl></div>'+
+ '<div class="compare"><section><h3>Mocha upload metadata</h3>'+metadataHtml(item.source_metadata,sourceFields)+'</section><section><h3>Catalog metadata</h3>'+metadataHtml(item.catalog_metadata,catalogFields)+'</section></div>'+
+ '<div class="reason"><strong>Why this needs review:</strong> '+esc(item.reason||"Manual verification required")+
+ (differences.length?'<br><strong>Differences:</strong> '+esc(differences.join(", ")):"")+
+ (unavailable.length?'<br><strong>Unavailable metadata:</strong> '+esc(unavailable.join(", ")):"")+'</div></article>';
+}
+async function loadQueue(){
+ const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading the latest scan and review queue…";
+ $("reviewQueue").innerHTML='<div class="empty">Loading unresolved entries…</div>';$("queueStats").innerHTML="";$("warning").innerHTML="";
  try{
-  const url=new URL(text);
-  if(url.protocol==="https:")return '<a href="'+esc(url.href)+'" target="_blank" rel="noopener noreferrer">'+esc(text)+'</a>';
- }catch{}
- return esc(text);
-}
-function numeric(value){return Number.isSafeInteger(value)&&value>=0?value:"Not available";}
-function akiraboxFileId(value){
- let parsed;
- try{parsed=new URL(value);}catch{return null;}
- if(!["akirabox.to","akirabox.com"].includes(parsed.hostname.toLowerCase()))return null;
- const rawParts=parsed.pathname.split("/").filter(Boolean);
- if(rawParts.length!==2)return null;
- let parts;
- try{parts=rawParts.map(part=>decodeURIComponent(part));}
- catch{throw Error("An AkiraBox catalog URL has malformed path encoding; deletion conflicts cannot be verified.");}
- if(parts[1]!=="file")return null;
- if(!parts[0]||parts[0].includes("/"))throw Error("An AkiraBox catalog URL has an invalid encoded file ID; deletion conflicts cannot be verified.");
- return parts[0];
-}
-async function loadMochaSummary(){
- const root=$("mochaOverview");
- root.innerHTML='<div class="empty">Loading the latest sanitized Mocha summary…</div>';
- try{
-  const response=await boundedFetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now());
-  if(!response.ok)throw Error("Mocha summary unavailable (HTTP "+response.status+").");
-  const data=await response.json();
-  if(!isRecord(data)||data.schema_version!==1||data.scanner!=="mocha"||typeof data.scan_complete!=="boolean"||!Number.isSafeInteger(data.file_count)||data.file_count<0||typeof data.details_published!=="boolean"||!isRecord(data.counts)||!isRecord(data.permissions))throw Error("Mocha summary has an invalid format.");
-  const cards=[["Scan status",data.scan_complete?"Complete":"Incomplete"],["Folders",numeric(data.folder_count)],["Files",numeric(data.file_count)],["Listing pages",numeric(data.listing_page_count)],["Possible duplicate groups",numeric(data.possible_duplicate_groups)]];
-  const countLabels={matched:"Matched",metadata_difference:"Metadata differences",unverified:"Unverified",new:"New candidates",ambiguous:"Ambiguous",unclassified:"Unclassified",possible_duplicate:"Possible duplicate groups"};
-  const countRows=Object.entries(countLabels).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(numeric(data.counts[key]))+'</dd>').join("");
-  const permissionRows=["can_use_api","can_create_hotlinks","profile_can_use_api","profile_can_create_hotlinks"].map(key=>{const value=data.permissions[key];return '<dt>'+esc(pretty(key))+'</dt><dd>'+esc(typeof value==="boolean"?value:"Not reported")+'</dd>';}).join("");
-  const cardsHtml=cards.map(([label,value])=>'<div class="stat">'+esc(label)+'<strong>'+esc(value)+'</strong></div>').join("");
-  root.innerHTML='<div class="stats">'+cardsHtml+'</div><article class="item"><div class="item-head"><strong>Sanitized scan details</strong><span class="pill">'+(data.scan_complete?"COMPLETE":"INCOMPLETE")+'</span></div><div class="side"><h3>Catalog comparison</h3><dl>'+countRows+'</dl><h3>Mocha account capabilities</h3><dl>'+permissionRows+'</dl></div><div class="reason">Generated: '+esc(data.generated_at||"Unknown")+' · Catalog commit: '+esc(data.catalog_commit||"Unknown")+' · Snapshot consistency: '+esc(data.snapshot_consistency||"Unknown")+'<br>Automatic cleanup: disabled. Detailed inventory published: '+esc(data.details_published===true?"yes":"no")+'. Inventory is metadata-only.</div></article>';
- }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+' The last successful summary may not be available yet.</div>';return false;}
-}
-function formatBytes(value){
- if(!Number.isSafeInteger(value)||value<0)return "Unknown";
- if(value<1024*1024)return (value/1024).toFixed(1)+" KB";
- if(value<1024*1024*1024)return (value/(1024*1024)).toFixed(2)+" MB";
- return (value/(1024*1024*1024)).toFixed(2)+" GB";
-}
-async function loadMochaInventory(){
- const root=$("mochaInventory");
- try{
-  const [summaryResponse,response]=await Promise.all([
+  const [summaryResponse,queueResponse]=await Promise.all([
    boundedFetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now()),
-   boundedFetch(REPORT_BASE+"mocha-file-inventory.json?v="+Date.now())
+   boundedFetch(REPORT_BASE+"mocha-review-queue.json?v="+Date.now())
   ]);
-  if(!summaryResponse.ok)throw Error("Latest scan summary unavailable; inventory cannot be matched safely.");
-  if(!response.ok)throw Error("Inventory unavailable for the latest scan.");
-  const summary=await summaryResponse.json(),data=await response.json();
-  if(!isRecord(summary)||summary.schema_version!==1||summary.scanner!=="mocha"||typeof summary.scan_observed_at!=="string")throw Error("Latest scan summary has an invalid format.");
-  if(!isRecord(data)||data.schema_version!==1||data.scanner!=="mocha"||!Array.isArray(data.files)||!Number.isSafeInteger(data.file_count)||data.file_count<0||data.file_count!==data.files.length)throw Error("Inventory has an invalid format.");
-  if(data.scan_observed_at!==summary.scan_observed_at||data.file_count!==summary.file_count)throw Error("Inventory belongs to a different scan. Waiting for the matching inventory publication.");
-  for(const file of data.files){
-   if(!isRecord(file)||typeof file.name!=="string"||!file.name||typeof file.folder_path!=="string")throw Error("Inventory contains an invalid file entry.");
-   if(file.size_bytes!==null&&(!Number.isSafeInteger(file.size_bytes)||file.size_bytes<0))throw Error("Inventory contains an invalid file size.");
-   for(const key of ["created_at","platform","catalog_category","extension"]){if(file[key]!==null&&typeof file[key]!=="string")throw Error("Inventory contains invalid "+key+" metadata.");}
-  }
-  const pageSize=50,totalPages=Math.max(1,Math.ceil(data.files.length/pageSize));
-  inventoryPage=Math.min(inventoryPage,totalPages-1);
-  const sorted=data.files.slice().sort((a,b)=>a.name.localeCompare(b.name));
-  const visible=sorted.slice(inventoryPage*pageSize,(inventoryPage+1)*pageSize);
-  const rows=visible.map(file=>"<tr><td>"+esc(file.name)+"</td><td>"+esc(file.folder_path===""?"Root":file.folder_path)+"</td><td>"+esc(formatBytes(file.size_bytes))+"</td><td>"+esc(file.created_at||"Unknown")+"</td><td>"+esc(file.platform||"Unknown")+"</td></tr>").join("");
-  root.innerHTML='<div class="muted">Files: '+esc(data.file_count)+' · Scan observed: '+esc(data.scan_observed_at)+'</div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Filename</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Folder</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Size</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Uploaded</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Platform</th></tr></thead><tbody>'+rows+'</tbody></table></div><div class="toolbar"><span class="muted">Page '+(inventoryPage+1)+' of '+totalPages+'</span><button id="inventoryPrev" type="button" '+(inventoryPage===0?"disabled":"")+'>Previous</button><button id="inventoryNext" type="button" '+(inventoryPage>=totalPages-1?"disabled":"")+'>Next</button></div>';
-  const prev=$("inventoryPrev"),next=$("inventoryNext");
-  if(prev)prev.addEventListener("click",()=>{inventoryPage=Math.max(0,inventoryPage-1);loadMochaInventory();});
-  if(next)next.addEventListener("click",()=>{inventoryPage=Math.min(totalPages-1,inventoryPage+1);loadMochaInventory();});
- }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';return false;}
+  if(!summaryResponse.ok)throw Error("Latest Mocha scan summary is unavailable (HTTP "+summaryResponse.status+").");
+  if(!queueResponse.ok)throw Error("Review queue is unavailable (HTTP "+queueResponse.status+").");
+  const summary=await summaryResponse.json(),queue=await queueResponse.json();
+  if(!isRecord(summary)||summary.schema_version!==1||summary.scanner!=="mocha"||summary.scan_complete!==true)throw Error("Latest scan is incomplete or has an invalid format; no decisions can be made.");
+  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.entries)||!Number.isSafeInteger(queue.pending_count)||queue.pending_count!==queue.entries.length||!Number.isSafeInteger(queue.auto_approved_count))throw Error("Review queue has an invalid format.");
+  if(queue.scan_observed_at!==summary.scan_observed_at||queue.catalog_commit!==summary.catalog_commit)throw Error("Review queue does not match the latest scan. Waiting for matching publication.");
+  $("queueStats").innerHTML='<div class="stats"><div class="stat">Automatically cleared<strong>'+queue.auto_approved_count+'</strong></div><div class="stat">Needs human review<strong>'+queue.pending_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
+  $("reviewQueue").innerHTML=queue.entries.length?queue.entries.map(renderEntry).join(""):'<div class="empty">No entries need a human decision. All eligible entries were automatically cleared.</div>';
+  $("sourceStatus").textContent="Review queue refreshed successfully.";
+ }catch(error){
+  $("reviewQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';
+  $("sourceStatus").textContent="Review queue unavailable; no automatic approval status can be confirmed.";
+ }finally{button.disabled=false;}
 }
-async function fetchRejections(){
- const response=await boundedFetch(REPORT_BASE+"akirabox-rejections.json?v="+Date.now());
- if(response.status===404)throw Error("Rejection report has not been published; rejection status is unavailable.");
- if(!response.ok)throw Error("Rejection records could not be loaded (HTTP "+response.status+").");
- const data=await response.json();
- if(!isRecord(data)||data.schema_version!==1||!Array.isArray(data.records))throw Error("Rejection report has an invalid format.");
- const safeKeys=["name","platform","catalog_category","scan_generated_at","rejected_at","status"];
- return data.records.filter(item=>isRecord(item)&&typeof item.name==="string"&&item.name.trim())
-  .map(item=>Object.fromEntries(safeKeys.filter(key=>typeof item[key]==="string").map(key=>[key,item[key]])));
-}
-function renderRejected(){
- const root=$("rejected");
- if(rejectionStatus==="loading"){root.innerHTML='<div class="empty">Loading saved rejection records…</div>';return;}
- if(rejectionStatus!=="available"){root.innerHTML='<div class="notice">Rejection status is unavailable. Do not delete any AkiraBox files based on this page.</div>';return;}
- if(!rejections.length){root.innerHTML='<div class="empty">No rejected uploads are recorded.</div>';return;}
- root.innerHTML=rejections.slice().sort((a,b)=>String(b.rejected_at||"").localeCompare(String(a.rejected_at||""))).map(item=>{
-  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed upload")+'</div><span class="pill">REJECTED — MANUAL REVIEW</span></div><div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform||"Unknown")+'</dd><dt>Category</dt><dd>'+esc(item.catalog_category||"Unknown")+'</dd><dt>Rejected at</dt><dd>'+esc(item.rejected_at||"—")+'</dd></dl></div><div class="reason"><strong>CATALOG REFERENCE NOT VERIFIED — DO NOT DELETE.</strong> This public report intentionally contains no AkiraBox file ID, share URL or issue link. Verify the catalog through an authorized private process before considering deletion.</div></article>';
- }).join("");
-}
-async function loadReports(){
- const button=$("refresh");button.disabled=true;
- $("sourceStatus").textContent="Loading Mocha summary, file inventory and sanitized rejection records…";
- rejectionStatus="loading";catalogStatus="loading";catalogUrls=null;renderRejected();
- const [mochaResult,inventoryResult,rejectionResult]=await Promise.allSettled([loadMochaSummary(),loadMochaInventory(),fetchRejections()]);
- if(rejectionResult.status==="fulfilled"){rejections=rejectionResult.value;rejectionStatus="available";}else{rejections=[];rejectionStatus="unavailable";}
- catalogUrls=null;catalogStatus="unavailable";
- renderRejected();
- const warnings=[];
- if(rejectionStatus!=="available")warnings.push("Rejection status could not be verified. Do not delete any upload based on this dashboard.");
- if(catalogStatus!=="available"&&rejections.length)warnings.push("Catalog references are not verified by this public dashboard. Do not delete rejected uploads based on these records.");
- const mochaOk=mochaResult.status==="fulfilled"&&mochaResult.value!==false;
- const inventoryOk=inventoryResult.status==="fulfilled"&&inventoryResult.value!==false;
- if(!mochaOk)warnings.push("Mocha summary could not be refreshed successfully.");
- if(!inventoryOk)warnings.push("Mocha inventory could not be refreshed successfully.");
- $("warning").innerHTML=warnings.map(message=>'<div class="notice">'+esc(message)+'</div>').join("");
- $("sourceStatus").textContent=warnings.length?"Some dashboard data is unavailable; review warnings below.":"Dashboard data refreshed successfully.";
- button.disabled=false;
-}
-$("refresh").addEventListener("click",loadReports);
-loadReports();
+$("refresh").addEventListener("click",loadQueue);loadQueue();
 </script>
 </body>
 </html>
