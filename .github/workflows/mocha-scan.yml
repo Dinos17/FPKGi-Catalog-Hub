@@ -401,6 +401,7 @@ jobs:
           SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
           INVENTORY_JSON: ${{ runner.temp }}/mocha-inventory/mocha-public-inventory.json
           RAW_REPORT_DIR: ${{ runner.temp }}/mocha-scan-reports
+          SOURCE_ROOT: ${{ github.workspace }}/source
           PYTHONPATH: ${{ github.workspace }}/source
         run: |
           set -euo pipefail
@@ -431,6 +432,8 @@ jobs:
           from datetime import datetime
           from pathlib import Path
 
+          # Prefer trusted helpers from the workflow commit over files in reports-branch.
+          sys.path.insert(0, os.environ["SOURCE_ROOT"])
           from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
 
           summary = json.loads(os.environ["SUMMARY_JSON"])
