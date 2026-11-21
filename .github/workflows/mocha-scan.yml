@@ -678,6 +678,7 @@ jobs:
               entries = []
               auto_approved = 0
               previously_rejected = 0
+              previously_decided = 0
               source_fields = ('title', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size_bytes')
               catalog_fields = ('name', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size')
               for row in raw_comparison.get('results', []):
@@ -713,7 +714,7 @@ jobs:
                       row.get('platform'), row.get('category'), row.get('name'), created_text
                   )
                   if decision_key is not None and decision_key in resolved_decisions:
-                      previously_rejected += 1
+                      previously_decided += 1
                       continue
 
                   if status == 'matched' and not is_duplicate:
@@ -741,6 +742,7 @@ jobs:
                   'catalog_commit': summary['catalog_commit'],
                   'auto_approved_count': auto_approved,
                   'previously_rejected_count': previously_rejected,
+                  'previously_decided_count': previously_decided,
                   'pending_count': len(entries),
                   'entries': entries,
               }
