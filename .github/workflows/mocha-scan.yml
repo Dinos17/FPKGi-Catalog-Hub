@@ -216,8 +216,8 @@ jobs:
           comparison["results"] = public_rows
           comparison["possible_duplicates"] = duplicates
           comparison["counts"] = counts
-          scan_path.write_text(json.dumps(scan, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
-          comparison_path.write_text(json.dumps(comparison, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+          scan_path.write_text(json.dumps(scan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          comparison_path.write_text(json.dumps(comparison, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           PY
 
       - name: Upload raw Mocha scan reports
