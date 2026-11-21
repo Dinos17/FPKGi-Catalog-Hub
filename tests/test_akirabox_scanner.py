@@ -32,8 +32,10 @@ def flight_html(folder, items, total, page=1, per_page=20):
 
 
 class FakeResponse:
-    def __init__(self, text):
+    def __init__(self, text="", status_code=200, headers=None):
         self.text = text
+        self.status_code = status_code
+        self.headers = headers or {}
 
     def raise_for_status(self):
         return None
@@ -44,10 +46,14 @@ class FakeSession:
         self.pages = pages
         self.headers = {}
 
-    def get(self, url, timeout):
+    def get(self, url, timeout, allow_redirects=True):
+        assert allow_redirects is False, "Automatic redirects must remain disabled"
         if url not in self.pages:
             raise AssertionError(f"Unexpected URL requested: {url}")
-        return FakeResponse(self.pages[url])
+        response = self.pages[url]
+        if isinstance(response, FakeResponse):
+            return response
+        return FakeResponse(response)
 
 
 def test_scans_nested_public_folders_and_extracts_file_metadata():
@@ -316,3 +322,46 @@ def test_platform_source_rejects_invalid_platform():
     assert result.files == []
     assert len(result.errors) == 1
     assert "PS4" in result.errors[0]["error"]
+
+
+
+def test_follows_redirects_only_within_allowlisted_https_hosts():
+    root = "https://akirabox.to/ROOT123/folder"
+    destination = "https://akirabox.com/ROOT123/folder"
+    pages = {
+        root: FakeResponse(status_code=302, headers={"Location": destination}),
+        destination: flight_html(
+            {"id": "ROOT123", "name": "Homebrew", "isPrivate": False},
+            [], total=0,
+        ),
+    }
+    result = akirabox_scanner.AkiraBoxScanner(session=FakeSession(pages)).scan([
+        {"label": "Homebrew", "category": "homebrew", "url": root}
+    ])
+    assert result.errors == []
+    assert len(result.folders) == 1
+
+
+def test_rejects_redirects_to_non_allowlisted_hosts():
+    root = "https://akirabox.to/ROOT123/folder"
+    pages = {
+        root: FakeResponse(status_code=302, headers={"Location": "http://127.0.0.1/latest"}),
+    }
+    result = akirabox_scanner.AkiraBoxScanner(session=FakeSession(pages)).scan([
+        {"label": "Homebrew", "category": "homebrew", "url": root}
+    ])
+    assert result.files == []
+    assert len(result.errors) == 1
+    assert "non-allowlisted" in result.errors[0]["error"]
+
+
+def test_rejects_redirects_to_unapproved_host_even_when_https():
+    root = "https://akirabox.to/ROOT123/folder"
+    pages = {
+        root: FakeResponse(status_code=302, headers={"Location": "https://example.com/internal"}),
+    }
+    result = akirabox_scanner.AkiraBoxScanner(session=FakeSession(pages)).scan([
+        {"label": "Homebrew", "category": "homebrew", "url": root}
+    ])
+    assert len(result.errors) == 1
+    assert "non-allowlisted" in result.errors[0]["error"]
