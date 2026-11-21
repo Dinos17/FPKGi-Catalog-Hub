@@ -1,0 +1,114 @@
+name: Record Mocha Review Decision
+
+on:
+  issues:
+    types: [opened]
+
+concurrency:
+  group: mocha-review-decision-${{ github.event.issue.number }}
+  queue: max
+
+permissions:
+  contents: read
+
+jobs:
+  record-decision:
+    if: github.event.issue.user.login == 'Dinos17' && startsWith(github.event.issue.title, 'FPKGi review decision:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      issues: write
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Validate and record decision
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+          REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json
+          REPORT_BRANCH: akirabox-reports
+        run: |
+          set -euo pipefail
+          git fetch origin "$REPORT_BRANCH"
+          if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
+            git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$REPORT_PATH"
+          else
+            printf '%s\\n' '{"schema_version":1,"records":[]}' > "$REPORT_PATH"
+          fi
+          python - <<'PY'
+          import hashlib, json, os, re
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
+          issue = event.get("issue", {})
+          body = issue.get("body") or ""
+          match = re.search(r"<!-- FPKGI_REVIEW_DECISION\\s*(\\{.*?\\})\\s*-->", body, re.S)
+          if not match:
+              raise SystemExit("Missing structured review decision payload.")
+          payload = json.loads(match.group(1))
+          if payload.get("schema_version") != 1:
+              raise SystemExit("Unsupported decision schema.")
+          action = payload.get("action")
+          if action not in {"keep", "reject", "resolve"}:
+              raise SystemExit("Unsupported decision action.")
+          name, platform, category, created = (payload.get(k) for k in ("name","platform","category","created_at"))
+          if not all(isinstance(v, str) and v.strip() for v in (name, platform, category, created)):
+              raise SystemExit("Decision identity is incomplete.")
+          if platform not in {"PS4","PS5"} or category not in {"games","dlc"}:
+              raise SystemExit("Decision platform/category is outside the supported scope.")
+          try:
+              uploaded = datetime.fromisoformat(created.replace("Z","+00:00"))
+          except ValueError as exc:
+              raise SystemExit("Invalid upload timestamp.") from exc
+          if uploaded.tzinfo is None:
+              raise SystemExit("Upload timestamp must include a timezone.")
+          key_material = "\\0".join((platform, category, name.casefold(), uploaded.astimezone(timezone.utc).isoformat()))
+          decision_key = hashlib.sha256(key_material.encode("utf-8")).hexdigest()
+          path = Path(os.environ["REPORT_PATH"])
+          report = json.loads(path.read_text(encoding="utf-8"))
+          if report.get("schema_version") != 1 or not isinstance(report.get("records"), list):
+              raise SystemExit("Existing decision report is malformed.")
+          records = [r for r in report["records"] if isinstance(r, dict) and r.get("decision_key") != decision_key]
+          records.append({
+              "decision_key": decision_key,
+              "name": name,
+              "platform": platform,
+              "category": category,
+              "created_at": uploaded.astimezone(timezone.utc).isoformat().replace("+00:00","Z"),
+              "action": action,
+              "decided_at": datetime.now(timezone.utc).isoformat().replace("+00:00","Z"),
+              "issue_number": issue.get("number"),
+              "status": "resolved"
+          })
+          path.write_text(json.dumps({"schema_version":1,"records":records},indent=2,ensure_ascii=False)+"\\n",encoding="utf-8")
+          PY
+
+      - name: Publish decision record
+        env:
+          REPORT_BRANCH: akirabox-reports
+          REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          for attempt in 1 2 3; do
+            git fetch origin "$REPORT_BRANCH"
+            git reset --hard FETCH_HEAD
+            mkdir -p reports
+            cp "$REPORT_PATH" reports/mocha-review-decisions.json
+            git add reports/mocha-review-decisions.json
+            if git diff --cached --quiet; then exit 0; fi
+            git commit -m "Record Mocha review decision"
+            if git push origin "HEAD:$REPORT_BRANCH"; then exit 0; fi
+          done
+          echo "Could not publish review decision after 3 attempts." >&2
+          exit 1
