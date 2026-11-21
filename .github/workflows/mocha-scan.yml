@@ -697,7 +697,7 @@ jobs:
                   'entries': entries,
               }
               Path('reports/mocha-review-queue.json').write_text(
-                  json.dumps(review_queue, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8'
+                  json.dumps(review_queue, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
               )
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
               print('Human-review queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
