@@ -6,8 +6,8 @@ on:
     - cron: '0 */6 * * *'
 
 concurrency:
-  group: mocha-catalog-scan-${{ github.run_id }}
-  cancel-in-progress: false
+  group: mocha-catalog-scan
+  queue: max
 
 permissions:
   contents: read
@@ -72,6 +72,16 @@ jobs:
           MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
         run: |
           "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
+
+      - name: Upload Mocha inventory artifact (public repository)
+        id: inventory_upload
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: mocha-file-inventory
+          path: ${{ runner.temp }}/mocha-scan-report.json
+          if-no-files-found: error
+          retention-days: 1
 
       - name: Compare against catalogs from the same commit
         run: |
@@ -158,12 +168,24 @@ jobs:
               f"- **Catalog commit:** {summary['catalog_commit']}",
               f"- **Possible duplicate groups:** {summary['possible_duplicate_groups']}",
               "- **Automatic cleanup:** disabled",
-              "- **Detailed inventory publication:** disabled; only aggregate counts are published",
+              "- **Dashboard inventory publication:** disabled; only aggregate counts are published (a separate one-day Actions artifact contains the detailed inventory)",
           ]
           for key, value in permissions.items():
               lines.append(f"- **{key.replace('_', ' ').title()}:** {value}")
           Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
+
+      - name: Report inventory artifact upload status
+        if: always()
+        env:
+          ARTIFACT_UPLOAD_OUTCOME: ${{ steps.inventory_upload.outcome }}
+        run: |
+          if [ "$ARTIFACT_UPLOAD_OUTCOME" = "success" ]; then
+            echo "- **Inventory artifact upload:** succeeded (1-day retention; publicly accessible)" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "::warning::Mocha inventory artifact upload failed; catalog comparison and dashboard publication will continue."
+            echo "- **Inventory artifact upload:** FAILED; catalog comparison and dashboard publication continued" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   publish-dashboard-summary:
     if: needs.scan.result == 'success' && github.ref == 'refs/heads/main'
