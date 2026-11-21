@@ -414,6 +414,7 @@ jobs:
             fi
 
             if python - <<'PY'
+          import hashlib
           import json
           import os
           import re
@@ -596,6 +597,43 @@ jobs:
                   key = (platform, category, normalize_rejection_name(record.get('name')))
                   rejected.setdefault(key, []).append(rejected_at)
 
+              # Prior owner decisions are durable and scoped to one exact upload.
+              decisions_path = Path('reports/mocha-review-decisions.json')
+              if decisions_path.exists():
+                  decisions_report = json.loads(decisions_path.read_text(encoding='utf-8'))
+              else:
+                  decisions_report = {'schema_version': 1, 'records': []}
+              if (not isinstance(decisions_report, dict) or decisions_report.get('schema_version') != 1
+                      or not isinstance(decisions_report.get('records'), list)):
+                  raise ValueError('saved Mocha review decisions have an unsupported format')
+              resolved_decisions = set()
+              for decision in decisions_report['records']:
+                  if not isinstance(decision, dict) or decision.get('status') != 'resolved':
+                      raise ValueError('saved Mocha review decision is malformed')
+                  decision_key = decision.get('decision_key')
+                  if not isinstance(decision_key, str) or not re.fullmatch(r'[0-9a-f]{64}', decision_key):
+                      raise ValueError('saved Mocha review decision has an invalid identity key')
+                  if decision.get('action') not in {'keep', 'reject', 'resolve'}:
+                      raise ValueError('saved Mocha review decision has an invalid action')
+                  resolved_decisions.add(decision_key)
+
+              def stable_decision_key(platform, category, name, created_text):
+                  if not all(isinstance(value, str) and value.strip() for value in
+                             (platform, category, name, created_text)):
+                      return None
+                  try:
+                      uploaded = datetime.fromisoformat(created_text.replace('Z', '+00:00'))
+                  except ValueError:
+                      return None
+                  if uploaded.tzinfo is None:
+                      return None
+                  identity = [
+                      platform, category,
+                      unicodedata.normalize('NFKC', name).strip().casefold(),
+                      uploaded.astimezone(__import__('datetime').timezone.utc).isoformat(),
+                  ]
+                  return hashlib.sha256(json.dumps(identity, ensure_ascii=False, separators=(',', ':')).encode('utf-8')).hexdigest()
+
               allowed_ids = set()
               scan_files_by_id = {}
               for item in raw_scan.get('files', []):
@@ -671,6 +709,13 @@ jobs:
                           previously_rejected += 1
                           continue
 
+                  decision_key = stable_decision_key(
+                      row.get('platform'), row.get('category'), row.get('name'), created_text
+                  )
+                  if decision_key is not None and decision_key in resolved_decisions:
+                      previously_rejected += 1
+                      continue
+
                   if status == 'matched' and not is_duplicate:
                       auto_approved += 1
                       continue
@@ -678,6 +723,8 @@ jobs:
                   catalog_meta = row.get('catalog_metadata') if isinstance(row.get('catalog_metadata'), dict) else {}
                   entries.append({
                       'name': row.get('name') if isinstance(row.get('name'), str) else 'Unnamed file',
+                      'created_at': created_text if isinstance(created_text, str) else '',
+                      'decision_key': decision_key or '',
                       'folder_path': row.get('folder_path') if isinstance(row.get('folder_path'), str) else '',
                       'platform': row.get('platform') if isinstance(row.get('platform'), str) else '',
                       'category': row.get('category') if isinstance(row.get('category'), str) else '',
