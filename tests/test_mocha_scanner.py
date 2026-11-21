@@ -304,6 +304,30 @@ def test_metadata_differences_include_firmware_and_languages(tmp_path):
     assert set(report["results"][0]["metadata_differences"]) == {"min_fw", "languages"}
 
 
+def test_missing_optional_mocha_metadata_does_not_block_strong_exact_match(tmp_path):
+    # Mocha omits title ID and minimum firmware. A unique exact title candidate
+    # with matching region, version, and exact package size is still verifiable.
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/example.pkg": {
+            "name": "Example Game", "title_id": "CUSA12345",
+            "region": "USA", "version": "01.00", "size": 1234, "min_fw": "9.00",
+        },
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "mocha-no-optional-fields",
+        "name": "Example_Game_v1.00_[US]_[EN].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+
+    row = report["results"][0]
+    assert row["status"] == "matched"
+    assert set(row["unavailable_metadata"]) == {"title_id", "min_fw", "languages"}
+    assert "optional metadata unavailable" in row["reason"]
+
+
 def test_missing_comparison_critical_metadata_is_unverified(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
         "https://archive.org/example.pkg": {
