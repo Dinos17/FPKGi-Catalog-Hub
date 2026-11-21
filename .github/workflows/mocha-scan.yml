@@ -740,10 +740,12 @@ jobs:
                   if type(binary_verified) is not bool:
                       raise ValueError('comparison row has no valid binary-integrity verification state')
 
-                  # A metadata match alone is not sufficient: only a trusted
-                  # binary-integrity verification can clear an upload from review.
-                  # Current Mocha listings do not provide that verification.
-                  if can_silently_clear_match(status, is_duplicate, binary_verified):
+                  # Metadata matching is not binary verification. Also, Mocha
+                  # does not guarantee a stable paginated snapshot, so uniqueness
+                  # cannot currently be established well enough to auto-clear.
+                  if can_silently_clear_match(
+                          status, is_duplicate, binary_verified, summary["snapshot_consistency"]
+                  ):
                       automatically_cleared += 1
                       continue
                   source_meta = row.get('source_metadata') if isinstance(row.get('source_metadata'), dict) else {}
