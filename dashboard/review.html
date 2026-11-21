@@ -10,6 +10,7 @@
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:22px}h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.04em;margin:0}p,.muted{color:var(--muted);margin:6px 0}a{color:var(--blue)}
 .toolbar,.notice,.item{background:var(--panel);border:1px solid var(--line);border-radius:14px}.toolbar{padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0}
 button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}
+.actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 13px 13px}.actions a{display:inline-block;text-decoration:none;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 12px;border-radius:9px;font-size:.9rem}.actions a:hover{border-color:var(--blue)}.actions a.reject{color:var(--red)}.actions a.resolve{color:var(--green)}
 .notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
 .stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
 .item{margin:10px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}.title{font-weight:700;overflow-wrap:anywhere}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;color:var(--red)}
@@ -19,8 +20,8 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 </style>
 </head>
 <body><main>
-<header><div><h1>FPKGi Catalog Review</h1><p>Only unresolved Mocha entries that require a human decision.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Exact catalog matches are automatically cleared and do not appear below. Possible duplicates, metadata differences, uncertain identities and new candidates remain here for human review. This page does not expose Mocha file IDs, share URLs, API paths or download links. No catalog entry or uploaded file is changed by opening this page.</div>
+<header><div><h1>FPKGi Catalog Review</h1><p>Only unresolved Mocha entries that require a human decision. Decisions are recorded through your authenticated GitHub account.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<div class="notice">Exact catalog matches are automatically cleared and do not appear below. Possible duplicates, metadata differences, uncertain identities and new candidates remain here for human review. Use Keep, Reject or Resolve to submit a decision through GitHub. Decisions are recorded by a repository workflow and suppress only that exact upload. This page does not expose Mocha file IDs, share URLs, API paths or download links. Decisions do not modify catalog entries or delete uploaded files.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
 <div id="queueStats"></div>
 <h2 class="section-title">Needs your decision</h2>
@@ -41,6 +42,13 @@ function metadataHtml(data,fields){
  if(!isRecord(data)||!Object.keys(data).length)return '<p class="muted">No catalog candidate available.</p>';
  return '<dl>'+fields.filter(([key])=>Object.prototype.hasOwnProperty.call(data,key)).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(Array.isArray(data[key])?data[key].join(", "):data[key])+'</dd>').join("")+'</dl>';
 }
+function decisionUrl(item,action){
+ if(!item.created_at||!item.name||!item.platform||!item.category)return null;
+ const payload={schema_version:1,action,name:item.name,platform:item.platform,category:item.category,created_at:item.created_at};
+ const body="Please record this Mocha review decision.\\n\\n<!-- FPKGI_REVIEW_DECISION\\n"+JSON.stringify(payload)+"\\n-->";
+ const title="FPKGi review decision: "+action.toUpperCase()+" — "+item.name;
+ return "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new?"+new URLSearchParams({title,body}).toString();
+}
 function renderEntry(item){
  const status=pretty(item.status||"needs review");
  const sourceFields=[["title","Title"],["title_id","Title ID"],["region","Region"],["languages","Languages"],["version","Version"],["min_fw","Minimum firmware"],["size_bytes","Size (bytes)"]];
@@ -52,7 +60,12 @@ function renderEntry(item){
  '<div class="compare"><section><h3>Mocha upload metadata</h3>'+metadataHtml(item.source_metadata,sourceFields)+'</section><section><h3>Catalog metadata</h3>'+metadataHtml(item.catalog_metadata,catalogFields)+'</section></div>'+
  '<div class="reason"><strong>Why this needs review:</strong> '+esc(item.reason||"Manual verification required")+
  (differences.length?'<br><strong>Differences:</strong> '+esc(differences.join(", ")):"")+
- (unavailable.length?'<br><strong>Unavailable metadata:</strong> '+esc(unavailable.join(", ")):"")+'</div></article>';
+ (unavailable.length?'<br><strong>Unavailable metadata:</strong> '+esc(unavailable.join(", ")):"")+'</div>'+
+ '<div class="actions">'+
+ (decisionUrl(item,"keep")?'<a href="'+esc(decisionUrl(item,"keep"))+'" target="_blank" rel="noopener">Keep</a>':'')+
+ (decisionUrl(item,"reject")?'<a class="reject" href="'+esc(decisionUrl(item,"reject"))+'" target="_blank" rel="noopener">Reject</a>':'')+
+ (decisionUrl(item,"resolve")?'<a class="resolve" href="'+esc(decisionUrl(item,"resolve"))+'" target="_blank" rel="noopener">Resolve</a>':'')+
+ '</div></article>';
 }
 async function loadQueue(){
  const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading the latest scan and review queue…";
