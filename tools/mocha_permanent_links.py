@@ -11,10 +11,14 @@ import argparse
 import fcntl
 import json
 import os
+import signal
+import stat
 import sys
+import threading
 import tempfile
 import time
 from pathlib import Path
+from contextlib import contextmanager
 from typing import Any
 
 import requests
@@ -35,6 +39,61 @@ class PermanentLinkError(RuntimeError):
         self.outcome_unknown = outcome_unknown
 
 
+@contextmanager
+def _absolute_request_deadline(seconds: int):
+    """Interrupt blocking socket operations when the total request budget expires."""
+    if threading.current_thread() is not threading.main_thread():
+        raise PermanentLinkError(
+            "Mocha requests must run on the main thread to enforce the absolute deadline"
+        )
+    if not hasattr(signal, "setitimer"):
+        raise PermanentLinkError("This platform cannot enforce an absolute request deadline")
+
+    started = time.monotonic()
+    previous_handler = signal.getsignal(signal.SIGALRM)
+    previous_delay, previous_interval = signal.getitimer(signal.ITIMER_REAL)
+
+    def expire(_signum, _frame):
+        raise PermanentLinkError(
+            "Mocha request exceeded the overall deadline",
+            outcome_unknown=True,
+        )
+
+    signal.signal(signal.SIGALRM, expire)
+    signal.setitimer(signal.ITIMER_REAL, seconds)
+    try:
+        yield
+    finally:
+        signal.setitimer(signal.ITIMER_REAL, 0)
+        signal.signal(signal.SIGALRM, previous_handler)
+        if previous_delay > 0:
+            remaining = max(0.0, previous_delay - (time.monotonic() - started))
+            signal.setitimer(signal.ITIMER_REAL, remaining, previous_interval)
+
+
+def _fsync_directory(path: Path) -> None:
+    flags = os.O_RDONLY | getattr(os, "O_DIRECTORY", 0)
+    directory_fd = os.open(path, flags)
+    try:
+        os.fsync(directory_fd)
+    finally:
+        os.close(directory_fd)
+
+
+def _mkdir_parents_durable(path: Path) -> None:
+    missing = []
+    cursor = path
+    while not cursor.exists():
+        missing.append(cursor)
+        parent = cursor.parent
+        if parent == cursor:
+            break
+        cursor = parent
+    path.mkdir(parents=True, exist_ok=True, mode=0o700)
+    for directory in reversed(missing):
+        _fsync_directory(directory.parent)
+
+
 class MochaPermanentLinkClient:
     def __init__(self, api_key: str, session: requests.Session | None = None):
         if not api_key:
@@ -50,52 +109,42 @@ class MochaPermanentLinkClient:
     def create(self, file_id: str) -> dict[str, Any]:
         if not isinstance(file_id, str) or not file_id.strip():
             raise PermanentLinkError("Invalid Mocha file ID")
-        deadline = time.monotonic() + OVERALL_TIMEOUT_SECONDS
         response = None
         try:
-            response = self.session.post(
-                API_URL,
-                json={"fileId": file_id},
-                timeout=(CONNECT_TIMEOUT_SECONDS, READ_TIMEOUT_SECONDS),
-                allow_redirects=False,
-                stream=True,
-            )
-            if 300 <= response.status_code < 400:
-                raise PermanentLinkError(
-                    "Mocha permanent-link API unexpectedly redirected; refusing "
-                    "to forward credentials"
+            with _absolute_request_deadline(OVERALL_TIMEOUT_SECONDS):
+                response = self.session.post(
+                    API_URL,
+                    json={"fileId": file_id},
+                    timeout=(CONNECT_TIMEOUT_SECONDS, READ_TIMEOUT_SECONDS),
+                    allow_redirects=False,
+                    stream=True,
                 )
-            if response.status_code >= 500:
-                raise PermanentLinkError(
-                    f"Mocha permanent-link API returned HTTP {response.status_code}; "
-                    "creation outcome is treated as unknown",
-                    outcome_unknown=True,
-                )
-            if response.status_code >= 400:
-                raise PermanentLinkError(
-                    f"Mocha permanent-link API returned HTTP {response.status_code}"
-                )
+                if 300 <= response.status_code < 400:
+                    raise PermanentLinkError(
+                        "Mocha permanent-link API unexpectedly redirected; refusing "
+                        "to forward credentials"
+                    )
+                if response.status_code >= 500:
+                    raise PermanentLinkError(
+                        f"Mocha permanent-link API returned HTTP {response.status_code}; "
+                        "creation outcome is treated as unknown",
+                        outcome_unknown=True,
+                    )
+                if response.status_code >= 400:
+                    raise PermanentLinkError(
+                        f"Mocha permanent-link API returned HTTP {response.status_code}"
+                    )
 
-            body = bytearray()
-            for chunk in response.iter_content(chunk_size=4096):
-                if time.monotonic() > deadline:
-                    raise PermanentLinkError(
-                        "Mocha response exceeded the overall deadline",
-                        outcome_unknown=True,
-                    )
-                if not chunk:
-                    continue
-                body.extend(chunk)
-                if len(body) > MAX_RESPONSE_BYTES:
-                    raise PermanentLinkError(
-                        f"Mocha response exceeded {MAX_RESPONSE_BYTES} bytes",
-                        outcome_unknown=True,
-                    )
-            if time.monotonic() > deadline:
-                raise PermanentLinkError(
-                    "Mocha response exceeded the overall deadline",
-                    outcome_unknown=True,
-                )
+                body = bytearray()
+                for chunk in response.iter_content(chunk_size=4096):
+                    if not chunk:
+                        continue
+                    body.extend(chunk)
+                    if len(body) > MAX_RESPONSE_BYTES:
+                        raise PermanentLinkError(
+                            f"Mocha response exceeded {MAX_RESPONSE_BYTES} bytes",
+                            outcome_unknown=True,
+                        )
         except PermanentLinkError:
             raise
         except requests.RequestException as exc:
@@ -155,7 +204,7 @@ class MochaPermanentLinkClient:
 
 
 def _write_private_json(path: Path, data: dict[str, Any]) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    _mkdir_parents_durable(path.parent)
     fd, temporary_name = tempfile.mkstemp(prefix=f".{path.name}.", dir=path.parent)
     try:
         os.fchmod(fd, 0o600)
@@ -166,6 +215,7 @@ def _write_private_json(path: Path, data: dict[str, Any]) -> None:
             os.fsync(handle.fileno())
         os.replace(temporary_name, path)
         os.chmod(path, 0o600)
+        _fsync_directory(path.parent)
     except Exception:
         try:
             os.unlink(temporary_name)
@@ -181,10 +231,9 @@ def create_links(
     persist_state=None,
     persist_report=None,
 ) -> dict[str, Any]:
-    normalized = list(dict.fromkeys(
-        value.strip() for value in file_ids
-        if isinstance(value, str) and value.strip()
-    ))
+    if any(not isinstance(value, str) or not value.strip() for value in file_ids):
+        raise PermanentLinkError("Every Mocha file ID must be a non-empty string")
+    normalized = list(dict.fromkeys(value.strip() for value in file_ids))
     if not normalized:
         raise PermanentLinkError("No Mocha file IDs were supplied")
     if len(normalized) > MAX_FILE_IDS:
@@ -266,11 +315,15 @@ def main(argv: list[str] | None = None) -> int:
         print("ERROR: MOCHA_API_KEY is not configured", file=sys.stderr)
         return 2
 
-    args.output.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    args.state.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
-    os.chmod(args.state.parent, 0o700)
+    _mkdir_parents_durable(args.output.parent)
+    _mkdir_parents_durable(args.state.parent)
     lock_path = args.state.with_name(args.state.name + ".lock")
-    lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR, 0o600)
+    nofollow = getattr(os, "O_NOFOLLOW", 0)
+    lock_fd = os.open(lock_path, os.O_CREAT | os.O_RDWR | nofollow, 0o600)
+    if not os.path.isfile(lock_path) or not stat.S_ISREG(os.fstat(lock_fd).st_mode):
+        os.close(lock_fd)
+        print("ERROR: lock path is not a regular file", file=sys.stderr)
+        return 2
     os.fchmod(lock_fd, 0o600)
     try:
         fcntl.flock(lock_fd, fcntl.LOCK_EX)
@@ -282,6 +335,9 @@ def main(argv: list[str] | None = None) -> int:
         os.fchmod(output_fd, 0o600)
         os.close(output_fd)
 
+        if args.state.is_symlink():
+            print("ERROR: refusing a symlink state file", file=sys.stderr)
+            return 2
         if args.state.exists():
             try:
                 state = json.loads(args.state.read_text(encoding="utf-8"))
