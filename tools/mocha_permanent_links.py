@@ -216,13 +216,18 @@ def create_links(
                 "is_permanent_link": True,
                 "creation_confirmed": True,
             })
-        elif isinstance(previous, dict) and previous.get("status") == "unknown":
+        elif isinstance(previous, dict) and previous.get("status") in ("unknown", "in_progress"):
             results.append({
                 "status": "unknown",
                 "file_id": file_id,
-                "error": "Previous attempt had an ambiguous outcome; refusing automatic retry",
+                "error": "Previous attempt was interrupted or had an ambiguous outcome; refusing automatic retry",
             })
         else:
+            # Persist intent before the non-idempotent POST. If the process dies
+            # mid-request, a later run treats this ID as ambiguous and will not retry.
+            state["files"][file_id] = {"status": "in_progress"}
+            if persist_state:
+                persist_state(state)
             try:
                 created = client.create(file_id)
                 state["files"][file_id] = {
