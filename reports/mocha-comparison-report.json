@@ -1,0 +1,1358 @@
+{
+  "comparison": "mocha_catalog",
+  "read_only": true,
+  "scan_complete": true,
+  "snapshot_consistency": "not_guaranteed_by_api",
+  "catalog_commit": "909607fdffa8ed09a8ae0aaf79582349a51079bd",
+  "catalog_write_performed": false,
+  "mocha_files_deleted": false,
+  "hotlink_creation_available": false,
+  "automatic_duplicate_cleanup_enabled": false,
+  "counts": {
+    "matched": 0,
+    "metadata_difference": 2,
+    "unverified": 33,
+    "new": 1,
+    "ambiguous": 0,
+    "unclassified": 0,
+    "possible_duplicate": 0
+  },
+  "possible_duplicates": [],
+  "results": [
+    {
+      "status": "unverified",
+      "file_id": "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+      "name": "DEAD RISING - [US] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dead rising",
+        "region": "USA",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 8049262592,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DEAD%20RISING%20-%20[US]%20[EN]%20[1.00].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA04513",
+        "region": "USA",
+        "name": "DEAD RISING",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 8049262592,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04513.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "275ced47-e1f6-49eb-9cbb-2646a433da5a",
+      "name": "Death's Door - [US] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "death s door",
+        "region": "USA",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 1044905984,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Death's%20Door%20-%20[US]%20[EN]%20[1.01].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA30423",
+        "region": "USA",
+        "name": "Death's Door",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 1044905984,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30423.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "ee03801c-39e2-4198-805e-2d355416d744",
+      "name": "Dead Rising 2 - [US] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dead rising 2",
+        "region": "USA",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 8105361408,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Rising%202%20-%20[US]%20[EN]%20[1.02].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA04313",
+        "region": "USA",
+        "name": "Dead Rising 2",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 8105361408,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04313.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "9fe21b94-44e6-4734-96dc-7f9ced5943a2",
+      "name": "Dead Rising 2 Off The Record - [US] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dead rising 2 off the record",
+        "region": "USA",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 6202327040,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Rising%202%20Off%20The%20Record%20-%20[US]%20[EN]%20[1.02].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA04273",
+        "region": "USA",
+        "name": "Dead Rising 2: Off The Record",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 6202327040,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04273.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "1b599ddb-ea73-4680-b89b-2f51fa900c4f",
+      "name": "Deadpool - [US] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "deadpool",
+        "region": "USA",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 5497815040,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Deadpool%20-%20[US]%20[EN]%20[1.00].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA03245",
+        "region": "USA",
+        "name": "Deadpool",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 5497815040,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03245.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "fa672bed-20ff-47e8-ad5b-6dd70f48db7b",
+      "name": "Darksiders Genesis - [EU] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "darksiders genesis",
+        "region": "EUR",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 9010937856,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Darksiders%20Genesis%20-%20[EU]%20[EN]%20[1.03].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA12979",
+        "region": "EUR",
+        "name": "Darksiders Genesis",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 9010937856,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA12979.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "980d9000-e6ca-447a-834b-991fe53737e5",
+      "name": "Dead Nation - [US] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dead nation",
+        "region": "USA",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2337538048,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Nation%20-%20[US]%20[EN]%20[1.03].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA00236",
+        "region": "USA",
+        "name": "Dead Nation™",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 2337538048,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00236.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "a01e7e32-0c1e-4c8c-b86d-abdf9d3eb5dd",
+      "name": "Deadlight - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "deadlight",
+        "region": "EUR",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 3727294464,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Deadlight%20-%20[EU]%20[EN]%20[1.02].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA04434",
+        "region": "EUR",
+        "name": "Deadlight",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 3727294464,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04434.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "4adc0462-f041-406e-98f7-b0a488b4cd27",
+      "name": "DRAGON BALL XENOVERSE - [EU] [EN] [1.07].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dragon ball xenoverse",
+        "region": "EUR",
+        "version": "1.07",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 10231742464,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20BALL%20XENOVERSE%20-%20[EU]%20[EN]%20[1.07].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA01186",
+        "region": "EUR",
+        "name": "DRAGON BALL XENOVERSE",
+        "version": "01.07",
+        "release": "11-15-2013",
+        "size": 10231742464,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01186.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "64ee80c4-e8d5-4f6a-a063-4313cf3c9462",
+      "name": "DRAGON QUEST BUILDERS 2 - [US] [EN] [1.04].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dragon quest builders 2",
+        "region": "USA",
+        "version": "1.04",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2453209088,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20QUEST%20BUILDERS%202%20-%20[US]%20[EN]%20[1.04].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA11230",
+        "region": "USA",
+        "name": "DRAGON QUEST BUILDERS 2",
+        "version": "01.04",
+        "release": "11-15-2013",
+        "size": 2453209088,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA11230.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "bc5b38bc-2f13-49ad-8863-1db53e5a20ee",
+      "name": "DRAGON BALL FighterZ - [EU] [EN] [1.38].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dragon ball fighterz",
+        "region": "EUR",
+        "version": "1.38",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 5764087808,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20BALL%20FighterZ%20-%20[EU]%20[EN]%20[1.38].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA08992",
+        "region": "EUR",
+        "name": "DRAGON BALL FighterZ",
+        "version": "01.38",
+        "release": "11-15-2013",
+        "size": 5764087808,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA08992.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "349dd16d-6435-4dc7-8fc6-a52335457330",
+      "name": "DREDGE - [EU] [EN] [1.08].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dredge",
+        "region": "EUR",
+        "version": "1.08",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 869859328,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DREDGE%20-%20[EU]%20[EN]%20[1.08].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA35761",
+        "region": "EUR",
+        "name": "DREDGE",
+        "version": "01.08",
+        "release": "11-15-2013",
+        "size": 869859328,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA35761.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "21626d29-275f-4a38-9636-e4aa21daef1c",
+      "name": "DRAGON QUEST BUILDERS - [EU] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dragon quest builders",
+        "region": "EUR",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 907280384,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20QUEST%20BUILDERS%20-%20[EU]%20[EN]%20[1.00].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA05170",
+        "region": "EUR",
+        "name": "DRAGON QUEST BUILDERS",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 907280384,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05170.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "09307cb7-f7e1-4dc5-bd3b-41315e2f2ab0",
+      "name": "Darksiders II - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "darksiders ii",
+        "region": "EUR",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 13750566912,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Darksiders%20II%20-%20[EU]%20[EN]%20[1.02].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA02419",
+        "region": "EUR",
+        "name": "Darksiders II",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 13750566912,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02419.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "85f4711e-8289-4369-91cc-c3291966a25c",
+      "name": "Dead Island - [EU] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dead island",
+        "region": "EUR",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 4719443968,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20-%20[EU]%20[EN]%20[1.03].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA03291",
+        "region": "EUR",
+        "name": "Dead Island",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 4719443968,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03291.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "3f5b502a-dea5-46f7-a2b6-02c78a1dcfa8",
+      "name": "DOOM (1993) - [EU] [EN] [1.09].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "doom 1993",
+        "region": "EUR",
+        "version": "1.09",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 385875968,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DOOM%20(1993)%20-%20[EU]%20[EN]%20[1.09].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA15565",
+        "region": "EUR",
+        "name": "DOOM (1993)",
+        "version": "01.09",
+        "release": "11-15-2013",
+        "size": 385875968,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA15565.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "new",
+      "file_id": "a05b8e0d-f23a-46c5-8594-829ae209f4f1",
+      "name": "DOOM 2 (1994) - [US] [EN] [1.08].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "doom",
+        "region": "USA",
+        "version": "1.08",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 508952576,
+        "sha256": null
+      },
+      "catalog_url": null,
+      "catalog_metadata": null,
+      "metadata_differences": [],
+      "unavailable_metadata": [],
+      "reason": "No unique catalog identity match"
+    },
+    {
+      "status": "unverified",
+      "file_id": "42cdaefd-4529-4534-b7b7-39424351fc1a",
+      "name": "Dead Cells - [EU] [EN] [1.51].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dead cells",
+        "region": "EUR",
+        "version": "1.51",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2461270016,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Cells%20-%20[EU]%20[EN]%20[1.51].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA10484",
+        "region": "EUR",
+        "name": "Dead Cells",
+        "version": "01.51",
+        "release": "11-15-2013",
+        "size": 2461270016,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10484.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "18db01aa-7bf2-43d5-9fe5-6487e98ab283",
+      "name": "DAVE THE DIVER - [EU] [EN] [1.23].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dave the diver",
+        "region": "EUR",
+        "version": "1.23",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 3423993856,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DAVE%20THE%20DIVER%20-%20[EU]%20[EN]%20[1.23].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA45600",
+        "region": "EUR",
+        "name": "DAVE THE DIVER",
+        "version": "01.23",
+        "release": "11-15-2013",
+        "size": 3423993856,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA45600.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "b27bca7f-809f-4785-9f67-aa2d19541919",
+      "name": "Darkwood - [US] [EN] [1.06].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "darkwood",
+        "region": "USA",
+        "version": "1.06",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2189361152,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Darkwood%20-%20[US]%20[EN]%20[1.06].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA13413",
+        "region": "USA",
+        "name": "Darkwood",
+        "version": "01.06",
+        "release": "11-15-2013",
+        "size": 2189361152,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13413.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "cf5cbc6a-c64d-4318-8b76-dd8123d60a34",
+      "name": "Day of the Tentacle - [EU] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "day of the tentacle",
+        "region": "EUR",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 1835401216,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Day%20of%20the%20Tentacle%20-%20[EU]%20[EN]%20[1.03].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA01959",
+        "region": "EUR",
+        "name": "Day of the Tentacle",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 1835401216,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01959.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "8ac4b920-32a3-41d0-a35e-cb77f1d77f62",
+      "name": "Dangerous Golf - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dangerous golf",
+        "region": "EUR",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 6008340480,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Dangerous%20Golf%20-%20[EU]%20[EN]%20[1.02].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA04398",
+        "region": "EUR",
+        "name": "Dangerous Golf",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 6008340480,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04398.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "b66e57a6-8e4a-4270-85e0-67d41f9aaf04",
+      "name": "Assetto Corsa Competizione - [EU] [EN] [1.12].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "assetto corsa competizione",
+        "region": "EUR",
+        "version": "1.12",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 11574640640,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/l76mZ97XjGan/file",
+      "catalog_metadata": {
+        "title_id": "CUSA17266",
+        "region": "EUR",
+        "name": "Assetto Corsa Competizione",
+        "version": "01.12",
+        "release": "11-15-2013",
+        "size": 11574640640,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA17266.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "metadata_difference",
+      "file_id": "e1b894fc-35e6-4b7e-b771-0fcf028f8e7a",
+      "name": "Darksiders - [EU] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "darksiders",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 671983848,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/Darksiders%20-%20[EU]%20[EN]%20[1.01].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA05275",
+        "region": "EUR",
+        "name": "Darksiders",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 17458528256,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05275.png"
+      },
+      "metadata_differences": [
+        "size_bytes"
+      ],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Source metadata differs in: size_bytes"
+    },
+    {
+      "status": "unverified",
+      "file_id": "1c2e6aa7-4001-4a4d-9ea2-c1dd4a48ce3a",
+      "name": "Dandara - [US] [EN] [1.17].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "dandara",
+        "region": "USA",
+        "version": "1.17",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 534249472,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/E9Qz9Ak2DzOL/file",
+      "catalog_metadata": {
+        "title_id": "CUSA10749",
+        "region": "USA",
+        "name": "Dandara",
+        "version": "01.17",
+        "release": "11-15-2013",
+        "size": 534249472,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10749.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "6f9ae722-9884-4593-a381-1b9af6e161f0",
+      "name": "Axiom Verge - [US] [EN] [1.07].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "axiom verge",
+        "region": "USA",
+        "version": "1.07",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 172097536,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/qPez45a29GOY/file",
+      "catalog_metadata": {
+        "title_id": "CUSA01230",
+        "region": "USA",
+        "name": "Axiom Verge",
+        "version": "01.07",
+        "release": "11-15-2013",
+        "size": 172097536,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01230.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "707ea418-8d79-4ac3-88ac-446d4e6e8250",
+      "name": "Assassin's Creed Chronicles Trilogy - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "assassin s creed chronicles trilogy",
+        "region": "EUR",
+        "version": "1.02",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 11250958336,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/qLQ365xYQm19/file",
+      "catalog_metadata": {
+        "title_id": "CUSA03440",
+        "region": "EUR",
+        "name": "Assassin’s Creed® Chronicles Trilogy",
+        "version": "01.02",
+        "release": "11-15-2013",
+        "size": 11250958336,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03440.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "7d47d884-f2ba-4e63-b31b-68220894edb7",
+      "name": "Axiom Verge 2 - [US] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "axiom verge 2",
+        "region": "USA",
+        "version": "1.03",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 208404480,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/qw1zeKYvemXy/file",
+      "catalog_metadata": {
+        "title_id": "CUSA29346",
+        "region": "USA",
+        "name": "Axiom Verge 2",
+        "version": "01.03",
+        "release": "11-15-2013",
+        "size": 208404480,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29346.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "330ecc5d-cf60-43d3-999d-d371876efab2",
+      "name": "Atari Flashback Classics vol.3 - [US] [EN] [1.04].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "atari flashback classics vol 3",
+        "region": "USA",
+        "version": "1.04",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 97386496,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/qw1zeKYaemXy/file",
+      "catalog_metadata": {
+        "title_id": "CUSA09458",
+        "region": "USA",
+        "name": "Atari Flashback Classics vol.3",
+        "version": "01.04",
+        "release": "11-15-2013",
+        "size": 97386496,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09458.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "33e5181d-62be-46fe-9ac2-c5e38412349d",
+      "name": "Atari Flashback Classics vol.2 - [EU] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "atari flashback classics vol 2",
+        "region": "EUR",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 287309824,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/1RgzR0NR8mbp/file",
+      "catalog_metadata": {
+        "title_id": "CUSA07213",
+        "region": "EUR",
+        "name": "Atari Flashback Classics vol.2",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 287309824,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07213.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "f6f8b3bc-77de-4c95-b20d-e955893566e2",
+      "name": "Atari Flashback Classics vol.1 - [EU] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "atari flashback classics vol 1",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 281083904,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/9QWmpOoJAGEB/file",
+      "catalog_metadata": {
+        "title_id": "CUSA07214",
+        "region": "EUR",
+        "name": "Atari Flashback Classics vol.1",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 281083904,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07214.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "c3e01874-4721-4d1d-a9ef-b6a00df721ed",
+      "name": "Ashen - [US] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "ashen",
+        "region": "USA",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 6271598592,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/vgKGxBLZ238Q/file",
+      "catalog_metadata": {
+        "title_id": "CUSA14332",
+        "region": "USA",
+        "name": "Ashen",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 6271598592,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14332.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "e88e57b1-e174-4fe1-9bdc-289a98890905",
+      "name": "Ancestors The Humankind Odyssey - [EU] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "ancestors the humankind odyssey",
+        "region": "EUR",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 4941742080,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/0rpmvgLaL3Rg/file",
+      "catalog_metadata": {
+        "title_id": "CUSA13248",
+        "region": "EUR",
+        "name": "Ancestors: The Humankind Odyssey",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 4941742080,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13248.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "unverified",
+      "file_id": "651e7072-b52c-4467-9ce5-c5fd4140e64b",
+      "name": "Another World - [EU] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "another world",
+        "region": "EUR",
+        "version": "1.00",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 150667264,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-a/Another%20World%20-%20[EU]%20[EN]%20[1.00].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA00602",
+        "region": "EUR",
+        "name": "Another World",
+        "version": "01.00",
+        "release": "11-15-2013",
+        "size": 150667264,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00602.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw"
+    },
+    {
+      "status": "unverified",
+      "file_id": "2c3c5427-3331-4eb5-acc2-a1a2511952e2",
+      "name": "Amplitude - [US] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "amplitude",
+        "region": "USA",
+        "version": "1.01",
+        "title_id": null,
+        "languages": [
+          "EN"
+        ],
+        "min_fw": null,
+        "size_bytes": 2452226048,
+        "sha256": null
+      },
+      "catalog_url": "https://akirabox.to/LK0G1a4Q9G91/file",
+      "catalog_metadata": {
+        "title_id": "CUSA02480",
+        "region": "USA",
+        "name": "Amplitude",
+        "version": "01.01",
+        "release": "11-15-2013",
+        "size": 2452226048,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02480.png"
+      },
+      "metadata_differences": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw",
+        "languages"
+      ],
+      "reason": "Catalog identity candidate found, but comparison metadata is unavailable: title_id, min_fw, languages"
+    },
+    {
+      "status": "metadata_difference",
+      "file_id": "533f0ed9-eb07-46ae-b907-702647cb2051",
+      "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4.pkg",
+      "folder_path": "PS4/Games",
+      "platform": "PS4",
+      "category": "games",
+      "source_metadata": {
+        "title": "slime rancher",
+        "region": null,
+        "version": "1.00",
+        "title_id": "CUSA11650",
+        "languages": [],
+        "min_fw": "5.05",
+        "size_bytes": 611123200,
+        "sha256": null
+      },
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-s/Slime%20Rancher%20-%20[EU]%20[EN]%20[1.20].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA11650",
+        "region": "EUR",
+        "name": "Slime Rancher",
+        "version": "01.20",
+        "release": "11-15-2013",
+        "size": 802226176,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA11650.png"
+      },
+      "metadata_differences": [
+        "version",
+        "size_bytes",
+        "min_fw"
+      ],
+      "unavailable_metadata": [
+        "region",
+        "languages"
+      ],
+      "reason": "Source metadata differs in: version, size_bytes, min_fw"
+    }
+  ]
+}

@@ -1,9 +1,27 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-21T14:57:38.699578Z",
-  "file_count": 34,
+  "scan_observed_at": "2026-11-21T15:31:48.345935Z",
+  "file_count": 36,
   "files": [
+    {
+      "name": "DEAD RISING - [US] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 8049262592,
+      "created_at": "2026-11-21T15:21:04.244Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Death's Door - [US] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 1044905984,
+      "created_at": "2026-11-21T15:01:04.285Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
     {
       "name": "Dead Rising 2 - [US] [EN] [1.02].pkg",
       "folder_path": "PS4/Games",
