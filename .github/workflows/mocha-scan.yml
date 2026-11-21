@@ -74,6 +74,7 @@ jobs:
           "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
 
       - name: Create sanitized public inventory artifact
+        id: public_inventory
         if: always()
         env:
           SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
@@ -93,6 +94,12 @@ jobs:
           files = scan.get('files')
           if not isinstance(files, list) or type(scan.get('file_count')) is not int or scan['file_count'] != len(files):
               raise SystemExit('Invalid inventory file count.')
+          approved_paths = {
+              "ps4/games": ("PS4", "games"),
+              "ps4/dlc": ("PS4", "dlc"),
+              "ps5/games": ("PS5", "games"),
+              "ps5/dlc": ("PS5", "dlc"),
+          }
           public_files = []
           for item in files:
               if not isinstance(item, dict): raise SystemExit('Invalid inventory entry.')
@@ -103,10 +110,23 @@ jobs:
               if size is not None and (type(size) is not int or size < 0): raise SystemExit('Invalid size.')
               if created is not None and not isinstance(created, str): raise SystemExit('Invalid upload timestamp.')
               if any(v is not None and not isinstance(v, str) for v in (platform, category, extension)): raise SystemExit('Invalid classification.')
+              approved_classification = approved_paths.get(folder.strip("/").casefold())
+              if approved_classification is None or (platform, category) != approved_classification:
+                  continue
               public_files.append({'name':name,'folder_path':folder,'size_bytes':size,'created_at':created,'platform':platform,'catalog_category':category,'extension':extension})
+          approved_folders = {
+              entry["path"].strip("/").casefold()
+              for entry in scan.get("folders", [])
+              if isinstance(entry, dict)
+              and isinstance(entry.get("path"), str)
+              and entry["path"].strip("/").casefold() in approved_paths
+          }
           public = {'schema_version':1,'scanner':'mocha','scan_observed_at':scan.get('scan_observed_at'),'file_count':len(public_files),'files':public_files}
           if not isinstance(public['scan_observed_at'], str): raise SystemExit('Missing scan timestamp.')
           Path(os.environ['PUBLIC_INVENTORY']).write_text(json.dumps(public, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"file_count={len(public_files)}\n")
+              output.write(f"folder_count={len(approved_folders)}\n")
           PY
 
       - name: Upload sanitized Mocha inventory artifact (public repository)
@@ -134,6 +154,8 @@ jobs:
           SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
           COMPARISON_REPORT: ${{ runner.temp }}/mocha-comparison-report.json
           CATALOG_COMMIT: ${{ github.sha }}
+          PUBLIC_FILE_COUNT: ${{ steps.public_inventory.outputs.file_count }}
+          PUBLIC_FOLDER_COUNT: ${{ steps.public_inventory.outputs.folder_count }}
         run: |
           python - <<'PY'
           import json
@@ -174,8 +196,8 @@ jobs:
               "catalog_commit": os.environ["CATALOG_COMMIT"],
               "scan_complete": scan.get("scan_complete") is True,
               "authentication": "verified_by_file_listing" if scan.get("authentication") == "verified_by_file_listing" else "not_verified",
-              "folder_count": scan.get("folder_count") if type(scan.get("folder_count")) is int and scan["folder_count"] >= 0 else None,
-              "file_count": scan.get("file_count") if type(scan.get("file_count")) is int and scan["file_count"] >= 0 else None,
+              "folder_count": int(os.environ["PUBLIC_FOLDER_COUNT"]) if os.environ.get("PUBLIC_FOLDER_COUNT", "").isdigit() else None,
+              "file_count": int(os.environ["PUBLIC_FILE_COUNT"]) if os.environ.get("PUBLIC_FILE_COUNT", "").isdigit() else None,
               "listing_page_count": scan.get("listing_page_count") if type(scan.get("listing_page_count")) is int and scan["listing_page_count"] >= 0 else None,
               "snapshot_consistency": "not_guaranteed_by_api",
               "permissions": permissions,
@@ -262,12 +284,17 @@ jobs:
               continue
             fi
             git reset --hard FETCH_HEAD
+            if ! git fetch origin main; then
+              echo "Could not fetch main on attempt $attempt/3; refusing to publish without a current catalog check." >&2
+              continue
+            fi
 
             if python - <<'PY'
           import json
           import os
           import re
           import subprocess
+          import sys
           from datetime import datetime
           from pathlib import Path
 
@@ -296,10 +323,17 @@ jobs:
 
           try:
               generated_at = parse_aware_timestamp(summary["generated_at"])
-              scan_observed_at = parse_aware_timestamp(summary["scan_observed_at"])          except (KeyError, ValueError) as exc:
+              scan_observed_at = parse_aware_timestamp(summary["scan_observed_at"])
+          except (KeyError, ValueError) as exc:
               raise SystemExit("Refusing to publish an invalid generation or scan-observation timestamp.") from exc
           if not isinstance(summary["catalog_commit"], str) or not re.fullmatch(r"[0-9a-f]{40}", summary["catalog_commit"]):
               raise SystemExit("Refusing to publish an invalid catalog commit.")
+          current_main_commit = subprocess.check_output(
+              ["git", "rev-parse", "FETCH_HEAD"], text=True
+          ).strip()
+          if summary["catalog_commit"] != current_main_commit:
+              print("Incoming scan uses an older catalog commit; preserving the current dashboard reports.", file=sys.stderr)
+              raise SystemExit(11)
           if type(summary["scan_complete"]) is not bool:
               raise SystemExit("Refusing to publish an invalid scan status.")
           if summary["authentication"] not in {"verified_by_file_listing", "not_verified"}:
@@ -390,7 +424,7 @@ jobs:
               :
             else
               validation_status=$?
-              if [ "$validation_status" -eq 10 ]; then
+              if [ "$validation_status" -eq 10 ] || [ "$validation_status" -eq 11 ]; then
                 exit 0
               fi
               exit "$validation_status"
@@ -404,6 +438,15 @@ jobs:
             fi
 
             git commit -m "Publish sanitized Mocha scan summary"
+            if ! git fetch origin main; then
+              echo "Could not recheck main immediately before publication; refusing to push." >&2
+              continue
+            fi
+            expected_catalog_commit="$(python -c 'import json,os; print(json.loads(os.environ["SUMMARY_JSON"])["catalog_commit"])')"
+            if [ "$(git rev-parse FETCH_HEAD)" != "$expected_catalog_commit" ]; then
+              echo "main advanced after validation; refusing to publish a report based on an older catalog commit."
+              exit 0
+            fi
             if git push origin HEAD:akirabox-reports; then
               exit 0
             fi
