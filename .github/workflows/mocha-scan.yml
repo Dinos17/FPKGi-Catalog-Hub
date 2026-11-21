@@ -572,7 +572,8 @@ jobs:
               def normalize_rejection_name(value):
                   if not isinstance(value, str) or not value.strip():
                       raise ValueError('rejection record has no valid filename')
-                  return unicodedata.normalize('NFKC', value).strip().casefold()
+                  normalized = unicodedata.normalize('NFKC', value).strip().casefold()
+                  return normalized[:-4] if normalized.endswith('.pkg') else normalized
 
               rejected = {}
               for record in rejection_report['records']:
