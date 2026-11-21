@@ -676,7 +676,9 @@ jobs:
                   duplicate_ids.update(group_ids)
 
               entries = []
-              auto_approved = 0
+              # Legacy counter name is retained for dashboard schema compatibility.
+              # This counts queue-cleared metadata matches, not binary-integrity approval.
+              automatically_cleared = 0
               previously_rejected = 0
               previously_decided = 0
               source_fields = ('title', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size_bytes')
@@ -721,11 +723,12 @@ jobs:
                   if type(binary_verified) is not bool:
                       raise ValueError('comparison row has no valid binary-integrity verification state')
 
-                  # Metadata can identify a catalog candidate, but Mocha currently
-                  # supplies no trusted SHA-256. Never auto-approve package bytes
-                  # unless a future scanner provides explicit trusted verification.
-                  if status == 'matched' and not is_duplicate and binary_verified is True:
-                      auto_approved += 1
+                  # Exact, unambiguous metadata matches are silently cleared from
+                  # the human-review queue. This is queue triage only: it does NOT
+                  # claim that package bytes were cryptographically authenticated.
+                  # Possible duplicates and every non-matched status remain for review.
+                  if status == 'matched' and not is_duplicate:
+                      automatically_cleared += 1
                       continue
                   source_meta = row.get('source_metadata') if isinstance(row.get('source_metadata'), dict) else {}
                   catalog_meta = row.get('catalog_metadata') if isinstance(row.get('catalog_metadata'), dict) else {}
@@ -748,7 +751,7 @@ jobs:
                   'schema_version': 1, 'scanner': 'mocha',
                   'scan_observed_at': summary['scan_observed_at'],
                   'catalog_commit': summary['catalog_commit'],
-                  'auto_approved_count': auto_approved,
+                  'auto_approved_count': automatically_cleared,
                   'previously_rejected_count': previously_rejected,
                   'previously_decided_count': previously_decided,
                   'pending_count': len(entries),
