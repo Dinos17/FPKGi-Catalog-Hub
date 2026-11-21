@@ -1,9 +1,45 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-21T12:40:09.513747Z",
-  "file_count": 30,
+  "scan_observed_at": "2026-11-21T14:57:38.699578Z",
+  "file_count": 34,
   "files": [
+    {
+      "name": "Dead Rising 2 - [US] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 8105361408,
+      "created_at": "2026-11-21T14:49:11.659Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Dead Rising 2 Off The Record - [US] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 6202327040,
+      "created_at": "2026-11-21T14:23:46.398Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Deadpool - [US] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 5497815040,
+      "created_at": "2026-11-21T13:38:11.286Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Darksiders Genesis - [EU] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 9010937856,
+      "created_at": "2026-11-21T13:20:38.155Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
     {
       "name": "Dead Nation - [US] [EN] [1.03].pkg",
       "folder_path": "PS4/Games",
