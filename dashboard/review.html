@@ -47,17 +47,20 @@ function formatBytes(value){
  if(value<1024*1024*1024)return (value/(1024*1024)).toFixed(2)+" MB";
  return (value/(1024*1024*1024)).toFixed(2)+" GB";
 }
-async function fetchWithTimeout(url){
+async function fetchReport(url){
  const controller=new AbortController();
  const timeout=setTimeout(()=>controller.abort(),15000);
- try{return await fetch(url,{cache:"no-store",signal:controller.signal});}
- catch(error){if(error.name==="AbortError")throw Error("Request timed out after 15 seconds.");throw error;}
+ try{
+  const response=await fetch(url,{cache:"no-store",signal:controller.signal});
+  const data=response.ok?await response.json():null;
+  return {response,data};
+ }catch(error){if(error.name==="AbortError")throw Error("Request timed out after 15 seconds.");throw error;}
  finally{clearTimeout(timeout);}
 }
 async function fetchJson(filename){
- const response=await fetchWithTimeout(REPORT_BASE+filename+"?v="+Date.now());
+ const {response,data}=await fetchReport(REPORT_BASE+filename+"?v="+Date.now());
  if(!response.ok)throw Error(filename+" unavailable (HTTP "+response.status+").");
- return response.json();
+ return data;
 }
 async function loadMochaSummary(){
  const root=$("mochaOverview");
@@ -105,10 +108,9 @@ function safeExternalLink(value){
 async function loadRejections(){
  const root=$("rejected");root.innerHTML='<div class="empty">Loading saved rejection records…</div>';
  try{
-  const response=await fetchWithTimeout(REPORT_BASE+"akirabox-rejections.json?v="+Date.now());
+  const {response,data}=await fetchReport(REPORT_BASE+"akirabox-rejections.json?v="+Date.now());
   if(response.status===404){root.innerHTML='<div class="empty">No rejected uploads are recorded.</div>';return true;}
   if(!response.ok)throw Error("Rejection records unavailable (HTTP "+response.status+").");
-  const data=await response.json();
   if(!isRecord(data)||data.schema_version!==1||!Array.isArray(data.records))throw Error("Rejection report has an invalid format.");
   for(const item of data.records){
    if(!isRecord(item)||typeof item.file_id!=="string"||typeof item.share_url!=="string"||!item.share_url)throw Error("Rejection report contains an invalid record.");
