@@ -568,10 +568,32 @@ jobs:
                   if classification and (item.get('platform'), item.get('catalog_category')) == classification:
                       if item.get('id') is not None:
                           allowed_ids.add(str(item['id']))
+              comparison_rows = raw_comparison.get('results')
+              if not isinstance(comparison_rows, list):
+                  raise ValueError('comparison results are missing')
+              expected_ids = {
+                  str(item['id']) for item in raw_scan.get('files', [])
+                  if isinstance(item, dict) and item.get('id') is not None
+                  and item.get('extension') == 'pkg'
+                  and isinstance(item.get('folder_path'), str)
+                  and approved_paths.get(item['folder_path'].strip('/').casefold()) ==
+                      (item.get('platform'), item.get('catalog_category'))
+              }
+              result_ids = {
+                  str(row['file_id']) for row in comparison_rows
+                  if isinstance(row, dict) and row.get('file_id') is not None
+                  and str(row['file_id']) in allowed_ids
+              }
+              if result_ids != expected_ids:
+                  raise ValueError('comparison does not cover every approved package file')
               duplicate_ids = set()
               for group in raw_comparison.get('possible_duplicates', []):
-                  if isinstance(group, dict):
-                      duplicate_ids.update(str(value) for value in group.get('file_ids', []))
+                  if not isinstance(group, dict) or not isinstance(group.get('file_ids'), list):
+                      raise ValueError('malformed possible-duplicate group')
+                  group_ids = {str(value) for value in group['file_ids']}
+                  if not group_ids.issubset(allowed_ids):
+                      raise ValueError('duplicate group contains an out-of-scope file')
+                  duplicate_ids.update(group_ids)
               entries = []
               auto_approved = 0
               source_fields = ('title', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size_bytes')
