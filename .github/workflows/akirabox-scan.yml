@@ -42,13 +42,16 @@ jobs:
         run: python tools/akirabox_scanner.py --config config/akirabox_sources.json --output "$RUNNER_TEMP/akirabox-scan-report.json"
 
       - name: Add scan generation timestamp
+        env:
+          SCAN_REPORT: ${{ runner.temp }}/akirabox-scan-report.json
         run: |
           python - <<'PY'
           import json
+          import os
           from datetime import datetime, timezone
           from pathlib import Path
 
-          path = Path("$RUNNER_TEMP/akirabox-scan-report.json")
+          path = Path(os.environ["SCAN_REPORT"])
           report = json.loads(path.read_text(encoding="utf-8"))
           report["generated_at"] = datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z")
           path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
