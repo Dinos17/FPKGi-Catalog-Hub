@@ -627,7 +627,7 @@ jobs:
                       return None
                   if uploaded.tzinfo is None:
                       return None
-                  identity = "\\0".join((
+                  identity = chr(0).join((
                       platform, category,
                       unicodedata.normalize('NFKC', name).strip().casefold(),
                       uploaded.astimezone(__import__('datetime').timezone.utc).isoformat(),
