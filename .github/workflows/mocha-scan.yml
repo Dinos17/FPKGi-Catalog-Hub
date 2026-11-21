@@ -424,6 +424,8 @@ jobs:
           from datetime import datetime
           from pathlib import Path
 
+          from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
+
           summary = json.loads(os.environ["SUMMARY_JSON"])
           allowed = {
               "schema_version", "scanner", "generated_at", "scan_observed_at", "catalog_commit",
@@ -675,6 +677,11 @@ jobs:
                       raise ValueError('duplicate group contains an out-of-scope file')
                   duplicate_ids.update(group_ids)
 
+              # Detect matched uploads that share core identity even when optional
+              # filename tags (languages/minimum firmware) differ or are missing.
+              # Keep all members of such groups visible for human review.
+              duplicate_ids.update(near_duplicate_file_ids(raw_comparison.get('results', [])))
+
               entries = []
               # Legacy counter name is retained for dashboard schema compatibility.
               # This counts queue-cleared metadata matches, not binary-integrity approval.
@@ -723,11 +730,10 @@ jobs:
                   if type(binary_verified) is not bool:
                       raise ValueError('comparison row has no valid binary-integrity verification state')
 
-                  # Exact, unambiguous metadata matches are silently cleared from
-                  # the human-review queue. This is queue triage only: it does NOT
-                  # claim that package bytes were cryptographically authenticated.
-                  # Possible duplicates and every non-matched status remain for review.
-                  if status == 'matched' and not is_duplicate:
+                  # A metadata match alone is not sufficient: only a trusted
+                  # binary-integrity verification can clear an upload from review.
+                  # Current Mocha listings do not provide that verification.
+                  if can_silently_clear_match(status, is_duplicate, binary_verified):
                       automatically_cleared += 1
                       continue
                   source_meta = row.get('source_metadata') if isinstance(row.get('source_metadata'), dict) else {}
