@@ -412,15 +412,15 @@ def test_metadata_match_is_not_binary_approval(tmp_path):
 
 
 def test_unique_metadata_matches_clear_without_claiming_binary_verification():
-    # Metadata-based catalog classification is independent from binary integrity.
-    assert can_silently_clear_match("matched", False, False, "stable") is True
-    assert can_silently_clear_match("matched", False, None, "stable") is True
-    assert can_silently_clear_match("matched", False, True, "stable") is True
-    assert can_silently_clear_match("matched", False, False, "not_guaranteed_by_api") is False
-    assert can_silently_clear_match("matched", True, False, "stable") is False
-    assert can_silently_clear_match("metadata_difference", False, False, "stable") is False
-    assert can_silently_clear_match("unverified", False, False, "stable") is False
-    assert can_silently_clear_match("new", False, False, "stable") is False
+    # Metadata-based catalog classification is independent from binary integrity
+    # and from snapshot guarantees that the Mocha API does not expose.
+    assert can_silently_clear_match("matched", False, False) is True
+    assert can_silently_clear_match("matched", False, None) is True
+    assert can_silently_clear_match("matched", False, True) is True
+    assert can_silently_clear_match("matched", True, False) is False
+    assert can_silently_clear_match("metadata_difference", False, False) is False
+    assert can_silently_clear_match("unverified", False, False) is False
+    assert can_silently_clear_match("new", False, False) is False
 
 
 def test_near_duplicate_matches_with_different_optional_tags_stay_flagged():
