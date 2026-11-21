@@ -627,12 +627,12 @@ jobs:
                       return None
                   if uploaded.tzinfo is None:
                       return None
-                  identity = [
+                  identity = "\\0".join((
                       platform, category,
                       unicodedata.normalize('NFKC', name).strip().casefold(),
                       uploaded.astimezone(__import__('datetime').timezone.utc).isoformat(),
-                  ]
-                  return hashlib.sha256(json.dumps(identity, ensure_ascii=False, separators=(',', ':')).encode('utf-8')).hexdigest()
+                  ))
+                  return hashlib.sha256(identity.encode('utf-8')).hexdigest()
 
               allowed_ids = set()
               scan_files_by_id = {}
