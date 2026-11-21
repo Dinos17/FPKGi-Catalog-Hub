@@ -411,12 +411,14 @@ def test_metadata_match_is_not_binary_approval(tmp_path):
     assert "binary contents are not cryptographically verified" in row["reason"]
 
 
-def test_only_binary_verified_unique_matches_can_be_silently_cleared():
-    assert can_silently_clear_match("matched", False, True) is True
-    assert can_silently_clear_match("matched", False, False) is False
-    assert can_silently_clear_match("matched", True, True) is False
-    assert can_silently_clear_match("metadata_difference", False, True) is False
-    assert can_silently_clear_match("new", False, True) is False
+def test_unique_metadata_matches_clear_without_claiming_binary_verification():
+    # Metadata-based catalog classification is independent from binary integrity.
+    assert can_silently_clear_match("matched", False, False) is True
+    assert can_silently_clear_match("matched", False, None) is True
+    assert can_silently_clear_match("matched", True, False) is False
+    assert can_silently_clear_match("metadata_difference", False, False) is False
+    assert can_silently_clear_match("unverified", False, False) is False
+    assert can_silently_clear_match("new", False, False) is False
 
 
 def test_near_duplicate_matches_with_different_optional_tags_stay_flagged():
