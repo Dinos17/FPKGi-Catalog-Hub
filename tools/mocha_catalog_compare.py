@@ -263,12 +263,26 @@ def compare_scan(
             if differences:
                 status = "metadata_difference"
                 reason = "Source metadata differs in: " + ", ".join(differences)
-            elif unavailable:
-                status = "unverified"
-                reason = "Catalog identity candidate found, but comparison metadata is unavailable: " + ", ".join(unavailable)
             else:
-                status = "matched"
-                reason = "Available identity and comparison metadata agree"
+                # Title ID, minimum firmware, and language tags are useful corroborating
+                # fields, but Mocha often omits them. Their absence must not veto a
+                # unique exact-title match when the core evidence (region, version,
+                # and package size) is present and agrees. Known conflicts above
+                # still force human review.
+                critical_unavailable = {
+                    "version", "size_bytes", "region", "package_title_identity",
+                }.intersection(unavailable)
+                if critical_unavailable:
+                    status = "unverified"
+                    reason = (
+                        "Catalog identity candidate found, but core verification "
+                        "metadata is unavailable: " + ", ".join(sorted(critical_unavailable))
+                    )
+                else:
+                    status = "matched"
+                    reason = "Unique catalog identity and all available core metadata agree"
+                    if unavailable:
+                        reason += "; optional metadata unavailable: " + ", ".join(unavailable)
 
         counts[status] += 1
 
