@@ -328,6 +328,93 @@ def test_missing_optional_mocha_metadata_does_not_block_strong_exact_match(tmp_p
     assert "optional metadata unavailable" in row["reason"]
 
 
+
+def test_catalog_filename_title_id_conflict_is_detected(tmp_path):
+    url = "https://archive.org/download/example/Example_Game_CUSA99999_v1.00_[US]_[EN]_[9.00].pkg"
+    write_catalog(tmp_path, "ps4/games.json", {
+        url: {"name": "Example Game", "region": "USA", "version": "1.00",
+              "size": 1234, "min_fw": "9.00"},
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "filename-id-conflict",
+        "name": "Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    row = report["results"][0]
+    assert row["status"] == "metadata_difference"
+    assert "title_id" in row["metadata_differences"]
+
+
+def test_catalog_metadata_languages_are_used_when_filename_has_no_tags(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/file": {
+            "name": "Example Game", "title_id": "CUSA12345",
+            "region": "USA", "version": "1.00", "size": 1234,
+            "languages": ["FR"],
+        },
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "language-conflict",
+        "name": "Example_Game_CUSA12345_v1.00_[US]_[EN].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    row = report["results"][0]
+    assert row["status"] == "metadata_difference"
+    assert "languages" in row["metadata_differences"]
+
+
+def test_reordered_title_words_do_not_verify_identity(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/example.pkg": {
+            "name": "Example Game", "title_id": "CUSA12345",
+            "region": "USA", "version": "1.00", "size": 1234, "min_fw": "9.00",
+        },
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "reordered-title",
+        "name": "Game_Example_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    row = report["results"][0]
+    assert row["status"] == "unverified"
+    assert "package_title_identity" in row["unavailable_metadata"]
+
+
+def test_metadata_match_is_not_binary_approval(tmp_path):
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/example.pkg": {
+            "name": "Example Game", "title_id": "CUSA12345",
+            "region": "USA", "version": "1.00", "size": 1234, "min_fw": "9.00",
+        },
+    })
+    for relative in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, relative, {})
+    report = compare_scan(make_complete_scan([{
+        "id": "metadata-only",
+        "name": "Example_Game_CUSA12345_v1.00_[US]_[EN]_[9.00].pkg",
+        "extension": "pkg", "size_bytes": 1234, "platform": "PS4",
+        "catalog_category": "games", "folder_path": "PS4/Games",
+    }]), tmp_path)
+    row = report["results"][0]
+    assert row["status"] == "matched"
+    assert row["binary_integrity_verified"] is False
+    assert "binary contents are not cryptographically verified" in row["reason"]
+
+
+def test_review_workflow_requires_binary_integrity_for_auto_approval():
+    workflow = (Path(__file__).parents[1] / ".github/workflows/mocha-scan.yml").read_text(encoding="utf-8")
+    assert "status == 'matched' and not is_duplicate and binary_verified is True" in workflow
+    assert "binary_integrity_verified" in workflow
+
 def test_missing_comparison_critical_metadata_is_unverified(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
         "https://archive.org/example.pkg": {
