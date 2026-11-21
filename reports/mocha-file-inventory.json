@@ -1,0 +1,269 @@
+{
+  "schema_version": 1,
+  "scanner": "mocha",
+  "scan_observed_at": "2026-11-21T10:28:31.297820Z",
+  "file_count": 29,
+  "files": [
+    {
+      "name": "Deadlight - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 3727294464,
+      "created_at": "2026-11-20T17:58:44.569Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DRAGON BALL XENOVERSE - [EU] [EN] [1.07].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 10231742464,
+      "created_at": "2026-11-19T13:49:20.199Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DRAGON QUEST BUILDERS 2 - [US] [EN] [1.04].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 2453209088,
+      "created_at": "2026-11-19T13:18:15.158Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DRAGON BALL FighterZ - [EU] [EN] [1.38].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 5764087808,
+      "created_at": "2026-11-19T13:12:39.677Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DREDGE - [EU] [EN] [1.08].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 869859328,
+      "created_at": "2026-11-19T13:06:49.247Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DRAGON QUEST BUILDERS - [EU] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 907280384,
+      "created_at": "2026-11-19T12:43:17.859Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Darksiders II - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 13750566912,
+      "created_at": "2026-11-19T12:17:33.313Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Dead Island - [EU] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 4719443968,
+      "created_at": "2026-11-19T11:54:09.519Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DOOM (1993) - [EU] [EN] [1.09].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 385875968,
+      "created_at": "2026-11-19T11:53:17.094Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DOOM 2 (1994) - [US] [EN] [1.08].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 508952576,
+      "created_at": "2026-11-19T11:33:52.603Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Dead Cells - [EU] [EN] [1.51].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 2461270016,
+      "created_at": "2026-11-19T10:53:11.457Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "DAVE THE DIVER - [EU] [EN] [1.23].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 3423993856,
+      "created_at": "2026-11-19T10:18:02.793Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Darkwood - [US] [EN] [1.06].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 2189361152,
+      "created_at": "2026-11-19T09:57:13.017Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Day of the Tentacle - [EU] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 1835401216,
+      "created_at": "2026-11-19T09:51:02.637Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Dangerous Golf - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 6008340480,
+      "created_at": "2026-11-19T08:53:41.921Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Assetto Corsa Competizione - [EU] [EN] [1.12].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 11574640640,
+      "created_at": "2026-11-19T08:04:24.959Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Darksiders - [EU] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 671983848,
+      "created_at": "2026-11-19T06:58:41.774Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Dandara - [US] [EN] [1.17].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 534249472,
+      "created_at": "2026-11-19T06:33:05.836Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Axiom Verge - [US] [EN] [1.07].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 172097536,
+      "created_at": "2026-11-19T06:28:46.140Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Assassin's Creed Chronicles Trilogy - [EU] [EN] [1.02].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 11250958336,
+      "created_at": "2026-11-19T06:16:29.700Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Axiom Verge 2 - [US] [EN] [1.03].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 208404480,
+      "created_at": "2026-11-19T06:08:58.130Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Atari Flashback Classics vol.3 - [US] [EN] [1.04].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 97386496,
+      "created_at": "2026-11-19T04:07:39.638Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Atari Flashback Classics vol.2 - [EU] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 287309824,
+      "created_at": "2026-11-19T03:46:06.657Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Atari Flashback Classics vol.1 - [EU] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 281083904,
+      "created_at": "2026-11-19T03:22:56.071Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Ashen - [US] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 6271598592,
+      "created_at": "2026-11-19T03:08:03.247Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Ancestors The Humankind Odyssey - [EU] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 4941742080,
+      "created_at": "2026-11-19T01:12:15.872Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Another World - [EU] [EN] [1.00].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 150667264,
+      "created_at": "2026-11-19T00:13:19.926Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "Amplitude - [US] [EN] [1.01].pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 2452226048,
+      "created_at": "2026-11-19T00:03:17.840Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    },
+    {
+      "name": "[SuperPSX]-Slime.Rancher_CUSA11650_v1.00_[5.05]-PS4.pkg",
+      "folder_path": "PS4/Games",
+      "size_bytes": 611123200,
+      "created_at": "2026-11-11T12:43:33.878Z",
+      "platform": "PS4",
+      "catalog_category": "games",
+      "extension": "pkg"
+    }
+  ]
+}
