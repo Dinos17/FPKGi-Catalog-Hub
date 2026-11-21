@@ -15,14 +15,13 @@ def near_duplicate_file_ids(rows: list[dict[str, Any]]) -> set[str]:
         if not isinstance(source, dict):
             continue
         title = " ".join(str(source.get("title") or "").casefold().split())
-        title_id = str(source.get("title_id") or "").strip().upper()
         region = str(source.get("region") or "").strip().upper()
         version = str(source.get("version") or "").strip().lstrip("0")
         size = source.get("size_bytes")
         file_id = row.get("file_id")
         if not title or not isinstance(size, int) or isinstance(size, bool) or not version or not file_id:
             continue
-        key = (row.get("platform"), row.get("category"), title, title_id, region, version, size)
+        key = (row.get("platform"), row.get("category"), title, region, version, size)
         groups[key].append(str(file_id))
     return {file_id for ids in groups.values() if len(ids) > 1 for file_id in ids}
 
