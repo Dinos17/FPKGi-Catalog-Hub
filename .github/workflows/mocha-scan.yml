@@ -717,7 +717,14 @@ jobs:
                       previously_decided += 1
                       continue
 
-                  if status == 'matched' and not is_duplicate:
+                  binary_verified = row.get('binary_integrity_verified')
+                  if type(binary_verified) is not bool:
+                      raise ValueError('comparison row has no valid binary-integrity verification state')
+
+                  # Metadata can identify a catalog candidate, but Mocha currently
+                  # supplies no trusted SHA-256. Never auto-approve package bytes
+                  # unless a future scanner provides explicit trusted verification.
+                  if status == 'matched' and not is_duplicate and binary_verified is True:
                       auto_approved += 1
                       continue
                   source_meta = row.get('source_metadata') if isinstance(row.get('source_metadata'), dict) else {}
@@ -730,6 +737,7 @@ jobs:
                       'platform': row.get('platform') if isinstance(row.get('platform'), str) else '',
                       'category': row.get('category') if isinstance(row.get('category'), str) else '',
                       'status': 'possible_duplicate' if is_duplicate else status,
+                      'binary_integrity_verified': binary_verified,
                       'reason': row.get('reason') if isinstance(row.get('reason'), str) else 'Manual verification required',
                       'metadata_differences': row.get('metadata_differences') if isinstance(row.get('metadata_differences'), list) else [],
                       'unavailable_metadata': row.get('unavailable_metadata') if isinstance(row.get('unavailable_metadata'), list) else [],
