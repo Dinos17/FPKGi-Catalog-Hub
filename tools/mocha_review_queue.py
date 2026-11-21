@@ -37,16 +37,11 @@ def can_silently_clear_match(
     status: str,
     is_duplicate: bool,
     binary_integrity_verified: Any = None,
-    snapshot_consistency: str = "not_guaranteed_by_api",
 ) -> bool:
-    """Clear only a unique metadata match from a stable, complete inventory.
+    """Clear unique metadata matches; keep duplicates and nonmatches for review.
 
     This is a metadata-classification decision, not binary-integrity approval.
-    A changing or snapshot-inconsistent listing cannot establish uniqueness,
-    so such matches stay available for human review.
+    Mocha does not expose a snapshot-consistency guarantee, so that unavailable
+    API detail must not disable metadata-based queue clearance.
     """
-    return (
-        status == "matched"
-        and not is_duplicate
-        and snapshot_consistency == "stable"
-    )
+    return status == "matched" and not is_duplicate
