@@ -147,6 +147,91 @@ jobs:
             --catalog-commit "$GITHUB_SHA" \
             --output "$RUNNER_TEMP/mocha-comparison-report.json"
 
+      - name: Restrict raw reports to approved catalog folders
+        if: always()
+        env:
+          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
+          COMPARISON_REPORT: ${{ runner.temp }}/mocha-comparison-report.json
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          scan_path = Path(os.environ["SCAN_REPORT"])
+          comparison_path = Path(os.environ["COMPARISON_REPORT"])
+          approved = {
+              "ps4/games": ("PS4", "games"),
+              "ps4/dlc": ("PS4", "dlc"),
+              "ps5/games": ("PS5", "games"),
+              "ps5/dlc": ("PS5", "dlc"),
+          }
+          try:
+              scan = json.loads(scan_path.read_text(encoding="utf-8"))
+              comparison = json.loads(comparison_path.read_text(encoding="utf-8"))
+          except (OSError, json.JSONDecodeError) as exc:
+              raise SystemExit(f"Raw report filtering failed: {exc}")
+          if not isinstance(scan, dict) or not isinstance(comparison, dict):
+              raise SystemExit("Raw reports must be JSON objects.")
+          files = scan.get("files")
+          rows = comparison.get("results")
+          if not isinstance(files, list) or not isinstance(rows, list):
+              raise SystemExit("Raw reports have an unexpected schema.")
+          public_files = []
+          allowed_ids = set()
+          for item in files:
+              if not isinstance(item, dict):
+                  raise SystemExit("Malformed scan file entry.")
+              folder = item.get("folder_path")
+              classification = approved.get(folder.strip("/").casefold()) if isinstance(folder, str) else None
+              if classification is None or (item.get("platform"), item.get("catalog_category")) != classification:
+                  continue
+              public_files.append(item)
+              allowed_ids.add(str(item.get("id")))
+          public_rows = [row for row in rows if isinstance(row, dict) and str(row.get("file_id")) in allowed_ids]
+          count_keys = ("matched", "metadata_difference", "unverified", "new", "ambiguous", "unclassified")
+          counts = {key: 0 for key in count_keys}
+          for row in public_rows:
+              status = row.get("status")
+              if status in counts:
+                  counts[status] += 1
+          duplicates = []
+          for group in comparison.get("possible_duplicates", []):
+              if not isinstance(group, dict):
+                  continue
+              ids = [str(value) for value in group.get("file_ids", []) if str(value) in allowed_ids]
+              if len(ids) > 1:
+                  group = dict(group)
+                  group["file_ids"] = ids
+                  duplicates.append(group)
+          counts["possible_duplicate"] = len(duplicates)
+          scan["files"] = public_files
+          scan["file_count"] = len(public_files)
+          scan["folder_count"] = sum(
+              1 for folder in scan.get("folders", [])
+              if isinstance(folder, dict)
+              and isinstance(folder.get("path"), str)
+              and folder["path"].strip("/").casefold() in approved
+          )
+          comparison["results"] = public_rows
+          comparison["possible_duplicates"] = duplicates
+          comparison["counts"] = counts
+          scan_path.write_text(json.dumps(scan, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          comparison_path.write_text(json.dumps(comparison, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload raw Mocha scan reports
+        if: always()
+        continue-on-error: true
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            ${{ runner.temp }}/mocha-scan-report.json
+            ${{ runner.temp }}/mocha-comparison-report.json
+          if-no-files-found: warn
+          retention-days: 1
+
       - name: Create sanitized dashboard summary
         id: export
         if: always()
@@ -232,6 +317,37 @@ jobs:
           Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
 
+      - name: Display raw Mocha scan and comparison JSON
+        if: always()
+        env:
+          ARTIFACT_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          reports=(
+            "$RUNNER_TEMP/mocha-scan-report.json"
+            "$RUNNER_TEMP/mocha-comparison-report.json"
+          )
+          total_size=0
+          for report in "${reports[@]}"; do
+            if [ -f "$report" ]; then
+              total_size=$((total_size + $(wc -c < "$report")))
+            fi
+          done
+
+          if [ "$total_size" -le 750000 ]; then
+            for report in "${reports[@]}"; do
+              if [ -f "$report" ]; then
+                echo "## Raw Mocha report: $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
+                echo >> "$GITHUB_STEP_SUMMARY"
+                cat "$report" >> "$GITHUB_STEP_SUMMARY"
+                echo >> "$GITHUB_STEP_SUMMARY"
+              fi
+            done
+          else
+            echo "## Raw Mocha scan reports" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "The combined reports exceed the safe run-summary size. Download both complete JSON files from the `mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}` artifact: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
       - name: Report inventory artifact upload status
         if: always()
         env:
@@ -266,11 +382,19 @@ jobs:
           name: mocha-file-inventory
           path: ${{ runner.temp }}/mocha-inventory
 
+      - name: Download this run's raw Mocha scan reports
+        continue-on-error: true
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mocha-scan-reports
+
       - name: Publish only the sanitized Mocha summary
         working-directory: reports-branch
         env:
           SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
           INVENTORY_JSON: ${{ runner.temp }}/mocha-inventory/mocha-public-inventory.json
+          RAW_REPORT_DIR: ${{ runner.temp }}/mocha-scan-reports
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -431,6 +555,15 @@ jobs:
             fi
 
             git add reports/mocha-scan-summary.json
+            for report in mocha-scan-report.json mocha-comparison-report.json; do
+              source="$RAW_REPORT_DIR/$report"
+              if [ -f "$source" ] && [ "$(wc -c < "$source")" -le 5000000 ]; then
+                cp "$source" "reports/$report"
+                git add "reports/$report"
+              else
+                echo "Keeping $report in the run artifact only (missing or larger than 5 MB)."
+              fi
+            done
             if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
