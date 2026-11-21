@@ -20,10 +20,12 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 </head>
 <body><main>
 <header><div><h1>FPKGi Catalog Review</h1><p>Sanitized Mocha scan overview and manually recorded AkiraBox rejections.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays aggregate counts only; filenames, file IDs, folder paths and detailed inventory are not published. Possible duplicates are review candidates, never automatic cleanup. AkiraBox rejection records remain separate and require manual deletion.</div>
+<div class="notice">Mocha scanning is metadata-only and read-only. This public dashboard displays uploaded file names and basic metadata (folder, size, upload date and platform); it does not publish file IDs, API paths, download links or checksums. Possible duplicates are review candidates, never automatic cleanup. AkiraBox rejection records remain separate and require manual deletion.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading reports…</span><button id="refresh" type="button">Refresh reports</button></section>
 <h2 class="section-title">Latest Mocha scan overview</h2>
 <div id="mochaOverview"><div class="empty">Loading the latest sanitized Mocha summary…</div></div>
+<h2 class="section-title">Uploaded Mocha files</h2>
+<div id="mochaInventory"><div class="empty">Loading uploaded file inventory…</div></div>
 <h2 class="section-title">Rejected AkiraBox uploads — manual deletion required</h2>
 <div id="rejected"><div class="empty">Loading saved rejection records…</div></div>
 <div id="warning"></div>
@@ -73,6 +75,26 @@ async function loadMochaSummary(){
   root.innerHTML='<div class="stats">'+cardsHtml+'</div><article class="item"><div class="item-head"><strong>Sanitized scan details</strong><span class="pill">'+(data.scan_complete?"COMPLETE":"INCOMPLETE")+'</span></div><div class="side"><h3>Catalog comparison</h3><dl>'+countRows+'</dl><h3>Mocha account capabilities</h3><dl>'+permissionRows+'</dl></div><div class="reason">Generated: '+esc(data.generated_at||"Unknown")+' · Catalog commit: '+esc(data.catalog_commit||"Unknown")+' · Snapshot consistency: '+esc(data.snapshot_consistency||"Unknown")+'<br>Automatic cleanup: disabled. Detailed inventory published: no.</div></article>';
  }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+' The last successful summary may not be available yet.</div>';}
 }
+function formatBytes(value){
+ if(!Number.isSafeInteger(value)||value<0)return "Unknown";
+ if(value<1024*1024)return (value/1024).toFixed(1)+" KB";
+ if(value<1024*1024*1024)return (value/(1024*1024)).toFixed(2)+" MB";
+ return (value/(1024*1024*1024)).toFixed(2)+" GB";
+}
+async function loadMochaInventory(){
+ const root=$("mochaInventory");
+ try{
+  const response=await fetch(REPORT_BASE+"mocha-file-inventory.json?v="+Date.now(),{cache:"no-store"});
+  if(!response.ok)throw Error("Inventory unavailable (HTTP "+response.status+").");
+  const data=await response.json();
+  if(!isRecord(data)||data.schema_version!==1||data.scanner!=="mocha"||!Array.isArray(data.files)||data.file_count!==data.files.length)throw Error("Inventory has an invalid format.");
+  const rows=data.files.slice().sort((a,b)=>String(a.name||"").localeCompare(String(b.name||""))).map(file=>{
+   if(!isRecord(file))return "";
+   return "<tr><td>"+esc(file.name||"Unknown")+"</td><td>"+esc(file.folder_path||"Unknown")+"</td><td>"+esc(formatBytes(file.size_bytes))+"</td><td>"+esc(file.created_at||"Unknown")+"</td><td>"+esc(file.platform||"Unknown")+"</td></tr>";
+  }).join("");
+  root.innerHTML='<div class="muted">Files: '+esc(data.file_count)+' · Scan observed: '+esc(data.scan_observed_at||"Unknown")+'</div><div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;margin-top:10px"><thead><tr><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Filename</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Folder</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Size</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Uploaded</th><th style="text-align:left;padding:10px;border-bottom:1px solid var(--line)">Platform</th></tr></thead><tbody>'+rows+'</tbody></table></div>';
+ }catch(error){root.innerHTML='<div class="notice">'+esc(error.message||String(error))+' The inventory will appear after the next successful Mocha scan.</div>';}
+}
 async function fetchRejections(){
  const response=await fetch(REPORT_BASE+"akirabox-rejections.json?v="+Date.now(),{cache:"no-store"});
  if(response.status===404)return [];
@@ -114,7 +136,7 @@ async function loadReports(){
  const button=$("refresh");button.disabled=true;
  $("sourceStatus").textContent="Loading Mocha summary, rejection records and live catalog references…";
  rejectionStatus="loading";catalogStatus="loading";catalogUrls=null;renderRejected();
- const [mochaResult,rejectionResult,catalogResult]=await Promise.allSettled([loadMochaSummary(),fetchRejections(),fetchCatalogReferences()]);
+ const [mochaResult,inventoryResult,rejectionResult,catalogResult]=await Promise.allSettled([loadMochaSummary(),loadMochaInventory(),fetchRejections(),fetchCatalogReferences()]);
  if(rejectionResult.status==="fulfilled"){rejections=rejectionResult.value;rejectionStatus="available";}else{rejections=[];rejectionStatus="unavailable";}
  if(catalogResult.status==="fulfilled"){catalogUrls=catalogResult.value;catalogStatus="available";}else{catalogUrls=null;catalogStatus="unavailable";}
  renderRejected();
