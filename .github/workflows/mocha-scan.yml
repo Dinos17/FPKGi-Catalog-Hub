@@ -419,6 +419,7 @@ jobs:
           import re
           import subprocess
           import sys
+          import unicodedata
           from datetime import datetime
           from pathlib import Path
 
@@ -544,7 +545,7 @@ jobs:
               inventory_target.write_text(json.dumps(inventory, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
           # Publish only entries that genuinely require a human decision.
-          # Exact catalog matches are auto-cleared; possible duplicates are never.
+          # Exact catalog matches are auto-cleared; prior owner rejections stay resolved.
           review_queue = None
           try:
               raw_dir = Path(os.environ['RAW_REPORT_DIR'])
@@ -559,7 +560,43 @@ jobs:
                       or raw_comparison.get('catalog_commit') != summary['catalog_commit']
                       or raw_scan.get('scan_observed_at') != summary['scan_observed_at']):
                   raise ValueError('raw scan/comparison snapshot does not match the published summary')
+
+              # Rejection records are already sanitized on akirabox-reports.
+              # Require the source file and validate it; never silently forget prior decisions.
+              rejection_path = Path('reports/akirabox-rejections.json')
+              rejection_report = json.loads(rejection_path.read_text(encoding='utf-8'))
+              if (not isinstance(rejection_report, dict) or rejection_report.get('schema_version') != 1
+                      or not isinstance(rejection_report.get('records'), list)):
+                  raise ValueError('saved rejection report has an unsupported format')
+
+              def normalize_rejection_name(value):
+                  if not isinstance(value, str) or not value.strip():
+                      raise ValueError('rejection record has no valid filename')
+                  return unicodedata.normalize('NFKC', value).strip().casefold()
+
+              rejected = {}
+              for record in rejection_report['records']:
+                  if not isinstance(record, dict):
+                      raise ValueError('saved rejection report contains a malformed record')
+                  if record.get('status') != 'manual_deletion_required':
+                      continue
+                  platform = record.get('platform')
+                  category = record.get('catalog_category')
+                  if platform not in {'PS4', 'PS5'} or category not in {'games', 'dlc'}:
+                      raise ValueError('saved rejection record has an invalid platform/category')
+                  try:
+                      rejected_at = datetime.fromisoformat(
+                          record['rejected_at'].replace('Z', '+00:00')
+                      )
+                  except (KeyError, AttributeError, TypeError, ValueError) as exc:
+                      raise ValueError('saved rejection record has an invalid rejection timestamp') from exc
+                  if rejected_at.tzinfo is None:
+                      raise ValueError('saved rejection timestamp has no timezone')
+                  key = (platform, category, normalize_rejection_name(record.get('name')))
+                  rejected.setdefault(key, []).append(rejected_at)
+
               allowed_ids = set()
+              scan_files_by_id = {}
               for item in raw_scan.get('files', []):
                   if not isinstance(item, dict):
                       raise ValueError('malformed scan file')
@@ -567,7 +604,10 @@ jobs:
                   classification = approved_paths.get(folder.strip('/').casefold()) if isinstance(folder, str) else None
                   if classification and (item.get('platform'), item.get('catalog_category')) == classification:
                       if item.get('id') is not None:
-                          allowed_ids.add(str(item['id']))
+                          file_id = str(item['id'])
+                          allowed_ids.add(file_id)
+                          scan_files_by_id[file_id] = item
+
               comparison_rows = raw_comparison.get('results')
               if not isinstance(comparison_rows, list):
                   raise ValueError('comparison results are missing')
@@ -586,6 +626,7 @@ jobs:
               }
               if result_ids != expected_ids:
                   raise ValueError('comparison does not cover every approved package file')
+
               duplicate_ids = set()
               for group in raw_comparison.get('possible_duplicates', []):
                   if not isinstance(group, dict) or not isinstance(group.get('file_ids'), list):
@@ -594,8 +635,10 @@ jobs:
                   if not group_ids.issubset(allowed_ids):
                       raise ValueError('duplicate group contains an out-of-scope file')
                   duplicate_ids.update(group_ids)
+
               entries = []
               auto_approved = 0
+              previously_rejected = 0
               source_fields = ('title', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size_bytes')
               catalog_fields = ('name', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size')
               for row in raw_comparison.get('results', []):
@@ -604,7 +647,29 @@ jobs:
                   status = row.get('status')
                   if status not in {'matched', 'metadata_difference', 'unverified', 'new', 'ambiguous', 'unclassified'}:
                       raise ValueError('unknown comparison status')
-                  is_duplicate = str(row['file_id']) in duplicate_ids
+                  file_id = str(row['file_id'])
+                  scan_item = scan_files_by_id[file_id]
+                  is_duplicate = file_id in duplicate_ids
+
+                  # Suppress only the same exact filename in the same category when
+                  # Mocha's upload timestamp proves it predates the recorded rejection.
+                  # A later re-upload with the same filename remains eligible for review.
+                  rejection_key = (
+                      row.get('platform'), row.get('category'),
+                      normalize_rejection_name(row.get('name')),
+                  )
+                  matching_rejections = rejected.get(rejection_key, [])
+                  created_text = scan_item.get('created_at')
+                  if matching_rejections and isinstance(created_text, str):
+                      try:
+                          created_at = datetime.fromisoformat(created_text.replace('Z', '+00:00'))
+                      except ValueError:
+                          created_at = None
+                      if created_at is not None and created_at.tzinfo is not None and any(
+                              created_at <= rejected_at for rejected_at in matching_rejections):
+                          previously_rejected += 1
+                          continue
+
                   if status == 'matched' and not is_duplicate:
                       auto_approved += 1
                       continue
@@ -627,11 +692,12 @@ jobs:
                   'scan_observed_at': summary['scan_observed_at'],
                   'catalog_commit': summary['catalog_commit'],
                   'auto_approved_count': auto_approved,
+                  'previously_rejected_count': previously_rejected,
                   'pending_count': len(entries),
                   'entries': entries,
               }
               Path('reports/mocha-review-queue.json').write_text(
-                  json.dumps(review_queue, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
+                  json.dumps(review_queue, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8'
               )
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
               print('Human-review queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
