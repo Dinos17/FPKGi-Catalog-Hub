@@ -14,7 +14,7 @@ import sys
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import urljoin, urlparse
 
 import requests
 
@@ -26,6 +26,7 @@ USER_AGENT = (
 )
 ALLOWED_CATEGORIES = {"homebrew", "apps", "emulators", "themes", "demos", "catalog"}
 AKIRA_HOSTS = {"akirabox.to", "akirabox.com"}
+MAX_REDIRECTS = 5
 
 
 class ScanError(RuntimeError):
@@ -133,12 +134,46 @@ class AkiraBoxScanner:
         self.max_folders = max_folders
 
     def _get_html(self, url: str) -> str:
-        try:
-            response = self.session.get(url, timeout=self.timeout)
-            response.raise_for_status()
-        except requests.RequestException as exc:
-            raise ScanError(f"Request failed for {url}: {exc}") from exc
-        return response.text
+        current_url = url
+        for redirect_count in range(MAX_REDIRECTS + 1):
+            try:
+                response = self.session.get(
+                    current_url, timeout=self.timeout, allow_redirects=False
+                )
+            except requests.RequestException as exc:
+                raise ScanError(f"Request failed for {current_url}: {exc}") from exc
+
+            status = getattr(response, "status_code", 200)
+            if status in {301, 302, 303, 307, 308}:
+                location = getattr(response, "headers", {}).get("Location")
+                if not location:
+                    raise ScanError(f"Redirect from {current_url} did not include a Location header")
+                target = urljoin(current_url, location)
+                try:
+                    parsed = urlparse(target)
+                    safe_target = (
+                        parsed.scheme == "https"
+                        and (parsed.hostname or "").lower() in AKIRA_HOSTS
+                        and parsed.username is None
+                        and parsed.password is None
+                        and parsed.port in (None, 443)
+                    )
+                except ValueError:
+                    safe_target = False
+                if not safe_target:
+                    raise ScanError(f"Refusing redirect to a non-allowlisted URL: {target}")
+                if redirect_count >= MAX_REDIRECTS:
+                    raise ScanError(f"Too many redirects while requesting {url}")
+                current_url = target
+                continue
+
+            try:
+                response.raise_for_status()
+            except requests.RequestException as exc:
+                raise ScanError(f"Request failed for {current_url}: {exc}") from exc
+            return response.text
+
+        raise ScanError(f"Too many redirects while requesting {url}")
 
     def _scan_folder(self, folder_url: str, category: str, path: list[str],
                      visited: set[str], result: ScanResult, platform: str | None = None,
