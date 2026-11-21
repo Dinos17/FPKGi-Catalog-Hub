@@ -6,10 +6,17 @@ from typing import Any
 
 
 def near_duplicate_file_ids(rows: list[dict[str, Any]]) -> set[str]:
-    """Flag matched uploads sharing core identity while optional tags may differ."""
+    """Flag uploads sharing core identity, even when optional metadata conflicts.
+
+    Optional tags such as languages and minimum firmware are deliberately not
+    part of the grouping key. Both matched and metadata_difference rows matter:
+    a conflict on one optional field must not let its matching counterpart pass
+    the duplicate check.
+    """
     groups: dict[tuple[Any, ...], list[str]] = defaultdict(list)
+    eligible_statuses = {"matched", "metadata_difference"}
     for row in rows:
-        if not isinstance(row, dict) or row.get("status") != "matched":
+        if not isinstance(row, dict) or row.get("status") not in eligible_statuses:
             continue
         source = row.get("source_metadata")
         if not isinstance(source, dict):
@@ -29,11 +36,10 @@ def near_duplicate_file_ids(rows: list[dict[str, Any]]) -> set[str]:
 def can_silently_clear_match(
     status: str, is_duplicate: bool, binary_integrity_verified: Any = None
 ) -> bool:
-    """Clear a unique metadata match from human review without claiming binary verification.
+    """Clear a unique catalog metadata match without asserting binary integrity.
 
-    Catalog matching and cryptographic package verification are separate decisions.
-    Mocha's listing API currently supplies no trusted package hash, so a clean,
-    unique metadata match may leave the review queue while its
-    binary_integrity_verified field remains False in the published report.
+    This is a metadata-classification decision only. Mocha's listing API does
+    not provide a trusted package hash, so binary_integrity_verified remains
+    False unless an independent trusted verification actually occurs.
     """
     return status == "matched" and not is_duplicate
