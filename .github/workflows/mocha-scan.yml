@@ -201,11 +201,17 @@ jobs:
           ref: akirabox-reports
           path: reports-branch
           fetch-depth: 0
+      - name: Download this run's Mocha inventory
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.0
+        with:
+          name: mocha-file-inventory
+          path: ${{ runner.temp }}/mocha-inventory
 
       - name: Publish only the sanitized Mocha summary
         working-directory: reports-branch
         env:
           SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
+          INVENTORY_JSON: ${{ runner.temp }}/mocha-inventory/mocha-scan-report.json
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -316,8 +322,50 @@ jobs:
                   print("Incoming scan observation is not newer; preserving the current dashboard summary.")
                   raise SystemExit(10)
 
+          inventory_path = Path(os.environ["INVENTORY_JSON"])
+          try:
+              inventory = json.loads(inventory_path.read_text(encoding="utf-8"))
+          except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
+              raise SystemExit("Refusing to publish a missing or malformed Mocha inventory.") from exc
+          if not isinstance(inventory, dict) or inventory.get("scanner") != "mocha" or inventory.get("scan_complete") is not True:
+              raise SystemExit("Refusing to publish an incomplete or unrecognized Mocha inventory.")
+          source_files = inventory.get("files")
+          if not isinstance(source_files, list) or len(source_files) != summary["file_count"]:
+              raise SystemExit("Refusing to publish an inventory whose file count does not match the summary.")
+          public_files = []
+          for item in source_files:
+              if not isinstance(item, dict):
+                  raise SystemExit("Refusing to publish malformed inventory entries.")
+              name, folder = item.get("name"), item.get("folder_path")
+              size, created = item.get("size_bytes"), item.get("created_at")
+              if not isinstance(name, str) or not name or not isinstance(folder, str):
+                  raise SystemExit("Refusing to publish an inventory entry with invalid name or folder.")
+              if size is not None and (type(size) is not int or size < 0):
+                  raise SystemExit("Refusing to publish an invalid file size.")
+              if created is not None and not isinstance(created, str):
+                  raise SystemExit("Refusing to publish an invalid creation timestamp.")
+              platform, category, extension = item.get("platform"), item.get("catalog_category"), item.get("extension")
+              if any(value is not None and not isinstance(value, str) for value in (platform, category, extension)):
+                  raise SystemExit("Refusing to publish invalid file classification metadata.")
+              public_files.append({
+                  "name": name, "folder_path": folder, "size_bytes": size,
+                  "created_at": created, "platform": platform,
+                  "catalog_category": category, "extension": extension,
+              })
+          public_inventory = {
+              "schema_version": 1,
+              "scanner": "mocha",
+              "scan_observed_at": inventory.get("scan_observed_at"),
+              "file_count": len(public_files),
+              "files": public_files,
+          }
+          if public_inventory["scan_observed_at"] != summary["scan_observed_at"]:
+              raise SystemExit("Inventory and summary timestamps do not match.")
+
           target.parent.mkdir(parents=True, exist_ok=True)
           target.write_text(json.dumps(summary, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          inventory_target = Path("reports/mocha-file-inventory.json")
+          inventory_target.write_text(json.dumps(public_inventory, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           PY
             then
               :
@@ -329,7 +377,7 @@ jobs:
               exit "$validation_status"
             fi
 
-            git add reports/mocha-scan-summary.json
+            git add reports/mocha-scan-summary.json reports/mocha-file-inventory.json
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
               exit 0
