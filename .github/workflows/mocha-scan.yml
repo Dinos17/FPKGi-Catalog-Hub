@@ -322,19 +322,31 @@ jobs:
         env:
           ARTIFACT_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
-          for report in "$RUNNER_TEMP/mocha-scan-report.json" "$RUNNER_TEMP/mocha-comparison-report.json"; do
+          reports=(
+            "$RUNNER_TEMP/mocha-scan-report.json"
+            "$RUNNER_TEMP/mocha-comparison-report.json"
+          )
+          total_size=0
+          for report in "${reports[@]}"; do
             if [ -f "$report" ]; then
-              echo "## Raw Mocha report: $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
-              echo >> "$GITHUB_STEP_SUMMARY"
-              size=$(wc -c < "$report")
-              if [ "$size" -le 750000 ]; then
-                cat "$report" >> "$GITHUB_STEP_SUMMARY"
-              else
-                echo "Report is larger than the GitHub run-summary limit. Download the complete JSON from the `mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}` artifact: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
-              fi
-              echo >> "$GITHUB_STEP_SUMMARY"
+              total_size=$((total_size + $(wc -c < "$report")))
             fi
           done
+
+          if [ "$total_size" -le 750000 ]; then
+            for report in "${reports[@]}"; do
+              if [ -f "$report" ]; then
+                echo "## Raw Mocha report: $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
+                echo >> "$GITHUB_STEP_SUMMARY"
+                cat "$report" >> "$GITHUB_STEP_SUMMARY"
+                echo >> "$GITHUB_STEP_SUMMARY"
+              fi
+            done
+          else
+            echo "## Raw Mocha scan reports" >> "$GITHUB_STEP_SUMMARY"
+            echo >> "$GITHUB_STEP_SUMMARY"
+            echo "The combined reports exceed the safe run-summary size. Download both complete JSON files from the `mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}` artifact: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
       - name: Report inventory artifact upload status
         if: always()
