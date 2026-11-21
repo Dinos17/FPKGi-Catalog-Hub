@@ -221,11 +221,23 @@ def compare_scan(
 
             source_title_id = parsed.get("title_id")
             catalog_title_id = catalog_metadata.get("title_id")
-            if source_title_id and catalog_title_id:
-                if source_title_id != str(catalog_title_id).strip().upper():
-                    differences.append("title_id")
-            elif source_title_id or catalog_title_id:
+            catalog_filename_title_id = (catalog_filename or {}).get("title_id")
+            known_catalog_title_ids = [
+                str(value).strip().upper()
+                for value in (catalog_title_id, catalog_filename_title_id)
+                if value is not None and str(value).strip()
+            ]
+            if source_title_id:
+                if known_catalog_title_ids:
+                    if any(value != source_title_id for value in known_catalog_title_ids):
+                        differences.append("title_id")
+                else:
+                    unavailable.append("title_id")
+            elif known_catalog_title_ids:
                 unavailable.append("title_id")
+            if (catalog_title_id and catalog_filename_title_id
+                    and str(catalog_title_id).strip().upper() != catalog_filename_title_id):
+                differences.append("catalog_title_id_inconsistency")
 
             source_region = _region(parsed.get("region"))
             catalog_region = _region(catalog_metadata.get("region")) or _region((catalog_filename or {}).get("region"))
@@ -242,33 +254,49 @@ def compare_scan(
                 differences.append("min_fw")
 
             source_languages = sorted(parsed.get("languages") or [])
-            catalog_languages = []
-            if catalog_filename:
-                catalog_languages = sorted(catalog_filename.get("languages") or [])
+            catalog_filename_languages = sorted((catalog_filename or {}).get("languages") or [])
+            if catalog_filename_languages:
+                catalog_languages = catalog_filename_languages
             elif isinstance(catalog_metadata.get("languages"), list):
                 catalog_languages = sorted(str(x).upper() for x in catalog_metadata["languages"])
+            else:
+                catalog_languages = []
             if not source_languages or not catalog_languages:
                 unavailable.append("languages")
             elif source_languages != catalog_languages:
                 differences.append("languages")
 
-            if parsed.get("title_id"):
-                title_similarity = _title_similarity(
-                    _clean_title(parsed.get("title")),
-                    _clean_title(catalog_metadata.get("name")),
-                )
-                if title_similarity < 1.0:
-                    unavailable.append("package_title_identity")
+            source_title = _clean_title(parsed.get("title"))
+            catalog_title = _clean_title(catalog_metadata.get("name"))
+            if source_title != catalog_title:
+                unavailable.append("package_title_identity")
 
             if differences:
                 status = "metadata_difference"
                 reason = "Source metadata differs in: " + ", ".join(differences)
-            elif unavailable:
-                status = "unverified"
-                reason = "Catalog identity candidate found, but comparison metadata is unavailable: " + ", ".join(unavailable)
             else:
-                status = "matched"
-                reason = "Available identity and comparison metadata agree"
+                # Title ID, minimum firmware, and language tags are useful corroborating
+                # fields, but Mocha often omits them. Their absence must not veto a
+                # unique exact-title match when the core evidence (region, version,
+                # and package size) is present and agrees. Known conflicts above
+                # still force human review.
+                critical_unavailable = {
+                    "version", "size_bytes", "region", "package_title_identity",
+                }.intersection(unavailable)
+                if critical_unavailable:
+                    status = "unverified"
+                    reason = (
+                        "Catalog identity candidate found, but core verification "
+                        "metadata is unavailable: " + ", ".join(sorted(critical_unavailable))
+                    )
+                else:
+                    status = "matched"
+                    reason = (
+                        "Unique catalog identity and available metadata agree; "
+                        "binary contents are not cryptographically verified"
+                    )
+                    if unavailable:
+                        reason += "; optional metadata unavailable: " + ", ".join(unavailable)
 
         counts[status] += 1
 
@@ -292,6 +320,10 @@ def compare_scan(
             "catalog_metadata": catalog_metadata,
             "metadata_differences": differences,
             "unavailable_metadata": unavailable,
+            # Mocha's current listing API supplies no trusted SHA-256. Metadata
+            # agreement identifies a catalog candidate but cannot authenticate
+            # the uploaded package bytes.
+            "binary_integrity_verified": False,
             "reason": reason,
         })
 
