@@ -147,6 +147,16 @@ jobs:
             --catalog-commit "$GITHUB_SHA" \
             --output "$RUNNER_TEMP/mocha-comparison-report.json"
 
+      - name: Upload raw Mocha scan reports
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: mocha-scan-reports
+          path: |
+            ${{ runner.temp }}/mocha-scan-report.json
+            ${{ runner.temp }}/mocha-comparison-report.json
+          if-no-files-found: error
+          retention-days: 1
+
       - name: Create sanitized dashboard summary
         id: export
         if: always()
@@ -232,6 +242,18 @@ jobs:
           Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
 
+      - name: Display raw Mocha scan and comparison JSON
+        if: always()
+        run: |
+          for report in "$RUNNER_TEMP/mocha-scan-report.json" "$RUNNER_TEMP/mocha-comparison-report.json"; do
+            if [ -f "$report" ]; then
+              echo "## Raw Mocha report: $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
+              echo >> "$GITHUB_STEP_SUMMARY"
+              cat "$report" | tee -a "$GITHUB_STEP_SUMMARY"
+              echo >> "$GITHUB_STEP_SUMMARY"
+            fi
+          done
+
       - name: Report inventory artifact upload status
         if: always()
         env:
@@ -266,11 +288,18 @@ jobs:
           name: mocha-file-inventory
           path: ${{ runner.temp }}/mocha-inventory
 
+      - name: Download this run's raw Mocha scan reports
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: mocha-scan-reports
+          path: ${{ runner.temp }}/mocha-scan-reports
+
       - name: Publish only the sanitized Mocha summary
         working-directory: reports-branch
         env:
           SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
           INVENTORY_JSON: ${{ runner.temp }}/mocha-inventory/mocha-public-inventory.json
+          RAW_REPORT_DIR: ${{ runner.temp }}/mocha-scan-reports
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -430,7 +459,9 @@ jobs:
               exit "$validation_status"
             fi
 
-            git add reports/mocha-scan-summary.json
+            cp "$RAW_REPORT_DIR/mocha-scan-report.json" reports/mocha-scan-report.json
+            cp "$RAW_REPORT_DIR/mocha-comparison-report.json" reports/mocha-comparison-report.json
+            git add reports/mocha-scan-summary.json reports/mocha-scan-report.json reports/mocha-comparison-report.json
             if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
