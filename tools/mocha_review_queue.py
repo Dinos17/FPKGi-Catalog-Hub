@@ -1,4 +1,4 @@
-"""Conservative review-queue safety helpers for Mocha scan reports."""
+"""Review-queue classification helpers for Mocha scan reports."""
 from __future__ import annotations
 
 from collections import defaultdict
@@ -27,7 +27,13 @@ def near_duplicate_file_ids(rows: list[dict[str, Any]]) -> set[str]:
 
 
 def can_silently_clear_match(
-    status: str, is_duplicate: bool, binary_integrity_verified: Any
+    status: str, is_duplicate: bool, binary_integrity_verified: Any = None
 ) -> bool:
-    """Only cryptographically verified, unique matches may leave human review."""
-    return status == "matched" and not is_duplicate and binary_integrity_verified is True
+    """Clear a unique metadata match from human review without claiming binary verification.
+
+    Catalog matching and cryptographic package verification are separate decisions.
+    Mocha's listing API currently supplies no trusted package hash, so a clean,
+    unique metadata match may leave the review queue while its
+    binary_integrity_verified field remains False in the published report.
+    """
+    return status == "matched" and not is_duplicate
