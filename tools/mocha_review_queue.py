@@ -34,12 +34,19 @@ def near_duplicate_file_ids(rows: list[dict[str, Any]]) -> set[str]:
 
 
 def can_silently_clear_match(
-    status: str, is_duplicate: bool, binary_integrity_verified: Any = None
+    status: str,
+    is_duplicate: bool,
+    binary_integrity_verified: Any = None,
+    snapshot_consistency: str = "not_guaranteed_by_api",
 ) -> bool:
-    """Clear a unique catalog metadata match without asserting binary integrity.
+    """Clear only a unique metadata match from a stable, complete inventory.
 
-    This is a metadata-classification decision only. Mocha's listing API does
-    not provide a trusted package hash, so binary_integrity_verified remains
-    False unless an independent trusted verification actually occurs.
+    This is a metadata-classification decision, not binary-integrity approval.
+    A changing or snapshot-inconsistent listing cannot establish uniqueness,
+    so such matches stay available for human review.
     """
-    return status == "matched" and not is_duplicate
+    return (
+        status == "matched"
+        and not is_duplicate
+        and snapshot_consistency == "stable"
+    )
