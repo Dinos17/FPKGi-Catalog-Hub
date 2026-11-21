@@ -189,8 +189,10 @@ jobs:
         env:
           REPORT_BRANCH: akirabox-reports
           REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
+          REJECTION_TOOL: ${{ github.workspace }}/tools/akirabox_rejections.py
         run: |
           set -euo pipefail
+          cp "$REJECTION_TOOL" "$RUNNER_TEMP/akirabox_rejections.py"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
@@ -205,7 +207,7 @@ jobs:
               rm -f "$REPORT_PATH"
             fi
 
-            python tools/akirabox_rejections.py \
+            python "$RUNNER_TEMP/akirabox_rejections.py" \
               --event-path "$GITHUB_EVENT_PATH" \
               --report-path "$REPORT_PATH" \
               --expected-actor "Dinos17"
