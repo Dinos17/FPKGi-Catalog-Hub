@@ -374,6 +374,12 @@ jobs:
           ref: akirabox-reports
           path: reports-branch
           fetch-depth: 0
+      - name: Check out the source commit for publisher helpers
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          path: source
+          persist-credentials: false
       - name: Download this run's sanitized Mocha inventory
         id: inventory_download
         continue-on-error: true
@@ -395,6 +401,7 @@ jobs:
           SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
           INVENTORY_JSON: ${{ runner.temp }}/mocha-inventory/mocha-public-inventory.json
           RAW_REPORT_DIR: ${{ runner.temp }}/mocha-scan-reports
+          PYTHONPATH: ${{ github.workspace }}/source
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
