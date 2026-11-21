@@ -410,10 +410,13 @@ def test_metadata_match_is_not_binary_approval(tmp_path):
     assert "binary contents are not cryptographically verified" in row["reason"]
 
 
-def test_review_workflow_requires_binary_integrity_for_auto_approval():
+def test_review_workflow_silently_clears_exact_matches_without_claiming_binary_approval():
     workflow = (Path(__file__).parents[1] / ".github/workflows/mocha-scan.yml").read_text(encoding="utf-8")
-    assert "status == 'matched' and not is_duplicate and binary_verified is True" in workflow
-    assert "binary_integrity_verified" in workflow
+    assert "status == 'matched' and not is_duplicate:" in workflow
+    assert "automatically_cleared += 1" in workflow
+    assert "binary_verified = row.get('binary_integrity_verified')" in workflow
+    assert "This is queue triage only: it does NOT" in workflow
+    assert "Possible duplicates and every non-matched status remain for review." in workflow
 
 def test_missing_comparison_critical_metadata_is_unverified(tmp_path):
     write_catalog(tmp_path, "ps4/games.json", {
