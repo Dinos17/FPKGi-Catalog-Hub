@@ -824,7 +824,6 @@ jobs:
             if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
             if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
             if [ -f reports/mocha-catalog-candidates.json ]; then git add reports/mocha-catalog-candidates.json; fi
-            if [ -f reports/mocha-catalog-candidates.json ]; then git add reports/mocha-catalog-candidates.json; fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
               exit 0
