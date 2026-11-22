@@ -125,3 +125,11 @@ jobs:
           EOF
           pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add Mocha source: $CANDIDATE_NAME" --body-file "$RUNNER_TEMP/mocha-catalog-pr.md")"
           gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Catalog pull request created: $pr_url. It must pass checks and be merged before FPKGi can request a temporary download URL."
+
+      - name: Explain failed approval
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "The candidate approval workflow could not safely create a catalog pull request. No catalog change was published. Check the failed workflow run for the reason; the candidate may be stale or already decided."
