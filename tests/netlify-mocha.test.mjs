@@ -266,3 +266,69 @@ test("endpoint returns only validated, non-cacheable presigned URLs", async (t) 
     expiresIn: 86400,
   });
 });
+
+
+test("handler never calls Mocha when the requested ID is absent from every catalog", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const originalNetlify = globalThis.Netlify;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.Netlify = originalNetlify;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  let mochaCalls = 0;
+  globalThis.Netlify = { env: { get: (name) => ({
+    MOCHA_API_KEY: "test-key",
+    MOCHA_STORAGE_HOSTS: "storage.example",
+  })[name] } };
+  globalThis.fetch = async (url) => {
+    if (String(url).includes("api.mocha.my")) {
+      mochaCalls += 1;
+      throw new Error("Mocha must not be contacted for an unauthorized ID");
+    }
+    return Response.json({ DATA: {
+      "different-approved-id": { download_source: "mocha" },
+    } });
+  };
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=not-approved",
+  ));
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: "file_not_found" });
+  assert.equal(mochaCalls, 0);
+});
+
+test("handler rejects an unapproved Mocha storage host without returning its URL", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const originalNetlify = globalThis.Netlify;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.Netlify = originalNetlify;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  globalThis.Netlify = { env: { get: (name) => ({
+    MOCHA_API_KEY: "test-key",
+    MOCHA_STORAGE_HOSTS: "storage.example",
+  })[name] } };
+  globalThis.fetch = async (url) => {
+    if (String(url).includes("api.mocha.my")) {
+      return Response.json({
+        url: "https://attacker.example/file?secret=must-not-leak",
+        expiresIn: 86400,
+      });
+    }
+    return Response.json({ DATA: {
+      "approved-file-id": { download_source: "mocha" },
+    } });
+  };
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=approved-file-id",
+  ));
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { error: "invalid_upstream_url" });
+  assert.equal(response.headers.get("cache-control"), null);
+});
