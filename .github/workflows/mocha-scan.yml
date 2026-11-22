@@ -743,7 +743,18 @@ jobs:
 
                   # Clear unique metadata matches independently of binary verification.
                   # Snapshot consistency is not exposed by Mocha's API.
-                  if can_silently_clear_match(status, is_duplicate, binary_verified):
+                  try:
+                      uploaded_at = datetime.fromisoformat(created_text.replace('Z', '+00:00')) if isinstance(created_text, str) else None
+                  except ValueError:
+                      uploaded_at = None
+                  identity_complete = (
+                      isinstance(file_id, str)
+                      and re.fullmatch(r'[A-Za-z0-9._-]{1,128}', file_id) is not None
+                      and uploaded_at is not None
+                      and uploaded_at.tzinfo is not None
+                  )
+                  if can_silently_clear_match(
+                          status, is_duplicate, binary_verified, identity_complete=identity_complete):
                       automatically_cleared += 1
                       continue
                   source_meta = row.get('source_metadata') if isinstance(row.get('source_metadata'), dict) else {}
