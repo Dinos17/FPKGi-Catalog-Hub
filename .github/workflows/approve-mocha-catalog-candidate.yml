@@ -50,7 +50,7 @@ jobs:
           event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
           issue = event.get("issue", {})
           body = issue.get("body") or ""
-          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\\s*(\\{.*?\\})\\s*-->", body, re.S)
+          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\s*(\{.*?\\})\s*-->", body, re.S)
           if not match:
               raise SystemExit("Missing structured candidate approval payload.")
           payload = json.loads(match.group(1))
@@ -118,7 +118,7 @@ jobs:
           if candidate.get("approval_required") is not True or candidate.get("binary_integrity_verified") is not False:
               raise SystemExit("Candidate approval state is invalid.")
           if candidate.get("candidate_id") != hashlib.sha256(
-              (file_id + "\\0" + queue["catalog_commit"] + "\\0" + expected_path + "\\0" + matched_key).encode("utf-8")
+              (file_id + "\0" + queue["catalog_commit"] + "\0" + expected_path + "\0" + matched_key).encode("utf-8")
           ).hexdigest()[:24]:
               raise SystemExit("Candidate identity does not match the trusted scan/catalog snapshot.")
           created_at = candidate.get("created_at")
@@ -133,16 +133,16 @@ jobs:
               raise SystemExit("Mocha file ID collides with an existing catalog key.")
 
           entries[file_id] = proposed
-          catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+          catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           candidate_name = candidate.get("name", "Mocha upload")
           if not isinstance(candidate_name, str):
               candidate_name = "Mocha upload"
-          candidate_name = re.sub(r"[\\r\\n\\t]+", " ", candidate_name)
+          candidate_name = re.sub(r"[\r\n\t]+", " ", candidate_name)
           candidate_name = "".join(ch for ch in candidate_name if ch.isprintable()).strip()[:120] or "Mocha upload"
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"candidate_id={candidate_id}\\n")
-              output.write(f"candidate_name={candidate_name}\\n")
-              output.write(f"catalog_path={expected_path}\\n")
+              output.write(f"candidate_id={candidate_id}\n")
+              output.write(f"candidate_name={candidate_name}\n")
+              output.write(f"catalog_path={expected_path}\n")
           PY
 
           python tools/validate_catalogs.py
