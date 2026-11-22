@@ -140,6 +140,40 @@ def test_load_sources_accepts_valid_configuration(tmp_path, monkeypatch):
     assert merge.load_sources() == sources
 
 
+def test_validate_entry_accepts_mocha_file_id_only_when_marked():
+    errors, warnings = validate_entry(
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        {"name": "Example Game", "download_source": "mocha"},
+    )
+
+    assert errors == []
+    assert warnings == []
+
+
+@pytest.mark.parametrize(
+    "file_id",
+    ["", "not a valid id", "mocha://file-id", "x" * 129],
+)
+def test_validate_entry_rejects_invalid_mocha_file_id(file_id):
+    errors, warnings = validate_entry(
+        file_id,
+        {"name": "Example Game", "download_source": "mocha"},
+    )
+
+    assert any("Mocha file ID is invalid" in error for error in errors)
+    assert warnings == []
+
+
+def test_validate_entry_rejects_unmarked_mocha_file_id():
+    errors, warnings = validate_entry(
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        {"name": "Example Game"},
+    )
+
+    assert any("package URL is not HTTP(S)" in error for error in errors)
+    assert warnings == []
+
+
 def test_validate_entry_accepts_valid_entry():
     errors, warnings = validate_entry(
         "https://example.com/game.pkg",
