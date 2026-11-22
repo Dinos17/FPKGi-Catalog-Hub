@@ -976,7 +976,7 @@ jobs:
               echo "Automatic catalog branch exists without an open PR; refusing to overwrite it." >&2
               exit 1
             fi
-            gh pr merge "$existing_pr" --auto --squash --delete-branch
+            gh pr merge "$existing_pr" --squash --delete-branch
             exit 0
           fi
           git switch --create "$branch"
@@ -991,4 +991,4 @@ jobs:
             --title "Automatically register safe Mocha sources" \
             --body "Automated registration of exact, unique Mocha metadata matches. The workflow validated the current scan/catalog snapshot, saved decisions and rejections, ran the repository test suite, and validated all catalog schemas. No ambiguous or conflicting candidates are included. Binary integrity is not verified.")"
           echo "Created $pr_url"
-          gh pr merge "$pr_url" --auto --squash --delete-branch
+          gh pr merge "$pr_url" --squash --delete-branch
