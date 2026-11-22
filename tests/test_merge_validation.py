@@ -144,6 +144,7 @@ def test_validate_entry_accepts_mocha_file_id_only_when_marked():
     errors, warnings = validate_entry(
         "d5ac3913-802b-4d68-9803-8f5c07c7640e",
         {"name": "Example Game", "download_source": "mocha"},
+        allow_mocha=True,
     )
 
     assert errors == []
@@ -158,6 +159,7 @@ def test_validate_entry_rejects_invalid_mocha_file_id(file_id):
     errors, warnings = validate_entry(
         file_id,
         {"name": "Example Game", "download_source": "mocha"},
+        allow_mocha=True,
     )
 
     assert any("Mocha file ID is invalid" in error for error in errors)
@@ -619,3 +621,12 @@ def test_merge_category_preserves_existing_mocha_registrations(tmp_path, monkeyp
     assert result["d5ac3913-802b-4d68-9803-8f5c07c7640e"] == mocha_entry
     assert "https://example.com/new.pkg" in result
     assert "https://example.com/old.pkg" not in result
+
+
+def test_validate_entry_rejects_mocha_marker_unless_catalog_context_is_explicit():
+    errors, warnings = validate_entry(
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        {"name": "Injected Game", "download_source": "mocha"},
+    )
+    assert any("not accepted from fetched sources" in error for error in errors)
+    assert warnings == []
