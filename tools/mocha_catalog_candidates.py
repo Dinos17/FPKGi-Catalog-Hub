@@ -154,7 +154,7 @@ def build_candidate_queue(
             "metadata_differences": [],
             "unavailable_metadata": row.get("unavailable_metadata", []),
             "binary_integrity_verified": False,
-            "approval_required": True,
+            "approval_required": False,
         })
 
     # If multiple Mocha uploads point at the same existing catalog record,
@@ -176,6 +176,6 @@ def build_candidate_queue(
         "candidate_count": len(candidates),
         "candidates": candidates,
         "catalog_write_performed": False,
-        "automatic_approval": False,
+        "automatic_approval": True,
         "binary_integrity_verified": False,
     }
