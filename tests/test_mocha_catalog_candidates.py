@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from tools.mocha_catalog_candidates import build_candidate_queue
+from tools.mocha_review_queue import near_duplicate_file_ids
 
 
 CATALOG_PATHS = {
@@ -135,6 +136,8 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         second_row["name"] = second_item["name"]
         second_row["source_metadata"] = dict(self.row["source_metadata"], region="EUR")
         self.comparison["results"].append(second_row)
+        duplicate_ids = near_duplicate_file_ids(self.comparison["results"])
+        self.assertEqual(duplicate_ids, {self.row["file_id"], second_row["file_id"]})
         result = self.build()
         self.assertEqual(result["candidate_count"], 0)
 
