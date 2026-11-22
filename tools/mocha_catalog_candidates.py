@@ -40,6 +40,7 @@ def build_candidate_queue(
     scan: dict[str, Any],
     comparison: dict[str, Any],
     catalog_root: Path,
+    excluded_file_ids: set[str] | None = None,
 ) -> dict[str, Any]:
     """Propose a Mocha source only for a unique, exact metadata match.
 
@@ -78,6 +79,7 @@ def build_candidate_queue(
     if not isinstance(rows, list):
         raise ValueError("Comparison results are missing")
     duplicate_ids = near_duplicate_file_ids(rows)
+    excluded_ids = {str(value) for value in (excluded_file_ids or set())}
     for group in comparison.get("possible_duplicates", []):
         if not isinstance(group, dict) or not isinstance(group.get("file_ids"), list):
             raise ValueError("Comparison contains a malformed duplicate group")
@@ -94,7 +96,7 @@ def build_candidate_queue(
         if file_id in seen_ids:
             raise ValueError("Comparison contains duplicate matched file IDs")
         seen_ids.add(file_id)
-        if file_id in duplicate_ids or file_id in existing_mocha_ids:
+        if file_id in duplicate_ids or file_id in existing_mocha_ids or file_id in excluded_ids:
             continue
 
         item = scan_files.get(file_id)
