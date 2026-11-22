@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime
+from collections import Counter
 import re
 from pathlib import Path
 from typing import Any
@@ -45,8 +46,8 @@ def build_candidate_queue(
 ) -> dict[str, Any]:
     """Propose a Mocha source only for a unique, exact metadata match.
 
-    This function never writes catalog data. Every candidate requires a later
-    human approval workflow and a catalog pull request.
+    This function never writes catalog data. Exact, unique candidates are
+    eligible for automatic registration; uncertain rows remain in the review queue.
     """
     if scan.get("scanner") != "mocha" or scan.get("scan_complete") is not True:
         raise ValueError("Refusing candidates from an incomplete or invalid Mocha scan")
@@ -155,6 +156,17 @@ def build_candidate_queue(
             "binary_integrity_verified": False,
             "approval_required": True,
         })
+
+    # If multiple Mocha uploads point at the same existing catalog record,
+    # neither is safe to register automatically. Keep the whole conflict out.
+    target_counts = Counter(
+        (candidate["catalog_path"], candidate["matched_catalog_key"])
+        for candidate in candidates
+    )
+    candidates = [
+        candidate for candidate in candidates
+        if target_counts[(candidate["catalog_path"], candidate["matched_catalog_key"])] == 1
+    ]
 
     return {
         "schema_version": 1,
