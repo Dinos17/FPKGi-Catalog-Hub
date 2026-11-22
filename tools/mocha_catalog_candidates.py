@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+from datetime import datetime
 import re
 from pathlib import Path
 from typing import Any
@@ -108,6 +109,15 @@ def build_candidate_queue(
             raise ValueError("Matched comparison row has an inconsistent catalog target")
         if item.get("extension") != "pkg" or row.get("name") != item.get("name"):
             raise ValueError("Matched comparison row does not identify the scanned PKG")
+        created_text = item.get("created_at")
+        if not isinstance(created_text, str):
+            continue
+        try:
+            created_at = datetime.fromisoformat(created_text.replace("Z", "+00:00"))
+        except ValueError:
+            continue
+        if created_at.tzinfo is None:
+            continue
         if row.get("metadata_differences") != []:
             raise ValueError("Matched comparison row unexpectedly contains metadata differences")
 
@@ -131,7 +141,7 @@ def build_candidate_queue(
             "candidate_id": candidate_id,
             "file_id": file_id,
             "name": item["name"],
-            "created_at": item.get("created_at") if isinstance(item.get("created_at"), str) else None,
+            "created_at": created_text,
             "platform": platform,
             "category": category,
             "catalog_path": CATALOGS[target],
