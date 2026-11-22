@@ -125,6 +125,19 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         self.row["catalog_metadata"]["download_source"] = "mocha"
         self.assertEqual(self.build()["candidate_count"], 0)
 
+    def test_multiple_mocha_uploads_for_same_catalog_record_are_not_auto_candidates(self):
+        second_item = dict(self.scan["files"][0])
+        second_item["id"] = "another-file-id"
+        second_item["name"] = "DEAD RISING - [EU] [EN] [1.00].pkg"
+        self.scan["files"].append(second_item)
+        second_row = dict(self.row)
+        second_row["file_id"] = second_item["id"]
+        second_row["name"] = second_item["name"]
+        second_row["source_metadata"] = dict(self.row["source_metadata"], region="EUR")
+        self.comparison["results"].append(second_row)
+        result = self.build()
+        self.assertEqual(result["candidate_count"], 0)
+
     def test_inconsistent_catalog_metadata_fails_closed(self):
         self.row["catalog_metadata"]["name"] = "TAMPERED"
         with self.assertRaises(ValueError):
