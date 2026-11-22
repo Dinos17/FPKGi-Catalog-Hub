@@ -1,0 +1,8 @@
+{
+  "name": "fpkgi-mocha-resolver",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test tests/netlify-mocha.test.mjs"
+  }
+}
