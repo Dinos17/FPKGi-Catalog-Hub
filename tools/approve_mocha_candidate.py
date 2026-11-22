@@ -121,6 +121,8 @@ def apply_candidate(
     name = candidate.get("name")
     if not isinstance(name, str) or not name.strip():
         name = "Mocha upload"
+    name = re.sub(r"[\\r\\n\\t]+", " ", name)
+    name = "".join(char for char in name if char.isprintable()).strip()[:120] or "Mocha upload"
     return expected_path, name
 
 
