@@ -40,17 +40,12 @@ jobs:
           git show "FETCH_HEAD:reports/mocha-catalog-candidates.json" > "$RUNNER_TEMP/mocha-candidate/candidates.json"
           git show "FETCH_HEAD:reports/mocha-scan-summary.json" > "$RUNNER_TEMP/mocha-candidate/summary.json"
 
-          python - <<'PY'
-          import hashlib
-          import json
-          import os
-          import re
+          python - <<'PY' > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+          import json, os, re
           from pathlib import Path
-
           event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
           issue = event.get("issue", {})
-          body = issue.get("body") or ""
-          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\s*(\{.*?\})\s*-->", body, re.S)
+          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\\s*(\\{.*?\\})\\s*-->", issue.get("body") or "", re.S)
           if not match:
               raise SystemExit("Missing structured candidate approval payload.")
           payload = json.loads(match.group(1))
@@ -59,91 +54,25 @@ jobs:
           candidate_id = payload.get("candidate_id")
           if not isinstance(candidate_id, str) or not re.fullmatch(r"[0-9a-f]{24}", candidate_id):
               raise SystemExit("Invalid candidate ID.")
-
-          root = Path(".")
-          report_dir = Path(os.environ["RUNNER_TEMP"]) / "mocha-candidate"
-          queue = json.loads((report_dir / "candidates.json").read_text(encoding="utf-8"))
-          summary = json.loads((report_dir / "summary.json").read_text(encoding="utf-8"))
-          if (queue.get("schema_version") != 1 or queue.get("scanner") != "mocha"
-                  or queue.get("automatic_approval") is not False
-                  or queue.get("catalog_write_performed") is not False
-                  or queue.get("binary_integrity_verified") is not False
-                  or summary.get("schema_version") != 1 or summary.get("scanner") != "mocha"
-                  or summary.get("scan_complete") is not True):
-              raise SystemExit("Candidate report or scan summary is not valid.")
-          if (queue.get("scan_observed_at") != summary.get("scan_observed_at")
-                  or queue.get("catalog_commit") != summary.get("catalog_commit")):
-              raise SystemExit("Candidate report is stale or does not match the latest scan summary.")
-          current_commit = os.popen("git rev-parse HEAD").read().strip()
-          if not re.fullmatch(r"[0-9a-f]{40}", current_commit) or current_commit != queue.get("catalog_commit"):
-              raise SystemExit("The catalog changed after this scan. Wait for a fresh scanner run.")
-
-          candidates = queue.get("candidates")
-          if not isinstance(candidates, list):
-              raise SystemExit("Candidate list is malformed.")
-          matches = [item for item in candidates if isinstance(item, dict) and item.get("candidate_id") == candidate_id]
-          if len(matches) != 1:
-              raise SystemExit("Candidate is missing, stale, or duplicated.")
-          candidate = matches[0]
-
-          file_id = candidate.get("file_id")
-          if not isinstance(file_id, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", file_id):
-              raise SystemExit("Candidate contains an invalid Mocha file ID.")
-          allowed_paths = {
-              ("PS4", "games"): "ps4/games.json",
-              ("PS4", "dlc"): "ps4/dlc.json",
-              ("PS5", "games"): "ps5/ps5-games.json",
-              ("PS5", "dlc"): "ps5/ps5-dlc.json",
-          }
-          expected_path = allowed_paths.get((candidate.get("platform"), candidate.get("category")))
-          if expected_path != candidate.get("catalog_path"):
-              raise SystemExit("Candidate catalog target is outside the approved catalog set.")
-          catalog_path = root / expected_path
-          catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
-          entries = catalog.get("DATA")
-          if not isinstance(entries, dict):
-              raise SystemExit("Target catalog has no DATA object.")
-          matched_key = candidate.get("matched_catalog_key")
-          matched_metadata = candidate.get("catalog_metadata")
-          proposed = candidate.get("proposed_entry")
-          if (not isinstance(matched_key, str) or matched_key not in entries
-                  or not isinstance(matched_metadata, dict) or entries[matched_key] != matched_metadata):
-              raise SystemExit("The matched catalog entry changed since candidate generation.")
-          expected_proposal = dict(entries[matched_key])
-          expected_proposal["download_source"] = "mocha"
-          if proposed != expected_proposal or proposed.get("download_source") != "mocha":
-              raise SystemExit("Candidate proposal does not exactly preserve the current catalog metadata.")
-          if candidate.get("match_status") != "matched" or candidate.get("metadata_differences") != []:
-              raise SystemExit("Only exact metadata matches may be approved through this workflow.")
-          if candidate.get("approval_required") is not True or candidate.get("binary_integrity_verified") is not False:
-              raise SystemExit("Candidate approval state is invalid.")
-          if candidate.get("candidate_id") != hashlib.sha256(
-              (file_id + "\0" + queue["catalog_commit"] + "\0" + expected_path + "\0" + matched_key).encode("utf-8")
-          ).hexdigest()[:24]:
-              raise SystemExit("Candidate identity does not match the trusted scan/catalog snapshot.")
-          created_at = candidate.get("created_at")
-          if not isinstance(created_at, str) or not created_at.strip():
-              raise SystemExit("Candidate upload timestamp is missing.")
-
-          for relative in allowed_paths.values():
-              data = json.loads((root / relative).read_text(encoding="utf-8"))
-              if file_id in data.get("DATA", {}):
-                  raise SystemExit("This Mocha file ID is already present in a catalog.")
-          if file_id in entries:
-              raise SystemExit("Mocha file ID collides with an existing catalog key.")
-
-          entries[file_id] = proposed
-          catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-          candidate_name = candidate.get("name", "Mocha upload")
-          if not isinstance(candidate_name, str):
-              candidate_name = "Mocha upload"
-          candidate_name = re.sub(r"[\r\n\t]+", " ", candidate_name)
-          candidate_name = "".join(ch for ch in candidate_name if ch.isprintable()).strip()[:120] or "Mocha upload"
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"candidate_id={candidate_id}\n")
-              output.write(f"candidate_name={candidate_name}\n")
-              output.write(f"catalog_path={expected_path}\n")
+              output.write(f"candidate_id={candidate_id}\\n")
           PY
+          python tools/approve_mocha_candidate.py \
+            --candidate-id "$(sed -n 's/^candidate_id=//p' "$GITHUB_OUTPUT" | tail -n 1)" \
+            --candidate-report "$RUNNER_TEMP/mocha-candidate/candidates.json" \
+            --summary "$RUNNER_TEMP/mocha-candidate/summary.json" \
+            --repo-root . \
+            --current-commit "$(git rev-parse HEAD)" > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+          while IFS='=' read -r key value; do
+            case "$key" in
+              catalog_path) echo "catalog_path=$value" >> "$GITHUB_OUTPUT" ;;
+              candidate_name)
+                value="$(printf '%s' "$value" | tr '\\r\\n\\t' '   ' | tr -cd '[:print:]' | cut -c1-120)"
+                [ -n "$value" ] || value="Mocha upload"
+                echo "candidate_name=$value" >> "$GITHUB_OUTPUT"
+                ;;
+            esac
+          done < "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
 
           python tools/validate_catalogs.py
 
