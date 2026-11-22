@@ -1,7 +1,7 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-21T23:42:03.007109Z",
+  "scan_observed_at": "2026-11-22T05:50:36.614352Z",
   "catalog_commit": "32f1a0e3a8c87bbbb2981695d0d662df1dd45d96",
   "auto_approved_count": 33,
   "previously_rejected_count": 1,
