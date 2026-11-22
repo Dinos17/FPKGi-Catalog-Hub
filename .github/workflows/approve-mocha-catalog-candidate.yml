@@ -50,7 +50,7 @@ jobs:
           event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
           issue = event.get("issue", {})
           body = issue.get("body") or ""
-          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\s*(\{.*?\\})\s*-->", body, re.S)
+          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\s*(\{.*?\})\s*-->", body, re.S)
           if not match:
               raise SystemExit("Missing structured candidate approval payload.")
           payload = json.loads(match.group(1))
