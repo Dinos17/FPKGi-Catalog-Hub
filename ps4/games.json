@@ -60,16 +60,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00362.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-a/Another%20World%20-%20[EU]%20[EN]%20[1.00].pkg": {
-      "title_id": "CUSA00602",
-      "region": "EUR",
-      "name": "Another World",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 150667264,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00602.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-a/Assassin's%20Creed%20III%20-%20[EU]%20[EN]%20[1.03].pkg": {
       "title_id": "CUSA11560",
       "region": "EUR",
@@ -1190,16 +1180,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07439.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DAVE%20THE%20DIVER%20-%20[EU]%20[EN]%20[1.23].pkg": {
-      "title_id": "CUSA45600",
-      "region": "EUR",
-      "name": "DAVE THE DIVER",
-      "version": "01.23",
-      "release": "11-15-2013",
-      "size": 3423993856,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA45600.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-d/DAYS%20GONE%20-%20[EU]%20[EN]%20[1.81].pkg": {
       "title_id": "CUSA09175",
       "region": "EUR",
@@ -1209,16 +1189,6 @@
       "size": 34554118144,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09175.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DEAD%20RISING%20-%20[US]%20[EN]%20[1.00].pkg": {
-      "title_id": "CUSA04513",
-      "region": "USA",
-      "name": "DEAD RISING",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 8049262592,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04513.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/DEATH%20STRANDING%20-%20[EU]%20[EN]%20[1.12].pkg": {
       "title_id": "CUSA12605",
@@ -1239,16 +1209,6 @@
       "size": 36671193088,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA16195.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DOOM%20(1993)%20-%20[EU]%20[EN]%20[1.09].pkg": {
-      "title_id": "CUSA15565",
-      "region": "EUR",
-      "name": "DOOM (1993)",
-      "version": "01.09",
-      "release": "11-15-2013",
-      "size": 385875968,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA15565.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/DOOM%20-%20[EU]%20[EN]%20[1.12].pkg": {
       "title_id": "CUSA02092",
@@ -1280,26 +1240,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13338.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20BALL%20FighterZ%20-%20[EU]%20[EN]%20[1.38].pkg": {
-      "title_id": "CUSA08992",
-      "region": "EUR",
-      "name": "DRAGON BALL FighterZ",
-      "version": "01.38",
-      "release": "11-15-2013",
-      "size": 5764087808,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA08992.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20BALL%20XENOVERSE%20-%20[EU]%20[EN]%20[1.07].pkg": {
-      "title_id": "CUSA01186",
-      "region": "EUR",
-      "name": "DRAGON BALL XENOVERSE",
-      "version": "01.07",
-      "release": "11-15-2013",
-      "size": 10231742464,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01186.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20BALL%20XENOVERSE%202%20-%20[EU]%20[EN]%20[1.45].pkg": {
       "title_id": "CUSA05088",
       "region": "EUR",
@@ -1319,26 +1259,6 @@
       "size": 53435105280,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14835.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20QUEST%20BUILDERS%20-%20[EU]%20[EN]%20[1.00].pkg": {
-      "title_id": "CUSA05170",
-      "region": "EUR",
-      "name": "DRAGON QUEST BUILDERS",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 907280384,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05170.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20QUEST%20BUILDERS%202%20-%20[US]%20[EN]%20[1.04].pkg": {
-      "title_id": "CUSA11230",
-      "region": "USA",
-      "name": "DRAGON QUEST BUILDERS 2",
-      "version": "01.04",
-      "release": "11-15-2013",
-      "size": 2453209088,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA11230.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/DRAGON%20QUEST%20HEROES%20II%20-%20[EU]%20[EN]%20[1.06].pkg": {
       "title_id": "CUSA06740",
@@ -1380,16 +1300,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA18600.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/DREDGE%20-%20[EU]%20[EN]%20[1.08].pkg": {
-      "title_id": "CUSA35761",
-      "region": "EUR",
-      "name": "DREDGE",
-      "version": "01.08",
-      "release": "11-15-2013",
-      "size": 869859328,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA35761.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-d/DRIVECLUB%20-%20[EU]%20[EN]%20[1.28].pkg": {
       "title_id": "CUSA00003",
       "region": "EUR",
@@ -1399,16 +1309,6 @@
       "size": 34894381056,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00003.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dangerous%20Golf%20-%20[EU]%20[EN]%20[1.02].pkg": {
-      "title_id": "CUSA04398",
-      "region": "EUR",
-      "name": "Dangerous Golf",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 6008340480,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04398.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Darksiders%20-%20[EU]%20[EN]%20[1.01].pkg": {
       "title_id": "CUSA05275",
@@ -1420,26 +1320,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05275.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Darksiders%20Genesis%20-%20[EU]%20[EN]%20[1.03].pkg": {
-      "title_id": "CUSA12979",
-      "region": "EUR",
-      "name": "Darksiders Genesis",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 9010937856,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA12979.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Darksiders%20II%20-%20[EU]%20[EN]%20[1.02].pkg": {
-      "title_id": "CUSA02419",
-      "region": "EUR",
-      "name": "Darksiders II",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 13750566912,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02419.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Darksiders%20III%20-%20[EU]%20[EN]%20[1.11].pkg": {
       "title_id": "CUSA08798",
       "region": "EUR",
@@ -1449,46 +1329,6 @@
       "size": 22828810240,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA08798.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Darkwood%20-%20[US]%20[EN]%20[1.06].pkg": {
-      "title_id": "CUSA13413",
-      "region": "USA",
-      "name": "Darkwood",
-      "version": "01.06",
-      "release": "11-15-2013",
-      "size": 2189361152,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13413.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Day%20of%20the%20Tentacle%20-%20[EU]%20[EN]%20[1.03].pkg": {
-      "title_id": "CUSA01959",
-      "region": "EUR",
-      "name": "Day of the Tentacle",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 1835401216,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01959.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Cells%20-%20[EU]%20[EN]%20[1.51].pkg": {
-      "title_id": "CUSA10484",
-      "region": "EUR",
-      "name": "Dead Cells",
-      "version": "01.51",
-      "release": "11-15-2013",
-      "size": 2461270016,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10484.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%20-%20[EU]%20[EN]%20[1.03].pkg": {
-      "title_id": "CUSA03291",
-      "region": "EUR",
-      "name": "Dead Island",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 4719443968,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03291.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Island%202%20-%20[EU]%20[EN]%20[1.10].pkg": {
       "title_id": "CUSA27043",
@@ -1510,36 +1350,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03290.png"
     },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Nation%20-%20[US]%20[EN]%20[1.03].pkg": {
-      "title_id": "CUSA00236",
-      "region": "USA",
-      "name": "Dead Nation™",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 2337538048,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00236.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Rising%202%20-%20[US]%20[EN]%20[1.02].pkg": {
-      "title_id": "CUSA04313",
-      "region": "USA",
-      "name": "Dead Rising 2",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 8105361408,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04313.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Rising%202%20Off%20The%20Record%20-%20[US]%20[EN]%20[1.02].pkg": {
-      "title_id": "CUSA04273",
-      "region": "USA",
-      "name": "Dead Rising 2: Off The Record",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 6202327040,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04273.png"
-    },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Dead%20Rising%204%20Frank's%20Big%20Package%20-%20[EU]%20[EN]%20[1.01].pkg": {
       "title_id": "CUSA08558",
       "region": "EUR",
@@ -1549,36 +1359,6 @@
       "size": 56604426240,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA08558.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Deadlight%20-%20[EU]%20[EN]%20[1.02].pkg": {
-      "title_id": "CUSA04434",
-      "region": "EUR",
-      "name": "Deadlight",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 3727294464,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04434.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Deadpool%20-%20[US]%20[EN]%20[1.00].pkg": {
-      "title_id": "CUSA03245",
-      "region": "USA",
-      "name": "Deadpool",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 5497815040,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03245.png"
-    },
-    "https://archive.org/download/ps4-fpkg-collection-english-d/Death's%20Door%20-%20[US]%20[EN]%20[1.01].pkg": {
-      "title_id": "CUSA30423",
-      "region": "USA",
-      "name": "Death's Door",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 1044905984,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30423.png"
     },
     "https://archive.org/download/ps4-fpkg-collection-english-d/Deep%20Rock%20Galactic%20-%20[EU]%20[EN]%20[1.43].pkg": {
       "title_id": "CUSA15094",
@@ -8590,86 +8370,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05148.png"
     },
-    "https://akirabox.to/LK0G1a4Q9G91/file": {
-      "title_id": "CUSA02480",
-      "region": "USA",
-      "name": "Amplitude",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 2452226048,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02480.png"
-    },
-    "https://akirabox.to/E9Qz9Ak2DzOL/file": {
-      "title_id": "CUSA10749",
-      "region": "USA",
-      "name": "Dandara",
-      "version": "01.17",
-      "release": "11-15-2013",
-      "size": 534249472,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10749.png"
-    },
-    "https://akirabox.to/qPez45a29GOY/file": {
-      "title_id": "CUSA01230",
-      "region": "USA",
-      "name": "Axiom Verge",
-      "version": "01.07",
-      "release": "11-15-2013",
-      "size": 172097536,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01230.png"
-    },
-    "https://akirabox.to/qw1zeKYvemXy/file": {
-      "title_id": "CUSA29346",
-      "region": "USA",
-      "name": "Axiom Verge 2",
-      "version": "01.03",
-      "release": "11-15-2013",
-      "size": 208404480,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29346.png"
-    },
-    "https://akirabox.to/l76mZ97XjGan/file": {
-      "title_id": "CUSA17266",
-      "region": "EUR",
-      "name": "Assetto Corsa Competizione",
-      "version": "01.12",
-      "release": "11-15-2013",
-      "size": 11574640640,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA17266.png"
-    },
-    "https://akirabox.to/qw1zeKYaemXy/file": {
-      "title_id": "CUSA09458",
-      "region": "USA",
-      "name": "Atari Flashback Classics vol.3",
-      "version": "01.04",
-      "release": "11-15-2013",
-      "size": 97386496,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09458.png"
-    },
-    "https://akirabox.to/1RgzR0NR8mbp/file": {
-      "title_id": "CUSA07213",
-      "region": "EUR",
-      "name": "Atari Flashback Classics vol.2",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 287309824,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07213.png"
-    },
-    "https://akirabox.to/9QWmpOoJAGEB/file": {
-      "title_id": "CUSA07214",
-      "region": "EUR",
-      "name": "Atari Flashback Classics vol.1",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 281083904,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07214.png"
-    },
     "https://akirabox.to/2WVGrvVjqGkx/file": {
       "title_id": "CUSA10123",
       "region": "EUR",
@@ -8679,26 +8379,6 @@
       "size": 8224833536,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10123.png"
-    },
-    "https://akirabox.to/qLQ365xYQm19/file": {
-      "title_id": "CUSA03440",
-      "region": "EUR",
-      "name": "Assassin’s Creed® Chronicles Trilogy",
-      "version": "01.02",
-      "release": "11-15-2013",
-      "size": 11250958336,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03440.png"
-    },
-    "https://akirabox.to/vgKGxBLZ238Q/file": {
-      "title_id": "CUSA14332",
-      "region": "USA",
-      "name": "Ashen",
-      "version": "01.00",
-      "release": "11-15-2013",
-      "size": 6271598592,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14332.png"
     },
     "https://akirabox.to/qw1zeKYBvmXy/file": {
       "title_id": "CUSA14954",
@@ -8710,16 +8390,6 @@
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14954.png"
     },
-    "https://akirabox.to/0rpmvgLaL3Rg/file": {
-      "title_id": "CUSA13248",
-      "region": "EUR",
-      "name": "Ancestors: The Humankind Odyssey",
-      "version": "01.01",
-      "release": "11-15-2013",
-      "size": 4941742080,
-      "min_fw": "9.00",
-      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13248.png"
-    },
     "https://akirabox.to/0KezkKA6gzD1/file": {
       "title_id": "CUSA40994",
       "region": "USA",
@@ -8729,6 +8399,369 @@
       "size": 9105637376,
       "min_fw": "9.00",
       "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA40994.png"
+    },
+    "d5ac3913-802b-4d68-9803-8f5c07c7640e": {
+      "title_id": "CUSA04513",
+      "region": "USA",
+      "name": "DEAD RISING",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 8049262592,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04513.png",
+      "download_source": "mocha"
+    },
+    "275ced47-e1f6-49eb-9cbb-2646a433da5a": {
+      "title_id": "CUSA30423",
+      "region": "USA",
+      "name": "Death's Door",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 1044905984,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA30423.png",
+      "download_source": "mocha"
+    },
+    "ee03801c-39e2-4198-805e-2d355416d744": {
+      "title_id": "CUSA04313",
+      "region": "USA",
+      "name": "Dead Rising 2",
+      "version": "01.02",
+      "release": "11-15-2013",
+      "size": 8105361408,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04313.png",
+      "download_source": "mocha"
+    },
+    "9fe21b94-44e6-4734-96dc-7f9ced5943a2": {
+      "title_id": "CUSA04273",
+      "region": "USA",
+      "name": "Dead Rising 2: Off The Record",
+      "version": "01.02",
+      "release": "11-15-2013",
+      "size": 6202327040,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04273.png",
+      "download_source": "mocha"
+    },
+    "1b599ddb-ea73-4680-b89b-2f51fa900c4f": {
+      "title_id": "CUSA03245",
+      "region": "USA",
+      "name": "Deadpool",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 5497815040,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03245.png",
+      "download_source": "mocha"
+    },
+    "fa672bed-20ff-47e8-ad5b-6dd70f48db7b": {
+      "title_id": "CUSA12979",
+      "region": "EUR",
+      "name": "Darksiders Genesis",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 9010937856,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA12979.png",
+      "download_source": "mocha"
+    },
+    "980d9000-e6ca-447a-834b-991fe53737e5": {
+      "title_id": "CUSA00236",
+      "region": "USA",
+      "name": "Dead Nation™",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 2337538048,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00236.png",
+      "download_source": "mocha"
+    },
+    "a01e7e32-0c1e-4c8c-b86d-abdf9d3eb5dd": {
+      "title_id": "CUSA04434",
+      "region": "EUR",
+      "name": "Deadlight",
+      "version": "01.02",
+      "release": "11-15-2013",
+      "size": 3727294464,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04434.png",
+      "download_source": "mocha"
+    },
+    "4adc0462-f041-406e-98f7-b0a488b4cd27": {
+      "title_id": "CUSA01186",
+      "region": "EUR",
+      "name": "DRAGON BALL XENOVERSE",
+      "version": "01.07",
+      "release": "11-15-2013",
+      "size": 10231742464,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01186.png",
+      "download_source": "mocha"
+    },
+    "64ee80c4-e8d5-4f6a-a063-4313cf3c9462": {
+      "title_id": "CUSA11230",
+      "region": "USA",
+      "name": "DRAGON QUEST BUILDERS 2",
+      "version": "01.04",
+      "release": "11-15-2013",
+      "size": 2453209088,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA11230.png",
+      "download_source": "mocha"
+    },
+    "bc5b38bc-2f13-49ad-8863-1db53e5a20ee": {
+      "title_id": "CUSA08992",
+      "region": "EUR",
+      "name": "DRAGON BALL FighterZ",
+      "version": "01.38",
+      "release": "11-15-2013",
+      "size": 5764087808,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA08992.png",
+      "download_source": "mocha"
+    },
+    "349dd16d-6435-4dc7-8fc6-a52335457330": {
+      "title_id": "CUSA35761",
+      "region": "EUR",
+      "name": "DREDGE",
+      "version": "01.08",
+      "release": "11-15-2013",
+      "size": 869859328,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA35761.png",
+      "download_source": "mocha"
+    },
+    "21626d29-275f-4a38-9636-e4aa21daef1c": {
+      "title_id": "CUSA05170",
+      "region": "EUR",
+      "name": "DRAGON QUEST BUILDERS",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 907280384,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA05170.png",
+      "download_source": "mocha"
+    },
+    "09307cb7-f7e1-4dc5-bd3b-41315e2f2ab0": {
+      "title_id": "CUSA02419",
+      "region": "EUR",
+      "name": "Darksiders II",
+      "version": "01.02",
+      "release": "11-15-2013",
+      "size": 13750566912,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02419.png",
+      "download_source": "mocha"
+    },
+    "85f4711e-8289-4369-91cc-c3291966a25c": {
+      "title_id": "CUSA03291",
+      "region": "EUR",
+      "name": "Dead Island",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 4719443968,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03291.png",
+      "download_source": "mocha"
+    },
+    "3f5b502a-dea5-46f7-a2b6-02c78a1dcfa8": {
+      "title_id": "CUSA15565",
+      "region": "EUR",
+      "name": "DOOM (1993)",
+      "version": "01.09",
+      "release": "11-15-2013",
+      "size": 385875968,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA15565.png",
+      "download_source": "mocha"
+    },
+    "42cdaefd-4529-4534-b7b7-39424351fc1a": {
+      "title_id": "CUSA10484",
+      "region": "EUR",
+      "name": "Dead Cells",
+      "version": "01.51",
+      "release": "11-15-2013",
+      "size": 2461270016,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10484.png",
+      "download_source": "mocha"
+    },
+    "18db01aa-7bf2-43d5-9fe5-6487e98ab283": {
+      "title_id": "CUSA45600",
+      "region": "EUR",
+      "name": "DAVE THE DIVER",
+      "version": "01.23",
+      "release": "11-15-2013",
+      "size": 3423993856,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA45600.png",
+      "download_source": "mocha"
+    },
+    "b27bca7f-809f-4785-9f67-aa2d19541919": {
+      "title_id": "CUSA13413",
+      "region": "USA",
+      "name": "Darkwood",
+      "version": "01.06",
+      "release": "11-15-2013",
+      "size": 2189361152,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13413.png",
+      "download_source": "mocha"
+    },
+    "cf5cbc6a-c64d-4318-8b76-dd8123d60a34": {
+      "title_id": "CUSA01959",
+      "region": "EUR",
+      "name": "Day of the Tentacle",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 1835401216,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01959.png",
+      "download_source": "mocha"
+    },
+    "8ac4b920-32a3-41d0-a35e-cb77f1d77f62": {
+      "title_id": "CUSA04398",
+      "region": "EUR",
+      "name": "Dangerous Golf",
+      "version": "01.02",
+      "release": "11-15-2013",
+      "size": 6008340480,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA04398.png",
+      "download_source": "mocha"
+    },
+    "b66e57a6-8e4a-4270-85e0-67d41f9aaf04": {
+      "title_id": "CUSA17266",
+      "region": "EUR",
+      "name": "Assetto Corsa Competizione",
+      "version": "01.12",
+      "release": "11-15-2013",
+      "size": 11574640640,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA17266.png",
+      "download_source": "mocha"
+    },
+    "1c2e6aa7-4001-4a4d-9ea2-c1dd4a48ce3a": {
+      "title_id": "CUSA10749",
+      "region": "USA",
+      "name": "Dandara",
+      "version": "01.17",
+      "release": "11-15-2013",
+      "size": 534249472,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA10749.png",
+      "download_source": "mocha"
+    },
+    "6f9ae722-9884-4593-a381-1b9af6e161f0": {
+      "title_id": "CUSA01230",
+      "region": "USA",
+      "name": "Axiom Verge",
+      "version": "01.07",
+      "release": "11-15-2013",
+      "size": 172097536,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA01230.png",
+      "download_source": "mocha"
+    },
+    "707ea418-8d79-4ac3-88ac-446d4e6e8250": {
+      "title_id": "CUSA03440",
+      "region": "EUR",
+      "name": "Assassin’s Creed® Chronicles Trilogy",
+      "version": "01.02",
+      "release": "11-15-2013",
+      "size": 11250958336,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA03440.png",
+      "download_source": "mocha"
+    },
+    "7d47d884-f2ba-4e63-b31b-68220894edb7": {
+      "title_id": "CUSA29346",
+      "region": "USA",
+      "name": "Axiom Verge 2",
+      "version": "01.03",
+      "release": "11-15-2013",
+      "size": 208404480,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA29346.png",
+      "download_source": "mocha"
+    },
+    "330ecc5d-cf60-43d3-999d-d371876efab2": {
+      "title_id": "CUSA09458",
+      "region": "USA",
+      "name": "Atari Flashback Classics vol.3",
+      "version": "01.04",
+      "release": "11-15-2013",
+      "size": 97386496,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA09458.png",
+      "download_source": "mocha"
+    },
+    "33e5181d-62be-46fe-9ac2-c5e38412349d": {
+      "title_id": "CUSA07213",
+      "region": "EUR",
+      "name": "Atari Flashback Classics vol.2",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 287309824,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07213.png",
+      "download_source": "mocha"
+    },
+    "f6f8b3bc-77de-4c95-b20d-e955893566e2": {
+      "title_id": "CUSA07214",
+      "region": "EUR",
+      "name": "Atari Flashback Classics vol.1",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 281083904,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA07214.png",
+      "download_source": "mocha"
+    },
+    "c3e01874-4721-4d1d-a9ef-b6a00df721ed": {
+      "title_id": "CUSA14332",
+      "region": "USA",
+      "name": "Ashen",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 6271598592,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA14332.png",
+      "download_source": "mocha"
+    },
+    "e88e57b1-e174-4fe1-9bdc-289a98890905": {
+      "title_id": "CUSA13248",
+      "region": "EUR",
+      "name": "Ancestors: The Humankind Odyssey",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 4941742080,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA13248.png",
+      "download_source": "mocha"
+    },
+    "651e7072-b52c-4467-9ce5-c5fd4140e64b": {
+      "title_id": "CUSA00602",
+      "region": "EUR",
+      "name": "Another World",
+      "version": "01.00",
+      "release": "11-15-2013",
+      "size": 150667264,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA00602.png",
+      "download_source": "mocha"
+    },
+    "2c3c5427-3331-4eb5-acc2-a1a2511952e2": {
+      "title_id": "CUSA02480",
+      "region": "USA",
+      "name": "Amplitude",
+      "version": "01.01",
+      "release": "11-15-2013",
+      "size": 2452226048,
+      "min_fw": "9.00",
+      "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA02480.png",
+      "download_source": "mocha"
     }
   }
 }
