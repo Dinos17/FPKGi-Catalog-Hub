@@ -36,6 +36,7 @@ class AutomaticMochaRegistrationTests(unittest.TestCase):
         self.scan = {
             "scanner": "mocha",
             "scan_complete": True,
+            "catalog_write_performed": False,
             "scan_observed_at": "2026-11-22T10:00:00Z",
             "files": [{
                 "id": FILE_ID,
