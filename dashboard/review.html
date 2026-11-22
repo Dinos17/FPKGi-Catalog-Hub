@@ -20,9 +20,14 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 </style>
 </head>
 <body><main>
-<header><div><h1>FPKGi Catalog Review</h1><p>Only unresolved Mocha entries that require a human decision. Decisions are recorded through your authenticated GitHub account.</p></div><a href="./index.html">← Back to Catalog</a></header>
-<div class="notice">Exact catalog matches are automatically cleared and do not appear below. Possible duplicates, metadata differences, uncertain identities and new candidates remain here for human review. Use Keep, Reject or Resolve to submit a decision through GitHub. Decisions are recorded by a repository workflow and suppress only that exact upload. This page does not expose Mocha file IDs, share URLs, API paths or download links. Decisions do not modify catalog entries or delete uploaded files.</div>
+<header><div><h1>FPKGi Catalog Review</h1><p>Review Mocha source-registration candidates separately from unresolved upload decisions. Approvals create catalog pull requests through GitHub.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<div class="notice">Exact catalog matches are automatically cleared from the duplicate-review queue. They may still appear in the separate source-registration queue below. Keep, Reject and Resolve only record review decisions; they do not publish catalog entries. This page does not expose Mocha file IDs, share URLs, API paths or download links.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
+<section class="toolbar"><span id="candidateStatus" class="muted" role="status" aria-live="polite">Loading catalog candidates…</span><button id="refreshCandidates" type="button">Refresh candidates</button></section>
+<div id="candidateStats"></div>
+<h2 class="section-title">Mocha catalog source candidates</h2>
+<p>These are exact metadata matches that can add a Mocha download source to an existing catalog title. Approving one creates a pull request; it does not publish the catalog. Binary integrity has not been verified.</p>
+<div id="candidateQueue"><div class="empty">Loading source candidates…</div></div>
 <div id="queueStats"></div>
 <h2 class="section-title">Needs your decision</h2>
 <div id="reviewQueue"><div class="empty">Loading unresolved entries…</div></div>
@@ -67,6 +72,49 @@ function renderEntry(item){
  (decisionUrl(item,"resolve")?'<a class="resolve" href="'+esc(decisionUrl(item,"resolve"))+'" target="_blank" rel="noopener">Resolve</a>':'')+
  '</div></article>';
 }
+function candidateApprovalUrl(item){
+ if(!/^[0-9a-f]{24}$/.test(item.candidate_id||"")||!item.name)return null;
+ const payload={schema_version:1,candidate_id:item.candidate_id};
+ const body="Please create a catalog pull request for this scanner-generated Mocha source candidate.\n\n<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\n"+JSON.stringify(payload)+"\n-->";
+ const title="FPKGi catalog candidate approval: "+item.name;
+ return "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new?"+new URLSearchParams({title,body}).toString();
+}
+function renderCandidate(item){
+ const metadata=item.proposed_entry||{};
+ const fields=[["name","Catalog title"],["title_id","Title ID"],["region","Region"],["version","Version"],["release","Release"],["size","Size (bytes)"],["min_fw","Minimum firmware"]];
+ const url=candidateApprovalUrl(item);
+ return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||metadata.name||"Unnamed Mocha upload")+'</div><span class="pill" style="color:var(--amber)">Source candidate</span></div>'+
+ '<div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform)+'</dd><dt>Category</dt><dd>'+esc(item.category)+'</dd><dt>Matched catalog</dt><dd>'+esc(item.matched_catalog_key)+'</dd><dt>Mocha upload date</dt><dd>'+esc(item.created_at)+'</dd></dl></div>'+
+ '<div class="compare"><section><h3>Proposed catalog metadata</h3>'+metadataHtml(metadata,fields)+'</section><section><h3>Source registration</h3><dl><dt>Download source</dt><dd>Mocha</dd><dt>Approval</dt><dd>Required — creates a catalog pull request</dd><dt>Binary integrity</dt><dd>Not verified</dd></dl></section></div>'+
+ '<div class="reason">The scanner found a unique exact metadata match. Existing catalog metadata will be preserved; only the Mocha file ID and download-source designation will be added. Review and merge the resulting pull request before the resolver can authorize this source.</div>'+
+ '<div class="actions">'+(url?'<a class="resolve" href="'+esc(url)+'" target="_blank" rel="noopener">Approve &amp; create catalog PR</a>':'<span class="muted">Approval unavailable: invalid candidate identity.</span>')+'</div></article>';
+}
+async function loadCandidates(){
+ const button=$("refreshCandidates");button.disabled=true;$("candidateStatus").textContent="Loading the latest source candidates…";
+ $("candidateQueue").innerHTML='<div class="empty">Loading source candidates…</div>';$("candidateStats").innerHTML="";
+ try{
+  const [summaryResponse,candidateResponse]=await Promise.all([
+   boundedFetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now()),
+   boundedFetch(REPORT_BASE+"mocha-catalog-candidates.json?v="+Date.now())
+  ]);
+  if(!summaryResponse.ok)throw Error("Latest Mocha scan summary is unavailable (HTTP "+summaryResponse.status+").");
+  if(!candidateResponse.ok)throw Error("Catalog candidate report is unavailable (HTTP "+candidateResponse.status+"). The scanner may not have published a candidate report yet.");
+  const summary=await summaryResponse.json(),queue=await candidateResponse.json();
+  if(!isRecord(summary)||summary.schema_version!==1||summary.scanner!=="mocha"||summary.scan_complete!==true)throw Error("Latest scan is incomplete or invalid.");
+  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.candidates)||!Number.isSafeInteger(queue.candidate_count)||queue.candidate_count!==queue.candidates.length||queue.catalog_write_performed!==false||queue.automatic_approval!==false||queue.binary_integrity_verified!==false)throw Error("Catalog candidate report has an invalid format.");
+  if(queue.scan_observed_at!==summary.scan_observed_at||queue.catalog_commit!==summary.catalog_commit)throw Error("Candidate report does not match the latest scan. Waiting for matching publication.");
+  const targets={"PS4:games":"ps4/games.json","PS4:dlc":"ps4/dlc.json","PS5:games":"ps5/ps5-games.json","PS5:dlc":"ps5/ps5-dlc.json"};
+  for(const item of queue.candidates){
+   if(!isRecord(item)||!/^[0-9a-f]{24}$/.test(item.candidate_id||"")||!targets[item.platform+":"+item.category]||item.catalog_path!==targets[item.platform+":"+item.category]||item.match_status!=="matched"||!Array.isArray(item.metadata_differences)||item.metadata_differences.length!==0||item.approval_required!==true||item.binary_integrity_verified!==false||!isRecord(item.proposed_entry)||item.proposed_entry.download_source!=="mocha")throw Error("A candidate failed validation; no approval links are available.");
+  }
+  $("candidateStats").innerHTML='<div class="stats"><div class="stat">Source candidates<strong>'+queue.candidate_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
+  $("candidateQueue").innerHTML=queue.candidates.length?queue.candidates.map(renderCandidate).join(""):'<div class="empty">No exact-match Mocha source candidates are waiting for approval.</div>';
+  $("candidateStatus").textContent="Catalog candidate queue refreshed successfully.";
+ }catch(error){
+  $("candidateQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';
+  $("candidateStatus").textContent="Catalog candidate queue unavailable; no approval can be confirmed.";
+ }finally{button.disabled=false;}
+}
 async function loadQueue(){
  const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading the latest scan and review queue…";
  $("reviewQueue").innerHTML='<div class="empty">Loading unresolved entries…</div>';$("queueStats").innerHTML="";$("warning").innerHTML="";
@@ -89,7 +137,7 @@ async function loadQueue(){
   $("sourceStatus").textContent="Review queue unavailable; no automatic approval status can be confirmed.";
  }finally{button.disabled=false;}
 }
-$("refresh").addEventListener("click",loadQueue);loadQueue();
+$("refresh").addEventListener("click",loadQueue);$("refreshCandidates").addEventListener("click",loadCandidates);loadQueue();loadCandidates();
 </script>
 </body>
 </html>

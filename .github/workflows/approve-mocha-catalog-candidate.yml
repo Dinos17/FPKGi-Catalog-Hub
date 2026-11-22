@@ -1,0 +1,143 @@
+name: Approve Mocha Catalog Candidate
+
+on:
+  issues:
+    types: [opened]
+
+concurrency:
+  group: mocha-catalog-candidate-${{ github.event.issue.number }}
+  queue: max
+
+permissions:
+  contents: read
+
+jobs:
+  create-catalog-pr:
+    if: github.event.issue.user.login == 'Dinos17' && startsWith(github.event.issue.title, 'FPKGi catalog candidate approval:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Install catalog validation dependency
+        run: python -m pip install --disable-pip-version-check "requests==2.32.5"
+
+      - name: Validate candidate and prepare catalog change
+        id: candidate
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+          REPORT_BRANCH: akirabox-reports
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$REPORT_BRANCH"
+          mkdir -p "$RUNNER_TEMP/mocha-candidate"
+          git show "FETCH_HEAD:reports/mocha-catalog-candidates.json" > "$RUNNER_TEMP/mocha-candidate/candidates.json"
+          git show "FETCH_HEAD:reports/mocha-scan-summary.json" > "$RUNNER_TEMP/mocha-candidate/summary.json"
+          git show "FETCH_HEAD:reports/akirabox-rejections.json" > "$RUNNER_TEMP/mocha-candidate/rejections.json"
+          if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
+            git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+          else
+            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+          fi
+
+          python - <<'PY' > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+          import json, os, re
+          from pathlib import Path
+          event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
+          issue = event.get("issue", {})
+          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\s*(\{.*?\})\s*-->", issue.get("body") or "", re.S)
+          if not match:
+              raise SystemExit("Missing structured candidate approval payload.")
+          payload = json.loads(match.group(1))
+          if payload.get("schema_version") != 1:
+              raise SystemExit("Unsupported candidate approval schema.")
+          candidate_id = payload.get("candidate_id")
+          if not isinstance(candidate_id, str) or not re.fullmatch(r"[0-9a-f]{24}", candidate_id):
+              raise SystemExit("Invalid candidate ID.")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"candidate_id={candidate_id}\n")
+          PY
+          python tools/approve_mocha_candidate.py \
+            --candidate-id "$(sed -n 's/^candidate_id=//p' "$GITHUB_OUTPUT" | tail -n 1)" \
+            --candidate-report "$RUNNER_TEMP/mocha-candidate/candidates.json" \
+            --summary "$RUNNER_TEMP/mocha-candidate/summary.json" \
+            --decisions "$RUNNER_TEMP/mocha-candidate/decisions.json" \
+            --rejections "$RUNNER_TEMP/mocha-candidate/rejections.json" \
+            --repo-root . \
+            --current-commit "$(git rev-parse HEAD)" > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+          while IFS='=' read -r key value; do
+            case "$key" in
+              catalog_path) echo "catalog_path=$value" >> "$GITHUB_OUTPUT" ;;
+              candidate_name)
+                value="$(printf '%s' "$value" | tr -cd '[:print:]' | cut -c1-120)"
+                [ -n "$value" ] || value="Mocha upload"
+                echo "candidate_name=$value" >> "$GITHUB_OUTPUT"
+                ;;
+            esac
+          done < "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+
+          python tools/validate_catalogs.py
+
+      - name: Create catalog pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CANDIDATE_ID: ${{ steps.candidate.outputs.candidate_id }}
+          CANDIDATE_NAME: ${{ steps.candidate.outputs.candidate_name }}
+          CATALOG_PATH: ${{ steps.candidate.outputs.catalog_path }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          branch="mocha-catalog-candidate-$CANDIDATE_ID"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state all --json url,state --jq '.[0].url // empty')"
+            if [ -n "$existing" ]; then
+              gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "A catalog pull request already exists for this candidate: $existing"
+              exit 0
+            fi
+            echo "Candidate branch already exists without a traceable pull request; refusing to overwrite it." >&2
+            exit 1
+          fi
+          git switch --create "$branch"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$CATALOG_PATH"
+          git commit -m "Add Mocha source for $CANDIDATE_NAME"
+          git push origin "$branch"
+          cat > "$RUNNER_TEMP/mocha-catalog-pr.md" <<EOF
+          ## Proposed catalog source
+
+          - Candidate: $CANDIDATE_ID
+          - Catalog: $CATALOG_PATH
+          - Change: add the approved Mocha file ID as a new DATA key and set download_source: mocha.
+          - Existing catalog metadata is preserved exactly.
+
+          ## Verification limits
+
+          - Scanner/catalog metadata matched exactly; this is not binary integrity verification.
+          - No package binary was downloaded or hashed by this workflow.
+          - Review this catalog change and merge manually. The Netlify resolver will only authorize the file ID after the catalog is published.
+          EOF
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add Mocha source: $CANDIDATE_NAME" --body-file "$RUNNER_TEMP/mocha-catalog-pr.md")"
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Catalog pull request created: $pr_url. It must pass checks and be merged before FPKGi can request a temporary download URL."
+
+      - name: Explain failed approval
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "The candidate approval workflow could not safely create a catalog pull request. No catalog change was published. Check the failed workflow run for the reason; the candidate may be stale or already decided."
