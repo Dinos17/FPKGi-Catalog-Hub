@@ -65,8 +65,8 @@ def apply_candidate(
         raise ValueError("Candidate is missing, stale, or duplicated")
     candidate = matches[0]
     file_ids = [item.get("file_id") for item in candidates if isinstance(item, dict)]
-    if len(file_ids) != len(set(file_ids)):
-        raise ValueError("Candidate report contains duplicate Mocha file IDs")
+    if any(not isinstance(value, str) for value in file_ids) or len(file_ids) != len(set(file_ids)):
+        raise ValueError("Candidate report contains invalid or duplicate Mocha file IDs")
 
     platform, category = candidate.get("platform"), candidate.get("category")
     expected_path = CATALOG_PATHS.get((platform, category))
