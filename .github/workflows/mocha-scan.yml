@@ -892,3 +892,95 @@ jobs:
 
           echo "Could not publish the Mocha summary after 3 bounded attempts." >&2
           exit 1
+
+  auto-register-safe-replacements:
+    if: needs.publish-dashboard-summary.result == 'success' && github.ref == 'refs/heads/main'
+    needs: publish-dashboard-summary
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out the exact catalog commit
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 0
+
+      - name: Check out the matching reports snapshot
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: akirabox-reports
+          path: reports-branch
+          fetch-depth: 1
+
+      - name: Prepare validated candidate inputs
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/mocha-auto"
+          cp reports-branch/reports/mocha-catalog-candidates.json "$RUNNER_TEMP/mocha-auto/candidates.json"
+          cp reports-branch/reports/mocha-scan-summary.json "$RUNNER_TEMP/mocha-auto/summary.json"
+          cp reports-branch/reports/akirabox-rejections.json "$RUNNER_TEMP/mocha-auto/rejections.json"
+          if [ -f reports-branch/reports/mocha-review-decisions.json ]; then
+            cp reports-branch/reports/mocha-review-decisions.json "$RUNNER_TEMP/mocha-auto/decisions.json"
+          else
+            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-auto/decisions.json"
+          fi
+
+      - name: Apply only exact, unique, undecided replacements
+        id: apply
+        env:
+          CANDIDATE_REPORT: ${{ runner.temp }}/mocha-auto/candidates.json
+          SUMMARY: ${{ runner.temp }}/mocha-auto/summary.json
+          DECISIONS: ${{ runner.temp }}/mocha-auto/decisions.json
+          REJECTIONS: ${{ runner.temp }}/mocha-auto/rejections.json
+        run: |
+          set -euo pipefail
+          python tools/auto_apply_mocha_candidates.py \
+            --candidate-report "$CANDIDATE_REPORT" \
+            --summary "$SUMMARY" \
+            --decisions "$DECISIONS" \
+            --rejections "$REJECTIONS" \
+            --repo-root . \
+            --current-commit "$GITHUB_SHA" > "$RUNNER_TEMP/mocha-auto/result.json"
+          count="$(python -c 'import json,os; print(json.load(open(os.environ["RESULT"]))["applied_count"])' RESULT="$RUNNER_TEMP/mocha-auto/result.json")"
+          echo "applied_count=$count" >> "$GITHUB_OUTPUT"
+          cat "$RUNNER_TEMP/mocha-auto/result.json"
+        env:
+          RESULT: ${{ runner.temp }}/mocha-auto/result.json
+
+      - name: Stop when no safe replacements are available
+        if: steps.apply.outputs.applied_count == '0'
+        run: echo "No safe Mocha replacements to register."
+
+      - name: Validate repository tests and catalog schemas
+        if: steps.apply.outputs.applied_count != '0'
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
+          python -m pytest -q
+          python tools/validate_catalogs.py
+
+      - name: Create and automatically merge the catalog pull request
+        if: steps.apply.outputs.applied_count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          branch="mocha-auto-replacements-${GITHUB_SHA}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch --create "$branch"
+          git add ps4/games.json ps4/dlc.json ps5/ps5-games.json ps5/ps5-dlc.json
+          if git diff --cached --quiet; then
+            echo "No catalog changes remain after validation."
+            exit 0
+          fi
+          git commit -m "Automatically register safe Mocha catalog sources"
+          git push origin "$branch"
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" \
+            --title "Automatically register safe Mocha sources" \
+            --body "Automated registration of exact, unique Mocha metadata matches. The workflow validated the current scan/catalog snapshot, saved decisions and rejections, ran the repository test suite, and validated all catalog schemas. No ambiguous or conflicting candidates are included. Binary integrity is not verified.")"
+          echo "Created $pr_url"
+          gh pr merge "$pr_url" --auto --squash --delete-branch
