@@ -64,6 +64,9 @@ def apply_candidate(
     if len(matches) != 1:
         raise ValueError("Candidate is missing, stale, or duplicated")
     candidate = matches[0]
+    file_ids = [item.get("file_id") for item in candidates if isinstance(item, dict)]
+    if len(file_ids) != len(set(file_ids)):
+        raise ValueError("Candidate report contains duplicate Mocha file IDs")
 
     platform, category = candidate.get("platform"), candidate.get("category")
     expected_path = CATALOG_PATHS.get((platform, category))
@@ -97,6 +100,8 @@ def apply_candidate(
     if (not isinstance(matched_key, str) or matched_key not in entries
             or not isinstance(matched_metadata, dict) or entries[matched_key] != matched_metadata):
         raise ValueError("The matched catalog entry changed since candidate generation")
+    if entries[matched_key].get("download_source") == "mocha":
+        raise ValueError("Matched catalog entry is already backed by Mocha")
     expected_proposal = dict(entries[matched_key])
     expected_proposal["download_source"] = "mocha"
     if proposed != expected_proposal:
