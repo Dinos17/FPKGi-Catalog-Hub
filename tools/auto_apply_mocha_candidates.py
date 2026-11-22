@@ -29,7 +29,7 @@ def apply_automatic_candidates(
     candidates = queue.get("candidates")
     if (queue.get("schema_version") != 1 or queue.get("scanner") != "mocha"
             or queue.get("catalog_write_performed") is not False
-            or queue.get("automatic_approval") is not False
+            or queue.get("automatic_approval") is not True
             or queue.get("binary_integrity_verified") is not False
             or not isinstance(candidates, list)
             or type(queue.get("candidate_count")) is not int
@@ -76,7 +76,7 @@ def apply_automatic_candidates(
     for candidate in candidates:
         applied.append(apply_candidate(
             queue, summary, candidate["candidate_id"], repo_root, current_commit,
-            decisions, rejections,
+            decisions, rejections, automatic=True,
         ))
     return applied
 
