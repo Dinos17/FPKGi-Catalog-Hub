@@ -92,12 +92,13 @@ class AutomaticMochaRegistrationTests(unittest.TestCase):
             self.decisions, self.rejections
         )
 
-    def test_exact_unique_candidate_is_applied_without_human_action(self):
+    def test_exact_unique_candidate_replaces_original_catalog_source(self):
         result = self.apply_batch()
         self.assertEqual(result, [(self.catalog_path, self.candidate["name"])])
         payload = json.loads((self.root / self.catalog_path).read_text(encoding="utf-8"))
         self.assertEqual(payload["DATA"][FILE_ID], {**METADATA, "download_source": "mocha"})
-        self.assertEqual(payload["DATA"][self.catalog_key], METADATA)
+        self.assertNotIn(self.catalog_key, payload["DATA"])
+        self.assertEqual(len(payload["DATA"]), 1)
 
     def test_duplicate_catalog_target_fails_closed_before_write(self):
         duplicate = dict(self.candidate)
