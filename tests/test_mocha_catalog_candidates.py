@@ -142,5 +142,5 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         self.assertEqual(self.build()["candidate_count"], 0)
 
 
-if __turn__ == "__main__":
+if __name__ == "__main__":
     unittest.main()
