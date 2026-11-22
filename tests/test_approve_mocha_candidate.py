@@ -116,6 +116,30 @@ class ApproveMochaCandidateTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.apply_one()
 
+    def test_duplicate_file_id_in_candidate_report_rejected(self):
+        duplicate = dict(self.candidate)
+        duplicate["candidate_id"] = "f" * 24
+        self.queue["candidates"].append(duplicate)
+        self.queue["candidate_count"] = 2
+        with self.assertRaises(ValueError):
+            self.apply_one()
+
+    def test_already_mocha_backed_catalog_entry_rejected(self):
+        path = self.root / self.catalog_path
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["DATA"][self.matched_key]["download_source"] = "mocha"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        self.candidate["catalog_metadata"]["download_source"] = "mocha"
+        self.candidate["proposed_entry"]["download_source"] = "mocha"
+        with self.assertRaises(ValueError):
+            self.apply_one()
+
+    def test_candidate_name_newlines_are_sanitized(self):
+        self.candidate["name"] = "DEAD RISING\\n::set-output name=evil::true"
+        _, name = self.apply_one()
+        self.assertNotIn("\\n", name)
+        self.assertNotIn("\\r", name)
+
     def test_existing_mocha_file_id_rejected(self):
         path = self.root / "ps4/dlc.json"
         payload = json.loads(path.read_text(encoding="utf-8"))
