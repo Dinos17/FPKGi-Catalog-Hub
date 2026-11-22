@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-22T21:43:55.238783Z",
-  "catalog_commit": "21fe09d3cf4577ac29ab3dd85a00a397991aee01",
+  "scan_observed_at": "2026-11-22T22:29:45.474232Z",
+  "catalog_commit": "eb13f80d4bf64fddce20208515129a03ce9c9505",
   "candidate_count": 33,
   "candidates": [
     {
-      "candidate_id": "5a45e1a1644db3c9285af828",
+      "candidate_id": "dc3f0105ea9c594fe4589ec8",
       "file_id": "d5ac3913-802b-4d68-9803-8f5c07c7640e",
       "name": "DEAD RISING - [US] [EN] [1.00].pkg",
       "created_at": "2026-11-21T15:21:04.244Z",
@@ -45,7 +45,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "7ed4f54f2973dd18976bf24a",
+      "candidate_id": "81af4e95457011280892195b",
       "file_id": "275ced47-e1f6-49eb-9cbb-2646a433da5a",
       "name": "Death's Door - [US] [EN] [1.01].pkg",
       "created_at": "2026-11-21T15:01:04.285Z",
@@ -84,7 +84,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "73c2573fd2cc6edd0672d438",
+      "candidate_id": "d5fb44d17be7ff518f8d3b5a",
       "file_id": "ee03801c-39e2-4198-805e-2d355416d744",
       "name": "Dead Rising 2 - [US] [EN] [1.02].pkg",
       "created_at": "2026-11-21T14:49:11.659Z",
@@ -123,7 +123,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "1309cb76e8e40d0f55f04427",
+      "candidate_id": "cd2141d07aa67e10f8654a9c",
       "file_id": "9fe21b94-44e6-4734-96dc-7f9ced5943a2",
       "name": "Dead Rising 2 Off The Record - [US] [EN] [1.02].pkg",
       "created_at": "2026-11-21T14:23:46.398Z",
@@ -162,7 +162,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "6d6522165d31fa8e75d22e37",
+      "candidate_id": "39827a7205dec58de82649aa",
       "file_id": "1b599ddb-ea73-4680-b89b-2f51fa900c4f",
       "name": "Deadpool - [US] [EN] [1.00].pkg",
       "created_at": "2026-11-21T13:38:11.286Z",
@@ -201,7 +201,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "26a003cef971be7c8f2ee0ac",
+      "candidate_id": "c48e056a78904ccf1f597309",
       "file_id": "fa672bed-20ff-47e8-ad5b-6dd70f48db7b",
       "name": "Darksiders Genesis - [EU] [EN] [1.03].pkg",
       "created_at": "2026-11-21T13:20:38.155Z",
@@ -240,7 +240,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "67d08de1ed07fceb1bca2f83",
+      "candidate_id": "ae668728d5a692064d6c64dc",
       "file_id": "980d9000-e6ca-447a-834b-991fe53737e5",
       "name": "Dead Nation - [US] [EN] [1.03].pkg",
       "created_at": "2026-11-21T12:28:17.919Z",
@@ -279,7 +279,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "34fc940d04a46cb0aee3cccc",
+      "candidate_id": "3cacc2ade8d7dc1804657161",
       "file_id": "a01e7e32-0c1e-4c8c-b86d-abdf9d3eb5dd",
       "name": "Deadlight - [EU] [EN] [1.02].pkg",
       "created_at": "2026-11-20T17:58:44.569Z",
@@ -318,7 +318,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "2f0ad6ae868c67505a9765f3",
+      "candidate_id": "3f1585c524365254485e3f37",
       "file_id": "4adc0462-f041-406e-98f7-b0a488b4cd27",
       "name": "DRAGON BALL XENOVERSE - [EU] [EN] [1.07].pkg",
       "created_at": "2026-11-19T13:49:20.199Z",
@@ -357,7 +357,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "459299b2640101f00816ab79",
+      "candidate_id": "56ee6cf76f7bdafe312c1166",
       "file_id": "64ee80c4-e8d5-4f6a-a063-4313cf3c9462",
       "name": "DRAGON QUEST BUILDERS 2 - [US] [EN] [1.04].pkg",
       "created_at": "2026-11-19T13:18:15.158Z",
@@ -396,7 +396,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "43e6365670f00e1a2bf8bbf4",
+      "candidate_id": "b91f8f2b8ed6a333b99014b1",
       "file_id": "bc5b38bc-2f13-49ad-8863-1db53e5a20ee",
       "name": "DRAGON BALL FighterZ - [EU] [EN] [1.38].pkg",
       "created_at": "2026-11-19T13:12:39.677Z",
@@ -435,7 +435,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "ba67ef175f42149553fd9489",
+      "candidate_id": "2a8c6856f273040eb7943327",
       "file_id": "349dd16d-6435-4dc7-8fc6-a52335457330",
       "name": "DREDGE - [EU] [EN] [1.08].pkg",
       "created_at": "2026-11-19T13:06:49.247Z",
@@ -474,7 +474,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "ede406f09131adf285f30043",
+      "candidate_id": "8e9cd47de593dadad000d35d",
       "file_id": "21626d29-275f-4a38-9636-e4aa21daef1c",
       "name": "DRAGON QUEST BUILDERS - [EU] [EN] [1.00].pkg",
       "created_at": "2026-11-19T12:43:17.859Z",
@@ -513,7 +513,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "5c9031ee0779b231119fac16",
+      "candidate_id": "b98fd4398640701451327182",
       "file_id": "09307cb7-f7e1-4dc5-bd3b-41315e2f2ab0",
       "name": "Darksiders II - [EU] [EN] [1.02].pkg",
       "created_at": "2026-11-19T12:17:33.313Z",
@@ -552,7 +552,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "90c098d7d5f84a6e303892ec",
+      "candidate_id": "ccdfc95aa9cf4d4d7361f38b",
       "file_id": "85f4711e-8289-4369-91cc-c3291966a25c",
       "name": "Dead Island - [EU] [EN] [1.03].pkg",
       "created_at": "2026-11-19T11:54:09.519Z",
@@ -591,7 +591,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "8ad1effcce7516004a2caffa",
+      "candidate_id": "a934ba9b46b8fc3ed5d96ba5",
       "file_id": "3f5b502a-dea5-46f7-a2b6-02c78a1dcfa8",
       "name": "DOOM (1993) - [EU] [EN] [1.09].pkg",
       "created_at": "2026-11-19T11:53:17.094Z",
@@ -630,7 +630,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "e7186a00e152ed730bc89fb0",
+      "candidate_id": "285ac7d0e63458e9f0334d3b",
       "file_id": "42cdaefd-4529-4534-b7b7-39424351fc1a",
       "name": "Dead Cells - [EU] [EN] [1.51].pkg",
       "created_at": "2026-11-19T10:53:11.457Z",
@@ -669,7 +669,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "196b0fd4adfbcba84034341e",
+      "candidate_id": "a7ebb41c78c7bbee8b02a593",
       "file_id": "18db01aa-7bf2-43d5-9fe5-6487e98ab283",
       "name": "DAVE THE DIVER - [EU] [EN] [1.23].pkg",
       "created_at": "2026-11-19T10:18:02.793Z",
@@ -708,7 +708,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "325a64274e2e4f4d78ab5de7",
+      "candidate_id": "9a2b7b592791cae23c512ef0",
       "file_id": "b27bca7f-809f-4785-9f67-aa2d19541919",
       "name": "Darkwood - [US] [EN] [1.06].pkg",
       "created_at": "2026-11-19T09:57:13.017Z",
@@ -747,7 +747,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "0558a92566f991f6ea3869ef",
+      "candidate_id": "928f461f767b7c8ab5523b9e",
       "file_id": "cf5cbc6a-c64d-4318-8b76-dd8123d60a34",
       "name": "Day of the Tentacle - [EU] [EN] [1.03].pkg",
       "created_at": "2026-11-19T09:51:02.637Z",
@@ -786,7 +786,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "7e8553cdacd9ca532a4c3bfe",
+      "candidate_id": "95418fec8794bd85af312cfd",
       "file_id": "8ac4b920-32a3-41d0-a35e-cb77f1d77f62",
       "name": "Dangerous Golf - [EU] [EN] [1.02].pkg",
       "created_at": "2026-11-19T08:53:41.921Z",
@@ -825,7 +825,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "a619c9248da9ff3abdebdea3",
+      "candidate_id": "d9b69c7b69b7ce65ba123021",
       "file_id": "b66e57a6-8e4a-4270-85e0-67d41f9aaf04",
       "name": "Assetto Corsa Competizione - [EU] [EN] [1.12].pkg",
       "created_at": "2026-11-19T08:04:24.959Z",
@@ -865,7 +865,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "cadc4ff2029d74c401393b0e",
+      "candidate_id": "012ec50b3ea1fa915afeeb78",
       "file_id": "1c2e6aa7-4001-4a4d-9ea2-c1dd4a48ce3a",
       "name": "Dandara - [US] [EN] [1.17].pkg",
       "created_at": "2026-11-19T06:33:05.836Z",
@@ -905,7 +905,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "309b16a2b63338236dadffa6",
+      "candidate_id": "8508b33b45a19107f51b021e",
       "file_id": "6f9ae722-9884-4593-a381-1b9af6e161f0",
       "name": "Axiom Verge - [US] [EN] [1.07].pkg",
       "created_at": "2026-11-19T06:28:46.140Z",
@@ -945,7 +945,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "b91df3e85d8cbe0e61f72b79",
+      "candidate_id": "17c4ca1df387dbccaf244b27",
       "file_id": "707ea418-8d79-4ac3-88ac-446d4e6e8250",
       "name": "Assassin's Creed Chronicles Trilogy - [EU] [EN] [1.02].pkg",
       "created_at": "2026-11-19T06:16:29.700Z",
@@ -985,7 +985,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "1ea851a05066cd498de0ea50",
+      "candidate_id": "7cea6e64e44ef23061d05c86",
       "file_id": "7d47d884-f2ba-4e63-b31b-68220894edb7",
       "name": "Axiom Verge 2 - [US] [EN] [1.03].pkg",
       "created_at": "2026-11-19T06:08:58.130Z",
@@ -1025,7 +1025,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "287febd2df94ee0ca6f121ec",
+      "candidate_id": "7ef6199ac051652e3c12201c",
       "file_id": "330ecc5d-cf60-43d3-999d-d371876efab2",
       "name": "Atari Flashback Classics vol.3 - [US] [EN] [1.04].pkg",
       "created_at": "2026-11-19T04:07:39.638Z",
@@ -1065,7 +1065,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "becfe1549f8b56749508b897",
+      "candidate_id": "ea1438395f65baad1e040a66",
       "file_id": "33e5181d-62be-46fe-9ac2-c5e38412349d",
       "name": "Atari Flashback Classics vol.2 - [EU] [EN] [1.00].pkg",
       "created_at": "2026-11-19T03:46:06.657Z",
@@ -1105,7 +1105,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "f17035f0c63981aecc359565",
+      "candidate_id": "0fa9efa2c6691ed550e2b301",
       "file_id": "f6f8b3bc-77de-4c95-b20d-e955893566e2",
       "name": "Atari Flashback Classics vol.1 - [EU] [EN] [1.01].pkg",
       "created_at": "2026-11-19T03:22:56.071Z",
@@ -1145,7 +1145,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "afb56e3a0305061d49702888",
+      "candidate_id": "13db0bea6efc2091f69285d3",
       "file_id": "c3e01874-4721-4d1d-a9ef-b6a00df721ed",
       "name": "Ashen - [US] [EN] [1.00].pkg",
       "created_at": "2026-11-19T03:08:03.247Z",
@@ -1185,7 +1185,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "da054faae37243f4bd94994a",
+      "candidate_id": "ea970369d69620ea6d01d3c5",
       "file_id": "e88e57b1-e174-4fe1-9bdc-289a98890905",
       "name": "Ancestors The Humankind Odyssey - [EU] [EN] [1.01].pkg",
       "created_at": "2026-11-19T01:12:15.872Z",
@@ -1225,7 +1225,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "918a6bd417a6c3745bc825d9",
+      "candidate_id": "b48856ed487ed989cf0e22fa",
       "file_id": "651e7072-b52c-4467-9ce5-c5fd4140e64b",
       "name": "Another World - [EU] [EN] [1.00].pkg",
       "created_at": "2026-11-19T00:13:19.926Z",
@@ -1264,7 +1264,7 @@
       "approval_required": false
     },
     {
-      "candidate_id": "121cac46802327597bcd3056",
+      "candidate_id": "47ad3d044125aadb2046f2c0",
       "file_id": "2c3c5427-3331-4eb5-acc2-a1a2511952e2",
       "name": "Amplitude - [US] [EN] [1.01].pkg",
       "created_at": "2026-11-19T00:03:17.840Z",
