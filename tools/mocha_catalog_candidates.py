@@ -107,8 +107,9 @@ def build_candidate_queue(
         target = (platform, category)
         if target not in CATALOGS or item.get("platform") != platform or item.get("catalog_category") != category:
             raise ValueError("Matched comparison row has an inconsistent catalog target")
-        if item.get("extension") != "pkg" or row.get("name") != item.get("name"):
-            raise ValueError("Matched comparison row does not identify the scanned PKG")
+        if (item.get("extension") != "pkg" or row.get("name") != item.get("name")
+                or not isinstance(item.get("name"), str) or not item["name"].strip()):
+            raise ValueError("Matched comparison row does not identify a named scanned PKG")
         created_text = item.get("created_at")
         if not isinstance(created_text, str):
             continue
