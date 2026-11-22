@@ -560,6 +560,7 @@ jobs:
           # Publish only entries that genuinely require a human decision.
           # Exact catalog matches are auto-cleared; prior owner rejections stay resolved.
           review_queue = None
+          review_state_validated = False
           try:
               raw_dir = Path(os.environ['RAW_REPORT_DIR'])
               raw_scan = json.loads((raw_dir / 'mocha-scan-report.json').read_text(encoding='utf-8'))
@@ -775,6 +776,7 @@ jobs:
               Path('reports/mocha-review-queue.json').write_text(
                   json.dumps(review_queue, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
               )
+              review_state_validated = True
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
               print('Human-review queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
               review_queue = None
@@ -789,7 +791,8 @@ jobs:
               if (raw_scan.get('scan_observed_at') != summary['scan_observed_at']
                       or raw_comparison.get('catalog_commit') != summary['catalog_commit']):
                   raise ValueError('candidate inputs do not match the published scan/catalog snapshot')
-              if (not isinstance(rejected, dict) or not isinstance(resolved_decisions, set)
+              if (not review_state_validated or not isinstance(rejected, dict)
+                      or not isinstance(resolved_decisions, set)
                       or not callable(stable_decision_key) or not callable(normalize_rejection_name)):
                   raise ValueError('saved review decisions are unavailable; refusing candidate publication')
               excluded_candidate_ids = set()
