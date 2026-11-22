@@ -87,7 +87,7 @@ class ApproveMochaCandidateTests(unittest.TestCase):
     def test_existing_keep_decision_blocks_candidate_approval(self):
         from datetime import datetime, timezone
         from unicodedata import normalize
-        identity = "\\0".join((
+        identity = "\0".join((
             "PS4", "games", normalize("NFKC", self.candidate["name"]).strip().casefold(),
             datetime.fromisoformat(self.candidate["created_at"].replace("Z", "+00:00")).astimezone(timezone.utc).isoformat(),
         ))
