@@ -5,6 +5,7 @@ import {
   isAllowedPresignedUrl,
   isValidFileId,
   readCatalog,
+  requestPresignedUrl,
 } from "../netlify/functions/_lib/mocha.mjs";
 
 test("accepts only bounded opaque Mocha file IDs", () => {
@@ -17,9 +18,9 @@ test("accepts only bounded opaque Mocha file IDs", () => {
   assert.equal(isValidFileId(null), false);
 });
 
-test("parses exact storage host allowlist", () => {
+test("parses only valid exact DNS storage hostnames", () => {
   assert.deepEqual(
-    [...getAllowedStorageHosts("storage.example, cdn.example ")],
+    [...getAllowedStorageHosts("storage.example, CDN.example, *.example, bad host, cdn.example:443")],
     ["storage.example", "cdn.example"],
   );
   assert.equal(getAllowedStorageHosts("").size, 0);
@@ -28,10 +29,14 @@ test("parses exact storage host allowlist", () => {
 test("accepts HTTPS URLs only on explicitly allowed hosts", () => {
   const hosts = getAllowedStorageHosts("storage.example");
   assert.equal(isAllowedPresignedUrl("https://storage.example/file?sig=a%2Fb", hosts), true);
+  assert.equal(isAllowedPresignedUrl("https://storage.example:443/file", hosts), true);
   assert.equal(isAllowedPresignedUrl("http://storage.example/file", hosts), false);
   assert.equal(isAllowedPresignedUrl("https://evil.example/file", hosts), false);
   assert.equal(isAllowedPresignedUrl("https://user:pass@storage.example/file", hosts), false);
+  assert.equal(isAllowedPresignedUrl("https://@storage.example/file", hosts), false);
+  assert.equal(isAllowedPresignedUrl("https://storage.example/file#", hosts), false);
   assert.equal(isAllowedPresignedUrl("https://storage.example/file#fragment", hosts), false);
+  assert.equal(isAllowedPresignedUrl("https://%73torage.example/file", hosts), false);
   assert.equal(isAllowedPresignedUrl("https://storage.example:444/file", hosts), false);
   assert.equal(isAllowedPresignedUrl("https://storage.example/file\\n", hosts), false);
   assert.equal(isAllowedPresignedUrl("x".repeat(2049), hosts), false);
@@ -68,4 +73,48 @@ test("cancels catalog response as soon as streamed bytes exceed 5 MiB", async (t
     /catalog_too_large/,
   );
   assert.equal(cancelled, true);
+});
+
+test("requests a bounded, valid presigned response without following redirects", async (t) => {
+  const originalFetch = globalThis.fetch;
+  let request;
+  t.after(() => { globalThis.fetch = originalFetch; });
+  globalThis.fetch = async (url, options) => {
+    request = { url, options };
+    return Response.json({ url: "https://storage.example/file?sig=x", expiresIn: 86400 });
+  };
+
+  const result = await requestPresignedUrl("file-id", "test-key");
+  assert.deepEqual(result, {
+    url: "https://storage.example/file?sig=x",
+    expiresIn: 86400,
+  });
+  assert.equal(request.url, "https://api.mocha.my/api/files/presigned");
+  assert.equal(request.options.redirect, "manual");
+  assert.equal(request.options.headers.authorization, "Bearer test-key");
+  assert.deepEqual(JSON.parse(request.options.body), {
+    fileId: "file-id",
+    disposition: "attachment",
+  });
+});
+
+test("rejects redirects, oversized bodies, malformed payloads, and invalid expiry", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => { globalThis.fetch = originalFetch; });
+
+  globalThis.fetch = async () => new Response(null, { status: 302 });
+  await assert.rejects(requestPresignedUrl("file-id", "key"), /upstream_redirect_rejected/);
+
+  globalThis.fetch = async () => new Response(new ReadableStream({
+    start(controller) {
+      controller.enqueue(new Uint8Array(16 * 1024 + 1));
+    },
+  }));
+  await assert.rejects(requestPresignedUrl("file-id", "key"), /upstream_response_invalid/);
+
+  globalThis.fetch = async () => Response.json({ url: "https://storage.example/file", expiresIn: 0 });
+  await assert.rejects(requestPresignedUrl("file-id", "key"), /upstream_response_invalid/);
+
+  globalThis.fetch = async () => new Response("{");
+  await assert.rejects(requestPresignedUrl("file-id", "key"), /upstream_response_invalid/);
 });
