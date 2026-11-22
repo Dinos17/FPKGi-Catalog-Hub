@@ -957,7 +957,7 @@ jobs:
           RESULT: ${{ runner.temp }}/mocha-auto/result.json
         run: |
           set -euo pipefail
-          python tools/auto_apply_mocha_candidates.py \
+          python -m tools.auto_apply_mocha_candidates \
             --candidate-report "$CANDIDATE_REPORT" \
             --summary "$SUMMARY" \
             --scan-report "$SCAN_REPORT" \
