@@ -332,3 +332,36 @@ test("handler rejects an unapproved Mocha storage host without returning its URL
   assert.deepEqual(await response.json(), { error: "invalid_upstream_url" });
   assert.equal(response.headers.get("cache-control"), null);
 });
+
+
+test("handler rejects Mocha redirects and never returns a redirected URL", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const originalNetlify = globalThis.Netlify;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.Netlify = originalNetlify;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  globalThis.Netlify = { env: { get: (name) => ({
+    MOCHA_API_KEY: "test-key",
+    MOCHA_STORAGE_HOSTS: "storage.example",
+  })[name] } };
+  globalThis.fetch = async (url) => {
+    if (String(url).includes("api.mocha.my")) {
+      return new Response(null, {
+        status: 302,
+        headers: { location: "https://attacker.example/collect?token=must-not-leak" },
+      });
+    }
+    return Response.json({ DATA: {
+      "approved-file-id": { download_source: "mocha" },
+    } });
+  };
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=approved-file-id",
+  ));
+  assert.equal(response.status, 502);
+  assert.deepEqual(await response.json(), { error: "resolver_upstream_unavailable" });
+});
