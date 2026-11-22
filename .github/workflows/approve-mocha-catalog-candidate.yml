@@ -1,0 +1,171 @@
+name: Approve Mocha Catalog Candidate
+
+on:
+  issues:
+    types: [opened]
+
+concurrency:
+  group: mocha-catalog-candidate-${{ github.event.issue.number }}
+  queue: max
+
+permissions:
+  contents: read
+
+jobs:
+  create-catalog-pr:
+    if: github.event.issue.user.login == 'Dinos17' && startsWith(github.event.issue.title, 'FPKGi catalog candidate approval:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+    steps:
+      - name: Check out current main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Validate candidate and prepare catalog change
+        id: candidate
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+          REPORT_BRANCH: akirabox-reports
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          git fetch origin "$REPORT_BRANCH"
+          mkdir -p "$RUNNER_TEMP/mocha-candidate"
+          git show "FETCH_HEAD:reports/mocha-catalog-candidates.json" > "$RUNNER_TEMP/mocha-candidate/candidates.json"
+          git show "FETCH_HEAD:reports/mocha-scan-summary.json" > "$RUNNER_TEMP/mocha-candidate/summary.json"
+
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import re
+          from pathlib import Path
+
+          event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
+          issue = event.get("issue", {})
+          body = issue.get("body") or ""
+          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\\s*(\\{.*?\\})\\s*-->", body, re.S)
+          if not match:
+              raise SystemExit("Missing structured candidate approval payload.")
+          payload = json.loads(match.group(1))
+          if payload.get("schema_version") != 1:
+              raise SystemExit("Unsupported candidate approval schema.")
+          candidate_id = payload.get("candidate_id")
+          if not isinstance(candidate_id, str) or not re.fullmatch(r"[0-9a-f]{24}", candidate_id):
+              raise SystemExit("Invalid candidate ID.")
+
+          root = Path(".")
+          report_dir = Path(os.environ["RUNNER_TEMP"]) / "mocha-candidate"
+          queue = json.loads((report_dir / "candidates.json").read_text(encoding="utf-8"))
+          summary = json.loads((report_dir / "summary.json").read_text(encoding="utf-8"))
+          if (queue.get("schema_version") != 1 or queue.get("scanner") != "mocha"
+                  or queue.get("automatic_approval") is not False
+                  or queue.get("catalog_write_performed") is not False
+                  or queue.get("binary_integrity_verified") is not False
+                  or summary.get("schema_version") != 1 or summary.get("scanner") != "mocha"
+                  or summary.get("scan_complete") is not True):
+              raise SystemExit("Candidate report or scan summary is not valid.")
+          if (queue.get("scan_observed_at") != summary.get("scan_observed_at")
+                  or queue.get("catalog_commit") != summary.get("catalog_commit")):
+              raise SystemExit("Candidate report is stale or does not match the latest scan summary.")
+          current_commit = os.popen("git rev-parse HEAD").read().strip()
+          if not re.fullmatch(r"[0-9a-f]{40}", current_commit) or current_commit != queue.get("catalog_commit"):
+              raise SystemExit("The catalog changed after this scan. Wait for a fresh scanner run.")
+
+          candidates = queue.get("candidates")
+          if not isinstance(candidates, list):
+              raise SystemExit("Candidate list is malformed.")
+          matches = [item for item in candidates if isinstance(item, dict) and item.get("candidate_id") == candidate_id]
+          if len(matches) != 1:
+              raise SystemExit("Candidate is missing, stale, or duplicated.")
+          candidate = matches[0]
+
+          file_id = candidate.get("file_id")
+          if not isinstance(file_id, str) or not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", file_id):
+              raise SystemExit("Candidate contains an invalid Mocha file ID.")
+          allowed_paths = {
+              ("PS4", "games"): "ps4/games.json",
+              ("PS4", "dlc"): "ps4/dlc.json",
+              ("PS5", "games"): "ps5/ps5-games.json",
+              ("PS5", "dlc"): "ps5/ps5-dlc.json",
+          }
+          expected_path = allowed_paths.get((candidate.get("platform"), candidate.get("category")))
+          if expected_path != candidate.get("catalog_path"):
+              raise SystemExit("Candidate catalog target is outside the approved catalog set.")
+          catalog_path = root / expected_path
+          catalog = json.loads(catalog_path.read_text(encoding="utf-8"))
+          entries = catalog.get("DATA")
+          if not isinstance(entries, dict):
+              raise SystemExit("Target catalog has no DATA object.")
+          matched_key = candidate.get("matched_catalog_key")
+          matched_metadata = candidate.get("catalog_metadata")
+          proposed = candidate.get("proposed_entry")
+          if (not isinstance(matched_key, str) or matched_key not in entries
+                  or not isinstance(matched_metadata, dict) or entries[matched_key] != matched_metadata):
+              raise SystemExit("The matched catalog entry changed since candidate generation.")
+          expected_proposal = dict(entries[matched_key])
+          expected_proposal["download_source"] = "mocha"
+          if proposed != expected_proposal or proposed.get("download_source") != "mocha":
+              raise SystemExit("Candidate proposal does not exactly preserve the current catalog metadata.")
+          if candidate.get("match_status") != "matched" or candidate.get("metadata_differences") != []:
+              raise SystemExit("Only exact metadata matches may be approved through this workflow.")
+          if candidate.get("approval_required") is not True or candidate.get("binary_integrity_verified") is not False:
+              raise SystemExit("Candidate approval state is invalid.")
+          if candidate.get("candidate_id") != hashlib.sha256(
+              (file_id + "\\0" + queue["catalog_commit"] + "\\0" + expected_path + "\\0" + matched_key).encode("utf-8")
+          ).hexdigest()[:24]:
+              raise SystemExit("Candidate identity does not match the trusted scan/catalog snapshot.")
+          created_at = candidate.get("created_at")
+          if not isinstance(created_at, str) or not created_at.strip():
+              raise SystemExit("Candidate upload timestamp is missing.")
+
+          for relative in allowed_paths.values():
+              data = json.loads((root / relative).read_text(encoding="utf-8"))
+              if file_id in data.get("DATA", {}):
+                  raise SystemExit("This Mocha file ID is already present in a catalog.")
+          if file_id in entries:
+              raise SystemExit("Mocha file ID collides with an existing catalog key.")
+
+          entries[file_id] = proposed
+          catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"candidate_id={candidate_id}\\n")
+              output.write(f"candidate_name={candidate.get('name', 'Mocha upload')}\\n")
+              output.write(f"catalog_path={expected_path}\\n")
+          PY
+
+          python tools/validate_catalogs.py
+
+      - name: Create catalog pull request
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CANDIDATE_ID: ${{ steps.candidate.outputs.candidate_id }}
+          CANDIDATE_NAME: ${{ steps.candidate.outputs.candidate_name }}
+          CATALOG_PATH: ${{ steps.candidate.outputs.catalog_path }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          branch="mocha-catalog-candidate-$CANDIDATE_ID"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state all --json url,state --jq '.[0].url // empty')"
+            if [ -n "$existing" ]; then
+              gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "A catalog pull request already exists for this candidate: $existing"
+              exit 0
+            fi
+            echo "Candidate branch already exists without a traceable pull request; refusing to overwrite it." >&2
+            exit 1
+          fi
+          git switch --create "$branch"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add "$CATALOG_PATH"
+          git commit -m "Add Mocha source for $CANDIDATE_NAME"
+          git push origin "$branch"
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add Mocha source: $CANDIDATE_NAME" --body "## Proposed catalog source\n\n- Candidate: `$CANDIDATE_ID`\n- Catalog: `$CATALOG_PATH`\n- Change: add the approved Mocha file ID as a new DATA key and set `download_source: mocha`.\n- Existing catalog metadata is preserved exactly.\n\n## Verification limits\n\n- Scanner/catalog metadata matched exactly; this is not binary integrity verification.\n- No package binary was downloaded or hashed by this workflow.\n- Review this catalog change and merge manually. The Netlify resolver will only authorize the file ID after the catalog is published.")"
+          gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Catalog pull request created: $pr_url. It must pass checks and be merged before FPKGi can request a temporary download URL."
