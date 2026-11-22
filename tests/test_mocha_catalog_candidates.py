@@ -95,6 +95,11 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         self.row["status"] = "metadata_difference"
         self.assertEqual(self.build()["candidate_count"], 0)
 
+    def test_previously_decided_upload_is_not_candidate(self):
+        file_id = self.row["file_id"]
+        result = build_candidate_queue(self.scan, self.comparison, self.root, {file_id})
+        self.assertEqual(result["candidate_count"], 0)
+
     def test_possible_duplicate_is_not_candidate(self):
         self.comparison["possible_duplicates"] = [{"file_ids": [self.row["file_id"]]}]
         self.assertEqual(self.build()["candidate_count"], 0)
