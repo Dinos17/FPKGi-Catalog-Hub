@@ -20,7 +20,7 @@ export function getAllowedStorageHosts(raw) {
 
 export function isAllowedPresignedUrl(value, allowedHosts) {
   if (typeof value !== "string" || value.length < 1 || value.length > 2048) return false;
-  if (/[\\u0000-\\u0020\\u007f-\\uffff\\\\]/.test(value)) return false;
+  if (/[\u0000-\u0020\u007f-\uffff\\]/.test(value)) return false;
   let parsed;
   try {
     parsed = new URL(value);
