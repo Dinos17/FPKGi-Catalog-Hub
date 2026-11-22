@@ -140,6 +140,42 @@ def test_load_sources_accepts_valid_configuration(tmp_path, monkeypatch):
     assert merge.load_sources() == sources
 
 
+def test_validate_entry_accepts_mocha_file_id_only_when_marked():
+    errors, warnings = validate_entry(
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        {"name": "Example Game", "download_source": "mocha"},
+        allow_mocha=True,
+    )
+
+    assert errors == []
+    assert warnings == []
+
+
+@pytest.mark.parametrize(
+    "file_id",
+    ["not a valid id", "mocha://file-id", "x" * 129],
+)
+def test_validate_entry_rejects_invalid_mocha_file_id(file_id):
+    errors, warnings = validate_entry(
+        file_id,
+        {"name": "Example Game", "download_source": "mocha"},
+        allow_mocha=True,
+    )
+
+    assert any("Mocha file ID is invalid" in error for error in errors)
+    assert warnings == []
+
+
+def test_validate_entry_rejects_unmarked_mocha_file_id():
+    errors, warnings = validate_entry(
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        {"name": "Example Game"},
+    )
+
+    assert any("package URL is not HTTP(S)" in error for error in errors)
+    assert warnings == []
+
+
 def test_validate_entry_accepts_valid_entry():
     errors, warnings = validate_entry(
         "https://example.com/game.pkg",
@@ -548,3 +584,49 @@ def test_main_continues_when_external_database_is_unavailable(
     )
 
     merge.main()
+
+
+def test_validate_entries_rejects_mocha_markers_from_external_sources():
+    entries = {
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e": {
+            "name": "Injected Game",
+            "download_source": "mocha",
+        }
+    }
+    assert validate_entries(entries, "untrusted source") == {}
+
+
+def test_merge_category_preserves_existing_mocha_registrations(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    output_path = tmp_path / "ps4" / "games.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    mocha_entry = {
+        "name": "Registered Game",
+        "download_source": "mocha",
+        "mocha_file_id": "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+    }
+    output_path.write_text(json.dumps({"DATA": {
+        "https://example.com/old.pkg": {"name": "Old"},
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e": mocha_entry,
+    }}), encoding="utf-8")
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(merge, "fetch_source", lambda _url: {
+        "https://example.com/new.pkg": {"name": "New"}
+    })
+
+    merge.merge_category("games", ["https://example.com/source.json"], {})
+    result = json.loads(output_path.read_text(encoding="utf-8"))["DATA"]
+    assert result["d5ac3913-802b-4d68-9803-8f5c07c7640e"] == mocha_entry
+    assert "https://example.com/new.pkg" in result
+    assert "https://example.com/old.pkg" not in result
+
+
+def test_validate_entry_rejects_mocha_marker_unless_catalog_context_is_explicit():
+    errors, warnings = validate_entry(
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        {"name": "Injected Game", "download_source": "mocha"},
+    )
+    assert any("not accepted from fetched sources" in error for error in errors)
+    assert warnings == []

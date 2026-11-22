@@ -440,7 +440,8 @@ I don't want one bad entry to break the entire catalog.
 
 The merger checks things such as:
 
-- valid HTTP(S) package URLs;
+- valid HTTP(S) package URLs for externally fetched and release entries;
+- valid Mocha file-ID keys only for catalog entries explicitly marked with `"download_source": "mocha"`;
 - valid JSON structure;
 - metadata types;
 - title ID format;
@@ -456,9 +457,9 @@ If an entire source is unavailable or malformed, the merger reports the problem 
 
 ## Duplicate handling
 
-The **package URL** is used as the unique key for an entry.
+The catalog key is normally the package URL. Mocha-backed entries are the explicit exception: their key is the Mocha file ID and their metadata must contain `"download_source": "mocha"`. The merger rejects Mocha-marked entries supplied by external catalog sources; only the guarded Mocha registration workflow may add them.
 
-That means different versions, regions, or packages can still coexist when they have different package URLs.
+Different versions, regions, or packages can coexist when they have different package URLs or, for Mocha entries, different file IDs. Mocha file IDs must be unique across all catalog files.
 
 The duplicate-check workflow scans the individual catalog files for repeated package URLs and also reports possible same-title/version duplicates for manual review.
 

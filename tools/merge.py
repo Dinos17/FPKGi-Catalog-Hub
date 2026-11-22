@@ -144,14 +144,20 @@ def fetch_source(url):
 ALLOWED_METADATA_TYPES = (str, int, float, bool, type(None))
 TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
 VERSION_RE = re.compile(r"^\d+(?:\.\d+)*$")
+MOCHA_FILE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 
 
-def validate_entry(pkg_url, metadata):
+def validate_entry(pkg_url, metadata, allow_mocha=False):
     errors = []
     warnings = []
 
     if not isinstance(pkg_url, str) or not pkg_url.strip():
         errors.append("package URL is missing or is not a string")
+    elif isinstance(metadata, dict) and metadata.get("download_source") == "mocha":
+        if not allow_mocha:
+            errors.append("Mocha entries are not accepted from fetched sources")
+        elif not MOCHA_FILE_ID_RE.fullmatch(pkg_url):
+            errors.append("Mocha file ID is invalid")
     elif not pkg_url.lower().startswith(("http://", "https://")):
         errors.append("package URL is not HTTP(S)")
 
@@ -298,6 +304,33 @@ def merge_category(category, urls, release_entries, excluded_urls=None):
         )
 
     output_path = catalog_output_path(category)
+
+    # Mocha registrations are written only by the scanner's guarded catalog
+    # workflow. Preserve them across ordinary source rebuilds; never import
+    # Mocha entries from fetched sources.
+    if output_path.exists():
+        try:
+            with output_path.open("r", encoding="utf-8") as file:
+                existing_output = json.load(file)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(
+                f"Cannot safely preserve Mocha registrations in {output_path}: {exc}"
+            ) from exc
+        existing_entries = (
+            existing_output.get("DATA") if isinstance(existing_output, dict) else None
+        )
+        if not isinstance(existing_entries, dict):
+            raise RuntimeError(
+                f"Cannot safely preserve Mocha registrations in {output_path}: "
+                'missing valid "DATA" object'
+            )
+        for file_id, metadata in existing_entries.items():
+            if isinstance(metadata, dict) and metadata.get("download_source") == "mocha":
+                if file_id in merged and merged[file_id] != metadata:
+                    raise RuntimeError(
+                        f"Mocha file ID conflicts with a fetched catalog key: {file_id}"
+                    )
+                merged[file_id] = metadata
 
     if failed_sources and output_path.exists() and merged:
         try:
@@ -455,6 +488,34 @@ def main():
                     f"{len(existing_ps5_entries)}"
                 )
                 continue
+
+        # Preserve scanner-registered Mocha entries during PS5 catalog rebuilds.
+        if ps5_output_path.exists():
+            try:
+                with ps5_output_path.open("r", encoding="utf-8") as file:
+                    existing_ps5_output = json.load(file)
+            except (OSError, json.JSONDecodeError) as exc:
+                raise RuntimeError(
+                    f"Cannot safely preserve PS5 Mocha registrations in "
+                    f"{ps5_output_path}: {exc}"
+                ) from exc
+            existing_ps5_entries = (
+                existing_ps5_output.get("DATA")
+                if isinstance(existing_ps5_output, dict)
+                else None
+            )
+            if not isinstance(existing_ps5_entries, dict):
+                raise RuntimeError(
+                    f"Cannot safely preserve PS5 Mocha registrations in "
+                    f"{ps5_output_path}: missing valid DATA object"
+                )
+            for file_id, metadata in existing_ps5_entries.items():
+                if isinstance(metadata, dict) and metadata.get("download_source") == "mocha":
+                    if file_id in ps5_entries and ps5_entries[file_id] != metadata:
+                        raise RuntimeError(
+                            f"PS5 Mocha file ID conflicts with a fetched catalog key: {file_id}"
+                        )
+                    ps5_entries[file_id] = metadata
 
         ps5_output = {"DATA": ps5_entries}
         with ps5_output_path.open("w", encoding="utf-8") as file:
