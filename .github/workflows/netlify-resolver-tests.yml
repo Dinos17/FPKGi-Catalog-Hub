@@ -1,0 +1,27 @@
+name: Netlify Mocha Resolver Tests
+
+on:
+  push:
+    branches:
+      - feat/netlify-mocha-resolver
+  pull_request:
+    branches:
+      - main
+    paths:
+      - "netlify/functions/**"
+      - "tests/netlify-mocha.test.mjs"
+      - "package.json"
+      - ".github/workflows/netlify-resolver-tests.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: npm test
