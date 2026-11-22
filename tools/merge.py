@@ -144,6 +144,7 @@ def fetch_source(url):
 ALLOWED_METADATA_TYPES = (str, int, float, bool, type(None))
 TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
 VERSION_RE = re.compile(r"^\d+(?:\.\d+)*$")
+MOCHA_FILE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 
 
 def validate_entry(pkg_url, metadata):
@@ -152,6 +153,9 @@ def validate_entry(pkg_url, metadata):
 
     if not isinstance(pkg_url, str) or not pkg_url.strip():
         errors.append("package URL is missing or is not a string")
+    elif isinstance(metadata, dict) and metadata.get("download_source") == "mocha":
+        if not MOCHA_FILE_ID_RE.fullmatch(pkg_url):
+            errors.append("Mocha file ID is invalid")
     elif not pkg_url.lower().startswith(("http://", "https://")):
         errors.append("package URL is not HTTP(S)")
 
