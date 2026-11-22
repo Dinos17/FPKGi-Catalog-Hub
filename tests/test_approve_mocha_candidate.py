@@ -135,10 +135,10 @@ class ApproveMochaCandidateTests(unittest.TestCase):
             self.apply_one()
 
     def test_candidate_name_newlines_are_sanitized(self):
-        self.candidate["name"] = "DEAD RISING\\n::set-output name=evil::true"
+        self.candidate["name"] = "DEAD RISING\n::set-output name=evil::true"
         _, name = self.apply_one()
-        self.assertNotIn("\\n", name)
-        self.assertNotIn("\\r", name)
+        self.assertNotIn("\n", name)
+        self.assertNotIn("\r", name)
 
     def test_existing_mocha_file_id_rejected(self):
         path = self.root / "ps4/dlc.json"
