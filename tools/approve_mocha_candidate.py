@@ -174,6 +174,9 @@ def apply_candidate(
         if file_id in existing:
             raise ValueError("This Mocha file ID is already present in a catalog")
 
+    # Replace the matched Archive.org/source key with the Mocha file ID.
+    # The catalog record remains a single DATA entry; no duplicate fallback row is kept.
+    del entries[matched_key]
     entries[file_id] = proposed
     path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     name = candidate.get("name")
