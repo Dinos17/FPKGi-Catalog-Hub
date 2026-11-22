@@ -117,6 +117,7 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         payload = json.loads(path.read_text(encoding="utf-8"))
         payload["DATA"]["https://example.invalid/dead-rising.pkg"]["download_source"] = "mocha"
         path.write_text(json.dumps(payload), encoding="utf-8")
+        self.row["catalog_metadata"]["download_source"] = "mocha"
         self.assertEqual(self.build()["candidate_count"], 0)
 
     def test_inconsistent_catalog_metadata_fails_closed(self):
