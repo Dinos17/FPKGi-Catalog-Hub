@@ -20,7 +20,7 @@ export function getAllowedStorageHosts(raw) {
 
 export function isAllowedPresignedUrl(value, allowedHosts) {
   if (typeof value !== "string" || value.length < 1 || value.length > 2048) return false;
-  if (/[\u0000-\u0020\u007f-\uffff\\]/.test(value)) return false;
+  if (/[\\u0000-\\u0020\\u007f-\\uffff\\\\]/.test(value)) return false;
   let parsed;
   try {
     parsed = new URL(value);
@@ -32,7 +32,7 @@ export function isAllowedPresignedUrl(value, allowedHosts) {
   return allowedHosts.has(parsed.hostname.toLowerCase());
 }
 
-async function readCatalog(url) {
+export async function readCatalog(url) {
   const response = await fetch(url, {
     method: "GET",
     redirect: "error",
@@ -40,9 +40,38 @@ async function readCatalog(url) {
     headers: { accept: "application/json" },
   });
   if (!response.ok) throw new Error("catalog_unavailable");
-  const text = await response.text();
-  if (new TextEncoder().encode(text).byteLength > MAX_CATALOG_BYTES) {
-    throw new Error("catalog_too_large");
+  if (!response.body) throw new Error("catalog_body_missing");
+
+  const reader = response.body.getReader();
+  const chunks = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > MAX_CATALOG_BYTES) {
+        await reader.cancel("catalog_too_large");
+        throw new Error("catalog_too_large");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+
+  let text;
+  try {
+    text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  } catch {
+    throw new Error("catalog_invalid_encoding");
   }
   const document = JSON.parse(text);
   if (!document || typeof document !== "object" || !document.DATA ||
