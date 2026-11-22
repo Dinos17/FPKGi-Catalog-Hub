@@ -970,6 +970,15 @@ jobs:
           branch="mocha-auto-replacements-${GITHUB_SHA}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            existing_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
+            if [ -z "$existing_pr" ]; then
+              echo "Automatic catalog branch exists without an open PR; refusing to overwrite it." >&2
+              exit 1
+            fi
+            gh pr merge "$existing_pr" --auto --squash --delete-branch
+            exit 0
+          fi
           git switch --create "$branch"
           git add ps4/games.json ps4/dlc.json ps5/ps5-games.json ps5/ps5-dlc.json
           if git diff --cached --quiet; then
