@@ -76,13 +76,14 @@ class ApproveMochaCandidateTests(unittest.TestCase):
     def apply_one(self):
         return apply_candidate(self.queue, self.summary, self.candidate_id, self.root, COMMIT)
 
-    def test_valid_candidate_adds_mocha_data_key_and_preserves_metadata(self):
+    def test_valid_candidate_replaces_original_catalog_key_and_preserves_metadata(self):
         path, name = self.apply_one()
         self.assertEqual(path, self.catalog_path)
         self.assertEqual(name, self.candidate["name"])
         payload = json.loads((self.root / path).read_text(encoding="utf-8"))
         self.assertEqual(payload["DATA"][FILE_ID], {**METADATA, "download_source": "mocha"})
-        self.assertEqual(payload["DATA"][self.matched_key], METADATA)
+        self.assertNotIn(self.matched_key, payload["DATA"])
+        self.assertEqual(len(payload["DATA"]), 1)
 
     def test_existing_keep_decision_blocks_candidate_approval(self):
         from datetime import datetime, timezone

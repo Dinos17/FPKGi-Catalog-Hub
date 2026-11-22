@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from tools.mocha_catalog_candidates import build_candidate_queue
+from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
 
 
 CATALOG_PATHS = {
@@ -87,7 +88,7 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         self.assertEqual(candidate["file_id"], self.scan["files"][0]["id"])
         self.assertEqual(candidate["proposed_entry"]["download_source"], "mocha")
         self.assertEqual(candidate["proposed_entry"]["title_id"], "CUSA04513")
-        self.assertTrue(candidate["approval_required"])
+        self.assertFalse(candidate["approval_required"])
         self.assertFalse(candidate["binary_integrity_verified"])
         self.assertFalse(result["catalog_write_performed"])
 
@@ -124,6 +125,26 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         path.write_text(json.dumps(payload), encoding="utf-8")
         self.row["catalog_metadata"]["download_source"] = "mocha"
         self.assertEqual(self.build()["candidate_count"], 0)
+
+    def test_multiple_mocha_uploads_for_same_catalog_record_are_not_auto_candidates(self):
+        second_item = dict(self.scan["files"][0])
+        second_item["id"] = "another-file-id"
+        second_item["name"] = "DEAD RISING - [EU] [EN] [1.00].pkg"
+        self.scan["files"].append(second_item)
+        second_row = dict(self.row)
+        second_row["file_id"] = second_item["id"]
+        second_row["name"] = second_item["name"]
+        second_row["source_metadata"] = dict(self.row["source_metadata"], region="EUR")
+        self.comparison["results"].append(second_row)
+        duplicate_ids = near_duplicate_file_ids(self.comparison["results"])
+        self.assertEqual(duplicate_ids, {self.row["file_id"], second_row["file_id"]})
+        result = self.build()
+        self.assertEqual(result["candidate_count"], 0)
+
+    def test_incomplete_matched_upload_identity_stays_in_human_review(self):
+        self.assertFalse(can_silently_clear_match(
+            "matched", False, False, identity_complete=False
+        ))
 
     def test_inconsistent_catalog_metadata_fails_closed(self):
         self.row["catalog_metadata"]["name"] = "TAMPERED"

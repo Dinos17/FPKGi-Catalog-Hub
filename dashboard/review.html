@@ -82,12 +82,11 @@ function candidateApprovalUrl(item){
 function renderCandidate(item){
  const metadata=item.proposed_entry||{};
  const fields=[["name","Catalog title"],["title_id","Title ID"],["region","Region"],["version","Version"],["release","Release"],["size","Size (bytes)"],["min_fw","Minimum firmware"]];
- const url=candidateApprovalUrl(item);
  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||metadata.name||"Unnamed Mocha upload")+'</div><span class="pill" style="color:var(--amber)">Source candidate</span></div>'+
  '<div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform)+'</dd><dt>Category</dt><dd>'+esc(item.category)+'</dd><dt>Matched catalog</dt><dd>'+esc(item.matched_catalog_key)+'</dd><dt>Mocha upload date</dt><dd>'+esc(item.created_at)+'</dd></dl></div>'+
- '<div class="compare"><section><h3>Proposed catalog metadata</h3>'+metadataHtml(metadata,fields)+'</section><section><h3>Source registration</h3><dl><dt>Download source</dt><dd>Mocha</dd><dt>Approval</dt><dd>Required — creates a catalog pull request</dd><dt>Binary integrity</dt><dd>Not verified</dd></dl></section></div>'+
- '<div class="reason">The scanner found a unique exact metadata match. Existing catalog metadata will be preserved; only the Mocha file ID and download-source designation will be added. Review and merge the resulting pull request before the resolver can authorize this source.</div>'+
- '<div class="actions">'+(url?'<a class="resolve" href="'+esc(url)+'" target="_blank" rel="noopener">Approve &amp; create catalog PR</a>':'<span class="muted">Approval unavailable: invalid candidate identity.</span>')+'</div></article>';
+ '<div class="compare"><section><h3>Proposed catalog metadata</h3>'+metadataHtml(metadata,fields)+'</section><section><h3>Source registration</h3><dl><dt>Download source</dt><dd>Mocha</dd><dt>Processing</dt><dd>Automatic — no human approval required</dd><dt>Binary integrity</dt><dd>Not verified</dd></dl></section></div>'+
+ '<div class="reason">The scanner found a unique exact metadata match. The automated workflow validates the current catalog and saved rejection/decision records, then registers the Mocha source without human review. Binary integrity is not verified.</div>'+
+ '<div class="actions"><span class="muted">Queued for automatic registration after safety checks.</span></div></article>';
 }
 async function loadCandidates(){
  const button=$("refreshCandidates");button.disabled=true;$("candidateStatus").textContent="Loading the latest source candidates…";
@@ -101,13 +100,13 @@ async function loadCandidates(){
   if(!candidateResponse.ok)throw Error("Catalog candidate report is unavailable (HTTP "+candidateResponse.status+"). The scanner may not have published a candidate report yet.");
   const summary=await summaryResponse.json(),queue=await candidateResponse.json();
   if(!isRecord(summary)||summary.schema_version!==1||summary.scanner!=="mocha"||summary.scan_complete!==true)throw Error("Latest scan is incomplete or invalid.");
-  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.candidates)||!Number.isSafeInteger(queue.candidate_count)||queue.candidate_count!==queue.candidates.length||queue.catalog_write_performed!==false||queue.automatic_approval!==false||queue.binary_integrity_verified!==false)throw Error("Catalog candidate report has an invalid format.");
+  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.candidates)||!Number.isSafeInteger(queue.candidate_count)||queue.candidate_count!==queue.candidates.length||queue.catalog_write_performed!==false||queue.automatic_approval!==true||queue.binary_integrity_verified!==false)throw Error("Catalog candidate report has an invalid format.");
   if(queue.scan_observed_at!==summary.scan_observed_at||queue.catalog_commit!==summary.catalog_commit)throw Error("Candidate report does not match the latest scan. Waiting for matching publication.");
   const targets={"PS4:games":"ps4/games.json","PS4:dlc":"ps4/dlc.json","PS5:games":"ps5/ps5-games.json","PS5:dlc":"ps5/ps5-dlc.json"};
   for(const item of queue.candidates){
-   if(!isRecord(item)||!/^[0-9a-f]{24}$/.test(item.candidate_id||"")||!targets[item.platform+":"+item.category]||item.catalog_path!==targets[item.platform+":"+item.category]||item.match_status!=="matched"||!Array.isArray(item.metadata_differences)||item.metadata_differences.length!==0||item.approval_required!==true||item.binary_integrity_verified!==false||!isRecord(item.proposed_entry)||item.proposed_entry.download_source!=="mocha")throw Error("A candidate failed validation; no approval links are available.");
+   if(!isRecord(item)||!/^[0-9a-f]{24}$/.test(item.candidate_id||"")||!targets[item.platform+":"+item.category]||item.catalog_path!==targets[item.platform+":"+item.category]||item.match_status!=="matched"||!Array.isArray(item.metadata_differences)||item.metadata_differences.length!==0||item.approval_required!==false||item.binary_integrity_verified!==false||!isRecord(item.proposed_entry)||item.proposed_entry.download_source!=="mocha")throw Error("A candidate failed validation; no approval links are available.");
   }
-  $("candidateStats").innerHTML='<div class="stats"><div class="stat">Source candidates<strong>'+queue.candidate_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
+  $("candidateStats").innerHTML='<div class="stats"><div class="stat">Automatic replacements<strong>'+queue.candidate_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
   $("candidateQueue").innerHTML=queue.candidates.length?queue.candidates.map(renderCandidate).join(""):'<div class="empty">No exact-match Mocha source candidates are waiting for approval.</div>';
   $("candidateStatus").textContent="Catalog candidate queue refreshed successfully.";
  }catch(error){
