@@ -3,7 +3,7 @@
   "read_only": true,
   "scan_complete": true,
   "snapshot_consistency": "not_guaranteed_by_api",
-  "catalog_commit": "b5745062add977f413bd87c0170fd673fb31c455",
+  "catalog_commit": "9b5fea7d531a79034237e3414a6ee93ad8fcf4b3",
   "catalog_write_performed": false,
   "mocha_files_deleted": false,
   "hotlink_creation_available": false,
