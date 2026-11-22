@@ -117,6 +117,9 @@ def build_candidate_queue(
         if not isinstance(catalog_metadata, dict) or entries[catalog_key] != catalog_metadata:
             raise ValueError("Comparison catalog metadata differs from the checked-out catalog")
 
+        if catalog_metadata.get("download_source") == "mocha":
+            continue
+
         proposed_entry = dict(catalog_metadata)
         proposed_entry["download_source"] = "mocha"
         candidate_id = hashlib.sha256(
