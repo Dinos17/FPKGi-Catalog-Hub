@@ -1,4 +1,5 @@
 const FILE_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
+const HOST_RE = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/;
 const CATALOG_URLS = [
   "https://dinos17.github.io/FPKGi-Catalog-Hub/ps4/games.json",
   "https://dinos17.github.io/FPKGi-Catalog-Hub/ps4/dlc.json",
@@ -7,6 +8,7 @@ const CATALOG_URLS = [
 ];
 const CATALOG_CACHE_MS = 60_000;
 const MAX_CATALOG_BYTES = 5 * 1024 * 1024;
+const MAX_UPSTREAM_BYTES = 16 * 1024;
 let catalogCache = { expiresAt: 0, ids: new Set() };
 
 export function isValidFileId(value) {
@@ -15,12 +17,23 @@ export function isValidFileId(value) {
 
 export function getAllowedStorageHosts(raw) {
   if (typeof raw !== "string" || !raw.trim()) return new Set();
-  return new Set(raw.split(",").map((host) => host.trim().toLowerCase()).filter(Boolean));
+  const hosts = new Set();
+  for (const entry of raw.split(",")) {
+    const host = entry.trim().toLowerCase();
+    if (HOST_RE.test(host)) hosts.add(host);
+  }
+  return hosts;
 }
 
 export function isAllowedPresignedUrl(value, allowedHosts) {
   if (typeof value !== "string" || value.length < 1 || value.length > 2048) return false;
-  if (/[\u0000-\u0020\u007f-\uffff\\]/.test(value)) return false;
+  if (/[\u0000-\u0020\u007f-\uffff\\]/.test(value) || value.includes("#")) return false;
+
+  // Reject ambiguous authority syntax before URL normalization (including empty user-info).
+  const authorityMatch = /^https:\/\/([^/?#]*)/i.exec(value);
+  if (!authorityMatch || !authorityMatch[1] || authorityMatch[1].includes("@") ||
+      authorityMatch[1].includes("%")) return false;
+
   let parsed;
   try {
     parsed = new URL(value);
@@ -30,6 +43,36 @@ export function isAllowedPresignedUrl(value, allowedHosts) {
   if (parsed.protocol !== "https:" || parsed.username || parsed.password || parsed.hash) return false;
   if (parsed.port && parsed.port !== "443") return false;
   return allowedHosts.has(parsed.hostname.toLowerCase());
+}
+
+async function readBoundedJson(response, maxBytes) {
+  if (!response.body) throw new Error("upstream_body_missing");
+  const reader = response.body.getReader();
+  const chunks = [];
+  let totalBytes = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      totalBytes += value.byteLength;
+      if (totalBytes > maxBytes) {
+        await reader.cancel("upstream_response_too_large");
+        throw new Error("upstream_response_too_large");
+      }
+      chunks.push(value);
+    }
+  } finally {
+    reader.releaseLock();
+  }
+
+  const bytes = new Uint8Array(totalBytes);
+  let offset = 0;
+  for (const chunk of chunks) {
+    bytes.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  const text = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+  return JSON.parse(text);
 }
 
 export async function readCatalog(url) {
@@ -118,10 +161,23 @@ export async function requestPresignedUrl(fileId, apiKey) {
     throw new Error("upstream_redirect_rejected");
   }
   if (!response.ok) throw new Error("upstream_request_failed");
-  const payload = await response.json();
-  if (!payload || typeof payload.url !== "string") throw new Error("upstream_response_invalid");
+
+  let payload;
+  try {
+    payload = await readBoundedJson(response, MAX_UPSTREAM_BYTES);
+  } catch {
+    throw new Error("upstream_response_invalid");
+  }
+  if (!payload || typeof payload !== "object" || Array.isArray(payload) ||
+      typeof payload.url !== "string" || payload.url.length < 1 || payload.url.length > 2048) {
+    throw new Error("upstream_response_invalid");
+  }
+  if (payload.expiresIn !== undefined &&
+      (!Number.isSafeInteger(payload.expiresIn) || payload.expiresIn <= 0)) {
+    throw new Error("upstream_response_invalid");
+  }
   return {
     url: payload.url,
-    expiresIn: Number.isInteger(payload.expiresIn) ? payload.expiresIn : null,
+    expiresIn: payload.expiresIn ?? null,
   };
 }
