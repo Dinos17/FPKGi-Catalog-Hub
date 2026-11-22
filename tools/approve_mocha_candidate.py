@@ -6,7 +6,8 @@ import argparse
 import hashlib
 import json
 import re
-from datetime import datetime
+import unicodedata
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -37,6 +38,8 @@ def apply_candidate(
     candidate_id: str,
     repo_root: Path,
     current_commit: str,
+    decision_report: dict[str, Any] | None = None,
+    rejection_report: dict[str, Any] | None = None,
 ) -> tuple[str, str]:
     """Apply one trusted candidate to a working tree after strict snapshot checks."""
     if not isinstance(candidate_id, str) or not CANDIDATE_ID_RE.fullmatch(candidate_id):
@@ -89,6 +92,52 @@ def apply_candidate(
     if parsed_created.tzinfo is None:
         raise ValueError("Candidate upload timestamp must include a timezone")
 
+    decisions = decision_report if decision_report is not None else {"schema_version": 1, "records": []}
+    rejections = rejection_report if rejection_report is not None else {"schema_version": 1, "records": []}
+    if decisions.get("schema_version") != 1 or not isinstance(decisions.get("records"), list):
+        raise ValueError("Saved Mocha review decisions are malformed")
+    decision_keys = set()
+    for record in decisions["records"]:
+        if (not isinstance(record, dict) or record.get("status") != "resolved"
+                or record.get("action") not in {"keep", "reject", "resolve"}
+                or not isinstance(record.get("decision_key"), str)
+                or not re.fullmatch(r"[0-9a-f]{64}", record["decision_key"])):
+            raise ValueError("Saved Mocha review decision record is malformed")
+        decision_keys.add(record["decision_key"])
+    decision_identity = "\\0".join((
+        platform,
+        category,
+        unicodedata.normalize("NFKC", candidate.get("name", "")).strip().casefold(),
+        parsed_created.astimezone(timezone.utc).isoformat(),
+    ))
+    if hashlib.sha256(decision_identity.encode("utf-8")).hexdigest() in decision_keys:
+        raise ValueError("This exact upload already has a recorded review decision")
+
+    if rejections.get("schema_version") != 1 or not isinstance(rejections.get("records"), list):
+        raise ValueError("Saved Mocha rejection report is malformed")
+    normalized_name = unicodedata.normalize("NFKC", candidate.get("name", "")).strip().casefold()
+    if normalized_name.endswith(".pkg"):
+        normalized_name = normalized_name[:-4]
+    for record in rejections["records"]:
+        if not isinstance(record, dict):
+            raise ValueError("Saved Mocha rejection record is malformed")
+        if record.get("status") != "manual_deletion_required":
+            continue
+        if record.get("platform") not in {"PS4", "PS5"} or record.get("catalog_category") not in {"games", "dlc"}:
+            raise ValueError("Saved Mocha rejection record has an invalid platform/category")
+        try:
+            rejected_at = datetime.fromisoformat(record["rejected_at"].replace("Z", "+00:00"))
+        except (KeyError, AttributeError, TypeError, ValueError) as exc:
+            raise ValueError("Saved Mocha rejection timestamp is invalid") from exc
+        if rejected_at.tzinfo is None or not isinstance(record.get("name"), str) or not record["name"].strip():
+            raise ValueError("Saved Mocha rejection identity is invalid")
+        rejected_name = unicodedata.normalize("NFKC", record["name"]).strip().casefold()
+        if rejected_name.endswith(".pkg"):
+            rejected_name = rejected_name[:-4]
+        if (record["platform"] == platform and record["catalog_category"] == category
+                and rejected_name == normalized_name and parsed_created <= rejected_at):
+            raise ValueError("This upload was previously rejected")
+
     path = repo_root / expected_path
     catalog = _read_json(path)
     entries = catalog.get("DATA")
@@ -138,10 +187,16 @@ def main() -> None:
     parser.add_argument("--summary", type=Path, required=True)
     parser.add_argument("--repo-root", type=Path, default=Path("."))
     parser.add_argument("--current-commit", required=True)
+    parser.add_argument("--decisions", type=Path, required=True)
+    parser.add_argument("--rejections", type=Path, required=True)
     args = parser.parse_args()
     queue = _read_json(args.candidate_report)
     summary = _read_json(args.summary)
-    path, name = apply_candidate(queue, summary, args.candidate_id, args.repo_root, args.current_commit)
+    decisions = _read_json(args.decisions)
+    rejections = _read_json(args.rejections)
+    path, name = apply_candidate(
+        queue, summary, args.candidate_id, args.repo_root, args.current_commit, decisions, rejections
+    )
     print(f"catalog_path={path}")
     print(f"candidate_name={name}")
 
