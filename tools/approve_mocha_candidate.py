@@ -82,6 +82,9 @@ def apply_candidate(
             or candidate.get("approval_required") is not True
             or candidate.get("binary_integrity_verified") is not False):
         raise ValueError("Only exact metadata matches requiring approval can be processed")
+    candidate_name = candidate.get("name")
+    if not isinstance(candidate_name, str) or not candidate_name.strip():
+        raise ValueError("Candidate filename is missing")
     created_at = candidate.get("created_at")
     if not isinstance(created_at, str):
         raise ValueError("Candidate upload timestamp is missing")
@@ -104,10 +107,10 @@ def apply_candidate(
                 or not re.fullmatch(r"[0-9a-f]{64}", record["decision_key"])):
             raise ValueError("Saved Mocha review decision record is malformed")
         decision_keys.add(record["decision_key"])
-    decision_identity = "\\0".join((
+    decision_identity = "\0".join((
         platform,
         category,
-        unicodedata.normalize("NFKC", candidate.get("name", "")).strip().casefold(),
+        unicodedata.normalize("NFKC", candidate_name).strip().casefold(),
         parsed_created.astimezone(timezone.utc).isoformat(),
     ))
     if hashlib.sha256(decision_identity.encode("utf-8")).hexdigest() in decision_keys:
@@ -115,7 +118,7 @@ def apply_candidate(
 
     if rejections.get("schema_version") != 1 or not isinstance(rejections.get("records"), list):
         raise ValueError("Saved Mocha rejection report is malformed")
-    normalized_name = unicodedata.normalize("NFKC", candidate.get("name", "")).strip().casefold()
+    normalized_name = unicodedata.normalize("NFKC", candidate_name).strip().casefold()
     if normalized_name.endswith(".pkg"):
         normalized_name = normalized_name[:-4]
     for record in rejections["records"]:
