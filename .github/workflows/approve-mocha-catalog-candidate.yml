@@ -43,7 +43,7 @@ jobs:
           if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
             git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$RUNNER_TEMP/mocha-candidate/decisions.json"
           else
-            printf '%s\\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-candidate/decisions.json"
           fi
 
           python - <<'PY' > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
