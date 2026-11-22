@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import handler from "../netlify/functions/presigned.mjs";
 import {
+  getAllowedFileIds,
   getAllowedStorageHosts,
   isAllowedPresignedUrl,
   isValidFileId,
@@ -40,7 +41,7 @@ test("accepts HTTPS URLs only on explicitly allowed hosts", () => {
   assert.equal(isAllowedPresignedUrl("https://storage.example/file#fragment", hosts), false);
   assert.equal(isAllowedPresignedUrl("https://%73torage.example/file", hosts), false);
   assert.equal(isAllowedPresignedUrl("https://storage.example:444/file", hosts), false);
-  assert.equal(isAllowedPresignedUrl("https://storage.example/file\\n", hosts), false);
+  assert.equal(isAllowedPresignedUrl("https://storage.example/file\n", hosts), false);
   assert.equal(isAllowedPresignedUrl("x".repeat(2049), hosts), false);
 });
 
@@ -75,6 +76,54 @@ test("cancels catalog response as soon as streamed bytes exceed 5 MiB", async (t
     /catalog_too_large/,
   );
   assert.equal(cancelled, true);
+});
+
+test("concurrent catalog lookups share one refresh and cache only complete results", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  let calls = 0;
+  globalThis.fetch = async () => {
+    calls += 1;
+    await Promise.resolve();
+    return Response.json({ DATA: {
+      "shared-file-id": { download_source: "mocha" },
+    } });
+  };
+
+  const [first, second] = await Promise.all([
+    getAllowedFileIds(),
+    getAllowedFileIds(),
+  ]);
+  assert.equal(calls, 4);
+  assert.equal(first.complete, true);
+  assert.equal(second.complete, true);
+  assert.equal(first.ids.has("shared-file-id"), true);
+  assert.equal(second.ids.has("shared-file-id"), true);
+});
+
+test("a failed catalog does not block an ID found in another healthy catalog", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith("/ps4/dlc.json")) {
+      return new Response("unavailable", { status: 503 });
+    }
+    return Response.json({ DATA: {
+      "healthy-file-id": { download_source: "mocha" },
+    } });
+  };
+
+  const result = await getAllowedFileIds();
+  assert.equal(result.complete, false);
+  assert.equal(result.ids.has("healthy-file-id"), true);
 });
 
 test("requests a bounded, valid presigned response without following redirects", async (t) => {
@@ -129,6 +178,33 @@ test("endpoint rejects non-GET methods and malformed IDs before touching secrets
 
   const idResponse = await handler(new Request("https://resolver.example/presigned?fileId=bad%2Fid"));
   assert.equal(idResponse.status, 400);
+});
+
+test("endpoint returns 503 when an ID cannot be verified because a catalog is unavailable", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const originalNetlify = globalThis.Netlify;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.Netlify = originalNetlify;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  globalThis.Netlify = { env: { get: (name) => ({
+    MOCHA_API_KEY: "test-key",
+    MOCHA_STORAGE_HOSTS: "storage.example",
+  })[name] } };
+  globalThis.fetch = async (url) => {
+    if (String(url).endsWith("/ps4/dlc.json")) {
+      return new Response("unavailable", { status: 503 });
+    }
+    return Response.json({ DATA: {} });
+  };
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=unknown-file-id",
+  ));
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "catalog_temporarily_unavailable" });
 });
 
 test("endpoint only mints a URL for a Mocha ID present in the public catalog", async (t) => {
