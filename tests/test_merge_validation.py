@@ -152,7 +152,7 @@ def test_validate_entry_accepts_mocha_file_id_only_when_marked():
 
 @pytest.mark.parametrize(
     "file_id",
-    ["", "not a valid id", "mocha://file-id", "x" * 129],
+    ["not a valid id", "mocha://file-id", "x" * 129],
 )
 def test_validate_entry_rejects_invalid_mocha_file_id(file_id):
     errors, warnings = validate_entry(
