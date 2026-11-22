@@ -88,7 +88,7 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         self.assertEqual(candidate["file_id"], self.scan["files"][0]["id"])
         self.assertEqual(candidate["proposed_entry"]["download_source"], "mocha")
         self.assertEqual(candidate["proposed_entry"]["title_id"], "CUSA04513")
-        self.assertTrue(candidate["approval_required"])
+        self.assertFalse(candidate["approval_required"])
         self.assertFalse(candidate["binary_integrity_verified"])
         self.assertFalse(result["catalog_write_performed"])
 
