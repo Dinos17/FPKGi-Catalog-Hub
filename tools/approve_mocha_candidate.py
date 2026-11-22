@@ -40,6 +40,7 @@ def apply_candidate(
     current_commit: str,
     decision_report: dict[str, Any] | None = None,
     rejection_report: dict[str, Any] | None = None,
+    automatic: bool = False,
 ) -> tuple[str, str]:
     """Apply one trusted candidate to a working tree after strict snapshot checks."""
     if not isinstance(candidate_id, str) or not CANDIDATE_ID_RE.fullmatch(candidate_id):
@@ -47,7 +48,7 @@ def apply_candidate(
     if queue.get("schema_version") != 1 or queue.get("scanner") != "mocha":
         raise ValueError("Unsupported candidate report")
     if (queue.get("catalog_write_performed") is not False
-            or queue.get("automatic_approval") is not False
+            or queue.get("automatic_approval") is not automatic
             or queue.get("binary_integrity_verified") is not False):
         raise ValueError("Candidate report safety flags are invalid")
     if summary.get("schema_version") != 1 or summary.get("scanner") != "mocha" or summary.get("scan_complete") is not True:
@@ -79,9 +80,9 @@ def apply_candidate(
     if not isinstance(file_id, str) or not FILE_ID_RE.fullmatch(file_id):
         raise ValueError("Candidate contains an invalid Mocha file ID")
     if (candidate.get("match_status") != "matched" or candidate.get("metadata_differences") != []
-            or candidate.get("approval_required") is not True
+            or candidate.get("approval_required") is not (not automatic)
             or candidate.get("binary_integrity_verified") is not False):
-        raise ValueError("Only exact metadata matches requiring approval can be processed")
+        raise ValueError("Candidate approval mode or metadata safety flags are invalid")
     candidate_name = candidate.get("name")
     if not isinstance(candidate_name, str) or not candidate_name.strip():
         raise ValueError("Candidate filename is missing")
