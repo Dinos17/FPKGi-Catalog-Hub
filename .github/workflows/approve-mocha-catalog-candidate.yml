@@ -39,6 +39,12 @@ jobs:
           mkdir -p "$RUNNER_TEMP/mocha-candidate"
           git show "FETCH_HEAD:reports/mocha-catalog-candidates.json" > "$RUNNER_TEMP/mocha-candidate/candidates.json"
           git show "FETCH_HEAD:reports/mocha-scan-summary.json" > "$RUNNER_TEMP/mocha-candidate/summary.json"
+          git show "FETCH_HEAD:reports/akirabox-rejections.json" > "$RUNNER_TEMP/mocha-candidate/rejections.json"
+          if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
+            git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+          else
+            printf '%s\\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+          fi
 
           python - <<'PY' > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
           import json, os, re
@@ -61,6 +67,8 @@ jobs:
             --candidate-id "$(sed -n 's/^candidate_id=//p' "$GITHUB_OUTPUT" | tail -n 1)" \
             --candidate-report "$RUNNER_TEMP/mocha-candidate/candidates.json" \
             --summary "$RUNNER_TEMP/mocha-candidate/summary.json" \
+            --decisions "$RUNNER_TEMP/mocha-candidate/decisions.json" \
+            --rejections "$RUNNER_TEMP/mocha-candidate/rejections.json" \
             --repo-root . \
             --current-commit "$(git rev-parse HEAD)" > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
           while IFS='=' read -r key value; do
