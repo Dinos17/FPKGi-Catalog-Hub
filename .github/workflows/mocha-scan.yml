@@ -793,7 +793,7 @@ jobs:
               if len(json.dumps(candidate_queue, ensure_ascii=False).encode('utf-8')) > 5000000:
                   raise ValueError('candidate queue exceeds the 5 MB publication limit')
               Path('reports/mocha-catalog-candidates.json').write_text(
-                  json.dumps(candidate_queue, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8'
+                  json.dumps(candidate_queue, indent=2, ensure_ascii=False) + chr(10), encoding='utf-8'
               )
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
               print('Catalog candidate queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
