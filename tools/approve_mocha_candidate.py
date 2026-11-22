@@ -39,7 +39,7 @@ def apply_candidate(
     current_commit: str,
 ) -> tuple[str, str]:
     """Apply one trusted candidate to a working tree after strict snapshot checks."""
-    if not CANDIDATE_ID_RE.fullmatch(candidate_id):
+    if not isinstance(candidate_id, str) or not CANDIDATE_ID_RE.fullmatch(candidate_id):
         raise ValueError("Invalid candidate ID")
     if queue.get("schema_version") != 1 or queue.get("scanner") != "mocha":
         raise ValueError("Unsupported candidate report")
