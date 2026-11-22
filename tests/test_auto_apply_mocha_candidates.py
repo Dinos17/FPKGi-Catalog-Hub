@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import hashlib
 import json
 import tempfile
 import unittest
@@ -116,6 +115,13 @@ class AutomaticMochaRegistrationTests(unittest.TestCase):
                 self.queue, self.summary, self.scan, self.comparison, self.root, "b" * 40,
                 self.decisions, self.rejections
             )
+
+    def test_forged_published_candidate_is_rejected_against_raw_scan(self):
+        self.candidate["file_id"] = "attacker-controlled-id"
+        with self.assertRaises(ValueError):
+            self.apply_batch()
+        payload = json.loads((self.root / self.catalog_path).read_text(encoding="utf-8"))
+        self.assertNotIn("attacker-controlled-id", payload["DATA"])
 
     def test_binary_integrity_is_never_claimed(self):
         result = self.apply_batch()
