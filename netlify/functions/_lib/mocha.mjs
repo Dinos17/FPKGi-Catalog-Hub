@@ -10,6 +10,7 @@ const CATALOG_CACHE_MS = 60_000;
 const MAX_CATALOG_BYTES = 5 * 1024 * 1024;
 const MAX_UPSTREAM_BYTES = 16 * 1024;
 let catalogCache = { expiresAt: 0, ids: new Set() };
+let catalogRefresh = null;
 
 export function isValidFileId(value) {
   return typeof value === "string" && FILE_ID_RE.test(value);
@@ -29,7 +30,6 @@ export function isAllowedPresignedUrl(value, allowedHosts) {
   if (typeof value !== "string" || value.length < 1 || value.length > 2048) return false;
   if (/[\u0000-\u0020\u007f-\uffff\\]/.test(value) || value.includes("#")) return false;
 
-  // Reject ambiguous authority syntax before URL normalization (including empty user-info).
   const authorityMatch = /^https:\/\/([^/?#]*)/i.exec(value);
   if (!authorityMatch || !authorityMatch[1] || authorityMatch[1].includes("@") ||
       authorityMatch[1].includes("%")) return false;
@@ -76,12 +76,17 @@ async function readBoundedJson(response, maxBytes) {
 }
 
 export async function readCatalog(url) {
-  const response = await fetch(url, {
-    method: "GET",
-    redirect: "error",
-    signal: AbortSignal.timeout(10_000),
-    headers: { accept: "application/json" },
-  });
+  let response;
+  try {
+    response = await fetch(url, {
+      method: "GET",
+      redirect: "error",
+      signal: AbortSignal.timeout(10_000),
+      headers: { accept: "application/json" },
+    });
+  } catch {
+    throw new Error("catalog_fetch_failed");
+  }
   if (!response.ok) throw new Error("catalog_unavailable");
   if (!response.body) throw new Error("catalog_body_missing");
 
@@ -116,7 +121,12 @@ export async function readCatalog(url) {
   } catch {
     throw new Error("catalog_invalid_encoding");
   }
-  const document = JSON.parse(text);
+  let document;
+  try {
+    document = JSON.parse(text);
+  } catch {
+    throw new Error("catalog_invalid_json");
+  }
   if (!document || typeof document !== "object" || !document.DATA ||
       typeof document.DATA !== "object" || Array.isArray(document.DATA)) {
     throw new Error("catalog_invalid");
@@ -124,39 +134,64 @@ export async function readCatalog(url) {
   return document.DATA;
 }
 
-export async function getAllowedFileIds(now = Date.now()) {
-  if (catalogCache.expiresAt > now) return catalogCache.ids;
-
+async function refreshAllowedFileIds() {
+  const results = await Promise.allSettled(CATALOG_URLS.map((url) => readCatalog(url)));
   const ids = new Set();
-  for (const url of CATALOG_URLS) {
-    const data = await readCatalog(url);
-    for (const [key, metadata] of Object.entries(data)) {
+  let complete = true;
+
+  for (const result of results) {
+    if (result.status !== "fulfilled") {
+      complete = false;
+      continue;
+    }
+    for (const [key, metadata] of Object.entries(result.value)) {
       if (metadata && typeof metadata === "object" &&
           metadata.download_source === "mocha" && isValidFileId(key)) {
         ids.add(key);
       }
     }
   }
-  catalogCache = { expiresAt: now + CATALOG_CACHE_MS, ids };
-  return ids;
+
+  if (complete) {
+    catalogCache = { expiresAt: Date.now() + CATALOG_CACHE_MS, ids };
+  }
+  return { ids, complete };
+}
+
+export async function getAllowedFileIds(now = Date.now()) {
+  if (catalogCache.expiresAt > now) {
+    return { ids: catalogCache.ids, complete: true };
+  }
+  if (!catalogRefresh) {
+    catalogRefresh = refreshAllowedFileIds().finally(() => {
+      catalogRefresh = null;
+    });
+  }
+  return catalogRefresh;
 }
 
 export function resetCatalogCacheForTests() {
   catalogCache = { expiresAt: 0, ids: new Set() };
+  catalogRefresh = null;
 }
 
 export async function requestPresignedUrl(fileId, apiKey) {
-  const response = await fetch("https://api.mocha.my/api/files/presigned", {
-    method: "POST",
-    redirect: "manual",
-    signal: AbortSignal.timeout(10_000),
-    headers: {
-      authorization: `Bearer ${apiKey}`,
-      "content-type": "application/json",
-      accept: "application/json",
-    },
-    body: JSON.stringify({ fileId, disposition: "attachment" }),
-  });
+  let response;
+  try {
+    response = await fetch("https://api.mocha.my/api/files/presigned", {
+      method: "POST",
+      redirect: "manual",
+      signal: AbortSignal.timeout(10_000),
+      headers: {
+        authorization: `Bearer ${apiKey}`,
+        "content-type": "application/json",
+        accept: "application/json",
+      },
+      body: JSON.stringify({ fileId, disposition: "attachment" }),
+    });
+  } catch {
+    throw new Error("upstream_network_error");
+  }
   if (response.status >= 300 && response.status < 400) {
     throw new Error("upstream_redirect_rejected");
   }
