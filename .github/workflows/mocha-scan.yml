@@ -828,7 +828,7 @@ jobs:
                   if decision_key is not None and decision_key in resolved_decisions:
                       excluded_candidate_ids.add(file_id)
               candidate_queue = build_candidate_queue(
-                  raw_scan, raw_comparison, Path('.'), excluded_candidate_ids
+                  raw_scan, raw_comparison, Path(os.environ['SOURCE_ROOT']), excluded_candidate_ids
               )
               if len(json.dumps(candidate_queue, ensure_ascii=False).encode('utf-8')) > 5000000:
                   raise ValueError('candidate queue exceeds the 5 MB publication limit')
