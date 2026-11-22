@@ -935,6 +935,7 @@ jobs:
           SUMMARY: ${{ runner.temp }}/mocha-auto/summary.json
           DECISIONS: ${{ runner.temp }}/mocha-auto/decisions.json
           REJECTIONS: ${{ runner.temp }}/mocha-auto/rejections.json
+          RESULT: ${{ runner.temp }}/mocha-auto/result.json
         run: |
           set -euo pipefail
           python tools/auto_apply_mocha_candidates.py \
@@ -944,11 +945,9 @@ jobs:
             --rejections "$REJECTIONS" \
             --repo-root . \
             --current-commit "$GITHUB_SHA" > "$RUNNER_TEMP/mocha-auto/result.json"
-          count="$(python -c 'import json,os; print(json.load(open(os.environ["RESULT"]))["applied_count"])' RESULT="$RUNNER_TEMP/mocha-auto/result.json")"
+          count="$(python -c 'import json,os; print(json.load(open(os.environ["RESULT"]))["applied_count"])')"
           echo "applied_count=$count" >> "$GITHUB_OUTPUT"
           cat "$RUNNER_TEMP/mocha-auto/result.json"
-        env:
-          RESULT: ${{ runner.temp }}/mocha-auto/result.json
 
       - name: Stop when no safe replacements are available
         if: steps.apply.outputs.applied_count == '0'
