@@ -45,7 +45,7 @@ jobs:
           from pathlib import Path
           event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
           issue = event.get("issue", {})
-          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\\s*(\\{.*?\\})\\s*-->", issue.get("body") or "", re.S)
+          match = re.search(r"<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\s*(\{.*?\})\s*-->", issue.get("body") or "", re.S)
           if not match:
               raise SystemExit("Missing structured candidate approval payload.")
           payload = json.loads(match.group(1))
@@ -55,7 +55,7 @@ jobs:
           if not isinstance(candidate_id, str) or not re.fullmatch(r"[0-9a-f]{24}", candidate_id):
               raise SystemExit("Invalid candidate ID.")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
-              output.write(f"candidate_id={candidate_id}\\n")
+              output.write(f"candidate_id={candidate_id}\n")
           PY
           python tools/approve_mocha_candidate.py \
             --candidate-id "$(sed -n 's/^candidate_id=//p' "$GITHUB_OUTPUT" | tail -n 1)" \
@@ -67,7 +67,7 @@ jobs:
             case "$key" in
               catalog_path) echo "catalog_path=$value" >> "$GITHUB_OUTPUT" ;;
               candidate_name)
-                value="$(printf '%s' "$value" | tr '\\r\\n\\t' '   ' | tr -cd '[:print:]' | cut -c1-120)"
+                value="$(printf '%s' "$value" | tr -cd '[:print:]' | cut -c1-120)"
                 [ -n "$value" ] || value="Mocha upload"
                 echo "candidate_name=$value" >> "$GITHUB_OUTPUT"
                 ;;
@@ -104,9 +104,9 @@ jobs:
           cat > "$RUNNER_TEMP/mocha-catalog-pr.md" <<EOF
           ## Proposed catalog source
 
-          - Candidate: `$CANDIDATE_ID`
-          - Catalog: `$CATALOG_PATH`
-          - Change: add the approved Mocha file ID as a new DATA key and set `download_source: mocha`.
+          - Candidate: $CANDIDATE_ID
+          - Catalog: $CATALOG_PATH
+          - Change: add the approved Mocha file ID as a new DATA key and set download_source: mocha.
           - Existing catalog metadata is preserved exactly.
 
           ## Verification limits
