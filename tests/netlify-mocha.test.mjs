@@ -1,11 +1,13 @@
 import test from "node:test";
 import assert from "node:assert/strict";
+import handler from "../netlify/functions/presigned.mjs";
 import {
   getAllowedStorageHosts,
   isAllowedPresignedUrl,
   isValidFileId,
   readCatalog,
   requestPresignedUrl,
+  resetCatalogCacheForTests,
 } from "../netlify/functions/_lib/mocha.mjs";
 
 test("accepts only bounded opaque Mocha file IDs", () => {
@@ -117,4 +119,74 @@ test("rejects redirects, oversized bodies, malformed payloads, and invalid expir
 
   globalThis.fetch = async () => new Response("{");
   await assert.rejects(requestPresignedUrl("file-id", "key"), /upstream_response_invalid/);
+});
+
+test("endpoint rejects non-GET methods and malformed IDs before touching secrets", async () => {
+  const methodResponse = await handler(new Request("https://resolver.example/presigned", {
+    method: "POST",
+  }));
+  assert.equal(methodResponse.status, 405);
+
+  const idResponse = await handler(new Request("https://resolver.example/presigned?fileId=bad%2Fid"));
+  assert.equal(idResponse.status, 400);
+});
+
+test("endpoint only mints a URL for a Mocha ID present in the public catalog", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const originalNetlify = globalThis.Netlify;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.Netlify = originalNetlify;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  globalThis.Netlify = { env: { get: (name) => ({
+    MOCHA_API_KEY: "test-key",
+    MOCHA_STORAGE_HOSTS: "storage.example",
+  })[name] } };
+  globalThis.fetch = async () => Response.json({ DATA: {
+    "approved-file-id": { download_source: "mocha" },
+  } });
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=not-in-catalog",
+  ));
+  assert.equal(response.status, 404);
+  assert.deepEqual(await response.json(), { error: "file_not_found" });
+});
+
+test("endpoint returns only validated, non-cacheable presigned URLs", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const originalNetlify = globalThis.Netlify;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.Netlify = originalNetlify;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  globalThis.Netlify = { env: { get: (name) => ({
+    MOCHA_API_KEY: "test-key",
+    MOCHA_STORAGE_HOSTS: "storage.example",
+  })[name] } };
+  globalThis.fetch = async (url) => {
+    if (String(url).includes("api.mocha.my")) {
+      return Response.json({
+        url: "https://storage.example/file?signature=temporary",
+        expiresIn: 86400,
+      });
+    }
+    return Response.json({ DATA: {
+      "approved-file-id": { download_source: "mocha" },
+    } });
+  };
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=approved-file-id",
+  ));
+  assert.equal(response.status, 200);
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.deepEqual(await response.json(), {
+    url: "https://storage.example/file?signature=temporary",
+    expiresIn: 86400,
+  });
 });
