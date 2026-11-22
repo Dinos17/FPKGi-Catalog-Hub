@@ -779,6 +779,25 @@ jobs:
               print('Human-review queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
               review_queue = None
 
+          # Generate separate source-registration candidates before exact matches
+          # disappear from the human-review queue. This remains read-only.
+          try:
+              from tools.mocha_catalog_candidates import build_candidate_queue
+              raw_dir = Path(os.environ['RAW_REPORT_DIR'])
+              raw_scan = json.loads((raw_dir / 'mocha-scan-report.json').read_text(encoding='utf-8'))
+              raw_comparison = json.loads((raw_dir / 'mocha-comparison-report.json').read_text(encoding='utf-8'))
+              if (raw_scan.get('scan_observed_at') != summary['scan_observed_at']
+                      or raw_comparison.get('catalog_commit') != summary['catalog_commit']):
+                  raise ValueError('candidate inputs do not match the published scan/catalog snapshot')
+              candidate_queue = build_candidate_queue(raw_scan, raw_comparison, Path('.'))
+              if len(json.dumps(candidate_queue, ensure_ascii=False).encode('utf-8')) > 5000000:
+                  raise ValueError('candidate queue exceeds the 5 MB publication limit')
+              Path('reports/mocha-catalog-candidates.json').write_text(
+                  json.dumps(candidate_queue, indent=2, ensure_ascii=False) + '\\n', encoding='utf-8'
+              )
+          except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
+              print('Catalog candidate queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
+
           print('Inventory publication: ' + ('published' if inventory is not None else 'unavailable; old inventory will be hidden by dashboard timestamp validation'))
           print('Human-review queue: ' + ('published' if review_queue is not None else 'unavailable; dashboard must not treat it as empty'))
           PY
@@ -804,6 +823,7 @@ jobs:
             done
             if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
             if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
+            if [ -f reports/mocha-catalog-candidates.json ]; then git add reports/mocha-catalog-candidates.json; fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
               exit 0
