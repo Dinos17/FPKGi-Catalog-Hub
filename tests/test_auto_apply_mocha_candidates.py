@@ -110,6 +110,24 @@ class AutomaticMochaRegistrationTests(unittest.TestCase):
         payload = json.loads((self.root / self.catalog_path).read_text(encoding="utf-8"))
         self.assertNotIn(FILE_ID, payload["DATA"])
 
+    def test_previously_rejected_upload_is_not_auto_registered(self):
+        self.rejections = {
+            "schema_version": 1,
+            "records": [{
+                "status": "manual_deletion_required",
+                "platform": "PS4",
+                "catalog_category": "games",
+                "name": self.scan["files"][0]["name"],
+                "rejected_at": "2026-11-23T00:00:00Z",
+            }],
+        }
+        self.queue = build_candidate_queue(
+            self.scan, self.comparison, self.root, {FILE_ID}
+        )
+        self.assertEqual(self.apply_batch(), [])
+        payload = json.loads((self.root / self.catalog_path).read_text(encoding="utf-8"))
+        self.assertNotIn(FILE_ID, payload["DATA"])
+
     def test_stale_scan_fails_closed(self):
         with self.assertRaises(ValueError):
             apply_automatic_candidates(
