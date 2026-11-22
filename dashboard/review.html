@@ -82,12 +82,11 @@ function candidateApprovalUrl(item){
 function renderCandidate(item){
  const metadata=item.proposed_entry||{};
  const fields=[["name","Catalog title"],["title_id","Title ID"],["region","Region"],["version","Version"],["release","Release"],["size","Size (bytes)"],["min_fw","Minimum firmware"]];
- const url=candidateApprovalUrl(item);
  return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||metadata.name||"Unnamed Mocha upload")+'</div><span class="pill" style="color:var(--amber)">Source candidate</span></div>'+
  '<div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform)+'</dd><dt>Category</dt><dd>'+esc(item.category)+'</dd><dt>Matched catalog</dt><dd>'+esc(item.matched_catalog_key)+'</dd><dt>Mocha upload date</dt><dd>'+esc(item.created_at)+'</dd></dl></div>'+
  '<div class="compare"><section><h3>Proposed catalog metadata</h3>'+metadataHtml(metadata,fields)+'</section><section><h3>Source registration</h3><dl><dt>Download source</dt><dd>Mocha</dd><dt>Approval</dt><dd>Required — creates a catalog pull request</dd><dt>Binary integrity</dt><dd>Not verified</dd></dl></section></div>'+
- '<div class="reason">The scanner found a unique exact metadata match. Existing catalog metadata will be preserved; only the Mocha file ID and download-source designation will be added. Review and merge the resulting pull request before the resolver can authorize this source.</div>'+
- '<div class="actions">'+(url?'<a class="resolve" href="'+esc(url)+'" target="_blank" rel="noopener">Approve &amp; create catalog PR</a>':'<span class="muted">Approval unavailable: invalid candidate identity.</span>')+'</div></article>';
+ '<div class="reason">The scanner found a unique exact metadata match. The automated workflow validates the current catalog and saved rejection/decision records, then registers the Mocha source without human review. Binary integrity is not verified.</div>'+
+ '<div class="actions"><span class="muted">Queued for automatic registration after safety checks.</span></div></article>';
 }
 async function loadCandidates(){
  const button=$("refreshCandidates");button.disabled=true;$("candidateStatus").textContent="Loading the latest source candidates…";
