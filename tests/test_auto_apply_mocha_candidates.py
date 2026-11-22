@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from tools.auto_apply_mocha_candidates import apply_automatic_candidates
+from tools.mocha_catalog_candidates import build_candidate_queue
 
 COMMIT = "a" * 40
 FILE_ID = "d5ac3913-802b-4d68-9803-8f5c07c7640e"
@@ -33,36 +34,45 @@ class AutomaticMochaRegistrationTests(unittest.TestCase):
             target.write_text(json.dumps(data), encoding="utf-8")
         self.catalog_path = "ps4/games.json"
         self.catalog_key = "https://example.invalid/dead-rising.pkg"
-        candidate_id = hashlib.sha256(
-            (FILE_ID + "\0" + COMMIT + "\0" + self.catalog_path + "\0" + self.catalog_key).encode()
-        ).hexdigest()[:24]
-        self.candidate = {
-            "candidate_id": candidate_id,
-            "file_id": FILE_ID,
-            "name": "DEAD RISING - [US] [EN] [1.00].pkg",
-            "created_at": "2026-11-22T09:00:00Z",
-            "platform": "PS4",
-            "category": "games",
-            "catalog_path": self.catalog_path,
-            "matched_catalog_key": self.catalog_key,
-            "catalog_metadata": dict(METADATA),
-            "proposed_entry": {**METADATA, "download_source": "mocha"},
-            "match_status": "matched",
-            "metadata_differences": [],
-            "binary_integrity_verified": False,
-            "approval_required": True,
-        }
-        self.queue = {
-            "schema_version": 1,
+        self.scan = {
             "scanner": "mocha",
+            "scan_complete": True,
             "scan_observed_at": "2026-11-22T10:00:00Z",
-            "catalog_commit": COMMIT,
-            "candidate_count": 1,
-            "candidates": [self.candidate],
-            "catalog_write_performed": False,
-            "automatic_approval": False,
-            "binary_integrity_verified": False,
+            "files": [{
+                "id": FILE_ID,
+                "name": "DEAD RISING - [US] [EN] [1.00].pkg",
+                "extension": "pkg",
+                "platform": "PS4",
+                "catalog_category": "games",
+                "created_at": "2026-11-22T09:00:00Z",
+            }],
         }
+        self.comparison = {
+            "comparison": "mocha_catalog",
+            "scan_complete": True,
+            "catalog_commit": COMMIT,
+            "results": [{
+                "status": "matched",
+                "file_id": FILE_ID,
+                "name": self.scan["files"][0]["name"],
+                "platform": "PS4",
+                "category": "games",
+                "catalog_url": self.catalog_key,
+                "catalog_metadata": dict(METADATA),
+                "metadata_differences": [],
+                "unavailable_metadata": [],
+                "source_metadata": {
+                    "title": "DEAD RISING",
+                    "title_id": "CUSA04513",
+                    "region": "USA",
+                    "version": "01.00",
+                    "size_bytes": METADATA["size"],
+                },
+            }],
+            "possible_duplicates": [],
+        }
+        self.queue = build_candidate_queue(self.scan, self.comparison, self.root)
+        self.candidate = self.queue["candidates"][0]
         self.summary = {
             "schema_version": 1,
             "scanner": "mocha",
@@ -78,7 +88,8 @@ class AutomaticMochaRegistrationTests(unittest.TestCase):
 
     def apply_batch(self):
         return apply_automatic_candidates(
-            self.queue, self.summary, self.root, COMMIT, self.decisions, self.rejections
+            self.queue, self.summary, self.scan, self.comparison, self.root, COMMIT,
+            self.decisions, self.rejections
         )
 
     def test_exact_unique_candidate_is_applied_without_human_action(self):
@@ -102,7 +113,8 @@ class AutomaticMochaRegistrationTests(unittest.TestCase):
     def test_stale_scan_fails_closed(self):
         with self.assertRaises(ValueError):
             apply_automatic_candidates(
-                self.queue, self.summary, self.root, "b" * 40, self.decisions, self.rejections
+                self.queue, self.summary, self.scan, self.comparison, self.root, "b" * 40,
+                self.decisions, self.rejections
             )
 
     def test_binary_integrity_is_never_claimed(self):
