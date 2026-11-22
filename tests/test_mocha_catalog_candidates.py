@@ -112,6 +112,13 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         path.write_text(json.dumps(payload), encoding="utf-8")
         self.assertEqual(self.build()["candidate_count"], 0)
 
+    def test_existing_mocha_catalog_source_is_not_candidate(self):
+        path = self.root / "ps4/games.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["DATA"]["https://example.invalid/dead-rising.pkg"]["download_source"] = "mocha"
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        self.assertEqual(self.build()["candidate_count"], 0)
+
     def test_inconsistent_catalog_metadata_fails_closed(self):
         self.row["catalog_metadata"]["name"] = "TAMPERED"
         with self.assertRaises(ValueError):
