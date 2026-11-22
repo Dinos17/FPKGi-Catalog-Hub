@@ -6,7 +6,7 @@ import unittest
 from pathlib import Path
 
 from tools.mocha_catalog_candidates import build_candidate_queue
-from tools.mocha_review_queue import near_duplicate_file_ids
+from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
 
 
 CATALOG_PATHS = {
@@ -140,6 +140,11 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
         self.assertEqual(duplicate_ids, {self.row["file_id"], second_row["file_id"]})
         result = self.build()
         self.assertEqual(result["candidate_count"], 0)
+
+    def test_incomplete_matched_upload_identity_stays_in_human_review(self):
+        self.assertFalse(can_silently_clear_match(
+            "matched", False, False, identity_complete=False
+        ))
 
     def test_inconsistent_catalog_metadata_fails_closed(self):
         self.row["catalog_metadata"]["name"] = "TAMPERED"
