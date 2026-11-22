@@ -82,7 +82,8 @@ class ApproveMochaCandidateTests(unittest.TestCase):
         self.assertEqual(name, self.candidate["name"])
         payload = json.loads((self.root / path).read_text(encoding="utf-8"))
         self.assertEqual(payload["DATA"][FILE_ID], {**METADATA, "download_source": "mocha"})
-        self.assertEqual(payload["DATA"][self.matched_key], METADATA)
+        self.assertNotIn(self.matched_key, payload["DATA"])
+        self.assertEqual(len(payload["DATA"]), 1)
 
     def test_existing_keep_decision_blocks_candidate_approval(self):
         from datetime import datetime, timezone
