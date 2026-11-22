@@ -781,6 +781,10 @@ jobs:
               print('Human-review queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
               review_queue = None
 
+          # Remove the previous snapshot first. A failed generation must never
+          # leave a stale approval queue available on the reports branch.
+          Path('reports/mocha-catalog-candidates.json').unlink(missing_ok=True)
+
           # Generate separate source-registration candidates before exact matches
           # disappear from the human-review queue. This remains read-only.
           try:
@@ -859,7 +863,7 @@ jobs:
             done
             if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
             if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
-            if [ -f reports/mocha-catalog-candidates.json ]; then git add reports/mocha-catalog-candidates.json; fi
+            git add -A reports/mocha-catalog-candidates.json
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
               exit 0
