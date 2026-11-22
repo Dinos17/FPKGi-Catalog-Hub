@@ -6,6 +6,20 @@ import {
   requestPresignedUrl,
 } from "./_lib/mocha.mjs";
 
+const SAFE_ERROR_CODES = new Set([
+  "catalog_fetch_failed",
+  "catalog_unavailable",
+  "catalog_body_missing",
+  "catalog_too_large",
+  "catalog_invalid_encoding",
+  "catalog_invalid_json",
+  "catalog_invalid",
+  "upstream_network_error",
+  "upstream_redirect_rejected",
+  "upstream_request_failed",
+  "upstream_response_invalid",
+]);
+
 export default async (request) => {
   if (request.method !== "GET") {
     return Response.json({ error: "method_not_allowed" }, {
@@ -26,8 +40,11 @@ export default async (request) => {
   }
 
   try {
-    const allowedIds = await getAllowedFileIds();
+    const { ids: allowedIds, complete } = await getAllowedFileIds();
     if (!allowedIds.has(fileId)) {
+      if (!complete) {
+        return Response.json({ error: "catalog_temporarily_unavailable" }, { status: 503 });
+      }
       return Response.json({ error: "file_not_found" }, { status: 404 });
     }
 
@@ -43,7 +60,11 @@ export default async (request) => {
       status: 200,
       headers: { "cache-control": "no-store" },
     });
-  } catch {
+  } catch (error) {
+    const code = error instanceof Error && SAFE_ERROR_CODES.has(error.message)
+      ? error.message
+      : "unexpected_error";
+    console.error("mocha_resolver_failure", { code });
     return Response.json({ error: "resolver_upstream_unavailable" }, { status: 502 });
   }
 };
