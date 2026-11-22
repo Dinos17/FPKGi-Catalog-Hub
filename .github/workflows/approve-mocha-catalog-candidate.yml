@@ -134,9 +134,14 @@ jobs:
 
           entries[file_id] = proposed
           catalog_path.write_text(json.dumps(catalog, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+          candidate_name = candidate.get("name", "Mocha upload")
+          if not isinstance(candidate_name, str):
+              candidate_name = "Mocha upload"
+          candidate_name = re.sub(r"[\\r\\n\\t]+", " ", candidate_name)
+          candidate_name = "".join(ch for ch in candidate_name if ch.isprintable()).strip()[:120] or "Mocha upload"
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"candidate_id={candidate_id}\\n")
-              output.write(f"candidate_name={candidate.get('name', 'Mocha upload')}\\n")
+              output.write(f"candidate_name={candidate_name}\\n")
               output.write(f"catalog_path={expected_path}\\n")
           PY
 
@@ -167,5 +172,19 @@ jobs:
           git add "$CATALOG_PATH"
           git commit -m "Add Mocha source for $CANDIDATE_NAME"
           git push origin "$branch"
-          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add Mocha source: $CANDIDATE_NAME" --body "## Proposed catalog source\n\n- Candidate: `$CANDIDATE_ID`\n- Catalog: `$CATALOG_PATH`\n- Change: add the approved Mocha file ID as a new DATA key and set `download_source: mocha`.\n- Existing catalog metadata is preserved exactly.\n\n## Verification limits\n\n- Scanner/catalog metadata matched exactly; this is not binary integrity verification.\n- No package binary was downloaded or hashed by this workflow.\n- Review this catalog change and merge manually. The Netlify resolver will only authorize the file ID after the catalog is published.")"
+          cat > "$RUNNER_TEMP/mocha-catalog-pr.md" <<EOF
+          ## Proposed catalog source
+
+          - Candidate: `$CANDIDATE_ID`
+          - Catalog: `$CATALOG_PATH`
+          - Change: add the approved Mocha file ID as a new DATA key and set `download_source: mocha`.
+          - Existing catalog metadata is preserved exactly.
+
+          ## Verification limits
+
+          - Scanner/catalog metadata matched exactly; this is not binary integrity verification.
+          - No package binary was downloaded or hashed by this workflow.
+          - Review this catalog change and merge manually. The Netlify resolver will only authorize the file ID after the catalog is published.
+          EOF
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add Mocha source: $CANDIDATE_NAME" --body-file "$RUNNER_TEMP/mocha-catalog-pr.md")"
           gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Catalog pull request created: $pr_url. It must pass checks and be merged before FPKGi can request a temporary download URL."
