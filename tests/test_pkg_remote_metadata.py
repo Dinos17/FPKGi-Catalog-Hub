@@ -232,8 +232,9 @@ def test_resolve_mocha_url_uses_read_only_api_when_key_is_available(monkeypatch)
     monkeypatch.setattr(pkg, "_retry_pause", lambda attempt: None)
     monkeypatch.setenv("MOCHA_API_KEY", "test-key")
     monkeypatch.setenv("MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li")
+    session = Session()
     assert pkg.resolve_mocha_url(
-        "d5ac3913-802b-4d68-9803-8f5c07c7640e", session=Session()
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e", session=session
     ) == expected_url
     assert session.calls == 2
     assert captured["url"] == "https://api.mocha.my/api/files/presigned"
