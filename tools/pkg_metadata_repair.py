@@ -308,7 +308,11 @@ def repair_catalogs(
                 "updates": updates,
             })
 
-    proposed_count = sum(len(items) for items in proposed_by_catalog.values())
+    proposed_count = sum(
+        len(item["updates"])
+        for items in proposed_by_catalog.values()
+        for item in items
+    )
     applied_count = 0
     if apply and proposed_count:
         replacements: dict[str, dict[str, Any]] = {}
