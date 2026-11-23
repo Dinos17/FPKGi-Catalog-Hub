@@ -1,38 +1,13 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-23T09:40:05.220026Z",
-  "catalog_commit": "f58ead9fb721c3d5c76f4a3c885a528f593e29db",
-  "auto_approved_count": 33,
+  "scan_observed_at": "2026-11-23T10:09:07.660520Z",
+  "catalog_commit": "93b5ef646ac5c2afb08b56a842c6346743baa4cb",
+  "auto_approved_count": 34,
   "previously_rejected_count": 1,
   "previously_decided_count": 0,
-  "pending_count": 2,
+  "pending_count": 1,
   "entries": [
-    {
-      "name": "DOOM 2 (1994) - [US] [EN] [1.08].pkg",
-      "created_at": "2026-11-19T11:33:52.603Z",
-      "decision_key": "370a3e6889f845932a289174e8bc64d28ba37a16879fc8eeb397fc33f94783eb",
-      "folder_path": "PS4/Games",
-      "platform": "PS4",
-      "category": "games",
-      "status": "new",
-      "binary_integrity_verified": false,
-      "reason": "No unique catalog identity match",
-      "metadata_differences": [],
-      "unavailable_metadata": [],
-      "source_metadata": {
-        "title": "doom",
-        "title_id": null,
-        "region": "USA",
-        "languages": [
-          "EN"
-        ],
-        "version": "1.08",
-        "min_fw": null,
-        "size_bytes": 508952576
-      },
-      "catalog_metadata": {}
-    },
     {
       "name": "Darksiders - [EU] [EN] [1.01].pkg",
       "created_at": "2026-11-19T06:58:41.774Z",

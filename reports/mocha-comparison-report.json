@@ -3,16 +3,16 @@
   "read_only": true,
   "scan_complete": true,
   "snapshot_consistency": "not_guaranteed_by_api",
-  "catalog_commit": "f58ead9fb721c3d5c76f4a3c885a528f593e29db",
+  "catalog_commit": "93b5ef646ac5c2afb08b56a842c6346743baa4cb",
   "catalog_write_performed": false,
   "mocha_files_deleted": false,
   "hotlink_creation_available": false,
   "automatic_duplicate_cleanup_enabled": false,
   "counts": {
-    "matched": 33,
+    "matched": 34,
     "metadata_difference": 2,
     "unverified": 0,
-    "new": 1,
+    "new": 0,
     "ambiguous": 0,
     "unclassified": 0,
     "possible_duplicate": 0
@@ -660,14 +660,14 @@
       "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw, languages"
     },
     {
-      "status": "new",
+      "status": "matched",
       "file_id": "a05b8e0d-f23a-46c5-8594-829ae209f4f1",
       "name": "DOOM 2 (1994) - [US] [EN] [1.08].pkg",
       "folder_path": "PS4/Games",
       "platform": "PS4",
       "category": "games",
       "source_metadata": {
-        "title": "doom",
+        "title": "doom 2 1994",
         "region": "USA",
         "version": "1.08",
         "title_id": null,
@@ -678,12 +678,24 @@
         "size_bytes": 508952576,
         "sha256": null
       },
-      "catalog_url": null,
-      "catalog_metadata": null,
+      "catalog_url": "https://archive.org/download/ps4-fpkg-collection-english-d/DOOM%202%20(1994)%20-%20[US]%20[EN]%20[1.08].pkg",
+      "catalog_metadata": {
+        "title_id": "CUSA15595",
+        "region": "USA",
+        "name": "DOOM 2 (1994)",
+        "version": "01.08",
+        "release": "11-15-2013",
+        "size": 508952576,
+        "min_fw": "9.00",
+        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA15595.png"
+      },
       "metadata_differences": [],
-      "unavailable_metadata": [],
+      "unavailable_metadata": [
+        "title_id",
+        "min_fw"
+      ],
       "binary_integrity_verified": false,
-      "reason": "No unique catalog identity match"
+      "reason": "Unique catalog identity and available metadata agree; binary contents are not cryptographically verified; optional metadata unavailable: title_id, min_fw"
     },
     {
       "status": "matched",
