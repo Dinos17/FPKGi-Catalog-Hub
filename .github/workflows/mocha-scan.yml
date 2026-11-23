@@ -1071,8 +1071,10 @@ jobs:
               raise SystemExit("Unexpected PKG metadata repair report")
           applied = report.get("applied_count")
           proposed = report.get("proposed_count")
-          if type(applied) is not int or applied < 0 or type(proposed) is not int or proposed < applied:
-              raise SystemExit("Invalid PKG metadata repair counts")
+          if type(applied) is not int or applied < 0 or type(proposed) is not int or proposed != applied:
+              raise SystemExit("Applied PKG metadata fields do not match the verified proposal count")
+          if report.get("catalog_files_modified") is not (applied > 0):
+              raise SystemExit("PKG metadata repair modification flag is inconsistent")
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"applied_count={applied}\n")
               output.write(f"proposed_count={proposed}\n")
