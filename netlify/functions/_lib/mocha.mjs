@@ -1,10 +1,10 @@
 const FILE_ID_RE = /^[A-Za-z0-9._-]{1,128}$/;
 const HOST_RE = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?)(?:\.(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?))*$/;
 const CATALOG_URLS = [
-  "https://dinos17.github.io/FPKGi-Catalog-Hub/ps4/games.json",
-  "https://dinos17.github.io/FPKGi-Catalog-Hub/ps4/dlc.json",
-  "https://dinos17.github.io/FPKGi-Catalog-Hub/ps5/ps5-games.json",
-  "https://dinos17.github.io/FPKGi-Catalog-Hub/ps5/ps5-dlc.json",
+  "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/games.json",
+  "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/dlc.json",
+  "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-games.json",
+  "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-dlc.json",
 ];
 const CATALOG_CACHE_MS = 60_000;
 const MAX_CATALOG_BYTES = 5 * 1024 * 1024;
