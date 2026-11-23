@@ -149,6 +149,15 @@ def _redact(source: str) -> str:
     return pkg._redact_source(source)
 
 
+def _safe_reason(value: Any, fallback: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        return fallback
+    reason = value.strip()
+    if "://" in reason or "?" in reason or "bearer " in reason.casefold() or "signature=" in reason.casefold():
+        return "Source request failed; sensitive URL details suppressed"
+    return reason[:240]
+
+
 def inspect_repair_target(
     target: dict[str, Any],
     files: list[dict[str, Any]],
@@ -187,13 +196,19 @@ def inspect_repair_target(
     try:
         result = inspector(inspection_target)
     except (pkg.MetadataError, requests.RequestException, OSError, ValueError) as exc:
-        return ({**base, "status": "unavailable", "reason": str(exc)}, None)
+        return ({
+            **base, "status": "unavailable",
+            "reason": _safe_reason(str(exc), f"Extraction failed ({type(exc).__name__})"),
+        }, None)
 
     if result.get("status") != "extracted":
         return ({
             **base,
             "status": result.get("status", "unavailable"),
-            "reason": result.get("reason", "PKG metadata extraction did not complete"),
+            "reason": _safe_reason(
+                result.get("reason"),
+                "PKG metadata extraction did not complete",
+            ),
         }, None)
 
     extracted = {
