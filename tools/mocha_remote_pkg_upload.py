@@ -26,6 +26,7 @@ MAX_PART_BYTES = 128 * 1024 * 1024
 MIN_PART_BYTES = 5 * 1024 * 1024
 MAX_PART_COUNT = 10_000
 RANGE_DEADLINE_SECONDS = 300
+UPLOAD_DEADLINE_SECONDS = 6 * 60 * 60
 MOCHA_STORAGE_HOSTS = {h.strip().lower() for h in os.environ.get("MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li").split(",") if h.strip()}
 SOURCE_HOSTS = {"archive.org", "huggingface.co", "hf.co"}
 
@@ -60,12 +61,19 @@ def _mocha_storage_url_allowed(url: str) -> bool:
 
 def _request_json(session: requests.Session, method: str, path: str,
                   api_key: str, body: dict[str, Any] | None = None,
-                  params: dict[str, str] | None = None) -> dict[str, Any]:
+                  params: dict[str, str] | None = None,
+                  deadline: float | None = None) -> dict[str, Any]:
     headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
     if body is not None:
         headers["Content-Type"] = "application/json"
+    timeout = TIMEOUT
+    if deadline is not None:
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            raise UploadError("Overall upload deadline exceeded")
+        timeout = (min(TIMEOUT[0], remaining), min(TIMEOUT[1], remaining))
     response = session.request(method, API_BASE + path, headers=headers,
-                               json=body, params=params, timeout=TIMEOUT,
+                               json=body, params=params, timeout=timeout,
                                allow_redirects=False)
     try:
         if response.status_code < 200 or response.status_code >= 300:
@@ -88,7 +96,8 @@ def _request_json(session: requests.Session, method: str, path: str,
 
 
 def _read_source_range(session: requests.Session, url: str, start: int,
-                       length: int, *, expected_validator: tuple[str, str] | None = None
+                       length: int, *, expected_validator: tuple[str, str] | None = None,
+                       overall_deadline: float | None = None
                        ) -> tuple[bytes, int, tuple[str, str]]:
     if not _source_host_allowed(url):
         raise UploadError("Source URL or redirect host is not allowlisted")
@@ -97,7 +106,12 @@ def _read_source_range(session: requests.Session, url: str, start: int,
     for _ in range(MAX_REDIRECTS + 1):
         if not _source_host_allowed(current):
             raise UploadError("Source redirect host is not allowlisted")
-        deadline = time.monotonic() + RANGE_DEADLINE_SECONDS
+        range_deadline = time.monotonic() + RANGE_DEADLINE_SECONDS
+        if overall_deadline is not None:
+            range_deadline = min(range_deadline, overall_deadline)
+        remaining = range_deadline - time.monotonic()
+        if remaining <= 0:
+            raise UploadError("Upload deadline exceeded before source range request")
         headers = {
             "Range": f"bytes={start}-{end}",
             "Accept-Encoding": "identity",
@@ -105,7 +119,8 @@ def _read_source_range(session: requests.Session, url: str, start: int,
         }
         if expected_validator is not None:
             headers["If-Range"] = expected_validator[1]
-        response = session.get(current, headers=headers, timeout=(15, 30),
+        response = session.get(current, headers=headers,
+                               timeout=(min(15, remaining), min(30, remaining)),
                                allow_redirects=False, stream=True)
         if response.status_code in (301, 302, 303, 307, 308):
             location = response.headers.get("Location")
@@ -135,14 +150,14 @@ def _read_source_range(session: requests.Session, url: str, start: int,
                 raise UploadError("Source representation changed during transfer")
             data = bytearray()
             for chunk in response.iter_content(chunk_size=1024 * 1024):
-                if time.monotonic() > deadline:
-                    raise UploadError("Source range exceeded its transfer deadline")
+                if time.monotonic() > range_deadline:
+                    raise UploadError("Source range or overall upload deadline exceeded")
                 if chunk:
                     data.extend(chunk)
                     if len(data) > length:
                         raise UploadError("Source returned more bytes than requested")
-            if time.monotonic() > deadline:
-                raise UploadError("Source range exceeded its transfer deadline")
+            if time.monotonic() > range_deadline:
+                raise UploadError("Source range or overall upload deadline exceeded")
             if len(data) != length:
                 raise UploadError("Source returned fewer bytes than requested")
             return bytes(data), total, validator
@@ -150,11 +165,18 @@ def _read_source_range(session: requests.Session, url: str, start: int,
             response.close()
     raise UploadError("Too many source redirects")
 
-def _put_part(session: requests.Session, url: str, data: bytes, part_number: int) -> str:
+def _put_part(session: requests.Session, url: str, data: bytes, part_number: int,
+              overall_deadline: float | None = None) -> str:
     if not _mocha_storage_url_allowed(url):
         raise UploadError("Mocha returned a presigned URL outside the storage host allowlist")
+    timeout = TIMEOUT
+    if overall_deadline is not None:
+        remaining = overall_deadline - time.monotonic()
+        if remaining <= 0:
+            raise UploadError("Overall upload deadline exceeded")
+        timeout = (min(TIMEOUT[0], remaining), min(TIMEOUT[1], remaining))
     response = session.put(url, data=data, headers={"Content-Type": "application/octet-stream"},
-                           timeout=TIMEOUT, allow_redirects=False)
+                           timeout=timeout, allow_redirects=False)
     try:
         if response.status_code < 200 or response.status_code >= 300:
             raise UploadError(f"Mocha storage rejected part {part_number} (HTTP {response.status_code})")
@@ -167,7 +189,8 @@ def _put_part(session: requests.Session, url: str, data: bytes, part_number: int
 
 
 def _find_staged_file(session: requests.Session, api_key: str, remote_path: str,
-                      staging_name: str, total_size: int) -> str:
+                      staging_name: str, total_size: int,
+                      deadline: float | None = None) -> str:
     """Find the uniquely named staged object after an ambiguous completion."""
     cursor = None
     matches: list[dict[str, Any]] = []
@@ -175,7 +198,7 @@ def _find_staged_file(session: requests.Session, api_key: str, remote_path: str,
         params = {"path": remote_path, "limit": "100", "q": staging_name}
         if cursor:
             params["cursor"] = cursor
-        payload = _request_json(session, "GET", "/files", api_key, params=params)
+        payload = _request_json(session, "GET", "/files", api_key, params=params, deadline=deadline)
         files = payload.get("files")
         if not isinstance(files, list):
             raise UploadError("Mocha file inventory response is malformed")
@@ -203,15 +226,16 @@ def _find_staged_file(session: requests.Session, api_key: str, remote_path: str,
 
 def _rename_staged_file(session: requests.Session, api_key: str, file_id: str,
                         final_name: str, remote_path: str, staging_name: str,
-                        total_size: int) -> None:
+                        total_size: int, deadline: float | None = None) -> None:
     """Rename by immutable file ID; resolve a lost PATCH response by inventory."""
     try:
         _request_json(session, "PATCH", "/files/" + quote(file_id, safe=""), api_key,
-                      {"originalName": final_name})
+                      {"originalName": final_name}, deadline=deadline)
     except Exception as exc:
         try:
             payload = _request_json(session, "GET", "/files", api_key,
-                                    params={"path": remote_path, "limit": "100", "q": final_name})
+                                    params={"path": remote_path, "limit": "100", "q": final_name},
+                                    deadline=deadline)
             files = payload.get("files")
             if not isinstance(files, list):
                 raise UploadError("Mocha file inventory response is malformed")
@@ -242,8 +266,11 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
     if not filename or not filename.lower().endswith(".pkg") or len(filename) > 240:
         raise UploadError("Source URL does not identify a valid .pkg filename")
 
+    overall_deadline = time.monotonic() + UPLOAD_DEADLINE_SECONDS
     # Require the full fixed-size PS4 PKG header, not merely its four-byte magic.
-    header, total_size, validator = _read_source_range(client, source_url, 0, 0x100)
+    header, total_size, validator = _read_source_range(
+        client, source_url, 0, 0x100, overall_deadline=overall_deadline
+    )
     if total_size < 0x100 or len(header) != 0x100 or header[:4] != bytes.fromhex("7f434e54"):
         raise UploadError("Source is not a complete PS4 PKG header")
 
@@ -257,7 +284,7 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
             "size": total_size,
             "mimeType": "application/octet-stream",
             "path": remote_path,
-        })
+        }, deadline=overall_deadline)
         upload_id, key, node_id = init.get("uploadId"), init.get("key"), init.get("nodeId")
         original_name = init.get("originalName") or staging_name
         if original_name != staging_name:
@@ -278,7 +305,8 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
             offset = (part_number - 1) * part_size
             length = min(part_size, total_size - offset)
             data, observed_size, observed_validator = _read_source_range(
-                client, source_url, offset, length, expected_validator=validator
+                client, source_url, offset, length, expected_validator=validator,
+                overall_deadline=overall_deadline
             )
             if observed_size != total_size or observed_validator != validator:
                 raise UploadError("Source package changed during transfer")
@@ -287,7 +315,7 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
                 "uploadId": upload_id, "key": key, "nodeId": node_id,
                 "originalName": original_name, "path": remote_path,
                 "partNumbers": [part_number],
-            })
+            }, deadline=overall_deadline)
             urls = urls_payload.get("urls")
             if not isinstance(urls, list) or len(urls) != 1 or not isinstance(urls[0], dict):
                 raise UploadError(f"Mocha did not return one presigned URL for part {part_number}")
@@ -296,7 +324,7 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
             part_url = urls[0].get("url")
             if not isinstance(part_url, str) or not part_url:
                 raise UploadError(f"Mocha returned an invalid presigned URL for part {part_number}")
-            etag = _put_part(client, part_url, data, part_number)
+            etag = _put_part(client, part_url, data, part_number, overall_deadline)
             completed_parts.append({"partNumber": part_number, "etag": etag})
             print(f"Uploaded part {part_number}/{part_count} ({offset + length:,}/{total_size:,} bytes)",
                   file=sys.stderr, flush=True)
@@ -309,22 +337,23 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
                 "originalName": original_name, "path": remote_path,
                 "mimeType": "application/octet-stream", "size": total_size,
                 "parts": completed_parts,
-            })
+            }, deadline=overall_deadline)
         except Exception:
             # The unique staging name makes inventory reconciliation specific to this attempt.
             file_id = _find_staged_file(
-                client, api_key, remote_path, staging_name, total_size
+                client, api_key, remote_path, staging_name, total_size, deadline=overall_deadline
             )
         else:
             file_obj = complete.get("file")
             file_id = file_obj.get("id") if isinstance(file_obj, dict) else None
             if not isinstance(file_id, str) or not file_id:
                 file_id = _find_staged_file(
-                    client, api_key, remote_path, staging_name, total_size
+                    client, api_key, remote_path, staging_name, total_size, deadline=overall_deadline
                 )
 
         _rename_staged_file(
-            client, api_key, file_id, filename, remote_path, staging_name, total_size
+            client, api_key, file_id, filename, remote_path, staging_name, total_size,
+            deadline=overall_deadline
         )
         return {"file_id": file_id, "filename": filename, "size": total_size,
                 "remote_path": remote_path, "parts": part_count}
