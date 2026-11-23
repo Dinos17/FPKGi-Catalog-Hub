@@ -219,9 +219,7 @@ def build_report(
     if incomplete_records:
         lines.extend(["#### ⚠️ Incomplete identity metadata (not classified)", ""])
         for filename, url, missing in sorted(incomplete_records):
-            lines.append(
-                f"- `{report_value(filename)}` — `{report_value(url)}` (missing or invalid: {report_value(', '.join(missing))})"
-            )
+            lines.append("- `" + report_value(filename) + "` — `" + report_value(url) + "` (missing or invalid: " + report_value(", ".join(missing)) + ")")
         lines.append("")
 
     if url_collisions:
