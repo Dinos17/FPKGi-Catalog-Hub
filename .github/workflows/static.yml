@@ -9,7 +9,7 @@ on:
   # Refresh the deployed dashboard after every completed Mocha scan,
   # because the scan publishes its sanitized summary to the dedicated reports branch.
   workflow_run:
-    workflows: ["Mocha Scan and Duplicate Review (Read-Only)"]
+    workflows: ["Mocha Scan, Duplicate Review, and Verified PKG Metadata Repair"]
     types: [completed]
     branches: ["main"]
 
