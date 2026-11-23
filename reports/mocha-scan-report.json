@@ -1,6 +1,6 @@
 {
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-23T14:38:09.270495Z",
+  "scan_observed_at": "2026-11-23T20:03:44.179727Z",
   "read_only": true,
   "authentication": "verified_by_file_listing",
   "permissions": {
