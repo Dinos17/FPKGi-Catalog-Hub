@@ -1127,8 +1127,8 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             git fetch origin "$branch"
-            if ! git diff --quiet FETCH_HEAD -- ps4/dlc.json ps5/ps5-apps.json; then
-              echo "Existing metadata repair branch differs from the currently verified catalog changes; refusing to merge it." >&2
+            if ! git diff --quiet FETCH_HEAD --; then
+              echo "Existing metadata repair branch differs from the currently verified workspace; refusing to merge it." >&2
               exit 1
             fi
             existing_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
