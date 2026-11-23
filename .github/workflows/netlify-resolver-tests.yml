@@ -35,7 +35,7 @@ jobs:
             status="$(curl --silent --show-error --max-time 10 --max-redirs 0 \
               -o "$RUNNER_TEMP/resolver-response.json" -w "%{http_code}" \
               "https://fpkgi-mocha-resolver.netlify.app/presigned?fileId=d5ac3913-802b-4d68-9803-8f5c07c7640e&diagnostics=1" || true)"
-            printf "Production resolver HTTP %s (attempt %s/6)\\n" "$status" "$attempt"
+            printf "Production resolver HTTP %s (attempt %s/6)\n" "$status" "$attempt"
             if [ "$status" = "200" ]; then
               rm -f "$RUNNER_TEMP/resolver-response.json"
               exit 0
