@@ -234,9 +234,11 @@ def test_case_sensitive_mirror_filenames_are_not_exempt():
 
 
 def test_markdown_report_escapes_untrusted_values():
+    malicious_url = "https://bad.test/`" + chr(10) + "# forged"
+    malicious_filename = "ps4/`" + chr(10) + "# forged.json"
     report = duplicate_check.build_report(
         {"ps4/games.json": {}},
-        {"https://bad.test/`\\n# forged": ["ps4/`\\n# forged.json"]},
+        {malicious_url: [malicious_filename]},
         {},
         {
             ("PS4", "games", "[click](https://evil.test)", "USA", "01.00", 1024): [
@@ -245,7 +247,7 @@ def test_markdown_report_escapes_untrusted_values():
         },
         [],
     )
-    assert "# forged" not in report
+    assert "\\n# forged" not in report
     assert "[click](https://evil.test)" not in report
-    assert "\\\\[" in report
+    assert r"\\[" in report
     assert duplicate_check.report_value("`") == "&#96;"
