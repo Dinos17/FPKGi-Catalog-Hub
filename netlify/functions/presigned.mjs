@@ -33,18 +33,18 @@ export default async (request) => {
     return Response.json({ error: "invalid_file_id" }, { status: 400 });
   }
 
-  const netlifyApiKey = Netlify.env.get("MOCHA_API_KEY");
-  const processApiKey = process.env.MOCHA_API_KEY;
-  const apiKey = String(netlifyApiKey || processApiKey || "").trim();
-  const netlifyStorageHosts = Netlify.env.get("MOCHA_STORAGE_HOSTS");
-  const processStorageHosts = process.env.MOCHA_STORAGE_HOSTS;
-  const allowedHosts = getAllowedStorageHosts(netlifyStorageHosts || processStorageHosts || "");
+  const netlifyApiKey = String(Netlify.env.get("MOCHA_API_KEY") ?? "").trim();
+  const processApiKey = String(process.env.MOCHA_API_KEY ?? "").trim();
+  const apiKey = netlifyApiKey || processApiKey;
+  const netlifyStorageHosts = String(Netlify.env.get("MOCHA_STORAGE_HOSTS") ?? "").trim();
+  const processStorageHosts = String(process.env.MOCHA_STORAGE_HOSTS ?? "").trim();
+  const allowedHosts = getAllowedStorageHosts(netlifyStorageHosts || processStorageHosts);
   if (!apiKey || allowedHosts.size === 0) {
     const diagnostics = {
-      netlifyApiKeyPresent: Boolean(String(netlifyApiKey ?? "").trim()),
-      processApiKeyPresent: Boolean(String(processApiKey ?? "").trim()),
-      netlifyStorageHostsPresent: Boolean(String(netlifyStorageHosts ?? "").trim()),
-      processStorageHostsPresent: Boolean(String(processStorageHosts ?? "").trim()),
+      netlifyApiKeyPresent: Boolean(netlifyApiKey),
+      processApiKeyPresent: Boolean(processApiKey),
+      netlifyStorageHostsPresent: Boolean(netlifyStorageHosts),
+      processStorageHostsPresent: Boolean(processStorageHosts),
       allowedStorageHostCount: allowedHosts.size,
     };
     console.error("mocha_resolver_not_configured", diagnostics);
