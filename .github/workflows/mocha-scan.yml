@@ -1,4 +1,4 @@
-name: Mocha Scan and Duplicate Review (Read-Only)
+name: Mocha Scan, Duplicate Review, and Verified PKG Metadata Repair
 
 on:
   workflow_dispatch:
@@ -1019,7 +1019,7 @@ jobs:
           gh pr merge "$pr_url" --squash --delete-branch
 
   auto-repair-verified-pkg-metadata:
-    if: needs.auto-register-safe-replacements.result == 'success' && github.ref == 'refs/heads/main'
+    if: needs['auto-register-safe-replacements'].result == 'success' && github.ref == 'refs/heads/main'
     needs: auto-register-safe-replacements
     runs-on: ubuntu-latest
     timeout-minutes: 20
