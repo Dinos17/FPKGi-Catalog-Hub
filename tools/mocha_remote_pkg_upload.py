@@ -18,7 +18,7 @@ from urllib.parse import urlparse, urljoin, unquote
 
 import requests
 
-API_BASE = "https://api.mocha.my"
+API_BASE = "https://api.mocha.my/api"
 TIMEOUT = (15, 180)
 MAX_REDIRECTS = 6
 MAX_PART_BYTES = 128 * 1024 * 1024
