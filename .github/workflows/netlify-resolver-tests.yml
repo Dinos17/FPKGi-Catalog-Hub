@@ -40,10 +40,10 @@ jobs:
               rm -f "$RUNNER_TEMP/resolver-response.json"
               exit 0
             fi
-            node - "$RUNNER_TEMP/resolver-response.json" <<'NODE'
+            RESOLVER_RESPONSE="$RUNNER_TEMP/resolver-response.json" node <<'NODE'
           const fs = require("node:fs");
           try {
-            const body = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+            const body = JSON.parse(fs.readFileSync(process.env.RESOLVER_RESPONSE, "utf8"));
             console.log(JSON.stringify({
               error: body.error ?? null,
               diagnostics: body.diagnostics ?? null,
@@ -54,3 +54,4 @@ jobs:
           NODE
             if [ "$attempt" -lt 6 ]; then sleep 10; fi
           done
+          rm -f "$RUNNER_TEMP/resolver-response.json"
