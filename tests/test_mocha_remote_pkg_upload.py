@@ -216,7 +216,7 @@ def test_remote_pkg_upload_fails_closed_on_ambiguous_completion(monkeypatch):
     def fake_range(_session, _url, start, length, *, expected_validator=None):
         return source[start:start + length], len(source), ("ETag", '"v1"')
 
-    def fake_api(_session, method, path, _key, body=None):
+    def fake_api(_session, method, path, _key, body=None, params=None):
         paths.append(path)
         if path == "/files/multipart/init":
             return {"uploadId": "u", "key": "k", "nodeId": "n",
