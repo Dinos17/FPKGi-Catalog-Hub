@@ -35,6 +35,8 @@ jobs:
         run: |
           python tools/pkg_remote_metadata.py --catalog-root . --output "$RUNNER_TEMP/pkg-metadata-report.json"
       - name: Validate PS4 parser against a real Mocha package (bounded ranges only)
+        env:
+          MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
         run: |
           python tools/pkg_remote_metadata.py \
             --source "d5ac3913-802b-4d68-9803-8f5c07c7640e" \
