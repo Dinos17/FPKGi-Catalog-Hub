@@ -213,7 +213,7 @@ def build_report(
         for identity, records in sorted(duplicate_identities.items()):
             lines.append(f"- **{format_identity(identity)}**")
             for filename, url in records:
-                lines.append(f"  - `{filename}` — {url}")
+                lines.append(f"  - `{report_value(filename)}` — `{report_value(url)}`")
         lines.append("")
 
     if incomplete_records:
@@ -238,9 +238,19 @@ def build_report(
         ])
     else:
         lines.extend([
-            "### ⚠️ Result: No duplicate registrations among complete records; incomplete records mean the catalog is not fully verified.",
+            (
+                "### ⚠️ Result: No duplicates among complete records; catalog not fully verified."
+                if incomplete_records
+                else "### ✅ Result: No confirmed duplicate registrations detected."
+            ),
             "",
-            "Possible mirrors and incomplete records are reported separately. This check does not establish binary identity.",
+            (
+                str(len(incomplete_records)) + " record(s) were excluded from identity matching."
+                if incomplete_records
+                else "All records had complete, valid identity metadata."
+            ),
+            "",
+            "Possible mirrors are unverified; this check does not establish binary identity.",
         ])
 
     return "\n".join(lines) + "\n"
