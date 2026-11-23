@@ -205,3 +205,36 @@ def test_main_direct_source_mode_inspects_one_source_and_writes_report(monkeypat
     assert captured["source"] == "d5ac3913-802b-4d68-9803-8f5c07c7640e"
     assert captured["platform"] == "PS4"
     assert report["results"][0]["title_id"] == "CUSA04513"
+
+
+def test_resolve_mocha_url_uses_read_only_api_when_key_is_available(monkeypatch):
+    import json
+
+    expected_url = "https://stor11.mochaprox.li/presigned-test"
+    captured = {}
+
+    class Response:
+        status_code = 200
+        def iter_content(self, chunk_size):
+            yield json.dumps({"url": expected_url}).encode()
+        def close(self):
+            pass
+
+    class Session:
+        def post(self, url, **kwargs):
+            captured["url"] = url
+            captured.update(kwargs)
+            return Response()
+
+    monkeypatch.setenv("MOCHA_API_KEY", "test-key")
+    monkeypatch.setenv("MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li")
+    assert pkg.resolve_mocha_url(
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e", session=Session()
+    ) == expected_url
+    assert captured["url"] == "https://api.mocha.my/api/files/presigned"
+    assert captured["json"] == {
+        "fileId": "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        "disposition": "attachment",
+    }
+    assert captured["headers"]["Authorization"] == "Bearer test-key"
+    assert captured["allow_redirects"] is False
