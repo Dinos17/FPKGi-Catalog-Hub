@@ -177,44 +177,44 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
     if not filename or not filename.lower().endswith(".pkg") or len(filename) > 240:
         raise UploadError("Source URL does not identify a valid .pkg filename")
 
-    # Probe one byte first: this also proves the origin supports exact Range reads.
-    first, total_size = _read_source_range(client, source_url, 0, 4)
-    if first != bytes.fromhex("7f434e54"):
-        raise UploadError("Source does not begin with the recognized PS4 PKG magic")
+    # Require the full fixed-size PS4 PKG header, not merely its four-byte magic.
+    header, total_size, validator = _read_source_range(client, source_url, 0, 0x100)
+    if total_size < 0x100 or len(header) != 0x100 or header[:4] != bytes.fromhex("7f434e54"):
+        raise UploadError("Source is not a complete PS4 PKG header")
 
-    init = _request_json(client, "POST", "/files/multipart/init", api_key, {
-        "originalName": filename,
-        "size": total_size,
-        "mimeType": "application/octet-stream",
-        "path": remote_path,
-    })
-    upload_id, key, node_id = init.get("uploadId"), init.get("key"), init.get("nodeId")
-    original_name = init.get("originalName") or filename
-    part_size = init.get("partSizeBytes")
-    if init.get("directPartUpload") is True and type(init.get("directPartSizeBytes")) is int and init["directPartSizeBytes"] > 0:
-        part_size = init["directPartSizeBytes"]
-    if not all(isinstance(v, str) and v for v in (upload_id, key, node_id)):
-        raise UploadError("Mocha multipart init response is incomplete")
-    if type(part_size) is not int or not 0 < part_size <= MAX_PART_BYTES:
-        raise UploadError("Mocha returned an unsafe or unsupported part size")
-
-    completed_parts: list[dict[str, Any]] = []
+    upload_id = key = node_id = None
+    original_name = filename
+    completion_started = False
     try:
+        init = _request_json(client, "POST", "/files/multipart/init", api_key, {
+            "originalName": filename,
+            "size": total_size,
+            "mimeType": "application/octet-stream",
+            "path": remote_path,
+        })
+        upload_id, key, node_id = init.get("uploadId"), init.get("key"), init.get("nodeId")
+        original_name = init.get("originalName") or filename
+        part_size = init.get("partSizeBytes")
+        if init.get("directPartUpload") is True and type(init.get("directPartSizeBytes")) is int:
+            part_size = init["directPartSizeBytes"]
+        if not all(isinstance(v, str) and v for v in (upload_id, key, node_id)):
+            raise UploadError("Mocha multipart init response is incomplete; session identifiers unavailable")
+        if type(part_size) is not int or not MIN_PART_BYTES <= part_size <= MAX_PART_BYTES:
+            raise UploadError("Mocha returned an unsupported part size")
         part_count = (total_size + part_size - 1) // part_size
+        if not 1 <= part_count <= MAX_PART_COUNT:
+            raise UploadError("Mocha part size would exceed the supported maximum part count")
+
+        completed_parts: list[dict[str, Any]] = []
         for part_number in range(1, part_count + 1):
             offset = (part_number - 1) * part_size
             length = min(part_size, total_size - offset)
-            data = None
-            for attempt in range(4):
-                try:
-                    data, observed_size = _read_source_range(client, source_url, offset, length)
-                    if observed_size != total_size:
-                        raise UploadError("Source package size changed during transfer")
-                    break
-                except (requests.RequestException, UploadError):
-                    if attempt == 3:
-                        raise
-                    time.sleep(min(2 ** attempt, 8))
+            data, observed_size, observed_validator = _read_source_range(
+                client, source_url, offset, length, expected_validator=validator
+            )
+            if observed_size != total_size or observed_validator != validator:
+                raise UploadError("Source package changed during transfer")
+
             urls_payload = _request_json(client, "POST", "/files/multipart/presigned", api_key, {
                 "uploadId": upload_id, "key": key, "nodeId": node_id,
                 "originalName": original_name, "path": remote_path,
@@ -223,46 +223,48 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
             urls = urls_payload.get("urls")
             if not isinstance(urls, list) or len(urls) != 1 or not isinstance(urls[0], dict):
                 raise UploadError(f"Mocha did not return one presigned URL for part {part_number}")
-            part_url = urls[0].get("url")
-            last_error = None
-            for attempt in range(4):
-                try:
-                    etag = _put_part(client, part_url, data, part_number)
-                    last_error = None
-                    break
-                except (requests.RequestException, UploadError) as exc:
-                    last_error = exc
-                    if attempt < 3:
-                        time.sleep(min(2 ** attempt, 8))
-            if last_error:
-                raise last_error
+            if urls[0].get("partNumber") != part_number:
+                raise UploadError(f"Mocha returned a mismatched presigned part number for part {part_number}")
+            etag = _put_part(client, urls[0].get("url"), data, part_number)
             completed_parts.append({"partNumber": part_number, "etag": etag})
             print(f"Uploaded part {part_number}/{part_count} ({offset + length:,}/{total_size:,} bytes)",
                   file=sys.stderr, flush=True)
 
-        complete = _request_json(client, "POST", "/files/multipart/complete", api_key, {
-            "uploadId": upload_id, "key": key, "nodeId": node_id,
-            "originalName": original_name, "path": remote_path,
-            "mimeType": "application/octet-stream", "size": total_size,
-            "parts": completed_parts,
-        })
+        # Never blindly retry completion: a lost response may mean it committed.
+        completion_started = True
+        try:
+            complete = _request_json(client, "POST", "/files/multipart/complete", api_key, {
+                "uploadId": upload_id, "key": key, "nodeId": node_id,
+                "originalName": original_name, "path": remote_path,
+                "mimeType": "application/octet-stream", "size": total_size,
+                "parts": completed_parts,
+            })
+        except Exception as exc:
+            raise UploadError(
+                "Mocha completion outcome is unknown; do not retry blindly. "
+                "Reconcile the destination in Mocha before starting another upload."
+            ) from exc
         file_obj = complete.get("file")
         file_id = file_obj.get("id") if isinstance(file_obj, dict) else None
         if not isinstance(file_id, str) or not file_id:
-            raise UploadError("Mocha completed the upload but returned no file ID")
+            raise UploadError(
+                "Mocha completion response omitted the file ID; outcome is unknown. "
+                "Reconcile the destination before retrying."
+            )
         return {"file_id": file_id, "filename": filename, "size": total_size,
                 "remote_path": remote_path, "parts": part_count}
-    except Exception:
-        # Abort is best-effort; never mask the original failure.
-        try:
-            _request_json(client, "POST", "/files/multipart/abort", api_key, {
-                "uploadId": upload_id, "key": key, "nodeId": node_id,
-                "originalName": original_name, "path": remote_path,
-            })
-        except Exception:
-            pass
+    except Exception as original_error:
+        if upload_id and key and node_id and not completion_started:
+            try:
+                _request_json(client, "POST", "/files/multipart/abort", api_key, {
+                    "uploadId": upload_id, "key": key, "nodeId": node_id,
+                    "originalName": original_name, "path": remote_path,
+                })
+            except Exception as cleanup_error:
+                raise UploadError(
+                    f"{original_error}; additionally, Mocha multipart abort failed: {cleanup_error}"
+                ) from original_error
         raise
-
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
