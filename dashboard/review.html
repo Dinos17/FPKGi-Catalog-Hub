@@ -35,7 +35,7 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 </main>
 <script>
 const $=id=>document.getElementById(id);
-const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/akirabox-reports/reports/";
+const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/mocha/reports/";
 async function boundedFetch(url){
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
  try{return await fetch(url,{cache:"no-store",signal:controller.signal});}finally{clearTimeout(timeout);}
