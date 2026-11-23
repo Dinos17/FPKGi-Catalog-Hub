@@ -32,7 +32,7 @@ jobs:
 
       - name: Load current rejection records
         env:
-          REPORT_BRANCH: akirabox-reports
+          REPORT_BRANCH: Mocha-reports
           REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
         run: |
           set -euo pipefail
@@ -74,7 +74,7 @@ jobs:
 
       - name: Publish sanitized rejection record
         env:
-          REPORT_BRANCH: akirabox-reports
+          REPORT_BRANCH: Mocha-reports
           REPORT_PATH: ${{ runner.temp }}/akirabox-rejections.json
         run: |
           set -euo pipefail
