@@ -180,11 +180,11 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
 def test_remote_pkg_upload_rejects_mismatched_presigned_part_and_aborts(monkeypatch):
     paths = []
 
-    def fake_range(_session, _url, start, length, *, expected_validator=None):
+    def fake_range(_session, _url, start, length, *, expected_validator=None, overall_deadline=None):
         source = bytes.fromhex("7f434e54") + b"H" * (0x100 - 4)
         return source[start:start + length], len(source), ("ETag", '"v1"')
 
-    def fake_api(_session, method, path, _key, body=None, params=None):
+    def fake_api(_session, method, path, _key, body=None, params=None, deadline=None):
         paths.append(path)
         if path == "/files/multipart/init":
             return {"uploadId": "u", "key": "k", "nodeId": "n",
@@ -213,10 +213,10 @@ def test_remote_pkg_upload_fails_closed_on_ambiguous_completion(monkeypatch):
     paths = []
     source = bytes.fromhex("7f434e54") + b"H" * (0x100 - 4)
 
-    def fake_range(_session, _url, start, length, *, expected_validator=None):
+    def fake_range(_session, _url, start, length, *, expected_validator=None, overall_deadline=None):
         return source[start:start + length], len(source), ("ETag", '"v1"')
 
-    def fake_api(_session, method, path, _key, body=None, params=None):
+    def fake_api(_session, method, path, _key, body=None, params=None, deadline=None):
         paths.append(path)
         if path == "/files/multipart/init":
             return {"uploadId": "u", "key": "k", "nodeId": "n",
