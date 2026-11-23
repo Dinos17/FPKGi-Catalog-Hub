@@ -22,6 +22,9 @@ API_BASE = "https://api.mocha.my/api"
 TIMEOUT = (15, 180)
 MAX_REDIRECTS = 6
 MAX_PART_BYTES = 128 * 1024 * 1024
+MIN_PART_BYTES = 5 * 1024 * 1024
+MAX_PART_COUNT = 10_000
+RANGE_DEADLINE_SECONDS = 300
 MOCHA_STORAGE_HOSTS = {h.strip().lower() for h in os.environ.get("MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li").split(",") if h.strip()}
 SOURCE_HOSTS = {"archive.org", "huggingface.co", "hf.co"}
 
