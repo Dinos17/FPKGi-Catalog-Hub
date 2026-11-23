@@ -27,6 +27,36 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - name: Check published catalog endpoints
+        run: |
+          urls=(
+            "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/games.json"
+            "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/dlc.json"
+            "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-games.json"
+            "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-dlc.json"
+          )
+          for url in "${urls[@]}"; do
+            status="$(curl --silent --show-error --max-time 15 --max-redirs 0 \
+              -o /dev/null -w "%{http_code}" "$url" || true)"
+            printf "Published catalog HTTP %s: %s\\n" "$status" "$url"
+            if [ "$status" != "200" ]; then
+              exit 1
+            fi
+          done
+          curl --silent --show-error --max-time 15 --max-redirs 0 \
+            -o "$RUNNER_TEMP/ps4-games.json" \
+            "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/games.json"
+          python - <<'PY'
+          import json, os
+          path = os.path.join(os.environ["RUNNER_TEMP"], "ps4-games.json")
+          with open(path, encoding="utf-8") as stream:
+              data = json.load(stream)
+          file_id = "d5ac3913-802b-4d68-9803-8f5c07c7640e"
+          present = file_id in data.get("DATA", {})
+          print("Published PS4 games catalog contains Mocha smoke fixture:", present)
+          if not present:
+              raise SystemExit("Published catalog is missing the registered Mocha smoke fixture")
+          PY
       - name: Probe production resolver without exposing response content
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
