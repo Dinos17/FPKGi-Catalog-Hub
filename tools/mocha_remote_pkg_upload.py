@@ -85,7 +85,8 @@ def _request_json(session: requests.Session, method: str, path: str,
 
 
 def _read_source_range(session: requests.Session, url: str, start: int,
-                       length: int) -> tuple[bytes, int]:
+                       length: int, *, expected_validator: tuple[str, str] | None = None
+                       ) -> tuple[bytes, int, tuple[str, str]]:
     if not _source_host_allowed(url):
         raise UploadError("Source URL or redirect host is not allowlisted")
     end = start + length - 1
@@ -93,11 +94,16 @@ def _read_source_range(session: requests.Session, url: str, start: int,
     for _ in range(MAX_REDIRECTS + 1):
         if not _source_host_allowed(current):
             raise UploadError("Source redirect host is not allowlisted")
-        response = session.get(current, headers={
+        deadline = time.monotonic() + RANGE_DEADLINE_SECONDS
+        headers = {
             "Range": f"bytes={start}-{end}",
             "Accept-Encoding": "identity",
             "User-Agent": "FPKGi-Mocha-PKG-Uploader/1.0",
-        }, timeout=TIMEOUT, allow_redirects=False, stream=True)
+        }
+        if expected_validator is not None:
+            headers["If-Range"] = expected_validator[1]
+        response = session.get(current, headers=headers, timeout=(15, 30),
+                               allow_redirects=False, stream=True)
         if response.status_code in (301, 302, 303, 307, 308):
             location = response.headers.get("Location")
             response.close()
@@ -114,19 +120,32 @@ def _read_source_range(session: requests.Session, url: str, start: int,
             total = int(match.group(3))
             if total <= end:
                 raise UploadError("Source Content-Range total is inconsistent")
+            etag = response.headers.get("ETag", "").strip()
+            modified = response.headers.get("Last-Modified", "").strip()
+            if etag and not etag.startswith("W/"):
+                validator = ("ETag", etag)
+            elif modified:
+                validator = ("Last-Modified", modified)
+            else:
+                raise UploadError("Source has no strong ETag or Last-Modified validator")
+            if expected_validator is not None and validator != expected_validator:
+                raise UploadError("Source representation changed during transfer")
             data = bytearray()
             for chunk in response.iter_content(chunk_size=1024 * 1024):
+                if time.monotonic() > deadline:
+                    raise UploadError("Source range exceeded its transfer deadline")
                 if chunk:
                     data.extend(chunk)
                     if len(data) > length:
                         raise UploadError("Source returned more bytes than requested")
+            if time.monotonic() > deadline:
+                raise UploadError("Source range exceeded its transfer deadline")
             if len(data) != length:
                 raise UploadError("Source returned fewer bytes than requested")
-            return bytes(data), total
+            return bytes(data), total, validator
         finally:
             response.close()
     raise UploadError("Too many source redirects")
-
 
 def _put_part(session: requests.Session, url: str, data: bytes, part_number: int) -> str:
     if not _mocha_storage_url_allowed(url):
