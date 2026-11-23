@@ -870,7 +870,6 @@ jobs:
               if type(current_difference_count) is not int or current_difference_count < previously_rejected_metadata_differences:
                   raise SystemExit('Rejected metadata-difference count exceeds the validated comparison total.')
               summary['counts']['metadata_difference'] = current_difference_count - previously_rejected_metadata_differences
-              summary['counts']['previously_rejected'] = previously_rejected_metadata_differences
           target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\\n', encoding='utf-8')
           print('Inventory publication: ' + ('published' if inventory is not None else 'unavailable; old inventory will be hidden by dashboard timestamp validation'))
           print('Human-review queue: ' + ('published' if review_queue is not None else 'unavailable; dashboard must not treat it as empty'))
