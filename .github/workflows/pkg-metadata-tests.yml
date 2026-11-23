@@ -52,6 +52,22 @@ jobs:
           missing = [key for key in required if not result.get(key)]
           if missing:
               raise SystemExit(f"Real PS4 PKG extraction omitted required fields: {missing}")
+          file_id = "d5ac3913-802b-4d68-9803-8f5c07c7640e"
+          with open("ps4/games.json", encoding="utf-8") as stream:
+              catalog = json.load(stream)["DATA"]
+          expected = catalog.get(file_id)
+          if not isinstance(expected, dict):
+              raise SystemExit("Real-package smoke fixture is no longer registered in ps4/games.json")
+          mapping = {"title_id": "title_id", "name": "name",
+                     "version": "version", "package_size": "size"}
+          mismatches = {
+              extracted: {"expected": expected.get(catalog_key),
+                          "actual": result.get(extracted)}
+              for extracted, catalog_key in mapping.items()
+              if expected.get(catalog_key) != result.get(extracted)
+          }
+          if mismatches:
+              raise SystemExit(f"Real PKG metadata disagrees with catalog: {json.dumps(mismatches, sort_keys=True)}")
           print(json.dumps({key: result.get(key) for key in required}, indent=2))
           PY
       - name: Upload real-package smoke report
