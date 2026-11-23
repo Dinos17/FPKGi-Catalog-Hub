@@ -238,8 +238,12 @@ def _insert_field(metadata: dict[str, Any], field: str, value: str) -> dict[str,
     updated: dict[str, Any] = {}
     inserted = False
     for key, existing in metadata.items():
+        if key == field:
+            updated[key] = value
+            inserted = True
+            continue
         updated[key] = existing
-        if field == "version" and key == "region":
+        if field == "version" and key == "region" and not inserted:
             updated[field] = value
             inserted = True
     if not inserted:
