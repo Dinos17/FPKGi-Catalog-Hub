@@ -12,9 +12,10 @@ import os
 import re
 import sys
 import time
+import uuid
 from pathlib import PurePosixPath
 from typing import Any
-from urllib.parse import urlparse, urljoin, unquote
+from urllib.parse import urlparse, urljoin, unquote, quote
 
 import requests
 
@@ -58,12 +59,14 @@ def _mocha_storage_url_allowed(url: str) -> bool:
 
 
 def _request_json(session: requests.Session, method: str, path: str,
-                  api_key: str, body: dict[str, Any] | None = None) -> dict[str, Any]:
+                  api_key: str, body: dict[str, Any] | None = None,
+                  params: dict[str, str] | None = None) -> dict[str, Any]:
     headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
     if body is not None:
         headers["Content-Type"] = "application/json"
     response = session.request(method, API_BASE + path, headers=headers,
-                               json=body, timeout=TIMEOUT, allow_redirects=False)
+                               json=body, params=params, timeout=TIMEOUT,
+                               allow_redirects=False)
     try:
         if response.status_code < 200 or response.status_code >= 300:
             detail = ""
@@ -163,6 +166,68 @@ def _put_part(session: requests.Session, url: str, data: bytes, part_number: int
         response.close()
 
 
+def _find_staged_file(session: requests.Session, api_key: str, remote_path: str,
+                      staging_name: str, total_size: int) -> str:
+    """Find the uniquely named staged object after an ambiguous completion."""
+    cursor = None
+    matches: list[dict[str, Any]] = []
+    for _ in range(100):
+        params = {"path": remote_path, "limit": "100", "q": staging_name}
+        if cursor:
+            params["cursor"] = cursor
+        payload = _request_json(session, "GET", "/files", api_key, params=params)
+        files = payload.get("files")
+        if not isinstance(files, list):
+            raise UploadError("Mocha file inventory response is malformed")
+        for item in files:
+            if not isinstance(item, dict):
+                continue
+            names = (item.get("original_name"), item.get("file_name"))
+            if (staging_name in names and item.get("path") == remote_path
+                    and item.get("size") == total_size
+                    and isinstance(item.get("id"), str)):
+                matches.append(item)
+        if payload.get("hasMore") is not True:
+            break
+        cursor = payload.get("nextCursor")
+        if not isinstance(cursor, str) or not cursor:
+            raise UploadError("Mocha inventory pagination is inconsistent")
+    else:
+        raise UploadError("Mocha inventory exceeded the pagination safety limit")
+    if len(matches) != 1:
+        raise UploadError(
+            f"Could not uniquely identify staged upload in Mocha (found {len(matches)} matches)"
+        )
+    return matches[0]["id"]
+
+
+def _rename_staged_file(session: requests.Session, api_key: str, file_id: str,
+                        final_name: str, remote_path: str, staging_name: str,
+                        total_size: int) -> None:
+    """Rename by immutable file ID; resolve a lost PATCH response by inventory."""
+    try:
+        _request_json(session, "PATCH", "/files/" + quote(file_id, safe=""), api_key,
+                      {"originalName": final_name})
+    except Exception as exc:
+        try:
+            payload = _request_json(session, "GET", "/files", api_key,
+                                    params={"path": remote_path, "limit": "100", "q": final_name})
+            files = payload.get("files")
+            if not isinstance(files, list):
+                raise UploadError("Mocha file inventory response is malformed")
+            if any(isinstance(item, dict) and item.get("id") == file_id
+                   and item.get("original_name") == final_name
+                   and item.get("size") == total_size
+                   for item in files):
+                return
+        except Exception:
+            pass
+        raise UploadError(
+            "Mocha file rename outcome is unknown; the staged object is retained. "
+            "Do not upload another copy until its file ID is checked."
+        ) from exc
+
+
 def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
                       session: requests.Session | None = None) -> dict[str, Any]:
     if not _source_host_allowed(source_url):
@@ -182,18 +247,21 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
     if total_size < 0x100 or len(header) != 0x100 or header[:4] != bytes.fromhex("7f434e54"):
         raise UploadError("Source is not a complete PS4 PKG header")
 
+    staging_name = f"fpkgi-upload-{uuid.uuid4().hex}.pkg"
     upload_id = key = node_id = None
-    original_name = filename
+    original_name = staging_name
     completion_started = False
     try:
         init = _request_json(client, "POST", "/files/multipart/init", api_key, {
-            "originalName": filename,
+            "originalName": staging_name,
             "size": total_size,
             "mimeType": "application/octet-stream",
             "path": remote_path,
         })
         upload_id, key, node_id = init.get("uploadId"), init.get("key"), init.get("nodeId")
-        original_name = init.get("originalName") or filename
+        original_name = init.get("originalName") or staging_name
+        if original_name != staging_name:
+            raise UploadError("Mocha changed the unique staging filename unexpectedly")
         part_size = init.get("partSizeBytes")
         if init.get("directPartUpload") is True and type(init.get("directPartSizeBytes")) is int:
             part_size = init["directPartSizeBytes"]
@@ -242,18 +310,22 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
                 "mimeType": "application/octet-stream", "size": total_size,
                 "parts": completed_parts,
             })
-        except Exception as exc:
-            raise UploadError(
-                "Mocha completion outcome is unknown. The current Mocha API exposes no "
-                "upload-session status/idempotency lookup; do not retry this upload blindly."
-            ) from exc
-        file_obj = complete.get("file")
-        file_id = file_obj.get("id") if isinstance(file_obj, dict) else None
-        if not isinstance(file_id, str) or not file_id:
-            raise UploadError(
-                "Mocha completion response omitted the file ID. The upload may have "
-                "committed; do not retry until the destination is checked manually."
+        except Exception:
+            # The unique staging name makes inventory reconciliation specific to this attempt.
+            file_id = _find_staged_file(
+                client, api_key, remote_path, staging_name, total_size
             )
+        else:
+            file_obj = complete.get("file")
+            file_id = file_obj.get("id") if isinstance(file_obj, dict) else None
+            if not isinstance(file_id, str) or not file_id:
+                file_id = _find_staged_file(
+                    client, api_key, remote_path, staging_name, total_size
+                )
+
+        _rename_staged_file(
+            client, api_key, file_id, filename, remote_path, staging_name, total_size
+        )
         return {"file_id": file_id, "filename": filename, "size": total_size,
                 "remote_path": remote_path, "parts": part_count}
     except Exception as original_error:
