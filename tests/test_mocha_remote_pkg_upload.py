@@ -217,6 +217,7 @@ def test_remote_pkg_upload_reconciles_lost_completion_without_retry(monkeypatch)
             return []
         return [{
             "id": "committed-file-1",
+            "uploadId": "u",
             "original_name": "game.pkg",
             "file_name": "game.pkg",
             "size": len(source),
