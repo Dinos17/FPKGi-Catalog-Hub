@@ -13,13 +13,17 @@ CONTENT_ID = "UP9000-PPSA01615_00-EXAMPLE000000000"
 
 
 class FakeReader:
-    def __init__(self, data):
+    def __init__(self, data, *, discover_size_on_first_read=False):
         self.data = data
-        self.total_size = len(data)
+        self.total_size = None if discover_size_on_first_read else len(data)
+        self.discover_size_on_first_read = discover_size_on_first_read
         self.reads = []
 
     def read(self, start, length):
         self.reads.append((start, length))
+        if self.discover_size_on_first_read:
+            self.total_size = len(self.data)
+            self.discover_size_on_first_read = False
         if start < 0 or length <= 0 or start + length > len(self.data):
             raise pkg.MetadataError("range outside synthetic package")
         return self.data[start:start + length]
@@ -188,3 +192,13 @@ def test_rejects_multiple_param_sfo_entries():
             cnt_offset + table_offset + 3 * probe.ENTRY_SIZE] = first_sfo
     with pytest.raises(pkg.MetadataError, match="multiple PARAM.SFO"):
         probe.probe_ps5_reader(FakeReader(bytes(damaged)))
+
+
+def test_discovers_total_size_from_first_range_response():
+    package, _ = make_ps5_package()
+    reader = FakeReader(package, discover_size_on_first_read=True)
+    result = probe.probe_ps5_reader(
+        reader, expected_title_id="PPSA01615", expected_size=len(package)
+    )
+    assert result["status"] == "extracted"
+    assert result["package_size"] == len(package)
