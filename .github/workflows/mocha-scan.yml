@@ -1,7 +1,12 @@
-name: Mocha Scan and Duplicate Review (Read-Only)
+name: Mocha Scan, Duplicate Review, and Verified PKG Metadata Repair
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/mocha-scan.yml"
   schedule:
     - cron: '0 */6 * * *'
 
@@ -985,6 +990,7 @@ jobs:
           python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
           python -m pytest -q
           python tools/validate_catalogs.py
+          python tools/duplicate_check.py
 
       - name: Create and automatically merge the catalog pull request
         if: steps.apply.outputs.applied_count != '0'
@@ -1017,3 +1023,144 @@ jobs:
             --body "Automated registration of exact, unique Mocha metadata matches. The workflow validated the current scan/catalog snapshot, saved decisions and rejections, ran the repository test suite, and validated all catalog schemas. No ambiguous or conflicting candidates are included. Binary integrity is not verified.")"
           echo "Created $pr_url"
           gh pr merge "$pr_url" --squash --delete-branch
+
+  auto-repair-verified-pkg-metadata:
+    if: needs['auto-register-safe-replacements'].result == 'success' && github.ref == 'refs/heads/main'
+    needs: auto-register-safe-replacements
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      actions: read
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Check out the latest main catalog
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Install repair dependencies
+        run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
+
+      - name: Download this scan's validated Mocha inventory
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
+        with:
+          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mocha-scan-reports
+
+      - name: Apply only identity-verified PKG metadata repairs
+        id: repair
+        env:
+          MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
+          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-reports/mocha-scan-report.json
+          REPAIR_REPORT: ${{ runner.temp }}/pkg-metadata-repair-report.json
+        run: |
+          set -euo pipefail
+          python tools/pkg_metadata_repair.py \
+            --scan-report "$SCAN_REPORT" \
+            --catalog-root . \
+            --apply \
+            --output "$REPAIR_REPORT"
+          python - <<'PY'
+          import json
+          import os
+          with open(os.environ["REPAIR_REPORT"], encoding="utf-8") as stream:
+              report = json.load(stream)
+          if report.get("scanner") != "pkg-metadata-repair":
+              raise SystemExit("Unexpected PKG metadata repair report")
+          applied = report.get("applied_count")
+          proposed = report.get("proposed_count")
+          if type(applied) is not int or applied < 0 or type(proposed) is not int or proposed != applied:
+              raise SystemExit("Applied PKG metadata fields do not match the verified proposal count")
+          if report.get("catalog_files_modified") is not (applied > 0):
+              raise SystemExit("PKG metadata repair modification flag is inconsistent")
+          with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
+              output.write(f"applied_count={applied}\n")
+              output.write(f"proposed_count={proposed}\n")
+          print(json.dumps({
+              "targets_found": report.get("targets_found"),
+              "proposed_count": proposed,
+              "applied_count": applied,
+              "catalog_files_modified": report.get("catalog_files_modified"),
+              "results": [
+                  {
+                      "catalog": row.get("catalog"),
+                      "source": row.get("source"),
+                      "status": row.get("status"),
+                      "reason": row.get("reason"),
+                      "proposed_updates": row.get("proposed_updates"),
+                  }
+                  for row in report.get("results", [])
+              ],
+          }, indent=2))
+          PY
+
+      - name: Upload PKG metadata repair report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: pkg-metadata-repair-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/pkg-metadata-repair-report.json
+          if-no-files-found: warn
+          retention-days: 3
+
+      - name: Stop when no verified metadata updates exist
+        if: steps.repair.outputs.applied_count == '0'
+        run: echo "No identity-verified PKG metadata updates were safe to apply."
+
+      - name: Validate tests and catalog schemas
+        if: steps.repair.outputs.applied_count != '0'
+        run: |
+          set -euo pipefail
+          python -m pytest -q
+          python tools/validate_catalogs.py
+
+      - name: Create and automatically merge the verified metadata repair PR
+        if: steps.repair.outputs.applied_count != '0'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          branch="pkg-metadata-repair-${GITHUB_SHA}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch origin "$branch"
+            if ! git diff --quiet FETCH_HEAD --; then
+              echo "Existing metadata repair branch differs from the currently verified workspace; refusing to merge it." >&2
+              exit 1
+            fi
+            existing_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
+            if [ -z "$existing_pr" ]; then
+              echo "Automatic metadata repair branch exists without an open PR; refusing to overwrite it." >&2
+              exit 1
+            fi
+            gh pr merge "$existing_pr" --squash --delete-branch
+            exit 0
+          fi
+          git switch --create "$branch"
+          git add ps4/dlc.json ps5/ps5-apps.json
+          if git diff --cached --quiet; then
+            echo "No catalog changes remain after validation."
+            exit 0
+          fi
+          git commit -m "Automatically repair verified PKG metadata"
+          git fetch origin main:refs/remotes/origin/main
+          git rebase origin/main
+          if git diff --quiet origin/main...HEAD -- ps4/dlc.json ps5/ps5-apps.json; then
+            echo "The verified metadata changes are already present on main."
+            exit 0
+          fi
+          git push origin "$branch"
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" \
+            --title "Automatically repair verified PKG metadata" \
+            --body "Automated PKG metadata repair. Only missing fields extracted from real PKG PARAM.SFO were applied after exact title_id and byte-size checks. Ambiguous Mocha filename matches, inaccessible sources, unsupported PS5 packages, identity mismatches, and unverifiable region values were not changed. The workflow ran the repository tests and catalog schema validation. Binary integrity is not verified.")"
+          echo "Created $pr_url"
+          gh pr merge "$pr_url" --squash --delete-branch
+

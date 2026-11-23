@@ -4,9 +4,11 @@ on:
   pull_request:
     paths:
       - "tools/pkg_remote_metadata.py"
+      - "tools/pkg_metadata_repair.py"
       - "tools/mocha_remote_pkg_upload.py"
       - "tests/test_mocha_remote_pkg_upload.py"
       - "tests/test_pkg_remote_metadata.py"
+      - "tests/test_pkg_metadata_repair.py"
       - "requirements.txt"
       - ".github/workflows/pkg-metadata-tests.yml"
   push:
