@@ -93,7 +93,7 @@ def test_local_upload_streams_parts_and_renames_only_after_completion(tmp_path, 
 
     result = local.upload_local_pkg(
         path,
-        api_key="test-key",
+        api_key="",
         remote_path="/PS4/Games",
         expected_size=size,
         expected_signature=signature,
@@ -123,7 +123,7 @@ def test_local_upload_aborts_if_source_changes_before_upload(tmp_path, monkeypat
     with pytest.raises(remote.UploadError, match="changed before upload"):
         local.upload_local_pkg(
             path,
-            api_key="test-key",
+            api_key="",
             remote_path="/PS4/Games",
             expected_size=size,
             expected_signature=signature,
