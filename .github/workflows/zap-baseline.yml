@@ -1,0 +1,31 @@
+name: ZAP Website Security Baseline
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "23 4 * * 1"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zap-review-site-baseline
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    name: Passive DAST baseline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Scan public review page
+        uses: zaproxy/action-baseline@v0.15.0
+        with:
+          target: "https://dinos17.github.io/FPKGi-Catalog-Hub/review.html"
+          cmd_options: "-m 5"
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: zap-review-site-baseline
