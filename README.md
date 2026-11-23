@@ -461,9 +461,11 @@ The catalog key is normally the package URL. Mocha-backed entries are the explic
 
 Different versions, regions, or packages can coexist when they have different package URLs or, for Mocha entries, different file IDs. Mocha file IDs must be unique across all catalog files.
 
-The duplicate-check workflow scans the individual catalog files for repeated package URLs and also reports possible same-title/version duplicates for manual review.
+The duplicate-check workflow scans all generated catalog files for URL-normalization collisions and duplicate package identities. Identity matching uses platform, catalog category, title ID, region, version, and positive package size; DLC identities also include the DLC name so separate add-ons are not collapsed.
 
-The duplicate-check workflow scans all generated catalog files. A package URL should appear in only one category catalog unless it is an approved mirror.
+URL normalization decodes only percent-encoded unreserved characters. Reserved path delimiters remain encoded because decoding them can change the resource being addressed. Incomplete or invalid identity metadata is reported separately and excluded from identity matching; a report containing such records is not a fully verified catalog.
+
+Archive.org and Hugging Face records with matching package identity and exact filename are reported only as possible mirrors. They are not approved or verified mirrors, and the checker does not compare binary contents. A package URL should otherwise appear only once across the generated catalog files.
 
 ---
 
