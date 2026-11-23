@@ -34,6 +34,33 @@ jobs:
       - name: Extract incomplete-record metadata using bounded HTTP ranges
         run: |
           python tools/pkg_remote_metadata.py --catalog-root . --output "$RUNNER_TEMP/pkg-metadata-report.json"
+      - name: Validate PS4 parser against a real Mocha package (bounded ranges only)
+        run: |
+          python tools/pkg_remote_metadata.py \
+            --source "d5ac3913-802b-4d68-9803-8f5c07c7640e" \
+            --platform PS4 \
+            --output "$RUNNER_TEMP/real-ps4-pkg-smoke.json"
+          python - <<'PY'
+          import json, os
+          path = os.path.join(os.environ["RUNNER_TEMP"], "real-ps4-pkg-smoke.json")
+          with open(path, encoding="utf-8") as stream:
+              report = json.load(stream)
+          result = report["results"][0]
+          if result.get("status") != "extracted":
+              raise SystemExit(f"Real PS4 PKG extraction failed: {result.get('reason', result.get('status'))}")
+          required = ("title_id", "name", "version", "package_size")
+          missing = [key for key in required if not result.get(key)]
+          if missing:
+              raise SystemExit(f"Real PS4 PKG extraction omitted required fields: {missing}")
+          print(json.dumps({key: result.get(key) for key in required}, indent=2))
+          PY
+      - name: Upload real-package smoke report
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: real-ps4-pkg-smoke-report
+          path: ${{ runner.temp }}/real-ps4-pkg-smoke.json
+          if-no-files-found: error
+          retention-days: 3
       - name: Upload read-only extraction report
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
