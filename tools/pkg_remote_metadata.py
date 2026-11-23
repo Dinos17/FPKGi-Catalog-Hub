@@ -63,11 +63,7 @@ def _safe_redirect_get(session: requests.Session, url: str, *, headers: dict[str
         if not _host_allowed(current, extra_hosts):
             raise MetadataError("URL or redirect host is not allowlisted")
         try:
-            prepared = session.prepare_request(requests.Request("GET", current, headers=headers))
-            if not _host_allowed(prepared.url, extra_hosts):
-                raise MetadataError("Prepared request host is not allowlisted")
-            settings = session.merge_environment_settings(prepared.url, {}, True, None, None)
-            response = session.get(prepared.url, headers=headers, timeout=TIMEOUT,
+            response = session.get(current, headers=headers, timeout=TIMEOUT,
                                    allow_redirects=False, stream=True)
         except requests.RequestException as exc:
             raise MetadataError(f"HTTP request failed ({type(exc).__name__})") from exc
@@ -192,7 +188,7 @@ def parse_sfo(data: bytes) -> dict[str, Any]:
         )
         key_start = key_off + key_rel
         value_start = data_off + value_rel
-        if key_start >= data_off or value_start > len(data) or value_len > len(data) - value_start:
+        if key_start >= data_off or value_start > len(data) or value_len > max_len or value_len > len(data) - value_start:
             raise MetadataError("PARAM.SFO entry points outside its tables")
         key_end = data.find(b"\0", key_start, data_off)
         if key_end < 0:
