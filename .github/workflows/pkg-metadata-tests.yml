@@ -47,14 +47,19 @@ jobs:
           path = os.path.join(os.environ["RUNNER_TEMP"], "real-ps4-pkg-smoke.json")
           with open(path, encoding="utf-8") as stream:
               report = json.load(stream)
-          result = report["results"][0]
+          file_id = "d5ac3913-802b-4d68-9803-8f5c07c7640e"
+          results = report.get("results")
+          if not isinstance(results, list) or len(results) != 1:
+              raise SystemExit("Direct-source smoke must return exactly one result")
+          result = results[0]
+          if result.get("catalog") != "direct-source" or result.get("source") != file_id:
+              raise SystemExit("Smoke report does not describe the requested Mocha file ID")
           if result.get("status") != "extracted":
               raise SystemExit(f"Real PS4 PKG extraction failed: {result.get('reason', result.get('status'))}")
           required = ("title_id", "name", "version", "package_size")
           missing = [key for key in required if not result.get(key)]
           if missing:
               raise SystemExit(f"Real PS4 PKG extraction omitted required fields: {missing}")
-          file_id = "d5ac3913-802b-4d68-9803-8f5c07c7640e"
           with open("ps4/games.json", encoding="utf-8") as stream:
               catalog = json.load(stream)["DATA"]
           expected = catalog.get(file_id)
@@ -73,6 +78,7 @@ jobs:
           print(json.dumps({key: result.get(key) for key in required}, indent=2))
           PY
       - name: Upload real-package smoke report
+        if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: real-ps4-pkg-smoke-report
