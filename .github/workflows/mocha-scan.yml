@@ -376,7 +376,7 @@ jobs:
       - name: Check out the dashboard reports branch
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: akirabox-reports
+          ref: Mocha-reports
           path: reports-branch
           fetch-depth: 0
       - name: Check out the source commit for publisher helpers
@@ -416,8 +416,8 @@ jobs:
           # Fetch and publish against the latest reports-branch tip. If another
           # workflow advances the branch, retry from that tip without force-pushing.
           for attempt in 1 2 3; do
-            if ! git fetch origin akirabox-reports; then
-              echo "Could not fetch akirabox-reports on attempt $attempt/3; retrying without reset or push." >&2
+            if ! git fetch origin Mocha-reports; then
+              echo "Could not fetch Mocha-reports on attempt $attempt/3; retrying without reset or push." >&2
               continue
             fi
             git reset --hard FETCH_HEAD
@@ -581,7 +581,7 @@ jobs:
                       or raw_scan.get('scan_observed_at') != summary['scan_observed_at']):
                   raise ValueError('raw scan/comparison snapshot does not match the published summary')
 
-              # Rejection records are already sanitized on akirabox-reports.
+              # Rejection records are already sanitized on Mocha-reports.
               # Require the source file and validate it; never silently forget prior decisions.
               rejection_path = Path('reports/akirabox-rejections.json')
               rejection_report = json.loads(rejection_path.read_text(encoding='utf-8'))
@@ -903,7 +903,7 @@ jobs:
               echo "main advanced after validation; refusing to publish a report based on an older catalog commit."
               exit 0
             fi
-            if git push origin HEAD:akirabox-reports; then
+            if git push origin HEAD:Mocha-reports; then
               exit 0
             fi
 
@@ -931,7 +931,7 @@ jobs:
       - name: Check out the matching reports snapshot
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: akirabox-reports
+          ref: Mocha-reports
           path: reports-branch
           fetch-depth: 1
 
