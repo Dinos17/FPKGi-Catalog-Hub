@@ -41,8 +41,15 @@ def normalize_package_url(url):
 
 
 def report_value(value):
+    """Sanitize untrusted text for use inside Markdown code spans."""
     text = html.escape(str(value), quote=True)
-    return re.sub(r"(?<!&)#", "&#35;", text.replace("\r", " ").replace("\n", " ").replace("`", "&#96;"))
+    return text.replace("\r", " ").replace("\n", " ").replace("`", "&#96;")
+
+
+def report_inline(value):
+    """Escape untrusted text for normal Markdown prose, not code spans."""
+    text = html.escape(str(value), quote=True).replace("\r", " ").replace("\n", " ")
+    return re.sub(r"([\\`*_{}\[\]()#+.!|>~-])", r"\\\1", text)
 
 
 def catalog_category(filename):
@@ -157,11 +164,11 @@ def classify_identity_duplicates(by_identity):
 def format_identity(identity):
     platform, category, title_id, region, version, size, *package_name = identity
     result = (
-        f"{report_value(platform)} {report_value(category)} {report_value(title_id)} "
-        f"{report_value(region)} v{report_value(version)} ({size} bytes)"
+        f"{report_inline(platform)} {report_inline(category)} {report_inline(title_id)} "
+        f"{report_inline(region)} v{report_inline(version)} ({size} bytes)"
     )
     if package_name:
-        result += f" — {report_value(package_name[0])}"
+        result += f" — {report_inline(package_name[0])}"
     return result
 
 
