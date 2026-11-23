@@ -198,7 +198,7 @@ def parse_sfo(data: bytes) -> dict[str, Any]:
         if fmt == 0x0404 and value_len == 4:
             value: Any = struct.unpack_from("<I", raw)[0]
         elif fmt == 0x0204:
-            value = raw.split(b"\\0", 1)[0].decode("utf-8", errors="strict")
+            value = raw.split(b"\0", 1)[0].decode("utf-8", errors="strict")
         else:
             raise MetadataError(f"Unsupported PARAM.SFO value format 0x{fmt:04X}")
         result[key] = value
