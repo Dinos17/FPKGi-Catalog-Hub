@@ -142,7 +142,7 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
             return {}
         raise AssertionError(path)
 
-    def fake_put(_session, url, data, part_number):
+    def fake_put(_session, url, data, part_number, overall_deadline=None):
         put_calls.append((url, data, part_number))
         return f"etag-{part_number}"
 
