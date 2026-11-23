@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-23T21:11:17.125051Z",
-  "catalog_commit": "26ca74d94d499cfbc4fe9f60e096efb9fdad03d7",
+  "scan_observed_at": "2026-11-23T23:36:42.130767Z",
+  "catalog_commit": "471795a0b6df65e41f066f4b4a3a0f053232b3f5",
   "candidate_count": 0,
   "candidates": [],
   "catalog_write_performed": false,
