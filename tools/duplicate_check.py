@@ -1,11 +1,14 @@
+import html
 import json
 import os
+import re
 from collections import defaultdict
 from pathlib import Path
-from urllib.parse import unquote, urlsplit
+from urllib.parse import urlsplit
 
 ROOT = Path(__file__).resolve().parent.parent
 IDENTITY_FIELDS = ("title_id", "region", "version", "size")
+UNRESERVED = frozenset("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789-._~")
 
 
 def load_catalogs():
@@ -28,13 +31,18 @@ def load_catalogs():
 
 
 def normalize_package_url(url):
-    """Normalize URL encoding in the path without changing query semantics."""
+    """Normalize unreserved percent escapes; preserve reserved delimiters."""
     parts = urlsplit(str(url))
-    return parts._replace(
-        scheme=parts.scheme.lower(),
-        netloc=parts.netloc.lower(),
-        path=unquote(parts.path),
-    ).geturl()
+    def normalize_escape(match):
+        char = chr(int(match.group(1), 16))
+        return char if char in UNRESERVED else "%" + match.group(1).upper()
+    path = re.sub(r"%([0-9a-fA-F]{2})", normalize_escape, parts.path)
+    return parts._replace(scheme=parts.scheme.lower(), netloc=parts.netloc.lower(), path=path).geturl()
+
+
+def report_value(value):
+    text = html.escape(str(value), quote=True)
+    return text.replace("\r", " ").replace("\n", " ").replace("`", "&#96;")
 
 
 def catalog_category(filename):
@@ -52,45 +60,48 @@ def valid_package_size(value):
         return None
     if isinstance(value, int):
         size = value
-    elif isinstance(value, str) and value.strip().isdigit():
+    elif isinstance(value, str) and re.fullmatch(r"[0-9]+", value.strip()):
         size = int(value.strip())
-    elif isinstance(value, float) and value.is_integer():
-        size = int(value)
     else:
         return None
-    return size if size >= 0 else None
+    return size if size > 0 else None
 
 
 def package_identity(filename, metadata):
-    """Build a conservative identity; incomplete metadata is never guessed."""
     if not isinstance(metadata, dict):
         return None
     values = []
     for field in IDENTITY_FIELDS:
         value = metadata.get(field)
-        if value is None or (isinstance(value, str) and not value.strip()):
-            return None
-        if field == "size":
+        if field != "size":
+            if not isinstance(value, str) or not value.strip():
+                return None
+            value = value.strip().upper()
+        else:
             value = valid_package_size(value)
             if value is None:
                 return None
-        else:
-            value = str(value).strip().upper()
         values.append(value)
-    path = Path(filename)
-    return (path.parent.name.upper(), catalog_category(filename), *values)
+    category = catalog_category(filename)
+    identity = (Path(filename).parent.name.upper(), category, *values)
+    if category == "dlc":
+        name = metadata.get("name")
+        if not isinstance(name, str) or not name.strip():
+            return None
+        identity += (name.strip().casefold(),)
+    return identity
 
 
-def incomplete_identity_fields(metadata):
+def incomplete_identity_fields(filename, metadata):
     if not isinstance(metadata, dict):
         return ["metadata object"]
-    missing = []
-    for field in IDENTITY_FIELDS:
-        value = metadata.get(field)
-        if value is None or (isinstance(value, str) and not value.strip()):
-            missing.append(field)
-        elif field == "size" and valid_package_size(value) is None:
-            missing.append(field)
+    missing = [field for field in ("title_id", "region", "version") if not isinstance(metadata.get(field), str) or not metadata[field].strip()]
+    if valid_package_size(metadata.get("size")) is None:
+        missing.append("size")
+    if catalog_category(filename) == "dlc":
+        name = metadata.get("name")
+        if not isinstance(name, str) or not name.strip():
+            missing.append("name")
     return missing
 
 
@@ -111,9 +122,9 @@ def is_expected_mirror(url_a, url_b):
     if not ((archive_a and hf_b) or (archive_b and hf_a)):
         return False
 
-    filename_a = unquote(a.path).rsplit("/", 1)[-1]
-    filename_b = unquote(b.path).rsplit("/", 1)[-1]
-    return bool(filename_a) and filename_a.casefold() == filename_b.casefold()
+    filename_a = a.path.rsplit("/", 1)[-1]
+    filename_b = b.path.rsplit("/", 1)[-1]
+    return bool(filename_a) and filename_a == filename_b
 
 
 def classify_identity_duplicates(by_identity):
@@ -174,9 +185,9 @@ def build_report(
     if url_collisions:
         lines.extend(["#### ❌ URL normalization collisions", ""])
         for url, records in sorted(url_collisions.items()):
-            lines.append(f"- `{url}`")
+            lines.append(f"- `{report_value(url)}`")
             for filename in sorted(records):
-                lines.append(f"  - Found in: {filename}")
+                lines.append(f"  - Found in: {report_value(filename)}")
         lines.append("")
 
     if possible_mirrors:
@@ -187,7 +198,7 @@ def build_report(
         for identity, records in sorted(possible_mirrors.items()):
             lines.append(f"- **{format_identity(identity)}**")
             for filename, url in records:
-                lines.append(f"  - `{filename}` — {url}")
+                lines.append(f"  - `{report_value(filename)}` — `{report_value(url)}`")
         lines.extend([
             "",
             "These pairs share package metadata and filename, but the checker has not compared their binary contents.",
@@ -244,7 +255,7 @@ def check_duplicates():
             identity = package_identity(filename, metadata)
             if identity is None:
                 incomplete_records.append(
-                    (filename, pkg_url, incomplete_identity_fields(metadata))
+                    (filename, pkg_url, incomplete_identity_fields(filename, metadata))
                 )
                 continue
             by_identity[identity].append((filename, pkg_url))
