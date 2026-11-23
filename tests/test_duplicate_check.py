@@ -97,7 +97,7 @@ def test_percent_encoded_path_variants_are_detected_as_same_url(
     with pytest.raises(SystemExit):
         duplicate_check.check_duplicates()
     output = capsys.readouterr().out
-    assert "**Exact duplicate package URLs (normalized):** 1" in output
+    assert "**URL normalization collisions:** 1" in output
 
 
 def test_archive_and_huggingface_pair_is_reported_as_unverified(
