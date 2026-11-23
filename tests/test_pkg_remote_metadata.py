@@ -180,3 +180,28 @@ def test_catalog_targets_finds_only_incomplete_identity_rows(tmp_path):
     targets = pkg.catalog_targets(tmp_path)
     assert len(targets) == 1
     assert targets[0]["missing"] == ["version"]
+
+
+def test_main_direct_source_mode_inspects_one_source_and_writes_report(monkeypatch, tmp_path):
+    import json
+
+    captured = {}
+    def fake_inspect(target):
+        captured.update(target)
+        return {"status": "extracted", "title_id": "CUSA04513"}
+
+    monkeypatch.setattr(pkg, "inspect_target", fake_inspect)
+    output = tmp_path / "direct-source.json"
+    monkeypatch.setattr(sys, "argv", [
+        "pkg_remote_metadata.py", "--source",
+        "d5ac3913-802b-4d68-9803-8f5c07c7640e",
+        "--output", str(output),
+    ])
+
+    assert pkg.main() == 0
+    report = json.loads(output.read_text(encoding="utf-8"))
+    assert report["read_only"] is True
+    assert report["targets_found"] == 1
+    assert captured["source"] == "d5ac3913-802b-4d68-9803-8f5c07c7640e"
+    assert captured["platform"] == "PS4"
+    assert report["results"][0]["title_id"] == "CUSA04513"
