@@ -365,3 +365,29 @@ test("handler rejects Mocha redirects and never returns a redirected URL", async
   assert.equal(response.status, 502);
   assert.deepEqual(await response.json(), { error: "resolver_upstream_unavailable" });
 });
+
+
+test("reports only safe configuration diagnostics when resolver secrets are missing", async (t) => {
+  const originalNetlify = globalThis.Netlify;
+  const originalError = console.error;
+  let logged;
+  t.after(() => {
+    globalThis.Netlify = originalNetlify;
+    console.error = originalError;
+  });
+  globalThis.Netlify = { env: { get: (name) => ({
+    MOCHA_API_KEY: "   ",
+    MOCHA_STORAGE_HOSTS: "storage.example",
+  })[name] } };
+  console.error = (...args) => { logged = args; };
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=approved-file-id",
+  ));
+  assert.equal(response.status, 503);
+  assert.deepEqual(await response.json(), { error: "resolver_not_configured" });
+  assert.deepEqual(logged, [
+    "mocha_resolver_not_configured",
+    { hasApiKey: false, allowedStorageHostCount: 1 },
+  ]);
+});

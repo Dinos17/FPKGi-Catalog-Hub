@@ -33,9 +33,13 @@ export default async (request) => {
     return Response.json({ error: "invalid_file_id" }, { status: 400 });
   }
 
-  const apiKey = Netlify.env.get("MOCHA_API_KEY");
+  const apiKey = String(Netlify.env.get("MOCHA_API_KEY") ?? "").trim();
   const allowedHosts = getAllowedStorageHosts(Netlify.env.get("MOCHA_STORAGE_HOSTS"));
   if (!apiKey || allowedHosts.size === 0) {
+    console.error("mocha_resolver_not_configured", {
+      hasApiKey: Boolean(apiKey),
+      allowedStorageHostCount: allowedHosts.size,
+    });
     return Response.json({ error: "resolver_not_configured" }, { status: 503 });
   }
 

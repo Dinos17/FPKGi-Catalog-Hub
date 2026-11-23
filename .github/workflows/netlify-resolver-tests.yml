@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - feat/netlify-mocha-resolver
+      - main
   pull_request:
     branches:
       - main
@@ -25,3 +26,10 @@ jobs:
         with:
           node-version: 22
       - run: npm test
+      - name: Probe production resolver without exposing response content
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        continue-on-error: true
+        run: |
+          curl --silent --show-error --max-time 15 --max-redirs 0 \
+            -o /dev/null -w "Production resolver HTTP %{http_code}\\n" \
+            "https://fpkgi-mocha-resolver.netlify.app/presigned?fileId=d5ac3913-802b-4d68-9803-8f5c07c7640e"
