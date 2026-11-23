@@ -26,9 +26,6 @@ except ImportError:  # Running as a script from the tools directory.
 
 MOCHA_FILE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
 VERSION_RE = re.compile(r"^\d{1,2}\.\d{1,2}$")
-ALLOWED_REGIONS = {"USA", "EUR", "JAP", "ASIA"}
-
-
 class RepairError(RuntimeError):
     pass
 
@@ -143,11 +140,7 @@ def _safe_updates(target: dict[str, Any], extracted: dict[str, Any]) -> tuple[di
             reasons.append("PKG did not provide a valid APP_VER")
 
     if "region" in missing:
-        region = extracted.get("region")
-        if isinstance(region, str) and region.strip().upper() in ALLOWED_REGIONS:
-            updates["region"] = region.strip().upper()
-        else:
-            reasons.append("Region is not reliably available in the extracted PKG metadata")
+        reasons.append("Region is not reliably exposed by the supported PKG parser; no region inference is attempted")
 
     return updates, reasons
 
