@@ -132,16 +132,20 @@ def resolve_mocha_url(file_id: str, *, session: requests.Session | None = None) 
     client = session or requests.Session()
     try:
         response = client.get(RESOLVER_URL, params={"fileId": file_id},
-                              timeout=TIMEOUT, allow_redirects=False,
+                              timeout=TIMEOUT, allow_redirects=False, stream=True,
                               headers={"Accept": "application/json"})
     except requests.RequestException as exc:
         raise MetadataError(f"Mocha resolver request failed ({type(exc).__name__})") from exc
     try:
         if response.status_code != 200:
             raise MetadataError(f"Mocha resolver returned HTTP {response.status_code}")
-        if len(response.content) > 16 * 1024:
-            raise MetadataError("Mocha resolver response is too large")
-        payload = response.json()
+        body = bytearray()
+        for chunk in response.iter_content(chunk_size=4096):
+            if chunk:
+                body.extend(chunk)
+                if len(body) > 16 * 1024:
+                    raise MetadataError("Mocha resolver response is too large")
+        payload = json.loads(body)
     except (ValueError, requests.RequestException) as exc:
         raise MetadataError("Mocha resolver returned invalid JSON") from exc
     finally:
@@ -188,7 +192,7 @@ def parse_sfo(data: bytes) -> dict[str, Any]:
         )
         key_start = key_off + key_rel
         value_start = data_off + value_rel
-        if key_start >= data_off or value_start > len(data) or value_len > max_len or value_len > len(data) - value_start:
+        if key_start < key_off or key_start >= data_off or value_start < data_off or value_start > len(data) or value_len > max_len or value_len > len(data) - value_start:
             raise MetadataError("PARAM.SFO entry points outside its tables")
         key_end = data.find(b"\0", key_start, data_off)
         if key_end < 0:
