@@ -34,7 +34,7 @@ jobs:
         env:
           EVENT_PATH: ${{ github.event_path }}
           REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json
-          REPORT_BRANCH: akirabox-reports
+          REPORT_BRANCH: mocha
         run: |
           set -euo pipefail
           git fetch origin "$REPORT_BRANCH"
@@ -94,7 +94,7 @@ jobs:
 
       - name: Publish decision record
         env:
-          REPORT_BRANCH: akirabox-reports
+          REPORT_BRANCH: mocha
           REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json
         run: |
           set -euo pipefail
