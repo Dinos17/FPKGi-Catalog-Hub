@@ -1,8 +1,8 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-23T20:53:43.963841Z",
-  "catalog_commit": "bf3dd5b7bfbbd967f19ec116e8403344c269d88c",
+  "scan_observed_at": "2026-11-23T21:09:26.573983Z",
+  "catalog_commit": "26ca74d94d499cfbc4fe9f60e096efb9fdad03d7",
   "auto_approved_count": 34,
   "previously_rejected_count": 1,
   "previously_decided_count": 0,
