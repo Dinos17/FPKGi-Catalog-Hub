@@ -6,12 +6,12 @@ on:
     branches:
       - main
     paths:
-      - ".github/workflows/mocha-scan.yml"
+      - ".github/workflows/Mocha-reports-scan.yml"
   schedule:
     - cron: '0 */6 * * *'
 
 concurrency:
-  group: mocha-catalog-scan
+  group: Mocha-reports-catalog-scan
   queue: max
 
 permissions:
@@ -64,26 +64,26 @@ jobs:
           python-version: "3.12"
 
       - name: Create isolated Mocha runtime
-        run: python -m venv "$RUNNER_TEMP/mocha-venv"
+        run: python -m venv "$RUNNER_TEMP/Mocha-reports-venv"
 
       - name: Install hash-verified Mocha dependencies
         run: |
-          "$RUNNER_TEMP/mocha-venv/bin/python" -m pip install \
+          "$RUNNER_TEMP/Mocha-reports-venv/bin/python" -m pip install \
             --disable-pip-version-check --require-hashes \
-            -r tools/mocha-requirements.lock
+            -r tools/Mocha-reports-requirements.lock
 
       - name: Scan Mocha folders and file metadata
         env:
           MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
         run: |
-          "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_scanner.py --output "$RUNNER_TEMP/mocha-scan-report.json"
+          "$RUNNER_TEMP/Mocha-reports-venv/bin/python" tools/Mocha-reports_scanner.py --output "$RUNNER_TEMP/Mocha-reports-scan-report.json"
 
       - name: Create sanitized public inventory artifact
         id: public_inventory
         if: always()
         env:
-          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
-          PUBLIC_INVENTORY: ${{ runner.temp }}/mocha-public-inventory.json
+          SCAN_REPORT: ${{ runner.temp }}/Mocha-reports-scan-report.json
+          PUBLIC_INVENTORY: ${{ runner.temp }}/Mocha-reports-public-inventory.json
         run: |
           python - <<'PY'
           import json
@@ -94,7 +94,7 @@ jobs:
               scan = json.loads(source.read_text(encoding='utf-8'))
           except (OSError, json.JSONDecodeError, UnicodeDecodeError) as exc:
               raise SystemExit(f'Cannot create inventory artifact: {exc}')
-          if not isinstance(scan, dict) or scan.get('scanner') != 'mocha' or scan.get('scan_complete') is not True:
+          if not isinstance(scan, dict) or scan.get('scanner') != 'Mocha-reports' or scan.get('scan_complete') is not True:
               raise SystemExit('Refusing to create an artifact from an incomplete scan.')
           files = scan.get('files')
           if not isinstance(files, list) or type(scan.get('file_count')) is not int or scan['file_count'] != len(files):
@@ -126,7 +126,7 @@ jobs:
               and isinstance(entry.get("path"), str)
               and entry["path"].strip("/").casefold() in approved_paths
           }
-          public = {'schema_version':1,'scanner':'mocha','scan_observed_at':scan.get('scan_observed_at'),'file_count':len(public_files),'files':public_files}
+          public = {'schema_version':1,'scanner':'Mocha-reports','scan_observed_at':scan.get('scan_observed_at'),'file_count':len(public_files),'files':public_files}
           if not isinstance(public['scan_observed_at'], str): raise SystemExit('Missing scan timestamp.')
           Path(os.environ['PUBLIC_INVENTORY']).write_text(json.dumps(public, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
@@ -139,24 +139,24 @@ jobs:
         continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
-          name: mocha-file-inventory
-          path: ${{ runner.temp }}/mocha-public-inventory.json
+          name: Mocha-reports-file-inventory
+          path: ${{ runner.temp }}/Mocha-reports-public-inventory.json
           if-no-files-found: error
           retention-days: 1
 
       - name: Compare against catalogs from the same commit
         run: |
-          "$RUNNER_TEMP/mocha-venv/bin/python" tools/mocha_catalog_compare.py \
-            --scan-report "$RUNNER_TEMP/mocha-scan-report.json" \
+          "$RUNNER_TEMP/Mocha-reports-venv/bin/python" tools/Mocha-reports_catalog_compare.py \
+            --scan-report "$RUNNER_TEMP/Mocha-reports-scan-report.json" \
             --catalog-root . \
             --catalog-commit "$GITHUB_SHA" \
-            --output "$RUNNER_TEMP/mocha-comparison-report.json"
+            --output "$RUNNER_TEMP/Mocha-reports-comparison-report.json"
 
       - name: Restrict raw reports to approved catalog folders
         if: always()
         env:
-          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
-          COMPARISON_REPORT: ${{ runner.temp }}/mocha-comparison-report.json
+          SCAN_REPORT: ${{ runner.temp }}/Mocha-reports-scan-report.json
+          COMPARISON_REPORT: ${{ runner.temp }}/Mocha-reports-comparison-report.json
         run: |
           python - <<'PY'
           import json
@@ -230,10 +230,10 @@ jobs:
         continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          name: Mocha-reports-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            ${{ runner.temp }}/mocha-scan-report.json
-            ${{ runner.temp }}/mocha-comparison-report.json
+            ${{ runner.temp }}/Mocha-reports-scan-report.json
+            ${{ runner.temp }}/Mocha-reports-comparison-report.json
           if-no-files-found: warn
           retention-days: 1
 
@@ -241,8 +241,8 @@ jobs:
         id: export
         if: always()
         env:
-          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-report.json
-          COMPARISON_REPORT: ${{ runner.temp }}/mocha-comparison-report.json
+          SCAN_REPORT: ${{ runner.temp }}/Mocha-reports-scan-report.json
+          COMPARISON_REPORT: ${{ runner.temp }}/Mocha-reports-comparison-report.json
           CATALOG_COMMIT: ${{ github.sha }}
           PUBLIC_FILE_COUNT: ${{ steps.public_inventory.outputs.file_count }}
           PUBLIC_FOLDER_COUNT: ${{ steps.public_inventory.outputs.folder_count }}
@@ -280,7 +280,7 @@ jobs:
 
           summary = {
               "schema_version": 1,
-              "scanner": "mocha",
+              "scanner": "Mocha-reports",
               "generated_at": datetime.now(timezone.utc).isoformat(timespec="seconds").replace("+00:00", "Z"),
               "scan_observed_at": scan.get("scan_observed_at"),
               "catalog_commit": os.environ["CATALOG_COMMIT"],
@@ -291,7 +291,7 @@ jobs:
               "listing_page_count": scan.get("listing_page_count") if type(scan.get("listing_page_count")) is int and scan["listing_page_count"] >= 0 else None,
               "snapshot_consistency": "not_guaranteed_by_api",
               "permissions": permissions,
-              "comparison_available": bool(comparison.get("comparison") == "mocha_catalog" and isinstance(counts_in, dict)),
+              "comparison_available": bool(comparison.get("comparison") == "Mocha-reports_catalog" and isinstance(counts_in, dict)),
               "counts": counts,
               "possible_duplicate_groups": (
                   len(comparison.get("possible_duplicates", []))
@@ -328,8 +328,8 @@ jobs:
           ARTIFACT_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           reports=(
-            "$RUNNER_TEMP/mocha-scan-report.json"
-            "$RUNNER_TEMP/mocha-comparison-report.json"
+            "$RUNNER_TEMP/Mocha-reports-scan-report.json"
+            "$RUNNER_TEMP/Mocha-reports-comparison-report.json"
           )
           total_size=0
           for report in "${reports[@]}"; do
@@ -350,7 +350,7 @@ jobs:
           else
             echo "## Raw Mocha scan reports" >> "$GITHUB_STEP_SUMMARY"
             echo >> "$GITHUB_STEP_SUMMARY"
-            echo "The combined reports exceed the safe run-summary size. Download both complete JSON files from the `mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}` artifact: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
+            echo "The combined reports exceed the safe run-summary size. Download both complete JSON files from the `Mocha-reports-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}` artifact: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
           fi
 
       - name: Report inventory artifact upload status
@@ -376,7 +376,7 @@ jobs:
       - name: Check out the dashboard reports branch
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: mocha
+          ref: Mocha-reports
           path: reports-branch
           fetch-depth: 0
       - name: Check out the source commit for publisher helpers
@@ -390,22 +390,22 @@ jobs:
         continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: mocha-file-inventory
-          path: ${{ runner.temp }}/mocha-inventory
+          name: Mocha-reports-file-inventory
+          path: ${{ runner.temp }}/Mocha-reports-inventory
 
       - name: Download this run's raw Mocha scan reports
         continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
-          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/mocha-scan-reports
+          name: Mocha-reports-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/Mocha-reports-scan-reports
 
       - name: Publish only the sanitized Mocha summary
         working-directory: reports-branch
         env:
           SUMMARY_JSON: ${{ needs.scan.outputs.summary_json }}
-          INVENTORY_JSON: ${{ runner.temp }}/mocha-inventory/mocha-public-inventory.json
-          RAW_REPORT_DIR: ${{ runner.temp }}/mocha-scan-reports
+          INVENTORY_JSON: ${{ runner.temp }}/Mocha-reports-inventory/Mocha-reports-public-inventory.json
+          RAW_REPORT_DIR: ${{ runner.temp }}/Mocha-reports-scan-reports
           SOURCE_ROOT: ${{ github.workspace }}/source
           PYTHONPATH: ${{ github.workspace }}/source
         run: |
@@ -416,8 +416,8 @@ jobs:
           # Fetch and publish against the latest reports-branch tip. If another
           # workflow advances the branch, retry from that tip without force-pushing.
           for attempt in 1 2 3; do
-            if ! git fetch origin mocha; then
-              echo "Could not fetch mocha on attempt $attempt/3; retrying without reset or push." >&2
+            if ! git fetch origin Mocha-reports; then
+              echo "Could not fetch Mocha-reports on attempt $attempt/3; retrying without reset or push." >&2
               continue
             fi
             git reset --hard FETCH_HEAD
@@ -439,8 +439,8 @@ jobs:
 
           # Prefer trusted helpers from the workflow commit over files in reports-branch.
           sys.path.insert(0, os.environ["SOURCE_ROOT"])
-          from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
-          from tools.mocha_catalog_candidates import catalog_identity_conflict_file_ids
+          from tools.Mocha-reports_review_queue import can_silently_clear_match, near_duplicate_file_ids
+          from tools.Mocha-reports_catalog_candidates import catalog_identity_conflict_file_ids
 
           summary = json.loads(os.environ["SUMMARY_JSON"])
           allowed = {
@@ -455,7 +455,7 @@ jobs:
 
           if type(summary["schema_version"]) is not int or summary["schema_version"] != 1:
               raise SystemExit("Refusing to publish an unsupported summary schema.")
-          if summary["scanner"] != "mocha":
+          if summary["scanner"] != "Mocha-reports":
               raise SystemExit("Refusing to publish a summary from an unknown scanner.")
           def parse_aware_timestamp(value):
               if not isinstance(value, str):
@@ -514,7 +514,7 @@ jobs:
           if summary["automatic_cleanup"] is not False or summary["details_published"] is not False:
               raise SystemExit("Refusing to publish a summary with unsafe flags.")
 
-          target = Path("reports/mocha-scan-summary.json")
+          target = Path("reports/Mocha-reports-scan-summary.json")
           current = None
           try:
               current_bytes = subprocess.check_output(
@@ -542,7 +542,7 @@ jobs:
               candidate = json.loads(inventory_path.read_text(encoding='utf-8'))
               required = {'schema_version','scanner','scan_observed_at','file_count','files'}
               if not isinstance(candidate, dict) or set(candidate) != required: raise ValueError('unexpected inventory schema')
-              if candidate['schema_version'] != 1 or candidate['scanner'] != 'mocha': raise ValueError('unsupported inventory schema')
+              if candidate['schema_version'] != 1 or candidate['scanner'] != 'Mocha-reports': raise ValueError('unsupported inventory schema')
               if candidate['scan_observed_at'] != summary['scan_observed_at']: raise ValueError('scan timestamps differ')
               if type(candidate['file_count']) is not int or candidate['file_count'] != summary['file_count']: raise ValueError('file counts differ')
               if not isinstance(candidate['files'], list) or len(candidate['files']) != candidate['file_count']: raise ValueError('invalid files list')
@@ -560,7 +560,7 @@ jobs:
           target.parent.mkdir(parents=True, exist_ok=True)
           target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           if inventory is not None:
-              inventory_target = Path('reports/mocha-file-inventory.json')
+              inventory_target = Path('reports/Mocha-reports-file-inventory.json')
               inventory_target.write_text(json.dumps(inventory, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
 
           # Publish only entries that genuinely require a human decision.
@@ -569,19 +569,19 @@ jobs:
           review_state_validated = False
           try:
               raw_dir = Path(os.environ['RAW_REPORT_DIR'])
-              raw_scan = json.loads((raw_dir / 'mocha-scan-report.json').read_text(encoding='utf-8'))
-              raw_comparison = json.loads((raw_dir / 'mocha-comparison-report.json').read_text(encoding='utf-8'))
+              raw_scan = json.loads((raw_dir / 'Mocha-reports-scan-report.json').read_text(encoding='utf-8'))
+              raw_comparison = json.loads((raw_dir / 'Mocha-reports-comparison-report.json').read_text(encoding='utf-8'))
               approved_paths = {
                   'ps4/games': ('PS4', 'games'), 'ps4/dlc': ('PS4', 'dlc'),
                   'ps5/games': ('PS5', 'games'), 'ps5/dlc': ('PS5', 'dlc'),
               }
-              if (raw_scan.get('scanner') != 'mocha' or raw_scan.get('scan_complete') is not True
-                      or raw_comparison.get('comparison') != 'mocha_catalog'
+              if (raw_scan.get('scanner') != 'Mocha-reports' or raw_scan.get('scan_complete') is not True
+                      or raw_comparison.get('comparison') != 'Mocha-reports_catalog'
                       or raw_comparison.get('catalog_commit') != summary['catalog_commit']
                       or raw_scan.get('scan_observed_at') != summary['scan_observed_at']):
                   raise ValueError('raw scan/comparison snapshot does not match the published summary')
 
-              # Rejection records are already sanitized on mocha.
+              # Rejection records are already sanitized on Mocha-reports.
               # Require the source file and validate it; never silently forget prior decisions.
               rejection_path = Path('reports/akirabox-rejections.json')
               rejection_report = json.loads(rejection_path.read_text(encoding='utf-8'))
@@ -617,7 +617,7 @@ jobs:
                   rejected.setdefault(key, []).append(rejected_at)
 
               # Prior owner decisions are durable and scoped to one exact upload.
-              decisions_path = Path('reports/mocha-review-decisions.json')
+              decisions_path = Path('reports/Mocha-reports-review-decisions.json')
               if decisions_path.exists():
                   decisions_report = json.loads(decisions_path.read_text(encoding='utf-8'))
               else:
@@ -784,7 +784,7 @@ jobs:
                       'catalog_metadata': {key: catalog_meta[key] for key in catalog_fields if key in catalog_meta},
                   })
               review_queue = {
-                  'schema_version': 1, 'scanner': 'mocha',
+                  'schema_version': 1, 'scanner': 'Mocha-reports',
                   'scan_observed_at': summary['scan_observed_at'],
                   'catalog_commit': summary['catalog_commit'],
                   'auto_approved_count': automatically_cleared,
@@ -793,7 +793,7 @@ jobs:
                   'pending_count': len(entries),
                   'entries': entries,
               }
-              Path('reports/mocha-review-queue.json').write_text(
+              Path('reports/Mocha-reports-review-queue.json').write_text(
                   json.dumps(review_queue, indent=2, ensure_ascii=False) + '\n', encoding='utf-8'
               )
               review_state_validated = True
@@ -803,15 +803,15 @@ jobs:
 
           # Remove the previous snapshot first. A failed generation must never
           # leave a stale approval queue available on the reports branch.
-          Path('reports/mocha-catalog-candidates.json').unlink(missing_ok=True)
+          Path('reports/Mocha-reports-catalog-candidates.json').unlink(missing_ok=True)
 
           # Generate separate source-registration candidates before exact matches
           # disappear from the human-review queue. This remains read-only.
           try:
-              from tools.mocha_catalog_candidates import build_candidate_queue
+              from tools.Mocha-reports_catalog_candidates import build_candidate_queue
               raw_dir = Path(os.environ['RAW_REPORT_DIR'])
-              raw_scan = json.loads((raw_dir / 'mocha-scan-report.json').read_text(encoding='utf-8'))
-              raw_comparison = json.loads((raw_dir / 'mocha-comparison-report.json').read_text(encoding='utf-8'))
+              raw_scan = json.loads((raw_dir / 'Mocha-reports-scan-report.json').read_text(encoding='utf-8'))
+              raw_comparison = json.loads((raw_dir / 'Mocha-reports-comparison-report.json').read_text(encoding='utf-8'))
               if (raw_scan.get('scan_observed_at') != summary['scan_observed_at']
                       or raw_comparison.get('catalog_commit') != summary['catalog_commit']):
                   raise ValueError('candidate inputs do not match the published scan/catalog snapshot')
@@ -852,7 +852,7 @@ jobs:
               )
               if len(json.dumps(candidate_queue, ensure_ascii=False).encode('utf-8')) > 5000000:
                   raise ValueError('candidate queue exceeds the 5 MB publication limit')
-              Path('reports/mocha-catalog-candidates.json').write_text(
+              Path('reports/Mocha-reports-catalog-candidates.json').write_text(
                   json.dumps(candidate_queue, indent=2, ensure_ascii=False) + chr(10), encoding='utf-8'
               )
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
@@ -871,8 +871,8 @@ jobs:
               exit "$validation_status"
             fi
 
-            git add reports/mocha-scan-summary.json
-            for report in mocha-scan-report.json mocha-comparison-report.json; do
+            git add reports/Mocha-reports-scan-summary.json
+            for report in Mocha-reports-scan-report.json Mocha-reports-comparison-report.json; do
               source="$RAW_REPORT_DIR/$report"
               if [ -f "$source" ] && [ "$(wc -c < "$source")" -le 5000000 ]; then
                 cp "$source" "reports/$report"
@@ -881,12 +881,12 @@ jobs:
                 echo "Keeping $report in the run artifact only (missing or larger than 5 MB)."
               fi
             done
-            if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
-            if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
-            if [ -f reports/mocha-catalog-candidates.json ]; then
-              git add reports/mocha-catalog-candidates.json
-            elif git ls-files --error-unmatch reports/mocha-catalog-candidates.json >/dev/null 2>&1; then
-              git add -u -- reports/mocha-catalog-candidates.json
+            if [ -f reports/Mocha-reports-file-inventory.json ]; then git add reports/Mocha-reports-file-inventory.json; fi
+            if [ -f reports/Mocha-reports-review-queue.json ]; then git add reports/Mocha-reports-review-queue.json; fi
+            if [ -f reports/Mocha-reports-catalog-candidates.json ]; then
+              git add reports/Mocha-reports-catalog-candidates.json
+            elif git ls-files --error-unmatch reports/Mocha-reports-catalog-candidates.json >/dev/null 2>&1; then
+              git add -u -- reports/Mocha-reports-catalog-candidates.json
             fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
@@ -903,7 +903,7 @@ jobs:
               echo "main advanced after validation; refusing to publish a report based on an older catalog commit."
               exit 0
             fi
-            if git push origin HEAD:mocha; then
+            if git push origin HEAD:Mocha-reports; then
               exit 0
             fi
 
@@ -931,42 +931,42 @@ jobs:
       - name: Check out the matching reports snapshot
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: mocha
+          ref: Mocha-reports
           path: reports-branch
           fetch-depth: 1
 
       - name: Download this run's raw Mocha scan reports
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
-          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/mocha-raw
+          name: Mocha-reports-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/Mocha-reports-raw
 
       - name: Prepare validated candidate inputs
         run: |
           set -euo pipefail
-          mkdir -p "$RUNNER_TEMP/mocha-auto"
-          cp reports-branch/reports/mocha-catalog-candidates.json "$RUNNER_TEMP/mocha-auto/candidates.json"
-          cp reports-branch/reports/mocha-scan-summary.json "$RUNNER_TEMP/mocha-auto/summary.json"
-          cp reports-branch/reports/akirabox-rejections.json "$RUNNER_TEMP/mocha-auto/rejections.json"
-          if [ -f reports-branch/reports/mocha-review-decisions.json ]; then
-            cp reports-branch/reports/mocha-review-decisions.json "$RUNNER_TEMP/mocha-auto/decisions.json"
+          mkdir -p "$RUNNER_TEMP/Mocha-reports-auto"
+          cp reports-branch/reports/Mocha-reports-catalog-candidates.json "$RUNNER_TEMP/Mocha-reports-auto/candidates.json"
+          cp reports-branch/reports/Mocha-reports-scan-summary.json "$RUNNER_TEMP/Mocha-reports-auto/summary.json"
+          cp reports-branch/reports/akirabox-rejections.json "$RUNNER_TEMP/Mocha-reports-auto/rejections.json"
+          if [ -f reports-branch/reports/Mocha-reports-review-decisions.json ]; then
+            cp reports-branch/reports/Mocha-reports-review-decisions.json "$RUNNER_TEMP/Mocha-reports-auto/decisions.json"
           else
-            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-auto/decisions.json"
+            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/Mocha-reports-auto/decisions.json"
           fi
 
       - name: Apply only exact, unique, undecided replacements
         id: apply
         env:
-          CANDIDATE_REPORT: ${{ runner.temp }}/mocha-auto/candidates.json
-          SUMMARY: ${{ runner.temp }}/mocha-auto/summary.json
-          DECISIONS: ${{ runner.temp }}/mocha-auto/decisions.json
-          REJECTIONS: ${{ runner.temp }}/mocha-auto/rejections.json
-          SCAN_REPORT: ${{ runner.temp }}/mocha-raw/mocha-scan-report.json
-          COMPARISON_REPORT: ${{ runner.temp }}/mocha-raw/mocha-comparison-report.json
-          RESULT: ${{ runner.temp }}/mocha-auto/result.json
+          CANDIDATE_REPORT: ${{ runner.temp }}/Mocha-reports-auto/candidates.json
+          SUMMARY: ${{ runner.temp }}/Mocha-reports-auto/summary.json
+          DECISIONS: ${{ runner.temp }}/Mocha-reports-auto/decisions.json
+          REJECTIONS: ${{ runner.temp }}/Mocha-reports-auto/rejections.json
+          SCAN_REPORT: ${{ runner.temp }}/Mocha-reports-raw/Mocha-reports-scan-report.json
+          COMPARISON_REPORT: ${{ runner.temp }}/Mocha-reports-raw/Mocha-reports-comparison-report.json
+          RESULT: ${{ runner.temp }}/Mocha-reports-auto/result.json
         run: |
           set -euo pipefail
-          python -m tools.auto_apply_mocha_candidates \
+          python -m tools.auto_apply_Mocha-reports_candidates \
             --candidate-report "$CANDIDATE_REPORT" \
             --summary "$SUMMARY" \
             --scan-report "$SCAN_REPORT" \
@@ -974,10 +974,10 @@ jobs:
             --decisions "$DECISIONS" \
             --rejections "$REJECTIONS" \
             --repo-root . \
-            --current-commit "$GITHUB_SHA" > "$RUNNER_TEMP/mocha-auto/result.json"
+            --current-commit "$GITHUB_SHA" > "$RUNNER_TEMP/Mocha-reports-auto/result.json"
           count="$(python -c 'import json,os; print(json.load(open(os.environ["RESULT"]))["applied_count"])')"
           echo "applied_count=$count" >> "$GITHUB_OUTPUT"
-          cat "$RUNNER_TEMP/mocha-auto/result.json"
+          cat "$RUNNER_TEMP/Mocha-reports-auto/result.json"
 
       - name: Stop when no safe replacements are available
         if: steps.apply.outputs.applied_count == '0'
@@ -998,7 +998,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          branch="mocha-auto-replacements-${GITHUB_SHA}"
+          branch="Mocha-reports-auto-replacements-${GITHUB_SHA}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
@@ -1051,14 +1051,14 @@ jobs:
       - name: Download this scan's validated Mocha inventory
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
-          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
-          path: ${{ runner.temp }}/mocha-scan-reports
+          name: Mocha-reports-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/Mocha-reports-scan-reports
 
       - name: Apply only identity-verified PKG metadata repairs
         id: repair
         env:
           MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
-          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-reports/mocha-scan-report.json
+          SCAN_REPORT: ${{ runner.temp }}/Mocha-reports-scan-reports/Mocha-reports-scan-report.json
           REPAIR_REPORT: ${{ runner.temp }}/pkg-metadata-repair-report.json
         run: |
           set -euo pipefail
