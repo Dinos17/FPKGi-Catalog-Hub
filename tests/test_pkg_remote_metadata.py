@@ -214,23 +214,28 @@ def test_resolve_mocha_url_uses_read_only_api_when_key_is_available(monkeypatch)
     captured = {}
 
     class Response:
-        status_code = 200
+        def __init__(self, status_code):
+            self.status_code = status_code
         def iter_content(self, chunk_size):
             yield json.dumps({"url": expected_url}).encode()
         def close(self):
             pass
 
     class Session:
+        calls = 0
         def post(self, url, **kwargs):
+            self.calls += 1
             captured["url"] = url
             captured.update(kwargs)
-            return Response()
+            return Response(503 if self.calls == 1 else 200)
 
+    monkeypatch.setattr(pkg, "_retry_pause", lambda attempt: None)
     monkeypatch.setenv("MOCHA_API_KEY", "test-key")
     monkeypatch.setenv("MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li")
     assert pkg.resolve_mocha_url(
         "d5ac3913-802b-4d68-9803-8f5c07c7640e", session=Session()
     ) == expected_url
+    assert session.calls == 2
     assert captured["url"] == "https://api.mocha.my/api/files/presigned"
     assert captured["json"] == {
         "fileId": "d5ac3913-802b-4d68-9803-8f5c07c7640e",
@@ -238,3 +243,38 @@ def test_resolve_mocha_url_uses_read_only_api_when_key_is_available(monkeypatch)
     }
     assert captured["headers"]["Authorization"] == "Bearer test-key"
     assert captured["allow_redirects"] is False
+
+
+def test_redacts_credentials_query_and_fragment_from_report_source():
+    source = "https://user:secret@stor11.mochaprox.li/a.pkg?token=secret&download=true#fragment"
+    assert pkg._redact_source(source) == "https://stor11.mochaprox.li/a.pkg"
+
+
+def test_range_reader_retries_transient_http_status(monkeypatch):
+    monkeypatch.setattr(pkg, "_retry_pause", lambda attempt: None)
+
+    class Response:
+        def __init__(self, status_code):
+            self.status_code = status_code
+            self.headers = {"Content-Range": "bytes 0-3/100"} if status_code == 206 else {}
+        def iter_content(self, chunk_size):
+            yield b"ABCD"
+        def close(self):
+            pass
+
+    class Session:
+        calls = 0
+        def get(self, *args, **kwargs):
+            self.calls += 1
+            return Response(503 if self.calls == 1 else 206)
+
+    session = Session()
+    reader = pkg.RangeReader("https://archive.org/file.pkg", session=session)
+    assert reader.read(0, 4) == b"ABCD"
+    assert session.calls == 2
+
+
+def test_main_rejects_explicit_empty_source(monkeypatch, capsys):
+    monkeypatch.setattr(sys, "argv", ["pkg_remote_metadata.py", "--source", ""])
+    assert pkg.main() == 2
+    assert "--source must not be empty" in capsys.readouterr().err
