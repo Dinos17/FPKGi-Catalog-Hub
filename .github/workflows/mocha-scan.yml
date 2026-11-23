@@ -1124,6 +1124,11 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
+            git fetch origin "$branch"
+            if ! git diff --quiet FETCH_HEAD -- ps4/dlc.json ps5/ps5-apps.json; then
+              echo "Existing metadata repair branch differs from the currently verified catalog changes; refusing to merge it." >&2
+              exit 1
+            fi
             existing_pr="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state open --json url --jq '.[0].url // empty')"
             if [ -z "$existing_pr" ]; then
               echo "Automatic metadata repair branch exists without an open PR; refusing to overwrite it." >&2
@@ -1139,6 +1144,12 @@ jobs:
             exit 0
           fi
           git commit -m "Automatically repair verified PKG metadata"
+          git fetch origin main:refs/remotes/origin/main
+          git rebase origin/main
+          if git diff --quiet origin/main...HEAD -- ps4/dlc.json ps5/ps5-apps.json; then
+            echo "The verified metadata changes are already present on main."
+            exit 0
+          fi
           git push origin "$branch"
           pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" \
             --title "Automatically repair verified PKG metadata" \
