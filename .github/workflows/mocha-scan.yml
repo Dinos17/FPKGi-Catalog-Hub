@@ -435,6 +435,7 @@ jobs:
           # Prefer trusted helpers from the workflow commit over files in reports-branch.
           sys.path.insert(0, os.environ["SOURCE_ROOT"])
           from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
+          from tools.mocha_catalog_candidates import catalog_identity_conflict_file_ids
 
           summary = json.loads(os.environ["SUMMARY_JSON"])
           allowed = {
@@ -692,6 +693,9 @@ jobs:
               # filename tags (languages/minimum firmware) differ or are missing.
               # Keep all members of such groups visible for human review.
               duplicate_ids.update(near_duplicate_file_ids(raw_comparison.get('results', [])))
+          duplicate_ids.update(catalog_identity_conflict_file_ids(
+              raw_comparison.get('results', []), Path(os.environ['SOURCE_ROOT'])
+          ))
 
               entries = []
               # Legacy counter name is retained for dashboard schema compatibility.
