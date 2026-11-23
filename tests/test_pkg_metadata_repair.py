@@ -291,3 +291,22 @@ def test_failure_report_suppresses_signed_url_details(tmp_path):
     assert report["results"][0]["reason"] == (
         "Source request failed; sensitive URL details suppressed"
     )
+
+
+def test_invalid_nonempty_catalog_version_is_not_overwritten(tmp_path):
+    root = make_root(tmp_path, metadata={
+        "title_id": "CUSA02084",
+        "region": "USA",
+        "name": "Rock Band 4 Expansion Pack 1",
+        "size": 123456,
+        "version": "not-a-version",
+    })
+    before = (root / "ps4" / "dlc.json").read_text(encoding="utf-8")
+    report = repair.repair_catalogs(
+        root, make_scan(mocha_file()), apply=True,
+        inspector=lambda target: extracted(target),
+    )
+    assert report["applied_count"] == 0
+    assert report["results"][0]["status"] == "extracted_no_safe_update"
+    assert "non-empty version is invalid" in report["results"][0]["reason"]
+    assert (root / "ps4" / "dlc.json").read_text(encoding="utf-8") == before
