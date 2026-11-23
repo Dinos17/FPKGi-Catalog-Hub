@@ -433,7 +433,9 @@ test("falls back to process.env when Netlify.env does not expose runtime variabl
   resetCatalogCacheForTests();
   process.env.MOCHA_API_KEY = "process-test-key";
   process.env.MOCHA_STORAGE_HOSTS = "storage.example";
-  globalThis.Netlify = { env: { get: () => undefined } };
+  globalThis.Netlify = { env: { get: (name) => (
+    name === "MOCHA_API_KEY" ? "   " : " "
+  ) } };
   let authorization;
   globalThis.fetch = async (url, options) => {
     if (String(url).includes("api.mocha.my")) {
