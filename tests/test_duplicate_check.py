@@ -79,11 +79,13 @@ def test_game_and_dlc_with_same_title_version_are_distinct(tmp_path, monkeypatch
         "https://example.test/game.pkg": metadata(),
     })
     write_catalog(tmp_path, "ps4/dlc.json", {
-        "https://example.test/dlc.pkg": metadata(),
+        "https://example.test/dlc.pkg": metadata(name="DLC Pack"),
     })
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     duplicate_check.check_duplicates()
-    assert "**Duplicate package identities:** 0" in capsys.readouterr().out
+    output = capsys.readouterr().out
+    assert "**Duplicate package identities:** 0" in output
+    assert "**Records with incomplete identity metadata:** 0" in output
 
 
 @pytest.mark.parametrize(
