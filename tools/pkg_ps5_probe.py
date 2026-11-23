@@ -199,7 +199,7 @@ def probe_source(
                 expected_size=expected_size,
             )
         finally:
-            reader.close()
+            reader.session.close()
         return {
             **result,
             "source": pkg._redact_source(source),
