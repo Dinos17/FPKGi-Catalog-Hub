@@ -119,7 +119,7 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
             assert expected_validator == validator
         return source[start:start + length], len(source), validator
 
-    def fake_api(_session, method, path, _key, body=None):
+    def fake_api(_session, method, path, _key, body=None, params=None):
         api_calls.append((method, path, body))
         if path == "/files/multipart/init":
             return {
@@ -134,7 +134,12 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
             return {"urls": [{"partNumber": number,
                               "url": "https://stor11.mochaprox.li/part"}]}
         if path == "/files/multipart/complete":
+            assert body["originalName"] == api_calls[0][2]["originalName"]
             return {"file": {"id": "mocha-file-123"}}
+        if path == "/files/mocha-file-123":
+            assert method == "PATCH"
+            assert body == {"originalName": "game.pkg"}
+            return {}
         raise AssertionError(path)
 
     def fake_put(_session, url, data, part_number):
@@ -164,6 +169,8 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
         source[:upload.MIN_PART_BYTES],
         source[upload.MIN_PART_BYTES:],
     ]
+    assert api_calls[0][2]["originalName"].startswith("fpkgi-upload-")
+    assert api_calls[0][2]["originalName"].endswith(".pkg")
     assert [call[2]["parts"] for call in api_calls if call[1].endswith("/complete")] == [[
         {"partNumber": 1, "etag": "etag-1"},
         {"partNumber": 2, "etag": "etag-2"},
@@ -219,6 +226,19 @@ def test_remote_pkg_upload_fails_closed_on_ambiguous_completion(monkeypatch):
                               "url": "https://stor11.mochaprox.li/part"}]}
         if path == "/files/multipart/complete":
             raise TimeoutError("response lost after commit")
+        if path == "/files":
+            staged = params["q"]
+            return {"files": [{
+                "id": "recovered-file-1",
+                "original_name": staged,
+                "file_name": staged,
+                "path": "/PS4/DLC",
+                "size": len(source),
+            }], "hasMore": False}
+        if path == "/files/recovered-file-1":
+            assert method == "PATCH"
+            assert body == {"originalName": "game.pkg"}
+            return {}
         raise AssertionError(path)
 
     monkeypatch.setattr(upload, "_read_source_range", fake_range)
@@ -233,4 +253,6 @@ def test_remote_pkg_upload_fails_closed_on_ambiguous_completion(monkeypatch):
             session=object(),
         )
     assert paths.count("/files/multipart/complete") == 1
+    assert paths.count("/files") == 1
+    assert "/files/recovered-file-1" in paths
     assert "/files/multipart/abort" not in paths
