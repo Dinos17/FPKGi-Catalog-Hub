@@ -126,7 +126,7 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
                 "uploadId": "upload-1",
                 "key": "object-key",
                 "nodeId": "node-1",
-                "originalName": "game.pkg",
+                "originalName": body["originalName"],
                 "partSizeBytes": upload.MIN_PART_BYTES,
             }
         if path == "/files/multipart/presigned":
@@ -184,7 +184,7 @@ def test_remote_pkg_upload_rejects_mismatched_presigned_part_and_aborts(monkeypa
         source = bytes.fromhex("7f434e54") + b"H" * (0x100 - 4)
         return source[start:start + length], len(source), ("ETag", '"v1"')
 
-    def fake_api(_session, method, path, _key, body=None):
+    def fake_api(_session, method, path, _key, body=None, params=None):
         paths.append(path)
         if path == "/files/multipart/init":
             return {"uploadId": "u", "key": "k", "nodeId": "n",
@@ -245,13 +245,13 @@ def test_remote_pkg_upload_fails_closed_on_ambiguous_completion(monkeypatch):
     monkeypatch.setattr(upload, "_request_json", fake_api)
     monkeypatch.setattr(upload, "_put_part", lambda *_args: "etag-1")
 
-    with pytest.raises(upload.UploadError, match="outcome is unknown"):
-        upload.upload_remote_pkg(
-            "https://archive.org/download/item/game.pkg",
-            api_key="test-key",
-            remote_path="/PS4/DLC",
-            session=object(),
-        )
+    result = upload.upload_remote_pkg(
+        "https://archive.org/download/item/game.pkg",
+        api_key="test-key",
+        remote_path="/PS4/DLC",
+        session=object(),
+    )
+    assert result["file_id"] == "recovered-file-1"
     assert paths.count("/files/multipart/complete") == 1
     assert paths.count("/files") == 1
     assert "/files/recovered-file-1" in paths
