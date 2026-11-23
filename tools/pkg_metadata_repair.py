@@ -133,11 +133,17 @@ def _safe_updates(target: dict[str, Any], extracted: dict[str, Any]) -> tuple[di
         return updates, reasons
 
     if "version" in missing:
-        version = extracted.get("version")
-        if isinstance(version, str) and VERSION_RE.fullmatch(version.strip()):
-            updates["version"] = version.strip()
+        existing_version = target["catalog_metadata"].get("version")
+        if existing_version not in (None, "") and not (
+            isinstance(existing_version, str) and not existing_version.strip()
+        ):
+            reasons.append("Existing non-empty version is invalid; automatic replacement is not permitted")
         else:
-            reasons.append("PKG did not provide a valid APP_VER")
+            version = extracted.get("version")
+            if isinstance(version, str) and VERSION_RE.fullmatch(version.strip()):
+                updates["version"] = version.strip()
+            else:
+                reasons.append("PKG did not provide a valid APP_VER")
 
     if "region" in missing:
         reasons.append("Region is not reliably exposed by the supported PKG parser; no region inference is attempted")
