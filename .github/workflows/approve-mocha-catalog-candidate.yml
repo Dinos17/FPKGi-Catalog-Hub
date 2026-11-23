@@ -5,7 +5,7 @@ on:
     types: [opened]
 
 concurrency:
-  group: mocha-catalog-candidate-${{ github.event.issue.number }}
+  group: Mocha-reports-catalog-candidate-${{ github.event.issue.number }}
   queue: max
 
 permissions:
@@ -39,22 +39,22 @@ jobs:
         id: candidate
         env:
           EVENT_PATH: ${{ github.event_path }}
-          REPORT_BRANCH: mocha
+          REPORT_BRANCH: Mocha-reports
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git fetch origin "$REPORT_BRANCH"
-          mkdir -p "$RUNNER_TEMP/mocha-candidate"
-          git show "FETCH_HEAD:reports/mocha-catalog-candidates.json" > "$RUNNER_TEMP/mocha-candidate/candidates.json"
-          git show "FETCH_HEAD:reports/mocha-scan-summary.json" > "$RUNNER_TEMP/mocha-candidate/summary.json"
-          git show "FETCH_HEAD:reports/akirabox-rejections.json" > "$RUNNER_TEMP/mocha-candidate/rejections.json"
-          if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
-            git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+          mkdir -p "$RUNNER_TEMP/Mocha-reports-candidate"
+          git show "FETCH_HEAD:reports/Mocha-reports-catalog-candidates.json" > "$RUNNER_TEMP/Mocha-reports-candidate/candidates.json"
+          git show "FETCH_HEAD:reports/Mocha-reports-scan-summary.json" > "$RUNNER_TEMP/Mocha-reports-candidate/summary.json"
+          git show "FETCH_HEAD:reports/akirabox-rejections.json" > "$RUNNER_TEMP/Mocha-reports-candidate/rejections.json"
+          if git cat-file -e "FETCH_HEAD:reports/Mocha-reports-review-decisions.json" 2>/dev/null; then
+            git show "FETCH_HEAD:reports/Mocha-reports-review-decisions.json" > "$RUNNER_TEMP/Mocha-reports-candidate/decisions.json"
           else
-            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/Mocha-reports-candidate/decisions.json"
           fi
 
-          python - <<'PY' > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+          python - <<'PY' > "$RUNNER_TEMP/Mocha-reports-candidate/approval-output.txt"
           import json, os, re
           from pathlib import Path
           event = json.loads(Path(os.environ["EVENT_PATH"]).read_text(encoding="utf-8"))
@@ -71,14 +71,14 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"candidate_id={candidate_id}\n")
           PY
-          python tools/approve_mocha_candidate.py \
+          python tools/approve_Mocha-reports_candidate.py \
             --candidate-id "$(sed -n 's/^candidate_id=//p' "$GITHUB_OUTPUT" | tail -n 1)" \
-            --candidate-report "$RUNNER_TEMP/mocha-candidate/candidates.json" \
-            --summary "$RUNNER_TEMP/mocha-candidate/summary.json" \
-            --decisions "$RUNNER_TEMP/mocha-candidate/decisions.json" \
-            --rejections "$RUNNER_TEMP/mocha-candidate/rejections.json" \
+            --candidate-report "$RUNNER_TEMP/Mocha-reports-candidate/candidates.json" \
+            --summary "$RUNNER_TEMP/Mocha-reports-candidate/summary.json" \
+            --decisions "$RUNNER_TEMP/Mocha-reports-candidate/decisions.json" \
+            --rejections "$RUNNER_TEMP/Mocha-reports-candidate/rejections.json" \
             --repo-root . \
-            --current-commit "$(git rev-parse HEAD)" > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+            --current-commit "$(git rev-parse HEAD)" > "$RUNNER_TEMP/Mocha-reports-candidate/approval-output.txt"
           while IFS='=' read -r key value; do
             case "$key" in
               catalog_path) echo "catalog_path=$value" >> "$GITHUB_OUTPUT" ;;
@@ -88,7 +88,7 @@ jobs:
                 echo "candidate_name=$value" >> "$GITHUB_OUTPUT"
                 ;;
             esac
-          done < "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
+          done < "$RUNNER_TEMP/Mocha-reports-candidate/approval-output.txt"
 
           python tools/validate_catalogs.py
 
@@ -101,7 +101,7 @@ jobs:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
         run: |
           set -euo pipefail
-          branch="mocha-catalog-candidate-$CANDIDATE_ID"
+          branch="Mocha-reports-catalog-candidate-$CANDIDATE_ID"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
             existing="$(gh pr list --repo "$GITHUB_REPOSITORY" --head "$branch" --state all --json url,state --jq '.[0].url // empty')"
             if [ -n "$existing" ]; then
@@ -117,12 +117,12 @@ jobs:
           git add "$CATALOG_PATH"
           git commit -m "Add Mocha source for $CANDIDATE_NAME"
           git push origin "$branch"
-          cat > "$RUNNER_TEMP/mocha-catalog-pr.md" <<EOF
+          cat > "$RUNNER_TEMP/Mocha-reports-catalog-pr.md" <<EOF
           ## Proposed catalog source
 
           - Candidate: $CANDIDATE_ID
           - Catalog: $CATALOG_PATH
-          - Change: add the approved Mocha file ID as a new DATA key and set download_source: mocha.
+          - Change: add the approved Mocha file ID as a new DATA key and set download_source: Mocha-reports.
           - Existing catalog metadata is preserved exactly.
 
           ## Verification limits
@@ -131,7 +131,7 @@ jobs:
           - No package binary was downloaded or hashed by this workflow.
           - Review this catalog change and merge manually. The Netlify resolver will only authorize the file ID after the catalog is published.
           EOF
-          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add Mocha source: $CANDIDATE_NAME" --body-file "$RUNNER_TEMP/mocha-catalog-pr.md")"
+          pr_url="$(gh pr create --repo "$GITHUB_REPOSITORY" --base main --head "$branch" --title "Add Mocha source: $CANDIDATE_NAME" --body-file "$RUNNER_TEMP/Mocha-reports-catalog-pr.md")"
           gh issue comment "$ISSUE_NUMBER" --repo "$GITHUB_REPOSITORY" --body "Catalog pull request created: $pr_url. It must pass checks and be merged before FPKGi can request a temporary download URL."
 
       - name: Explain failed approval
