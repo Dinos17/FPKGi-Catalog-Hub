@@ -1,50 +1,10 @@
 {
   "schema_version": 1,
   "scanner": "mocha",
-  "scan_observed_at": "2026-11-23T10:09:07.660520Z",
-  "catalog_commit": "93b5ef646ac5c2afb08b56a842c6346743baa4cb",
-  "candidate_count": 1,
-  "candidates": [
-    {
-      "candidate_id": "2269b5c0831631d3ece6494d",
-      "file_id": "a05b8e0d-f23a-46c5-8594-829ae209f4f1",
-      "name": "DOOM 2 (1994) - [US] [EN] [1.08].pkg",
-      "created_at": "2026-11-19T11:33:52.603Z",
-      "platform": "PS4",
-      "category": "games",
-      "catalog_path": "ps4/games.json",
-      "matched_catalog_key": "https://archive.org/download/ps4-fpkg-collection-english-d/DOOM%202%20(1994)%20-%20[US]%20[EN]%20[1.08].pkg",
-      "catalog_metadata": {
-        "title_id": "CUSA15595",
-        "region": "USA",
-        "name": "DOOM 2 (1994)",
-        "version": "01.08",
-        "release": "11-15-2013",
-        "size": 508952576,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA15595.png"
-      },
-      "proposed_entry": {
-        "title_id": "CUSA15595",
-        "region": "USA",
-        "name": "DOOM 2 (1994)",
-        "version": "01.08",
-        "release": "11-15-2013",
-        "size": 508952576,
-        "min_fw": "9.00",
-        "cover_url": "https://dn710101.ca.archive.org/0/items/ps4-fpkg-collection-english-icons/CUSA15595.png",
-        "download_source": "mocha"
-      },
-      "match_status": "matched",
-      "metadata_differences": [],
-      "unavailable_metadata": [
-        "title_id",
-        "min_fw"
-      ],
-      "binary_integrity_verified": false,
-      "approval_required": false
-    }
-  ],
+  "scan_observed_at": "2026-11-23T14:38:09.270495Z",
+  "catalog_commit": "147ff91955f9538861cb3c3d15a40f7dad7d8074",
+  "candidate_count": 0,
+  "candidates": [],
   "catalog_write_performed": false,
   "automatic_approval": true,
   "binary_integrity_verified": false
