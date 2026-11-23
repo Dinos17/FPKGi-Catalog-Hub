@@ -194,7 +194,7 @@ def test_version_can_be_repaired_without_guessing_missing_region(tmp_path):
     assert after["version"] == "01.02"
     assert "region" not in after
     assert report["results"][0]["unresolved_fields"] == ["region"]
-    assert "Region is not reliably available" in report["results"][0]["reason"]
+    assert "Region is not reliably exposed" in report["results"][0]["reason"]
 
 
 def test_invalid_extracted_version_is_not_applied(tmp_path):
