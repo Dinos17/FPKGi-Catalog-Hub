@@ -89,7 +89,7 @@ def test_game_and_dlc_with_same_title_version_are_distinct(tmp_path, monkeypatch
 @pytest.mark.parametrize(
     ("first", "second", "collides"),
     [
-        ("Game%20Name.pkg", "Game Name.pkg", True),
+        ("Game%7EName.pkg", "Game~Name.pkg", True),
         ("Game%2FName.pkg", "Game/Name.pkg", False),
         ("Game%3Fedition=1.pkg", "Game?edition=1.pkg", False),
         ("Game%23part.pkg", "Game#part.pkg", False),
