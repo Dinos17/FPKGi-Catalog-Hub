@@ -155,11 +155,14 @@ def classify_identity_duplicates(by_identity):
 
 
 def format_identity(identity):
-    platform, category, title_id, region, version, size = identity
-    return (
-        f"{platform} {category} {title_id} "
-        f"{region} v{version} ({size} bytes)"
+    platform, category, title_id, region, version, size, *package_name = identity
+    result = (
+        f"{report_value(platform)} {report_value(category)} {report_value(title_id)} "
+        f"{report_value(region)} v{version} ({size} bytes)"
     )
+    if package_name:
+        result += f" — {report_value(package_name[0])}"
+    return result
 
 
 def build_report(
@@ -235,7 +238,7 @@ def build_report(
         ])
     else:
         lines.extend([
-            "### ✅ Result: No confirmed duplicate registrations detected.",
+            "### ⚠️ Result: No duplicate registrations among complete records; incomplete records mean the catalog is not fully verified.",
             "",
             "Possible mirrors and incomplete records are reported separately. This check does not establish binary identity.",
         ])
