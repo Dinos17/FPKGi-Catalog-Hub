@@ -105,7 +105,7 @@ def _read_source_range(session: requests.Session, url: str, start: int,
         try:
             if response.status_code != 206:
                 raise UploadError(f"Source did not honor HTTP Range (status {response.status_code})")
-            match = re.fullmatch(r"bytes (\\d+)-(\\d+)/(\\d+)", response.headers.get("Content-Range", "").strip())
+            match = re.fullmatch(r"bytes (\d+)-(\d+)/(\d+)", response.headers.get("Content-Range", "").strip())
             if not match or (int(match.group(1)), int(match.group(2))) != (start, end):
                 raise UploadError("Source returned an invalid Content-Range")
             total = int(match.group(3))
