@@ -38,6 +38,60 @@ def _load_catalogs(root: Path) -> dict[tuple[str, str], dict[str, dict[str, Any]
     return catalogs
 
 
+def catalog_identity_conflict_file_ids(
+    rows: list[dict[str, Any]],
+    catalog_root: Path,
+) -> set[str]:
+    """Flag matched uploads whose catalog identity already has duplicate records.
+
+    Identity is title ID + region + normalized version + package size within
+    the same platform/category catalog. Different versions/sizes remain distinct
+    packages; URL-encoding aliases with identical package identity are conflicts.
+    """
+    catalogs = _load_catalogs(catalog_root)
+    duplicate_identities: dict[tuple[str, str, str, str, int], int] = {}
+    for (platform, category), entries in catalogs.items():
+        for metadata in entries.values():
+            title_id = metadata.get("title_id")
+            region = metadata.get("region")
+            version = metadata.get("version")
+            size = metadata.get("size")
+            if (not isinstance(title_id, str) or not title_id.strip()
+                    or not isinstance(region, str) or not region.strip()
+                    or not isinstance(version, str) or not version.strip()
+                    or not isinstance(size, int) or isinstance(size, bool) or size <= 0):
+                continue
+            identity = (
+                platform, category, title_id.strip().upper(),
+                region.strip().upper(), version.strip().lstrip("0"), size,
+            )
+            duplicate_identities[identity] = duplicate_identities.get(identity, 0) + 1
+
+    conflicts: set[str] = set()
+    for row in rows:
+        if not isinstance(row, dict) or row.get("status") != "matched":
+            continue
+        file_id = row.get("file_id")
+        metadata = row.get("catalog_metadata")
+        if not isinstance(file_id, str) or not isinstance(metadata, dict):
+            continue
+        title_id = metadata.get("title_id")
+        region = metadata.get("region")
+        version = metadata.get("version")
+        size = metadata.get("size")
+        if (not isinstance(title_id, str) or not isinstance(region, str)
+                or not isinstance(version, str) or not isinstance(size, int)
+                or isinstance(size, bool)):
+            continue
+        identity = (
+            row.get("platform"), row.get("category"), title_id.strip().upper(),
+            region.strip().upper(), version.strip().lstrip("0"), size,
+        )
+        if duplicate_identities.get(identity, 0) > 1:
+            conflicts.add(file_id)
+    return conflicts
+
+
 def build_candidate_queue(
     scan: dict[str, Any],
     comparison: dict[str, Any],
@@ -81,6 +135,7 @@ def build_candidate_queue(
     if not isinstance(rows, list):
         raise ValueError("Comparison results are missing")
     duplicate_ids = near_duplicate_file_ids(rows)
+    duplicate_ids.update(catalog_identity_conflict_file_ids(rows, catalog_root))
     excluded_ids = {str(value) for value in (excluded_file_ids or set())}
     for group in comparison.get("possible_duplicates", []):
         if not isinstance(group, dict) or not isinstance(group.get("file_ids"), list):
