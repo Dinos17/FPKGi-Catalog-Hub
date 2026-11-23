@@ -12,6 +12,7 @@ import os
 import re
 import struct
 import sys
+import time
 from pathlib import Path
 from typing import Any
 from urllib.parse import urljoin, urlparse
@@ -24,6 +25,8 @@ MAX_HEADER = 0x1000
 MAX_ENTRIES = 4096
 MAX_ENTRY_BYTES = 2 * 1024 * 1024
 MAX_REDIRECTS = 6
+MAX_REQUEST_ATTEMPTS = 3
+RETRYABLE_STATUS_CODES = {408, 429, 500, 502, 503, 504}
 PKG_MAGIC = 0x7F434E54
 PARAM_SFO_ID = 0x1000
 ENTRY_SIZE = 32
@@ -56,17 +59,33 @@ def _host_allowed(url: str, extra_hosts: set[str] | None = None) -> bool:
         return False
 
 
+def _retry_pause(attempt: int) -> None:
+    time.sleep(min(0.25 * (2 ** attempt), 1.0))
+
+
 def _safe_redirect_get(session: requests.Session, url: str, *, headers: dict[str, str],
                        extra_hosts: set[str] | None = None) -> requests.Response:
     current = url
     for _ in range(MAX_REDIRECTS + 1):
         if not _host_allowed(current, extra_hosts):
             raise MetadataError("URL or redirect host is not allowlisted")
-        try:
-            response = session.get(current, headers=headers, timeout=TIMEOUT,
-                                   allow_redirects=False, stream=True)
-        except requests.RequestException as exc:
-            raise MetadataError(f"HTTP request failed ({type(exc).__name__})") from exc
+        response = None
+        for attempt in range(MAX_REQUEST_ATTEMPTS):
+            try:
+                response = session.get(current, headers=headers, timeout=TIMEOUT,
+                                       allow_redirects=False, stream=True)
+            except requests.RequestException as exc:
+                if attempt + 1 == MAX_REQUEST_ATTEMPTS:
+                    raise MetadataError(f"HTTP request failed ({type(exc).__name__})") from exc
+                _retry_pause(attempt)
+                continue
+            if response.status_code in RETRYABLE_STATUS_CODES and attempt + 1 < MAX_REQUEST_ATTEMPTS:
+                response.close()
+                _retry_pause(attempt)
+                continue
+            break
+        if response is None:
+            raise MetadataError("HTTP request failed without a response")
         if response.status_code in (301, 302, 303, 307, 308):
             location = response.headers.get("Location")
             response.close()
@@ -130,15 +149,40 @@ def resolve_mocha_url(file_id: str, *, session: requests.Session | None = None) 
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", file_id or ""):
         raise MetadataError("Invalid Mocha file ID")
     client = session or requests.Session()
-    try:
-        response = client.get(RESOLVER_URL, params={"fileId": file_id},
-                              timeout=TIMEOUT, allow_redirects=False, stream=True,
-                              headers={"Accept": "application/json"})
-    except requests.RequestException as exc:
-        raise MetadataError(f"Mocha resolver request failed ({type(exc).__name__})") from exc
+    api_key = os.environ.get("MOCHA_API_KEY", "").strip()
+    service = "Mocha API" if api_key else "Mocha resolver"
+    response = None
+    for attempt in range(MAX_REQUEST_ATTEMPTS):
+        try:
+            if api_key:
+                response = client.post(
+                    "https://api.mocha.my/api/files/presigned",
+                    json={"fileId": file_id, "disposition": "attachment"},
+                    timeout=TIMEOUT, allow_redirects=False, stream=True,
+                    headers={"Authorization": f"Bearer {api_key}",
+                             "Accept": "application/json"},
+                )
+            else:
+                response = client.get(
+                    RESOLVER_URL, params={"fileId": file_id},
+                    timeout=TIMEOUT, allow_redirects=False, stream=True,
+                    headers={"Accept": "application/json"},
+                )
+        except requests.RequestException as exc:
+            if attempt + 1 == MAX_REQUEST_ATTEMPTS:
+                raise MetadataError(f"{service} request failed ({type(exc).__name__})") from exc
+            _retry_pause(attempt)
+            continue
+        if response.status_code in RETRYABLE_STATUS_CODES and attempt + 1 < MAX_REQUEST_ATTEMPTS:
+            response.close()
+            _retry_pause(attempt)
+            continue
+        break
+    if response is None:
+        raise MetadataError(f"{service} request failed without a response")
     try:
         if response.status_code != 200:
-            raise MetadataError(f"Mocha resolver returned HTTP {response.status_code}")
+            raise MetadataError(f"{service} returned HTTP {response.status_code}")
         body = bytearray()
         for chunk in response.iter_content(chunk_size=4096):
             if chunk:
@@ -273,9 +317,30 @@ def catalog_targets(root: Path) -> list[dict[str, Any]]:
     return targets
 
 
+def _redact_source(source: str) -> str:
+    """Remove URL userinfo, query strings, and fragments from report output."""
+    parsed = urlparse(source)
+    if not parsed.scheme or not parsed.netloc:
+        return source
+    host = parsed.hostname or ""
+    try:
+        if parsed.port:
+            host = f"{host}:{parsed.port}"
+    except ValueError:
+        host = parsed.hostname or ""
+    return f"{parsed.scheme}://{host}{parsed.path}"
+
+
+def _report_target_fields(target: dict[str, Any]) -> dict[str, Any]:
+    return {
+        key: (_redact_source(target[key]) if key == "source" else target[key])
+        for key in ("catalog", "source", "platform", "missing")
+    }
+
+
 def inspect_target(target: dict[str, Any], *, session: requests.Session | None = None) -> dict[str, Any]:
     if target["platform"] != "PS4":
-        return {**{k: target[k] for k in ("catalog", "source", "platform", "missing")},
+        return {**_report_target_fields(target),
                 "status": "unsupported_platform",
                 "reason": "PS5 PKG format has not yet been independently validated by this extractor"}
     source = target["source"]
@@ -288,23 +353,33 @@ def inspect_target(target: dict[str, Any], *, session: requests.Session | None =
     ).split(",") if h.strip()}
     reader = RangeReader(url, session=session, allowed_hosts=allowed)
     extracted = extract_ps4_metadata(reader)
-    return {**{k: target[k] for k in ("catalog", "source", "platform", "missing")},
+    return {**_report_target_fields(target),
             "catalog_metadata": target["catalog_metadata"], **extracted}
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog-root", type=Path, default=Path("."))
+    parser.add_argument("--source", default=None, help="Inspect one direct PKG URL or Mocha file ID instead of scanning catalogs")
+    parser.add_argument("--platform", choices=("PS4", "PS5"), default="PS4",
+                        help="Platform for --source (PS5 remains unsupported until independently validated)")
     parser.add_argument("--output", type=Path, help="Write JSON report (default: stdout)")
     args = parser.parse_args()
     try:
-        targets = catalog_targets(args.catalog_root)
+        if args.source is not None:
+            if not args.source.strip():
+                raise MetadataError("--source must not be empty")
+            targets = [{"catalog": "direct-source", "source": args.source,
+                        "platform": args.platform, "missing": ["title_id", "version"],
+                        "catalog_metadata": {}}]
+        else:
+            targets = catalog_targets(args.catalog_root)
         results = []
         for target in targets:
             try:
                 results.append(inspect_target(target))
             except (MetadataError, requests.RequestException, OSError, ValueError) as exc:
-                results.append({**{k: target[k] for k in ("catalog", "source", "platform", "missing")},
+                results.append({**_report_target_fields(target),
                                 "catalog_metadata": target["catalog_metadata"],
                                 "status": "unavailable", "reason": str(exc)})
         report = {"schema_version": 1, "read_only": True, "targets_found": len(targets),
