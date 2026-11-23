@@ -28,7 +28,6 @@ jobs:
           node-version: 22
       - run: npm test
       - name: Check published catalog endpoints
-        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         run: |
           urls=(
             "https://dinos17.github.io/FPKGi-Catalog-Hub/ps4/games.json"
