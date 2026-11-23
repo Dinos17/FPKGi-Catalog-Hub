@@ -7,6 +7,7 @@ TOOLS_DIR = Path(__file__).resolve().parents[1] / "tools"
 sys.path.insert(0, str(TOOLS_DIR))
 
 import akirabox_catalog_compare as comparator
+import mocha_catalog_compare as mocha_comparator
 from akirabox_catalog_compare import compare_scan, parse_source_details, parse_source_identity, parse_source_metadata
 
 
@@ -675,3 +676,32 @@ def test_verified_duplicate_without_creation_timestamps_stays_manual(tmp_path):
     duplicate = next(row for row in report["results"] if row["status"] == "duplicate")
     assert duplicate["binary_verification"]["status"] == "verified_identical"
     assert "automatic_decision" not in duplicate
+
+
+def test_mocha_title_normalization_preserves_sequel_number_and_year(tmp_path):
+    assert mocha_comparator._clean_title("DOOM 2 (1994)") == "doom 2 1994"
+    write_catalog(tmp_path, "ps4/games.json", {
+        "https://archive.org/download/example/DOOM%202%20(1994)%20-%20[US]%20[EN]%20[1.08].pkg": {
+            "title_id": "CUSA15595", "region": "USA", "name": "DOOM 2 (1994)",
+            "version": "01.08", "release": "11-15-2013",
+            "size": 508952576, "min_fw": "9.00",
+        },
+    })
+    for path in ("ps4/dlc.json", "ps5/ps5-games.json", "ps5/ps5-dlc.json"):
+        write_catalog(tmp_path, path, {})
+    scan = {
+        "scanner": "mocha", "scan_complete": True,
+        "catalog_write_performed": False,
+        "files": [{
+            "id": "a05b8e0d-f23a-46c5-8594-829ae209f4f1",
+            "name": "DOOM 2 (1994) - [US] [EN] [1.08].pkg",
+            "extension": "pkg", "platform": "PS4",
+            "catalog_category": "games", "size_bytes": 508952576,
+        }],
+    }
+
+    report = mocha_comparator.compare_scan(scan, tmp_path)
+
+    assert report["counts"]["matched"] == 1
+    assert report["counts"]["new"] == 0
+    assert report["results"][0]["catalog_metadata"]["title_id"] == "CUSA15595"
