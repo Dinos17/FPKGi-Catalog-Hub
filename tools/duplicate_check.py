@@ -153,7 +153,7 @@ def format_identity(identity):
 
 def build_report(
     catalogs,
-    exact_duplicates,
+    url_collisions,
     possible_mirrors,
     duplicate_identities,
     incomplete_records,
@@ -164,16 +164,16 @@ def build_report(
         "",
         f"**Catalogs scanned:** {len(catalogs)}",
         f"**Package registrations:** {total_registrations}",
-        f"**Exact duplicate package URLs (normalized):** {len(exact_duplicates)}",
+        f"**URL normalization collisions:** {len(url_collisions)}",
         f"**Possible Archive.org ↔ Hugging Face mirrors (unverified):** {len(possible_mirrors)}",
         f"**Duplicate package identities:** {len(duplicate_identities)}",
         f"**Records with incomplete identity metadata:** {len(incomplete_records)}",
         "",
     ]
 
-    if exact_duplicates:
-        lines.extend(["#### ❌ Exact duplicate package URLs", ""])
-        for url, records in sorted(exact_duplicates.items()):
+    if url_collisions:
+        lines.extend(["#### ❌ URL normalization collisions", ""])
+        for url, records in sorted(url_collisions.items()):
             lines.append(f"- `{url}`")
             for filename in sorted(records):
                 lines.append(f"  - Found in: {filename}")
@@ -210,9 +210,9 @@ def build_report(
             )
         lines.append("")
 
-    if exact_duplicates:
+    if url_collisions:
         lines.extend([
-            "### ❌ Result: Exact duplicate package URLs detected.",
+            "### ❌ Result: URL normalization collisions detected.",
             "",
             "The workflow failed so these registrations can be reviewed before changing the catalogs.",
         ])
@@ -249,14 +249,14 @@ def check_duplicates():
                 continue
             by_identity[identity].append((filename, pkg_url))
 
-    exact_duplicates = {
+    url_collisions = {
         url: files for url, files in by_url.items() if len(files) > 1
     }
     possible_mirrors, duplicate_identities = classify_identity_duplicates(by_identity)
 
     report = build_report(
         catalogs,
-        exact_duplicates,
+        url_collisions,
         possible_mirrors,
         duplicate_identities,
         incomplete_records,
@@ -267,7 +267,7 @@ def check_duplicates():
     if summary_path:
         Path(summary_path).write_text(report, encoding="utf-8")
 
-    if exact_duplicates or duplicate_identities:
+    if url_collisions or duplicate_identities:
         raise SystemExit(1)
 
 
