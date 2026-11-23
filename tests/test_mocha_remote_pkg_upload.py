@@ -114,12 +114,12 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
     source = bytes.fromhex("7f434e54") + b"H" * (upload.MIN_PART_BYTES + 17 - 4)
     validator = ("ETag", '"stable-source"')
 
-    def fake_range(_session, _url, start, length, *, expected_validator=None):
+    def fake_range(_session, _url, start, length, *, expected_validator=None, overall_deadline=None):
         if expected_validator is not None:
             assert expected_validator == validator
         return source[start:start + length], len(source), validator
 
-    def fake_api(_session, method, path, _key, body=None, params=None):
+    def fake_api(_session, method, path, _key, body=None, params=None, deadline=None):
         api_calls.append((method, path, body))
         if path == "/files/multipart/init":
             return {
