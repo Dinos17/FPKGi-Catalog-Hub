@@ -5,7 +5,7 @@ on:
     types: [opened]
 
 concurrency:
-  group: mocha-review-decision-${{ github.event.issue.number }}
+  group: Mocha-reports-review-decision-${{ github.event.issue.number }}
   queue: max
 
 permissions:
@@ -33,13 +33,13 @@ jobs:
       - name: Validate and record decision
         env:
           EVENT_PATH: ${{ github.event_path }}
-          REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json
-          REPORT_BRANCH: mocha
+          REPORT_PATH: ${{ runner.temp }}/Mocha-reports-review-decisions.json
+          REPORT_BRANCH: Mocha-reports
         run: |
           set -euo pipefail
           git fetch origin "$REPORT_BRANCH"
-          if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
-            git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$REPORT_PATH"
+          if git cat-file -e "FETCH_HEAD:reports/Mocha-reports-review-decisions.json" 2>/dev/null; then
+            git show "FETCH_HEAD:reports/Mocha-reports-review-decisions.json" > "$REPORT_PATH"
           else
             printf '%s\n' '{"schema_version":1,"records":[]}' > "$REPORT_PATH"
           fi
@@ -94,8 +94,8 @@ jobs:
 
       - name: Publish decision record
         env:
-          REPORT_BRANCH: mocha
-          REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json
+          REPORT_BRANCH: Mocha-reports
+          REPORT_PATH: ${{ runner.temp }}/Mocha-reports-review-decisions.json
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -104,8 +104,8 @@ jobs:
             git fetch origin "$REPORT_BRANCH"
             git reset --hard FETCH_HEAD
             mkdir -p reports
-            cp "$REPORT_PATH" reports/mocha-review-decisions.json
-            git add reports/mocha-review-decisions.json
+            cp "$REPORT_PATH" reports/Mocha-reports-review-decisions.json
+            git add reports/Mocha-reports-review-decisions.json
             if git diff --cached --quiet; then exit 0; fi
             git commit -m "Record Mocha review decision"
             if git push origin "HEAD:$REPORT_BRANCH"; then exit 0; fi
