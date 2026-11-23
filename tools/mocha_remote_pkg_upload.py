@@ -192,7 +192,7 @@ def _list_mocha_files(session: requests.Session, api_key: str, remote_path: str)
 
 
 def _reconcile_completed_file(session: requests.Session, api_key: str, remote_path: str,
-                             filename: str, total_size: int,
+                             filename: str, total_size: int, upload_id: str,
                              baseline_ids: set[str]) -> str:
     current = _list_mocha_files(session, api_key, remote_path)
     matches = [
@@ -200,6 +200,7 @@ def _reconcile_completed_file(session: requests.Session, api_key: str, remote_pa
         if isinstance(item.get("id"), str)
         and item["id"] not in baseline_ids
         and item.get("size") == total_size
+        and item.get("uploadId", item.get("upload_id")) == upload_id
         and filename in (item.get("original_name"), item.get("file_name"))
     ]
     if len(matches) != 1:
@@ -273,9 +274,12 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
             urls = urls_payload.get("urls")
             if not isinstance(urls, list) or len(urls) != 1 or not isinstance(urls[0], dict):
                 raise UploadError(f"Mocha did not return one presigned URL for part {part_number}")
-            if urls[0].get("partNumber") != part_number:
+            if type(urls[0].get("partNumber")) is not int or urls[0]["partNumber"] != part_number:
                 raise UploadError(f"Mocha returned a mismatched presigned part number for part {part_number}")
-            etag = _put_part(client, urls[0].get("url"), data, part_number)
+            part_url = urls[0].get("url")
+            if not isinstance(part_url, str) or not part_url:
+                raise UploadError(f"Mocha returned an invalid presigned URL for part {part_number}")
+            etag = _put_part(client, part_url, data, part_number)
             completed_parts.append({"partNumber": part_number, "etag": etag})
             print(f"Uploaded part {part_number}/{part_count} ({offset + length:,}/{total_size:,} bytes)",
                   file=sys.stderr, flush=True)
@@ -292,7 +296,7 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
         except Exception as exc:
             try:
                 reconciled_id = _reconcile_completed_file(
-                    client, api_key, remote_path, filename, total_size, baseline_ids
+                    client, api_key, remote_path, filename, total_size, upload_id, baseline_ids
                 )
             except Exception as reconcile_error:
                 raise UploadError(
@@ -306,7 +310,7 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
         if not isinstance(file_id, str) or not file_id:
             try:
                 file_id = _reconcile_completed_file(
-                    client, api_key, remote_path, filename, total_size, baseline_ids
+                    client, api_key, remote_path, filename, total_size, upload_id, baseline_ids
                 )
             except Exception as reconcile_error:
                 raise UploadError(
