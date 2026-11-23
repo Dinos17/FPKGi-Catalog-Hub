@@ -51,7 +51,9 @@ def catalog_identity_conflict_file_ids(
                  key: str) -> tuple[Any, ...] | None:
         filename = _catalog_filename_metadata(key)
         title_id = metadata.get("title_id") or (filename or {}).get("title_id")
-        title = _clean_title(metadata.get("name") or (filename or {}).get("title"))
+        # A title ID identifies a game; DLC entries sharing the base-game ID
+        # also require the normalized package title to distinguish add-ons.
+        title = _clean_title(metadata.get("name") or (filename or {}).get("title")) if category == "dlc" else ""
         region = _region(metadata.get("region")) or _region((filename or {}).get("region"))
         version = _normalized_version(metadata.get("version")) or _normalized_version((filename or {}).get("version"))
         size = metadata.get("size")
@@ -67,7 +69,8 @@ def catalog_identity_conflict_file_ids(
     for (platform, category), entries in catalogs.items():
         for key, metadata in entries.items():
             ident = identity(platform, category, metadata, key)
-            raw_id = metadata.get("title_id")
+            filename = _catalog_filename_metadata(key)
+            raw_id = metadata.get("title_id") or (filename or {}).get("title_id")
             if ident is None:
                 if isinstance(raw_id, str) and raw_id.strip():
                     incomplete_by_title_id.add((platform, category, raw_id.strip().upper()))
