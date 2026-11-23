@@ -100,7 +100,15 @@ def test_exact_mocha_filename_and_size_selects_unique_mocha_file(tmp_path):
 
 
 def test_apply_updates_only_verified_missing_version(tmp_path):
-    root = make_root(tmp_path)
+    root = make_root(tmp_path, metadata={
+        "title_id": "CUSA02084",
+        "region": "USA",
+        "name": "Rock Band 4 Expansion Pack 1",
+        "size": 123456,
+        "version": "",
+        "min_fw": "9.00",
+        "cover_url": "CUSA02084.png",
+    })
     before = read_dlc(root).copy()
     report = repair.repair_catalogs(
         root, make_scan(mocha_file()), apply=True,
