@@ -39,6 +39,9 @@ jobs:
             status="$(curl --silent --show-error --max-time 15 --max-redirs 0 \
               -o /dev/null -w "%{http_code}" "$url" || true)"
             printf "Published catalog HTTP %s: %s\\n" "$status" "$url"
+            if [ "$status" != "200" ]; then
+              exit 1
+            fi
           done
           curl --silent --show-error --max-time 15 --max-redirs 0 \
             -o "$RUNNER_TEMP/ps4-games.json" \
@@ -49,7 +52,10 @@ jobs:
           with open(path, encoding="utf-8") as stream:
               data = json.load(stream)
           file_id = "d5ac3913-802b-4d68-9803-8f5c07c7640e"
-          print("Published PS4 games catalog contains Mocha smoke fixture:", file_id in data.get("DATA", {}))
+          present = file_id in data.get("DATA", {})
+          print("Published PS4 games catalog contains Mocha smoke fixture:", present)
+          if not present:
+              raise SystemExit("Published catalog is missing the registered Mocha smoke fixture")
           PY
       - name: Probe production resolver without exposing response content
         if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
