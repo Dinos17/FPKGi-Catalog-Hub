@@ -41,10 +41,10 @@ export default async (request) => {
   const allowedHosts = getAllowedStorageHosts(netlifyStorageHosts || processStorageHosts || "");
   if (!apiKey || allowedHosts.size === 0) {
     const diagnostics = {
-      netlifyApiKeyPresent: Boolean(netlifyApiKey),
-      processApiKeyPresent: Boolean(processApiKey),
-      netlifyStorageHostsPresent: Boolean(netlifyStorageHosts),
-      processStorageHostsPresent: Boolean(processStorageHosts),
+      netlifyApiKeyPresent: Boolean(String(netlifyApiKey ?? "").trim()),
+      processApiKeyPresent: Boolean(String(processApiKey ?? "").trim()),
+      netlifyStorageHostsPresent: Boolean(String(netlifyStorageHosts ?? "").trim()),
+      processStorageHostsPresent: Boolean(String(processStorageHosts ?? "").trim()),
       allowedStorageHostCount: allowedHosts.size,
     };
     console.error("mocha_resolver_not_configured", diagnostics);
