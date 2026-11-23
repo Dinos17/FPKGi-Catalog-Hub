@@ -130,15 +130,29 @@ def resolve_mocha_url(file_id: str, *, session: requests.Session | None = None) 
     if not re.fullmatch(r"[A-Za-z0-9._-]{1,128}", file_id or ""):
         raise MetadataError("Invalid Mocha file ID")
     client = session or requests.Session()
+    api_key = os.environ.get("MOCHA_API_KEY", "").strip()
     try:
-        response = client.get(RESOLVER_URL, params={"fileId": file_id},
-                              timeout=TIMEOUT, allow_redirects=False, stream=True,
-                              headers={"Accept": "application/json"})
+        if api_key:
+            response = client.post(
+                "https://api.mocha.my/api/files/presigned",
+                json={"fileId": file_id, "disposition": "attachment"},
+                timeout=TIMEOUT, allow_redirects=False, stream=True,
+                headers={"Authorization": f"Bearer {api_key}",
+                         "Accept": "application/json"},
+            )
+        else:
+            response = client.get(
+                RESOLVER_URL, params={"fileId": file_id},
+                timeout=TIMEOUT, allow_redirects=False, stream=True,
+                headers={"Accept": "application/json"},
+            )
     except requests.RequestException as exc:
-        raise MetadataError(f"Mocha resolver request failed ({type(exc).__name__})") from exc
+        service = "Mocha API" if api_key else "Mocha resolver"
+        raise MetadataError(f"{service} request failed ({type(exc).__name__})") from exc
     try:
         if response.status_code != 200:
-            raise MetadataError(f"Mocha resolver returned HTTP {response.status_code}")
+            service = "Mocha API" if api_key else "Mocha resolver"
+            raise MetadataError(f"{service} returned HTTP {response.status_code}")
         body = bytearray()
         for chunk in response.iter_content(chunk_size=4096):
             if chunk:
