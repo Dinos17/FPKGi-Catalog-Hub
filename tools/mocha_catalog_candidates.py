@@ -49,7 +49,7 @@ def catalog_identity_conflict_file_ids(
     packages; URL-encoding aliases with identical package identity are conflicts.
     """
     catalogs = _load_catalogs(catalog_root)
-    duplicate_identities: dict[tuple[str, str, str, str, int], int] = {}
+    duplicate_identities: dict[tuple[str, str, str, str, str, int], int] = {}
     for (platform, category), entries in catalogs.items():
         for metadata in entries.values():
             title_id = metadata.get("title_id")
