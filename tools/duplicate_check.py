@@ -42,7 +42,7 @@ def normalize_package_url(url):
 
 def report_value(value):
     text = html.escape(str(value), quote=True)
-    return text.replace("\r", " ").replace("\n", " ").replace("`", "&#96;").replace("#", "&#35;")
+    return re.sub(r"(?<!&)#", "&#35;", text.replace("\r", " ").replace("\n", " ").replace("`", "&#96;"))
 
 
 def catalog_category(filename):
