@@ -206,7 +206,7 @@ def _find_staged_file(session: requests.Session, api_key: str, remote_path: str,
             if not isinstance(item, dict):
                 continue
             names = (item.get("original_name"), item.get("file_name"))
-            if (staging_name in names and item.get("path") == remote_path
+            if (staging_name in names and str(item.get("path", "")).rstrip("/") == remote_path.rstrip("/")
                     and item.get("size") == total_size
                     and isinstance(item.get("id"), str)):
                 matches.append(item)
@@ -241,6 +241,7 @@ def _rename_staged_file(session: requests.Session, api_key: str, file_id: str,
                 raise UploadError("Mocha file inventory response is malformed")
             if any(isinstance(item, dict) and item.get("id") == file_id
                    and item.get("original_name") == final_name
+                   and str(item.get("path", "")).rstrip("/") == remote_path.rstrip("/")
                    and item.get("size") == total_size
                    for item in files):
                 return
