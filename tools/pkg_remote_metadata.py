@@ -199,9 +199,9 @@ def parse_sfo(data: bytes) -> dict[str, Any]:
             raise MetadataError("PARAM.SFO key is not terminated")
         key = data[key_start:key_end].decode("ascii", errors="strict")
         raw = data[value_start:value_start + value_len]
-        if fmt in (0x0204, 0x0004) and value_len >= 4:
+        if fmt == 0x0404 and value_len == 4:
             value: Any = struct.unpack_from("<I", raw)[0]
-        elif fmt in (0x0204, 0x0004) and value_len == 0:
+        elif fmt == 0x0404 and value_len == 0:
             value = None
         elif fmt in (0x0000, 0x0204):
             value = raw.hex()
