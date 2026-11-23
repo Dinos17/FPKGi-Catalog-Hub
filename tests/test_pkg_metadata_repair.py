@@ -274,3 +274,20 @@ def test_existing_mocha_id_is_used_without_inventory_name_match(tmp_path):
     assert seen["source"] == FILE_ID
     assert report["results"][0]["mocha_match_status"] == "catalog_mocha_id"
     assert report["results"][0]["status"] == "candidate_update"
+
+
+def test_failure_report_suppresses_signed_url_details(tmp_path):
+    root = make_root(tmp_path)
+
+    def inspector(target):
+        raise pkg.MetadataError(
+            "request failed https://stor11.mochaprox.li/file?signature=private-token"
+        )
+
+    report = repair.repair_catalogs(root, make_scan(), inspector=inspector)
+    serialized = json.dumps(report)
+    assert "private-token" not in serialized
+    assert "stor11.mochaprox.li" not in serialized
+    assert report["results"][0]["reason"] == (
+        "Source request failed; sensitive URL details suppressed"
+    )
