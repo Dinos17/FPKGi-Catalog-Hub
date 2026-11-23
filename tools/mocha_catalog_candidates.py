@@ -59,7 +59,7 @@ def catalog_identity_conflict_file_ids(
         size = metadata.get("size")
         if not isinstance(size, int) or isinstance(size, bool):
             size = None
-        if not title_id or not title or not region or version is None or size is None:
+        if not title_id or (category == "dlc" and not title) or not region or version is None or size is None:
             return None
         return (platform, category, str(title_id).strip().upper(), title,
                 region, version, size)
