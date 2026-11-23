@@ -465,7 +465,7 @@ The duplicate-check workflow scans all generated catalog files for URL-normaliza
 
 URL normalization decodes only percent-encoded unreserved characters. Reserved path delimiters remain encoded because decoding them can change the resource being addressed. Incomplete or invalid identity metadata is reported separately and excluded from identity matching; a report containing such records is not a fully verified catalog.
 
-Archive.org and Hugging Face records with matching package identity and exact filename are reported only as possible mirrors. They are not approved or verified mirrors, and the checker does not compare binary contents. A package URL should otherwise appear only once across the generated catalog files.
+Only a group containing exactly two distinct URLs—one on Archive.org and one on Hugging Face—with matching package identity and exact filename is reported as a possible mirror pair. Any other group sharing that complete identity, including groups with three or more distinct URLs, is reported as a duplicate package identity. Possible mirrors are not approved or verified, and the checker does not compare binary contents. A package URL should otherwise appear only once across the generated catalog files.
 
 ---
 
