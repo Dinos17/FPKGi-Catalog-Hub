@@ -370,11 +370,19 @@ test("handler rejects Mocha redirects and never returns a redirected URL", async
 test("reports only safe configuration diagnostics when resolver secrets are missing", async (t) => {
   const originalNetlify = globalThis.Netlify;
   const originalError = console.error;
+  const originalApiKey = process.env.MOCHA_API_KEY;
+  const originalStorageHosts = process.env.MOCHA_STORAGE_HOSTS;
   let logged;
   t.after(() => {
     globalThis.Netlify = originalNetlify;
     console.error = originalError;
+    if (originalApiKey === undefined) delete process.env.MOCHA_API_KEY;
+    else process.env.MOCHA_API_KEY = originalApiKey;
+    if (originalStorageHosts === undefined) delete process.env.MOCHA_STORAGE_HOSTS;
+    else process.env.MOCHA_STORAGE_HOSTS = originalStorageHosts;
   });
+  delete process.env.MOCHA_API_KEY;
+  delete process.env.MOCHA_STORAGE_HOSTS;
   globalThis.Netlify = { env: { get: (name) => ({
     MOCHA_API_KEY: "   ",
     MOCHA_STORAGE_HOSTS: "storage.example",
@@ -388,7 +396,7 @@ test("reports only safe configuration diagnostics when resolver secrets are miss
   assert.deepEqual(await response.json(), {
     error: "resolver_not_configured",
     diagnostics: {
-      netlifyApiKeyPresent: true,
+      netlifyApiKeyPresent: false,
       processApiKeyPresent: false,
       netlifyStorageHostsPresent: true,
       processStorageHostsPresent: false,
@@ -398,7 +406,7 @@ test("reports only safe configuration diagnostics when resolver secrets are miss
   assert.deepEqual(logged, [
     "mocha_resolver_not_configured",
     {
-      netlifyApiKeyPresent: true,
+      netlifyApiKeyPresent: false,
       processApiKeyPresent: false,
       netlifyStorageHostsPresent: true,
       processStorageHostsPresent: false,
