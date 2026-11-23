@@ -5,10 +5,12 @@ on:
     paths:
       - "tools/pkg_remote_metadata.py"
       - "tools/pkg_metadata_repair.py"
+      - "tools/pkg_ps5_probe.py"
       - "tools/mocha_remote_pkg_upload.py"
       - "tests/test_mocha_remote_pkg_upload.py"
       - "tests/test_pkg_remote_metadata.py"
       - "tests/test_pkg_metadata_repair.py"
+      - "tests/test_pkg_ps5_probe.py"
       - "requirements.txt"
       - ".github/workflows/pkg-metadata-tests.yml"
   push:
@@ -79,6 +81,45 @@ jobs:
               raise SystemExit(f"Real PKG metadata disagrees with catalog: {json.dumps(mismatches, sort_keys=True)}")
           print(json.dumps({key: result.get(key) for key in required}, indent=2))
           PY
+      - name: Probe PS5 FIH/CNT metadata container using bounded ranges
+        run: |
+          set -euo pipefail
+          python tools/pkg_ps5_probe.py --catalog-root . --output "$RUNNER_TEMP/ps5-pkg-probe-report.json"
+          python - <<'PY'
+          import json
+          import os
+          path = os.path.join(os.environ["RUNNER_TEMP"], "ps5-pkg-probe-report.json")
+          with open(path, encoding="utf-8") as stream:
+              report = json.load(stream)
+          print(json.dumps({
+              "targets_found": report.get("targets_found"),
+              "results": [
+                  {
+                      "catalog": row.get("catalog"),
+                      "status": row.get("status"),
+                      "reason": row.get("reason"),
+                      "package_size": row.get("package_size"),
+                      "cnt_content_id": row.get("cnt_content_id"),
+                      "cnt_entry_ids": row.get("cnt_entry_ids"),
+                      "param_sfo_entry": row.get("param_sfo_entry"),
+                      "title_id": row.get("title_id"),
+                      "version": row.get("version"),
+                      "identity_verified": row.get("identity_verified"),
+                  }
+                  for row in report.get("results", [])
+              ],
+          }, indent=2))
+          PY
+
+      - name: Upload PS5 package probe report
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
+        with:
+          name: ps5-pkg-probe-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/ps5-pkg-probe-report.json
+          if-no-files-found: warn
+          retention-days: 3
+
       - name: Upload real-package smoke report
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
