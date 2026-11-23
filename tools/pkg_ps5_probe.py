@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
 import struct
 import sys
 from pathlib import Path
@@ -190,20 +192,32 @@ def probe_source(
     expected_title_id: str | None = None,
     expected_size: int | None = None,
 ) -> dict[str, Any]:
+    session = requests.Session()
     try:
-        reader = pkg.RangeReader(source, allowed_hosts={"huggingface.co"})
-        try:
-            result = probe_ps5_reader(
-                reader,
-                expected_title_id=expected_title_id,
-                expected_size=expected_size,
-            )
-        finally:
-            reader.session.close()
+        if re.fullmatch(r"[A-Za-z0-9._-]{1,128}", source or ""):
+            resolved_url = pkg.resolve_mocha_url(source, session=session)
+            allowed_hosts = {
+                host.strip().lower()
+                for host in os.environ.get("MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li").split(",")
+                if host.strip()
+            }
+        else:
+            resolved_url = source
+            allowed_hosts = {"huggingface.co"}
+        reader = pkg.RangeReader(
+            resolved_url, session=session, allowed_hosts=allowed_hosts
+        )
+        result = probe_ps5_reader(
+            reader,
+            expected_title_id=expected_title_id,
+            expected_size=expected_size,
+        )
         return {
             **result,
             "source": pkg._redact_source(source),
         }
+    finally:
+        session.close()
     except (pkg.MetadataError, requests.RequestException, OSError, ValueError, struct.error) as exc:
         return {
             "status": "unavailable",
