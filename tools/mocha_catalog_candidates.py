@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.mocha_review_queue import near_duplicate_file_ids
+from tools.mocha_catalog_compare import _catalog_filename_metadata, _clean_title, _normalized_version, _region
 
 CATALOGS = {
     ("PS4", "games"): "ps4/games.json",
@@ -42,52 +43,64 @@ def catalog_identity_conflict_file_ids(
     rows: list[dict[str, Any]],
     catalog_root: Path,
 ) -> set[str]:
-    """Flag matched uploads whose catalog identity already has duplicate records.
-
-    Identity is title ID + region + normalized version + package size within
-    the same platform/category catalog. Different versions/sizes remain distinct
-    packages; URL-encoding aliases with identical package identity are conflicts.
-    """
+    """Fail closed when a matched or ambiguous upload touches duplicate/uncertain catalog identity."""
     catalogs = _load_catalogs(catalog_root)
-    duplicate_identities: dict[tuple[str, str, str, str, str, int], int] = {}
-    for (platform, category), entries in catalogs.items():
-        for metadata in entries.values():
-            title_id = metadata.get("title_id")
-            region = metadata.get("region")
-            version = metadata.get("version")
-            size = metadata.get("size")
-            if (not isinstance(title_id, str) or not title_id.strip()
-                    or not isinstance(region, str) or not region.strip()
-                    or not isinstance(version, str) or not version.strip()
-                    or not isinstance(size, int) or isinstance(size, bool) or size <= 0):
-                continue
-            identity = (
-                platform, category, title_id.strip().upper(),
-                region.strip().upper(), version.strip().lstrip("0"), size,
-            )
-            duplicate_identities[identity] = duplicate_identities.get(identity, 0) + 1
-
     conflicts: set[str] = set()
-    for row in rows:
-        if not isinstance(row, dict) or row.get("status") != "matched":
-            continue
-        file_id = row.get("file_id")
-        metadata = row.get("catalog_metadata")
-        if not isinstance(file_id, str) or not isinstance(metadata, dict):
-            continue
-        title_id = metadata.get("title_id")
-        region = metadata.get("region")
-        version = metadata.get("version")
+
+    def identity(platform: str, category: str, metadata: dict[str, Any],
+                 key: str) -> tuple[Any, ...] | None:
+        filename = _catalog_filename_metadata(key)
+        title_id = metadata.get("title_id") or (filename or {}).get("title_id")
+        title = _clean_title(metadata.get("name") or (filename or {}).get("title"))
+        region = _region(metadata.get("region")) or _region((filename or {}).get("region"))
+        version = _normalized_version(metadata.get("version")) or _normalized_version((filename or {}).get("version"))
         size = metadata.get("size")
-        if (not isinstance(title_id, str) or not isinstance(region, str)
-                or not isinstance(version, str) or not isinstance(size, int)
-                or isinstance(size, bool)):
+        if not isinstance(size, int) or isinstance(size, bool):
+            size = None
+        if not title_id or not title or not region or version is None or size is None:
+            return None
+        return (platform, category, str(title_id).strip().upper(), title,
+                region, version, size)
+
+    counts: dict[tuple[Any, ...], int] = {}
+    incomplete_by_title_id: set[tuple[str, str, str]] = set()
+    for (platform, category), entries in catalogs.items():
+        for key, metadata in entries.items():
+            ident = identity(platform, category, metadata, key)
+            raw_id = metadata.get("title_id")
+            if ident is None:
+                if isinstance(raw_id, str) and raw_id.strip():
+                    incomplete_by_title_id.add((platform, category, raw_id.strip().upper()))
+                continue
+            counts[ident] = counts.get(ident, 0) + 1
+
+    for row in rows:
+        if not isinstance(row, dict):
             continue
-        identity = (
-            row.get("platform"), row.get("category"), title_id.strip().upper(),
-            region.strip().upper(), version.strip().lstrip("0"), size,
-        )
-        if duplicate_identities.get(identity, 0) > 1:
+        status = row.get("status")
+        file_id = row.get("file_id")
+        if status == "ambiguous" and isinstance(file_id, str):
+            # Comparator has already established multiple catalog candidates.
+            conflicts.add(file_id)
+            continue
+        if status != "matched" or not isinstance(file_id, str):
+            continue
+        platform, category = row.get("platform"), row.get("category")
+        metadata = row.get("catalog_metadata")
+        key = row.get("catalog_url")
+        if not isinstance(platform, str) or not isinstance(category, str):
+            conflicts.add(file_id)
+            continue
+        if not isinstance(metadata, dict) or not isinstance(key, str):
+            conflicts.add(file_id)
+            continue
+        ident = identity(platform, category, metadata, key)
+        if ident is None:
+            # A matched row with incomplete identity cannot be proven unique.
+            conflicts.add(file_id)
+            continue
+        title_id_key = (platform, category, ident[2])
+        if counts.get(ident, 0) > 1 or title_id_key in incomplete_by_title_id:
             conflicts.add(file_id)
     return conflicts
 
