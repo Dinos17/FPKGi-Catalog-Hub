@@ -1045,15 +1045,15 @@ jobs:
       - name: Download this scan's validated Mocha inventory
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
-          name: mocha-scan-reports-\${{ github.run_id }}-\${{ github.run_attempt }}
-          path: \${{ runner.temp }}/mocha-scan-reports
+          name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/mocha-scan-reports
 
       - name: Apply only identity-verified PKG metadata repairs
         id: repair
         env:
-          MOCHA_API_KEY: \${{ secrets.MOCHA_API_KEY }}
-          SCAN_REPORT: \${{ runner.temp }}/mocha-scan-reports/mocha-scan-report.json
-          REPAIR_REPORT: \${{ runner.temp }}/pkg-metadata-repair-report.json
+          MOCHA_API_KEY: ${{ secrets.MOCHA_API_KEY }}
+          SCAN_REPORT: ${{ runner.temp }}/mocha-scan-reports/mocha-scan-report.json
+          REPAIR_REPORT: ${{ runner.temp }}/pkg-metadata-repair-report.json
         run: |
           set -euo pipefail
           python tools/pkg_metadata_repair.py \
@@ -1097,8 +1097,8 @@ jobs:
         if: always()
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
-          name: pkg-metadata-repair-report-\${{ github.run_id }}-\${{ github.run_attempt }}
-          path: \${{ runner.temp }}/pkg-metadata-repair-report.json
+          name: pkg-metadata-repair-report-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/pkg-metadata-repair-report.json
           if-no-files-found: warn
           retention-days: 3
 
@@ -1116,10 +1116,10 @@ jobs:
       - name: Create and automatically merge the verified metadata repair PR
         if: steps.repair.outputs.applied_count != '0'
         env:
-          GH_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          branch="pkg-metadata-repair-\${GITHUB_SHA}"
+          branch="pkg-metadata-repair-${GITHUB_SHA}"
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           if git ls-remote --exit-code --heads origin "$branch" >/dev/null 2>&1; then
