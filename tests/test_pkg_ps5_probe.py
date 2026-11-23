@@ -118,7 +118,9 @@ def test_encrypted_param_sfo_is_reported_without_decryption():
     assert result["status"] == "param_sfo_encrypted"
     assert result["param_sfo_entry"]["encrypted"] is True
     assert "title_id" not in result
-    assert not any(length > probe.CNT_HEADER_SIZE for _, length in reader.reads)
+    sfo_entry = result["param_sfo_entry"]
+    sfo_range = (result["cnt_offset"] + sfo_entry["data_offset"], sfo_entry["data_size"])
+    assert sfo_range not in reader.reads
 
 
 def test_missing_param_sfo_is_reported():
