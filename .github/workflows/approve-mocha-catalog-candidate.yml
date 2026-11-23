@@ -39,7 +39,7 @@ jobs:
         id: candidate
         env:
           EVENT_PATH: ${{ github.event_path }}
-          REPORT_BRANCH: akirabox-reports
+          REPORT_BRANCH: Mocha-reports
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
