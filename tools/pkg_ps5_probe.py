@@ -63,11 +63,12 @@ def probe_ps5_reader(
     expected_title_id: str | None = None,
     expected_size: int | None = None,
 ) -> dict[str, Any]:
+    # RangeReader learns the object size from Content-Range on its first request.
+    prefix = reader.read(0, 4)
     total_size = reader.total_size
     if type(total_size) is not int or total_size <= 0:
         raise pkg.MetadataError("PS5 package source did not provide a valid total size")
 
-    prefix = reader.read(0, 4)
     fih_info: dict[str, Any] = {}
     if prefix == FIH_MAGIC:
         fih = reader.read(0, FIH_HEADER_READ_SIZE)
