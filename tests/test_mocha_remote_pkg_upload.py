@@ -83,7 +83,7 @@ def test_remote_pkg_upload_uses_multipart_and_returns_file_id(monkeypatch):
 
     def fake_range(_session, _url, start, length):
         if start == 0 and length == 1:
-            return b"\\x7f", 8
+            return bytes.fromhex("7f434e54"), 8
         return (b"X" * length), 8
 
     def fake_api(_session, method, path, _key, body=None):
@@ -137,7 +137,7 @@ def test_remote_pkg_upload_aborts_after_part_failure(monkeypatch):
     paths = []
 
     def fake_range(_session, _url, start, length):
-        return (b"\\x7f" if length == 1 else b"X" * length), 4
+        return (bytes.fromhex("7f434e54") if length == 4 else b"X" * length), 4
 
     def fake_api(_session, method, path, _key, body=None):
         paths.append(path)
