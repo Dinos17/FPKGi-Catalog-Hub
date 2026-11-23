@@ -28,19 +28,30 @@ export default async (request) => {
     });
   }
 
-  const fileId = new URL(request.url).searchParams.get("fileId");
+  const url = new URL(request.url);
+  const fileId = url.searchParams.get("fileId");
   if (!isValidFileId(fileId)) {
     return Response.json({ error: "invalid_file_id" }, { status: 400 });
   }
 
-  const apiKey = String(Netlify.env.get("MOCHA_API_KEY") ?? "").trim();
-  const allowedHosts = getAllowedStorageHosts(Netlify.env.get("MOCHA_STORAGE_HOSTS"));
+  const netlifyApiKey = String(Netlify.env.get("MOCHA_API_KEY") ?? "").trim();
+  const processApiKey = String(process.env.MOCHA_API_KEY ?? "").trim();
+  const apiKey = netlifyApiKey || processApiKey;
+  const netlifyStorageHosts = String(Netlify.env.get("MOCHA_STORAGE_HOSTS") ?? "").trim();
+  const processStorageHosts = String(process.env.MOCHA_STORAGE_HOSTS ?? "").trim();
+  const allowedHosts = getAllowedStorageHosts(netlifyStorageHosts || processStorageHosts);
   if (!apiKey || allowedHosts.size === 0) {
-    console.error("mocha_resolver_not_configured", {
-      hasApiKey: Boolean(apiKey),
+    const diagnostics = {
+      netlifyApiKeyPresent: Boolean(netlifyApiKey),
+      processApiKeyPresent: Boolean(processApiKey),
+      netlifyStorageHostsPresent: Boolean(netlifyStorageHosts),
+      processStorageHostsPresent: Boolean(processStorageHosts),
       allowedStorageHostCount: allowedHosts.size,
-    });
-    return Response.json({ error: "resolver_not_configured" }, { status: 503 });
+    };
+    console.error("mocha_resolver_not_configured", diagnostics);
+    const body = { error: "resolver_not_configured" };
+    if (url.searchParams.get("diagnostics") === "1") body.diagnostics = diagnostics;
+    return Response.json(body, { status: 503 });
   }
 
   try {
