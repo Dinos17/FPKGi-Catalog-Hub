@@ -985,6 +985,7 @@ jobs:
           python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
           python -m pytest -q
           python tools/validate_catalogs.py
+          python tools/duplicate_check.py
 
       - name: Create and automatically merge the catalog pull request
         if: steps.apply.outputs.applied_count != '0'
