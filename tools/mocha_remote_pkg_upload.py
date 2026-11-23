@@ -22,8 +22,8 @@ API_BASE = "https://api.mocha.my"
 TIMEOUT = (15, 180)
 MAX_REDIRECTS = 6
 MAX_PART_BYTES = 128 * 1024 * 1024
+MOCHA_STORAGE_HOSTS = {h.strip().lower() for h in os.environ.get("MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li").split(",") if h.strip()}
 SOURCE_HOSTS = {"archive.org", "huggingface.co", "hf.co"}
-RETRYABLE = {408, 425, 429, 500, 502, 503, 504}
 
 
 class UploadError(RuntimeError):
@@ -45,6 +45,13 @@ def _source_host_allowed(url: str) -> bool:
         return False
     host = (urlparse(url).hostname or "").lower().rstrip(".")
     return any(host == root or host.endswith("." + root) for root in SOURCE_HOSTS)
+
+
+def _mocha_storage_url_allowed(url: str) -> bool:
+    if not _valid_https_url(url):
+        return False
+    host = (urlparse(url).hostname or "").lower().rstrip(".")
+    return host in MOCHA_STORAGE_HOSTS
 
 
 def _request_json(session: requests.Session, method: str, path: str,
@@ -119,8 +126,8 @@ def _read_source_range(session: requests.Session, url: str, start: int,
 
 
 def _put_part(session: requests.Session, url: str, data: bytes, part_number: int) -> str:
-    if not _valid_https_url(url):
-        raise UploadError("Mocha returned an invalid presigned part URL")
+    if not _mocha_storage_url_allowed(url):
+        raise UploadError("Mocha returned a presigned URL outside the storage host allowlist")
     response = session.put(url, data=data, headers={"Content-Type": "application/octet-stream"},
                            timeout=TIMEOUT, allow_redirects=False)
     try:
@@ -150,8 +157,8 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
 
     # Probe one byte first: this also proves the origin supports exact Range reads.
     first, total_size = _read_source_range(client, source_url, 0, 1)
-    if first[:4] == b"":
-        raise UploadError("Empty source package")
+    if first != bytes.fromhex("7f434e54"):
+        raise UploadError("Source does not begin with the recognized PS4 PKG magic")
 
     init = _request_json(client, "POST", "/files/multipart/init", api_key, {
         "originalName": filename,
@@ -162,6 +169,8 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
     upload_id, key, node_id = init.get("uploadId"), init.get("key"), init.get("nodeId")
     original_name = init.get("originalName") or filename
     part_size = init.get("partSizeBytes")
+    if init.get("directPartUpload") is True and type(init.get("directPartSizeBytes")) is int and init["directPartSizeBytes"] > 0:
+        part_size = init["directPartSizeBytes"]
     if not all(isinstance(v, str) and v for v in (upload_id, key, node_id)):
         raise UploadError("Mocha multipart init response is incomplete")
     if type(part_size) is not int or not 0 < part_size <= MAX_PART_BYTES:
