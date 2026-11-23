@@ -142,6 +142,7 @@ def test_remote_pkg_upload_uses_exact_source_bytes_and_returns_file_id(monkeypat
         return f"etag-{part_number}"
 
     monkeypatch.setattr(upload, "_read_source_range", fake_range)
+    monkeypatch.setattr(upload, "_list_mocha_files", lambda *_args: [])
     monkeypatch.setattr(upload, "_request_json", fake_api)
     monkeypatch.setattr(upload, "_put_part", fake_put)
 
@@ -202,12 +203,24 @@ def test_remote_pkg_upload_rejects_mismatched_presigned_part_and_aborts(monkeypa
     assert paths[-1] == "/files/multipart/abort"
 
 
-def test_remote_pkg_upload_does_not_abort_or_retry_ambiguous_completion(monkeypatch):
+def test_remote_pkg_upload_reconciles_lost_completion_without_retry(monkeypatch):
     paths = []
+    inventory_calls = []
     source = bytes.fromhex("7f434e54") + b"H" * (0x100 - 4)
 
     def fake_range(_session, _url, start, length, *, expected_validator=None):
         return source[start:start + length], len(source), ("ETag", '"v1"')
+
+    def fake_inventory(*_args):
+        inventory_calls.append(True)
+        if len(inventory_calls) == 1:
+            return []
+        return [{
+            "id": "committed-file-1",
+            "original_name": "game.pkg",
+            "file_name": "game.pkg",
+            "size": len(source),
+        }]
 
     def fake_api(_session, method, path, _key, body=None):
         paths.append(path)
@@ -222,15 +235,17 @@ def test_remote_pkg_upload_does_not_abort_or_retry_ambiguous_completion(monkeypa
         raise AssertionError(path)
 
     monkeypatch.setattr(upload, "_read_source_range", fake_range)
+    monkeypatch.setattr(upload, "_list_mocha_files", fake_inventory)
     monkeypatch.setattr(upload, "_request_json", fake_api)
     monkeypatch.setattr(upload, "_put_part", lambda *_args: "etag-1")
 
-    with pytest.raises(upload.UploadError, match="outcome is unknown"):
-        upload.upload_remote_pkg(
-            "https://archive.org/download/item/game.pkg",
-            api_key="test-key",
-            remote_path="/PS4/DLC",
-            session=object(),
-        )
+    result = upload.upload_remote_pkg(
+        "https://archive.org/download/item/game.pkg",
+        api_key="test-key",
+        remote_path="/PS4/DLC",
+        session=object(),
+    )
+    assert result["file_id"] == "committed-file-1"
     assert paths.count("/files/multipart/complete") == 1
     assert "/files/multipart/abort" not in paths
+    assert len(inventory_calls) == 2
