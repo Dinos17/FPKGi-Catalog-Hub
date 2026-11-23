@@ -1,7 +1,7 @@
 {
   "authentication": "verified_by_file_listing",
   "automatic_cleanup": false,
-  "catalog_commit": "63e575c726e548755fe108937917ec49cf855cab",
+  "catalog_commit": "bf3dd5b7bfbbd967f19ec116e8403344c269d88c",
   "comparison_available": true,
   "counts": {
     "ambiguous": 0,
@@ -15,7 +15,7 @@
   "details_published": true,
   "file_count": 36,
   "folder_count": 1,
-  "generated_at": "2026-11-23T20:20:05Z",
+  "generated_at": "2026-11-23T20:53:45Z",
   "listing_page_count": 4,
   "permissions": {
     "can_create_hotlinks": false,
@@ -25,7 +25,7 @@
   },
   "possible_duplicate_groups": 0,
   "scan_complete": true,
-  "scan_observed_at": "2026-11-23T20:20:03.177033Z",
+  "scan_observed_at": "2026-11-23T20:53:43.963841Z",
   "scanner": "mocha",
   "schema_version": 1,
   "snapshot_consistency": "not_guaranteed_by_api"
