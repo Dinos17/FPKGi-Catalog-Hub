@@ -78,6 +78,32 @@ test("cancels catalog response as soon as streamed bytes exceed 5 MiB", async (t
   assert.equal(cancelled, true);
 });
 
+test("loads resolver allowlist from the four raw GitHub catalog files", async (t) => {
+  const originalFetch = globalThis.fetch;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  const requested = [];
+  globalThis.fetch = async (url) => {
+    requested.push(String(url));
+    return Response.json({ DATA: {
+      "raw-catalog-file-id": { download_source: "mocha" },
+    } });
+  };
+
+  const result = await getAllowedFileIds();
+  assert.equal(result.complete, true);
+  assert.equal(result.ids.has("raw-catalog-file-id"), true);
+  assert.deepEqual(requested.sort(), [
+    "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/games.json",
+    "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps4/dlc.json",
+    "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-games.json",
+    "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/refs/heads/main/ps5/ps5-dlc.json",
+  ].sort());
+});
+
 test("concurrent catalog lookups share one refresh and cache only complete results", async (t) => {
   const originalFetch = globalThis.fetch;
   t.after(() => {
