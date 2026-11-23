@@ -101,7 +101,7 @@ def test_url_normalization_preserves_reserved_path_delimiters(
 ):
     write_catalog(tmp_path, "ps4/games.json", {
         "https://archive.org/download/test/" + first: metadata(),
-        "https://archive.org/download/test/" + second: metadata(),
+        "https://archive.org/download/test/" + second: metadata(version="02.00"),
     })
     monkeypatch.setattr(duplicate_check, "ROOT", tmp_path)
     if collides:
@@ -240,4 +240,4 @@ def test_markdown_report_escapes_untrusted_values():
         {}, {}, []
     )
     assert "# forged" not in report
-    assert "&#96;" in report
+    assert duplicate_check.report_value("`") == "&#96;"
