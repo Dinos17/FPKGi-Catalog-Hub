@@ -156,7 +156,7 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
         raise UploadError("Source URL does not identify a valid .pkg filename")
 
     # Probe one byte first: this also proves the origin supports exact Range reads.
-    first, total_size = _read_source_range(client, source_url, 0, 1)
+    first, total_size = _read_source_range(client, source_url, 0, 4)
     if first != bytes.fromhex("7f434e54"):
         raise UploadError("Source does not begin with the recognized PS4 PKG magic")
 
