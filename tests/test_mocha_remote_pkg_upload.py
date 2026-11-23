@@ -82,7 +82,7 @@ def test_remote_pkg_upload_uses_multipart_and_returns_file_id(monkeypatch):
     put_calls = []
 
     def fake_range(_session, _url, start, length):
-        if start == 0 and length == 1:
+        if start == 0 and length == 4:
             return bytes.fromhex("7f434e54"), 8
         return (b"X" * length), 8
 
