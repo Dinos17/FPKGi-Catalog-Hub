@@ -163,6 +163,53 @@ def _put_part(session: requests.Session, url: str, data: bytes, part_number: int
         response.close()
 
 
+def _list_mocha_files(session: requests.Session, api_key: str, remote_path: str) -> list[dict[str, Any]]:
+    """Read a bounded inventory snapshot for safe completion reconciliation."""
+    headers = {"Authorization": f"Bearer {api_key}", "Accept": "application/json"}
+    files: list[dict[str, Any]] = []
+    cursor = None
+    for _ in range(100):
+        params = {"path": remote_path, "limit": "100"}
+        if cursor:
+            params["cursor"] = cursor
+        response = session.get(API_BASE + "/files", params=params, headers=headers,
+                               timeout=TIMEOUT, allow_redirects=False)
+        try:
+            if response.status_code < 200 or response.status_code >= 300:
+                raise UploadError(f"Mocha file inventory returned HTTP {response.status_code}")
+            payload = response.json()
+            if not isinstance(payload, dict) or not isinstance(payload.get("files"), list):
+                raise UploadError("Mocha file inventory response is malformed")
+            files.extend(item for item in payload["files"] if isinstance(item, dict))
+            if payload.get("hasMore") is not True:
+                return files
+            cursor = payload.get("nextCursor")
+            if not isinstance(cursor, str) or not cursor:
+                raise UploadError("Mocha file inventory pagination is inconsistent")
+        finally:
+            response.close()
+    raise UploadError("Mocha file inventory exceeded the pagination safety limit")
+
+
+def _reconcile_completed_file(session: requests.Session, api_key: str, remote_path: str,
+                             filename: str, total_size: int,
+                             baseline_ids: set[str]) -> str:
+    current = _list_mocha_files(session, api_key, remote_path)
+    matches = [
+        item for item in current
+        if isinstance(item.get("id"), str)
+        and item["id"] not in baseline_ids
+        and item.get("size") == total_size
+        and filename in (item.get("original_name"), item.get("file_name"))
+    ]
+    if len(matches) != 1:
+        raise UploadError(
+            "Could not uniquely reconcile the completed file in Mocha "
+            f"(found {len(matches)} new filename/size matches)"
+        )
+    return matches[0]["id"]
+
+
 def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
                       session: requests.Session | None = None) -> dict[str, Any]:
     if not _source_host_allowed(source_url):
@@ -182,6 +229,9 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
     if total_size < 0x100 or len(header) != 0x100 or header[:4] != bytes.fromhex("7f434e54"):
         raise UploadError("Source is not a complete PS4 PKG header")
 
+    baseline_files = _list_mocha_files(client, api_key, remote_path)
+    baseline_ids = {item["id"] for item in baseline_files
+                    if isinstance(item.get("id"), str)}
     upload_id = key = node_id = None
     original_name = filename
     completion_started = False
@@ -240,17 +290,29 @@ def upload_remote_pkg(source_url: str, *, api_key: str, remote_path: str,
                 "parts": completed_parts,
             })
         except Exception as exc:
-            raise UploadError(
-                "Mocha completion outcome is unknown; do not retry blindly. "
-                "Reconcile the destination in Mocha before starting another upload."
-            ) from exc
+            try:
+                reconciled_id = _reconcile_completed_file(
+                    client, api_key, remote_path, filename, total_size, baseline_ids
+                )
+            except Exception as reconcile_error:
+                raise UploadError(
+                    "Mocha completion outcome is unknown and automatic reconciliation "
+                    f"was inconclusive: {reconcile_error}. Do not retry blindly."
+                ) from exc
+            return {"file_id": reconciled_id, "filename": filename, "size": total_size,
+                    "remote_path": remote_path, "parts": part_count}
         file_obj = complete.get("file")
         file_id = file_obj.get("id") if isinstance(file_obj, dict) else None
         if not isinstance(file_id, str) or not file_id:
-            raise UploadError(
-                "Mocha completion response omitted the file ID; outcome is unknown. "
-                "Reconcile the destination before retrying."
-            )
+            try:
+                file_id = _reconcile_completed_file(
+                    client, api_key, remote_path, filename, total_size, baseline_ids
+                )
+            except Exception as reconcile_error:
+                raise UploadError(
+                    "Mocha completion response omitted the file ID and automatic "
+                    f"reconciliation was inconclusive: {reconcile_error}"
+                )
         return {"file_id": file_id, "filename": filename, "size": total_size,
                 "remote_path": remote_path, "parts": part_count}
     except Exception as original_error:
