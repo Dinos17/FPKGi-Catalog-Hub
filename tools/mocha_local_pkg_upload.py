@@ -324,6 +324,17 @@ def main(argv: list[str] | None = None) -> int:
 
         results = []
         for index, (path, size, signature) in enumerate(validated, 1):
+            # Refresh the destination immediately before each transfer to catch
+            # concurrent uploads made after the initial dry-run inventory.
+            latest = list_remote_pkgs(session, api_key, remote_path)
+            appeared = latest.get(path.name, [])
+            if appeared:
+                if len(appeared) == 1 and appeared[0]["size"] == size:
+                    print(f"[{index}/{len(validated)}] Skipping {path.name}: now present with matching size")
+                else:
+                    print(f"[{index}/{len(validated)}] Skipping {path.name}: destination conflict appeared")
+                continue
+
             print(f"[{index}/{len(validated)}] Uploading {path.name} ({size:,} bytes)")
             result = upload_local_pkg(
                 path, api_key=api_key, remote_path=remote_path,
