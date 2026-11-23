@@ -707,6 +707,7 @@ jobs:
               # This counts queue-cleared metadata matches, not binary-integrity approval.
               automatically_cleared = 0
               previously_rejected = 0
+              previously_rejected_metadata_differences = 0
               previously_decided = 0
               source_fields = ('title', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size_bytes')
               catalog_fields = ('name', 'title_id', 'region', 'languages', 'version', 'min_fw', 'size')
@@ -737,6 +738,8 @@ jobs:
                       if created_at is not None and created_at.tzinfo is not None and any(
                               created_at <= rejected_at for rejected_at in matching_rejections):
                           previously_rejected += 1
+                          if status == 'metadata_difference':
+                              previously_rejected_metadata_differences += 1
                           continue
 
                   decision_key = stable_decision_key(
@@ -858,6 +861,17 @@ jobs:
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
               print('Catalog candidate queue unavailable; refusing to publish a partial queue: ' + str(exc), file=__import__('sys').stderr)
 
+          # Dashboard comparison counts represent actionable entries. Preserve the
+          # raw comparison rows for audit, but exclude previously rejected uploads
+          # from the actionable metadata-difference total and expose them separately.
+          summary['previously_rejected_count'] = previously_rejected
+          if summary.get('comparison_available') and isinstance(summary.get('counts'), dict):
+              current_difference_count = summary['counts'].get('metadata_difference')
+              if type(current_difference_count) is not int or current_difference_count < previously_rejected_metadata_differences:
+                  raise SystemExit('Rejected metadata-difference count exceeds the validated comparison total.')
+              summary['counts']['metadata_difference'] = current_difference_count - previously_rejected_metadata_differences
+              summary['counts']['previously_rejected'] = previously_rejected_metadata_differences
+          target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\\n', encoding='utf-8')
           print('Inventory publication: ' + ('published' if inventory is not None else 'unavailable; old inventory will be hidden by dashboard timestamp validation'))
           print('Human-review queue: ' + ('published' if review_queue is not None else 'unavailable; dashboard must not treat it as empty'))
           PY
