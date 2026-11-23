@@ -5,6 +5,7 @@ on:
     branches:
       - feat/netlify-mocha-resolver
       - main
+  workflow_dispatch:
   pull_request:
     branches:
       - main
@@ -27,9 +28,16 @@ jobs:
           node-version: 22
       - run: npm test
       - name: Probe production resolver without exposing response content
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
         continue-on-error: true
         run: |
-          curl --silent --show-error --max-time 15 --max-redirs 0 \
-            -o /dev/null -w "Production resolver HTTP %{http_code}\\n" \
-            "https://fpkgi-mocha-resolver.netlify.app/presigned?fileId=d5ac3913-802b-4d68-9803-8f5c07c7640e"
+          for attempt in 1 2 3 4 5 6; do
+            status="$(curl --silent --show-error --max-time 10 --max-redirs 0 \
+              -o /dev/null -w "%{http_code}" \
+              "https://fpkgi-mocha-resolver.netlify.app/presigned?fileId=d5ac3913-802b-4d68-9803-8f5c07c7640e" || true)"
+            printf "Production resolver HTTP %s (attempt %s/6)\\n" "$status" "$attempt"
+            if [ "$status" = "200" ]; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 6 ]; then sleep 10; fi
+          done
