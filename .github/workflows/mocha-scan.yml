@@ -864,13 +864,15 @@ jobs:
           # Dashboard comparison counts represent actionable entries. Preserve the
           # raw comparison rows for audit, but exclude previously rejected uploads
           # from the actionable metadata-difference total and expose them separately.
+          if not review_state_validated:
+              raise SystemExit('Cannot publish actionable counts without validated rejection state.')
           summary['previously_rejected_count'] = previously_rejected
           if summary.get('comparison_available') and isinstance(summary.get('counts'), dict):
               current_difference_count = summary['counts'].get('metadata_difference')
               if type(current_difference_count) is not int or current_difference_count < previously_rejected_metadata_differences:
                   raise SystemExit('Rejected metadata-difference count exceeds the validated comparison total.')
               summary['counts']['metadata_difference'] = current_difference_count - previously_rejected_metadata_differences
-          target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\\n', encoding='utf-8')
+          target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           print('Inventory publication: ' + ('published' if inventory is not None else 'unavailable; old inventory will be hidden by dashboard timestamp validation'))
           print('Human-review queue: ' + ('published' if review_queue is not None else 'unavailable; dashboard must not treat it as empty'))
           PY
