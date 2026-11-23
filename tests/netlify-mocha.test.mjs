@@ -382,12 +382,67 @@ test("reports only safe configuration diagnostics when resolver secrets are miss
   console.error = (...args) => { logged = args; };
 
   const response = await handler(new Request(
-    "https://resolver.example/presigned?fileId=approved-file-id",
+    "https://resolver.example/presigned?fileId=approved-file-id&diagnostics=1",
   ));
   assert.equal(response.status, 503);
-  assert.deepEqual(await response.json(), { error: "resolver_not_configured" });
+  assert.deepEqual(await response.json(), {
+    error: "resolver_not_configured",
+    diagnostics: {
+      netlifyApiKeyPresent: true,
+      processApiKeyPresent: false,
+      netlifyStorageHostsPresent: true,
+      processStorageHostsPresent: false,
+      allowedStorageHostCount: 1,
+    },
+  });
   assert.deepEqual(logged, [
     "mocha_resolver_not_configured",
-    { hasApiKey: false, allowedStorageHostCount: 1 },
+    {
+      netlifyApiKeyPresent: true,
+      processApiKeyPresent: false,
+      netlifyStorageHostsPresent: true,
+      processStorageHostsPresent: false,
+      allowedStorageHostCount: 1,
+    },
   ]);
+});
+
+
+test("falls back to process.env when Netlify.env does not expose runtime variables", async (t) => {
+  const originalFetch = globalThis.fetch;
+  const originalNetlify = globalThis.Netlify;
+  const originalApiKey = process.env.MOCHA_API_KEY;
+  const originalStorageHosts = process.env.MOCHA_STORAGE_HOSTS;
+  t.after(() => {
+    globalThis.fetch = originalFetch;
+    globalThis.Netlify = originalNetlify;
+    if (originalApiKey === undefined) delete process.env.MOCHA_API_KEY;
+    else process.env.MOCHA_API_KEY = originalApiKey;
+    if (originalStorageHosts === undefined) delete process.env.MOCHA_STORAGE_HOSTS;
+    else process.env.MOCHA_STORAGE_HOSTS = originalStorageHosts;
+    resetCatalogCacheForTests();
+  });
+  resetCatalogCacheForTests();
+  process.env.MOCHA_API_KEY = "process-test-key";
+  process.env.MOCHA_STORAGE_HOSTS = "storage.example";
+  globalThis.Netlify = { env: { get: () => undefined } };
+  let authorization;
+  globalThis.fetch = async (url, options) => {
+    if (String(url).includes("api.mocha.my")) {
+      authorization = options.headers.authorization;
+      return Response.json({
+        url: "https://storage.example/file?signature=temporary",
+        expiresIn: 86400,
+      });
+    }
+    return Response.json({ DATA: {
+      "approved-file-id": { download_source: "mocha" },
+    } });
+  };
+
+  const response = await handler(new Request(
+    "https://resolver.example/presigned?fileId=approved-file-id",
+  ));
+  assert.equal(response.status, 200);
+  assert.equal(authorization, "Bearer process-test-key");
 });
