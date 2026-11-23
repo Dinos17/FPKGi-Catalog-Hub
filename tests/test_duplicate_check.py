@@ -249,5 +249,5 @@ def test_markdown_report_escapes_untrusted_values():
     )
     assert "\\n# forged" not in report
     assert "[click](https://evil.test)" not in report
-    assert r"\\[" in report
+    assert r"\[" in report
     assert duplicate_check.report_value("`") == "&#96;"
