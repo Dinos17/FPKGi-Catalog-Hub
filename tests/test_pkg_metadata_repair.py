@@ -117,7 +117,8 @@ def test_apply_updates_only_verified_missing_version(tmp_path):
     after = read_dlc(root)
     assert after["version"] == "01.02"
     for key, value in before.items():
-        assert after[key] == value
+        if key != "version":
+            assert after[key] == value
     assert report["read_only"] is False
     assert report["catalog_files_modified"] is True
     assert report["applied_count"] == 1
