@@ -295,10 +295,18 @@ def inspect_target(target: dict[str, Any], *, session: requests.Session | None =
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--catalog-root", type=Path, default=Path("."))
+    parser.add_argument("--source", help="Inspect one direct PKG URL or Mocha file ID instead of scanning catalogs")
+    parser.add_argument("--platform", choices=("PS4", "PS5"), default="PS4",
+                        help="Platform for --source (PS5 remains unsupported until independently validated)")
     parser.add_argument("--output", type=Path, help="Write JSON report (default: stdout)")
     args = parser.parse_args()
     try:
-        targets = catalog_targets(args.catalog_root)
+        if args.source:
+            targets = [{"catalog": "direct-source", "source": args.source,
+                        "platform": args.platform, "missing": ["title_id", "version"],
+                        "catalog_metadata": {}}]
+        else:
+            targets = catalog_targets(args.catalog_root)
         results = []
         for target in targets:
             try:
