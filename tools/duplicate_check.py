@@ -42,7 +42,7 @@ def normalize_package_url(url):
 
 def report_value(value):
     text = html.escape(str(value), quote=True)
-    return text.replace("\r", " ").replace("\n", " ").replace("`", "&#96;")
+    return text.replace("\r", " ").replace("\n", " ").replace("`", "&#96;").replace("#", "&#35;")
 
 
 def catalog_category(filename):
@@ -158,7 +158,7 @@ def format_identity(identity):
     platform, category, title_id, region, version, size, *package_name = identity
     result = (
         f"{report_value(platform)} {report_value(category)} {report_value(title_id)} "
-        f"{report_value(region)} v{version} ({size} bytes)"
+        f"{report_value(region)} v{report_value(version)} ({size} bytes)"
     )
     if package_name:
         result += f" — {report_value(package_name[0])}"
@@ -220,7 +220,7 @@ def build_report(
         lines.extend(["#### ⚠️ Incomplete identity metadata (not classified)", ""])
         for filename, url, missing in sorted(incomplete_records):
             lines.append(
-                f"- `{filename}` — {url} (missing or invalid: {', '.join(missing)})"
+                f"- `{report_value(filename)}` — `{report_value(url)}` (missing or invalid: {report_value(', '.join(missing))})"
             )
         lines.append("")
 
