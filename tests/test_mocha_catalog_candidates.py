@@ -5,7 +5,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from tools.mocha_catalog_candidates import build_candidate_queue
+from tools.mocha_catalog_candidates import build_candidate_queue, catalog_identity_conflict_file_ids
 from tools.mocha_review_queue import can_silently_clear_match, near_duplicate_file_ids
 
 
@@ -104,6 +104,74 @@ class MochaCatalogCandidatesTests(unittest.TestCase):
     def test_possible_duplicate_is_not_candidate(self):
         self.comparison["possible_duplicates"] = [{"file_ids": [self.row["file_id"]]}]
         self.assertEqual(self.build()["candidate_count"], 0)
+
+    def test_duplicate_catalog_package_identity_is_not_auto_candidate(self):
+        path = self.root / "ps4/games.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["DATA"]["https://example.invalid/dead-rising-encoded-alias.pkg"] = dict(METADATA)
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        self.assertEqual(self.build()["candidate_count"], 0)
+        self.assertEqual(
+            catalog_identity_conflict_file_ids(self.comparison["results"], self.root),
+            {self.row["file_id"]},
+        )
+
+    def test_region_aliases_are_canonicalized_for_duplicate_detection(self):
+        path = self.root / "ps4/games.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        alias = dict(METADATA, region="US")
+        payload["DATA"]["https://example.invalid/dead-rising-us-alias.pkg"] = alias
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        self.assertIn(
+            self.row["file_id"],
+            catalog_identity_conflict_file_ids(self.comparison["results"], self.root),
+        )
+
+    def test_zero_size_duplicate_identity_is_not_ignored(self):
+        path = self.root / "ps4/games.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["DATA"]["https://example.invalid/dead-rising.pkg"]["size"] = 0
+        payload["DATA"]["https://example.invalid/dead-rising-zero-alias.pkg"] = dict(METADATA, size=0)
+        self.row["catalog_metadata"]["size"] = 0
+        payload["DATA"]["https://example.invalid/dead-rising.pkg"] = dict(self.row["catalog_metadata"])
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        self.assertIn(
+            self.row["file_id"],
+            catalog_identity_conflict_file_ids(self.comparison["results"], self.root),
+        )
+
+    def test_missing_version_fails_closed_for_matched_identity(self):
+        path = self.root / "ps4/games.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        payload["DATA"]["https://example.invalid/dead-rising.pkg"].pop("version")
+        self.row["catalog_metadata"].pop("version")
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        self.assertIn(
+            self.row["file_id"],
+            catalog_identity_conflict_file_ids(self.comparison["results"], self.root),
+        )
+
+    def test_incomplete_catalog_identity_fails_closed(self):
+        self.row["catalog_metadata"].pop("title_id")
+        self.assertIn(
+            self.row["file_id"],
+            catalog_identity_conflict_file_ids(self.comparison["results"], self.root),
+        )
+
+    def test_ambiguous_comparison_rows_are_classified_as_duplicate_conflicts(self):
+        ambiguous = dict(self.row, status="ambiguous", catalog_metadata=None, catalog_url=None)
+        self.assertIn(
+            self.row["file_id"],
+            catalog_identity_conflict_file_ids([ambiguous], self.root),
+        )
+
+    def test_different_version_and_size_same_title_id_are_not_identity_duplicates(self):
+        path = self.root / "ps4/games.json"
+        payload = json.loads(path.read_text(encoding="utf-8"))
+        alternate = dict(METADATA, version="01.52", size=93187211264)
+        payload["DATA"]["https://example.invalid/alternate-version.pkg"] = alternate
+        path.write_text(json.dumps(payload), encoding="utf-8")
+        self.assertEqual(self.build()["candidate_count"], 1)
 
     def test_near_duplicate_is_not_candidate(self):
         other = dict(self.row)

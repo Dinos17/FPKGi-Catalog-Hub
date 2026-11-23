@@ -11,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.mocha_review_queue import near_duplicate_file_ids
+from tools.mocha_catalog_compare import _catalog_filename_metadata, _clean_title, _normalized_version, _region
 
 CATALOGS = {
     ("PS4", "games"): "ps4/games.json",
@@ -36,6 +37,75 @@ def _load_catalogs(root: Path) -> dict[tuple[str, str], dict[str, dict[str, Any]
             raise ValueError(f"Catalog {relative} contains malformed entries")
         catalogs[key] = entries
     return catalogs
+
+
+def catalog_identity_conflict_file_ids(
+    rows: list[dict[str, Any]],
+    catalog_root: Path,
+) -> set[str]:
+    """Fail closed when a matched or ambiguous upload touches duplicate/uncertain catalog identity."""
+    catalogs = _load_catalogs(catalog_root)
+    conflicts: set[str] = set()
+
+    def identity(platform: str, category: str, metadata: dict[str, Any],
+                 key: str) -> tuple[Any, ...] | None:
+        filename = _catalog_filename_metadata(key)
+        title_id = metadata.get("title_id") or (filename or {}).get("title_id")
+        # A title ID identifies a game; DLC entries sharing the base-game ID
+        # also require the normalized package title to distinguish add-ons.
+        title = _clean_title(metadata.get("name") or (filename or {}).get("title")) if category == "dlc" else ""
+        region = _region(metadata.get("region")) or _region((filename or {}).get("region"))
+        version = _normalized_version(metadata.get("version")) or _normalized_version((filename or {}).get("version"))
+        size = metadata.get("size")
+        if not isinstance(size, int) or isinstance(size, bool):
+            size = None
+        if not title_id or (category == "dlc" and not title) or not region or version is None or size is None:
+            return None
+        return (platform, category, str(title_id).strip().upper(), title,
+                region, version, size)
+
+    counts: dict[tuple[Any, ...], int] = {}
+    incomplete_by_title_id: set[tuple[str, str, str]] = set()
+    for (platform, category), entries in catalogs.items():
+        for key, metadata in entries.items():
+            ident = identity(platform, category, metadata, key)
+            filename = _catalog_filename_metadata(key)
+            raw_id = metadata.get("title_id") or (filename or {}).get("title_id")
+            if ident is None:
+                if isinstance(raw_id, str) and raw_id.strip():
+                    incomplete_by_title_id.add((platform, category, raw_id.strip().upper()))
+                continue
+            counts[ident] = counts.get(ident, 0) + 1
+
+    for row in rows:
+        if not isinstance(row, dict):
+            continue
+        status = row.get("status")
+        file_id = row.get("file_id")
+        if status == "ambiguous" and isinstance(file_id, str):
+            # Comparator has already established multiple catalog candidates.
+            conflicts.add(file_id)
+            continue
+        if status != "matched" or not isinstance(file_id, str):
+            continue
+        platform, category = row.get("platform"), row.get("category")
+        metadata = row.get("catalog_metadata")
+        key = row.get("catalog_url")
+        if not isinstance(platform, str) or not isinstance(category, str):
+            conflicts.add(file_id)
+            continue
+        if not isinstance(metadata, dict) or not isinstance(key, str):
+            conflicts.add(file_id)
+            continue
+        ident = identity(platform, category, metadata, key)
+        if ident is None:
+            # A matched row with incomplete identity cannot be proven unique.
+            conflicts.add(file_id)
+            continue
+        title_id_key = (platform, category, ident[2])
+        if counts.get(ident, 0) > 1 or title_id_key in incomplete_by_title_id:
+            conflicts.add(file_id)
+    return conflicts
 
 
 def build_candidate_queue(
@@ -81,6 +151,7 @@ def build_candidate_queue(
     if not isinstance(rows, list):
         raise ValueError("Comparison results are missing")
     duplicate_ids = near_duplicate_file_ids(rows)
+    duplicate_ids.update(catalog_identity_conflict_file_ids(rows, catalog_root))
     excluded_ids = {str(value) for value in (excluded_file_ids or set())}
     for group in comparison.get("possible_duplicates", []):
         if not isinstance(group, dict) or not isinstance(group.get("file_ids"), list):
