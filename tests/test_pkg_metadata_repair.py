@@ -214,7 +214,10 @@ def test_missing_catalog_title_id_prevents_automatic_repair(tmp_path):
 
 def test_ps5_targets_remain_unsupported_and_unchanged(tmp_path):
     ps5_source = "https://huggingface.co/datasets/example/file.pkg"
-    root = make_root(tmp_path, ps5_metadata={
+    root = make_root(tmp_path, metadata={
+        "title_id": "CUSA00001", "region": "USA", "name": "Complete PS4 entry",
+        "size": 123456, "version": "01.00",
+    }, ps5_metadata={
         ps5_source: {"title_id": "PPSA01615", "name": "Example", "size": 456, "version": ""}
     })
     before = (root / "ps5" / "ps5-apps.json").read_text(encoding="utf-8")
@@ -244,3 +247,22 @@ def test_rejects_scan_file_count_mismatch(tmp_path):
     }), encoding="utf-8")
     with pytest.raises(repair.RepairError, match="file count"):
         repair.load_scan_report(path)
+
+
+def test_existing_mocha_id_is_used_without_inventory_name_match(tmp_path):
+    root = make_root(tmp_path)
+    metadata = read_dlc(root)
+    document_path = root / "ps4" / "dlc.json"
+    document = json.loads(document_path.read_text(encoding="utf-8"))
+    document["DATA"] = {FILE_ID: metadata}
+    document_path.write_text(json.dumps(document, indent=2) + "\n", encoding="utf-8")
+    seen = {}
+
+    def inspector(target):
+        seen["source"] = target["source"]
+        return extracted(target)
+
+    report = repair.repair_catalogs(root, make_scan(), inspector=inspector)
+    assert seen["source"] == FILE_ID
+    assert report["results"][0]["mocha_match_status"] == "catalog_mocha_id"
+    assert report["results"][0]["status"] == "candidate_update"
