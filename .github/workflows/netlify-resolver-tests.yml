@@ -33,11 +33,24 @@ jobs:
         run: |
           for attempt in 1 2 3 4 5 6; do
             status="$(curl --silent --show-error --max-time 10 --max-redirs 0 \
-              -o /dev/null -w "%{http_code}" \
-              "https://fpkgi-mocha-resolver.netlify.app/presigned?fileId=d5ac3913-802b-4d68-9803-8f5c07c7640e" || true)"
+              -o "$RUNNER_TEMP/resolver-response.json" -w "%{http_code}" \
+              "https://fpkgi-mocha-resolver.netlify.app/presigned?fileId=d5ac3913-802b-4d68-9803-8f5c07c7640e&diagnostics=1" || true)"
             printf "Production resolver HTTP %s (attempt %s/6)\\n" "$status" "$attempt"
             if [ "$status" = "200" ]; then
+              rm -f "$RUNNER_TEMP/resolver-response.json"
               exit 0
             fi
+            node - "$RUNNER_TEMP/resolver-response.json" <<'NODE'
+          const fs = require("node:fs");
+          try {
+            const body = JSON.parse(fs.readFileSync(process.argv[2], "utf8"));
+            console.log(JSON.stringify({
+              error: body.error ?? null,
+              diagnostics: body.diagnostics ?? null,
+            }));
+          } catch {
+            console.log("Resolver returned no readable diagnostic payload.");
+          }
+          NODE
             if [ "$attempt" -lt 6 ]; then sleep 10; fi
           done
