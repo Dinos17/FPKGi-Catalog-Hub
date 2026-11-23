@@ -28,7 +28,8 @@ export default async (request) => {
     });
   }
 
-  const fileId = new URL(request.url).searchParams.get("fileId");
+  const url = new URL(request.url);
+  const fileId = url.searchParams.get("fileId");
   if (!isValidFileId(fileId)) {
     return Response.json({ error: "invalid_file_id" }, { status: 400 });
   }
