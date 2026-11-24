@@ -208,7 +208,7 @@ async function stagePrivateInput(request, store) {
     return json({ error: "invalid_comparison" }, 400);
   }
   if (!Number.isFinite(Date.parse(value.scan_observed_at)) ||
-      !/(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value.scan_observed_at)) {
+      !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.scan_observed_at)) {
     return json({ error: "invalid_scan_timestamp" }, 400);
   }
   await store.setJSON(STAGED_KEYS[payload.resource], {
