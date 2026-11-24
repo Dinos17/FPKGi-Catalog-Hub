@@ -297,6 +297,20 @@ function normalizeName(value) {
   return value.normalize("NFKC").trim().toLowerCase();
 }
 
+function isAuthorizedReviewer(user) {
+  const roles = Array.isArray(user?.roles) ? user.roles : [];
+  if (roles.includes("reviewer") || roles.includes("admin")) return true;
+
+  const configured = Netlify.env.get("REVIEWER_EMAILS");
+  if (typeof configured !== "string" || !configured.trim() ||
+      typeof user?.email !== "string" || !user.email.trim()) return false;
+
+  const allowed = new Set(configured.split(",")
+    .map((email) => email.trim().toLowerCase())
+    .filter(Boolean));
+  return allowed.has(user.email.trim().toLowerCase());
+}
+
 function decisionKey(item) {
   const material = [
     item.platform,
@@ -450,6 +464,7 @@ export default async (request) => {
     return json({ error: "authentication_unavailable" }, 503);
   }
   if (!user) return json({ error: "unauthorized" }, 401);
+  if (!isAuthorizedReviewer(user)) return json({ error: "forbidden_reviewer_only" }, 403);
 
   if (request.method === "GET") {
     if (resource === "queue") {
