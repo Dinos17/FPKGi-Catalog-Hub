@@ -297,16 +297,6 @@ function normalizeName(value) {
   return value.normalize("NFKC").trim().toLocaleLowerCase("en-US");
 }
 
-function decisionKey(item) {
-  const material = [
-    item.platform,
-    item.category,
-    normalizeName(item.name),
-    new Date(item.created_at).toISOString(),
-  ].join("\0");
-  return createHash("sha256").update(material, "utf8").digest("hex");
-}
-
 function validDecision(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   if (value.schema_version !== 1) return false;
@@ -329,7 +319,9 @@ async function recordMachineDecision(request, store) {
   let payload;
   try { payload = JSON.parse(raw); } catch { return json({ error: "invalid_json" }, 400); }
   if (!validDecision(payload)) return json({ error: "invalid_decision" }, 400);
-  if (!Number.isSafeInteger(payload.issue_number) || payload.issue_number < 1 ||
+  if (typeof payload.decision_key !== "string" ||
+      !/^[0-9a-f]{64}$/.test(payload.decision_key) ||
+      !Number.isSafeInteger(payload.issue_number) || payload.issue_number < 1 ||
       typeof payload.decided_by !== "string" ||
       !/^[A-Za-z0-9_-]{1,39}$/.test(payload.decided_by)) {
     return json({ error: "invalid_issue_attribution" }, 400);
@@ -344,7 +336,7 @@ async function recordMachineDecision(request, store) {
     normalizeName(entry.name) === normalizeName(payload.name)
   );
   if (!pending) return json({ error: "item_not_pending_in_current_scan" }, 409);
-  const key = decisionKey(payload);
+  const key = payload.decision_key;
   const record = {
     schema_version: 1,
     decision_key: key,

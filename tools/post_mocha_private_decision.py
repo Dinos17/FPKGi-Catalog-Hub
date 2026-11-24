@@ -2,12 +2,15 @@
 """Submit a validated GitHub issue decision to the private Netlify review API."""
 from __future__ import annotations
 
+import hashlib
 import json
 import os
 import re
 import sys
+import unicodedata
 import urllib.error
 import urllib.request
+from datetime import datetime, timezone
 from pathlib import Path
 
 
@@ -30,6 +33,19 @@ def main() -> int:
             raise SystemExit(f"Decision identity field {key} is missing.")
     if payload["platform"] not in {"PS4", "PS5"} or payload["category"] not in {"games", "dlc"}:
         raise SystemExit("Decision platform/category is unsupported.")
+    try:
+        uploaded = datetime.fromisoformat(payload["created_at"].replace("Z", "+00:00"))
+    except ValueError as exc:
+        raise SystemExit("Decision upload timestamp is invalid.") from exc
+    if uploaded.tzinfo is None:
+        raise SystemExit("Decision upload timestamp must include a timezone.")
+    identity = "\\0".join((
+        payload["platform"],
+        payload["category"],
+        unicodedata.normalize("NFKC", payload["name"]).strip().casefold(),
+        uploaded.astimezone(timezone.utc).isoformat(),
+    ))
+    payload["decision_key"] = hashlib.sha256(identity.encode("utf-8")).hexdigest()
     payload["issue_number"] = issue.get("number")
     payload["decided_by"] = actor
     api_url = os.environ.get("REVIEW_API_URL", "").rstrip("/")
