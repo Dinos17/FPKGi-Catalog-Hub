@@ -367,15 +367,48 @@ async function recordMachineDecision(request, store) {
   return json({ ok: true, decision: record }, 201);
 }
 
+async function readGitHubReport(name) {
+  const paths = Object.freeze({
+    queue: "mocha-review-queue.json",
+    candidates: "mocha-catalog-candidates.json",
+  });
+  if (!Object.hasOwn(paths, name)) throw new Error("unsupported_github_report");
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), 10000);
+  try {
+    const response = await fetch(
+      "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/reports/reports/" + paths[name],
+      { headers: { accept: "application/json" }, cache: "no-store", signal: controller.signal },
+    );
+    if (!response.ok) throw new Error("github_report_http_" + response.status);
+    const raw = await response.text();
+    if (new TextEncoder().encode(raw).byteLength > MAX_PUBLISH_BYTES) {
+      throw new Error("github_report_too_large");
+    }
+    const report = JSON.parse(raw);
+    if (!report || typeof report !== "object" || Array.isArray(report)) {
+      throw new Error("invalid_github_report");
+    }
+    return report;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
 async function readQueue(store) {
-  const queue = await store.get(QUEUE_KEY, { type: "json", consistency: "strong" });
-  if (!queue || queue.schema_version !== 1 || queue.scanner !== "mocha" ||
-      !Array.isArray(queue.entries) || !Number.isSafeInteger(queue.pending_count) ||
-      queue.pending_count !== queue.entries.length ||
-      typeof queue.scan_observed_at !== "string" || typeof queue.catalog_commit !== "string") {
+  try {
+    const queue = await readGitHubReport("queue");
+    if (queue.schema_version !== 1 || queue.scanner !== "mocha" ||
+        !Array.isArray(queue.entries) || !Number.isSafeInteger(queue.pending_count) ||
+        queue.pending_count !== queue.entries.length ||
+        typeof queue.scan_observed_at !== "string" || typeof queue.catalog_commit !== "string") {
+      return null;
+    }
+    return queue;
+  } catch (error) {
+    console.error("github_mocha_review_queue_fetch_failed", error);
     return null;
   }
-  return queue;
 }
 
 export default async (request) => {
@@ -419,12 +452,18 @@ export default async (request) => {
   if (request.method === "GET") {
     if (resource === "queue") {
       const queue = await readQueue(store);
-      if (!queue) return json({ error: "review_queue_not_ready" }, 503);
+      if (!queue) return json({ error: "github_review_queue_unavailable" }, 503);
       return json({ queue, user: { email: user.email } });
     }
     if (resource === "candidates") {
-      const report = await store.get(CANDIDATES_KEY, { type: "json", consistency: "strong" });
-      if (!report || report.schema_version !== 1 || report.scanner !== "mocha" ||
+      let report;
+      try {
+        report = await readGitHubReport("candidates");
+      } catch (error) {
+        console.error("github_mocha_candidate_report_fetch_failed", error);
+        return json({ error: "candidate_report_unavailable" }, 503);
+      }
+      if (report.schema_version !== 1 || report.scanner !== "mocha" ||
           !Array.isArray(report.candidates) || !Number.isSafeInteger(report.candidate_count) ||
           report.candidate_count !== report.candidates.length ||
           report.catalog_write_performed !== false || report.automatic_approval !== true ||
