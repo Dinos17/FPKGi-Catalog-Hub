@@ -19,7 +19,7 @@ def main() -> int:
     if actor != "Dinos17":
         raise SystemExit("Only the repository owner may record review decisions.")
     body = issue.get("body") or ""
-    match = re.search(r"<!-- FPKGI_REVIEW_DECISION\\s*(\\{.*?\\})\\s*-->", body, re.S)
+    match = re.search(r"<!-- FPKGI_REVIEW_DECISION\s*(\{.*?\})\s*-->", body, re.S)
     if not match:
         raise SystemExit("Missing structured review decision payload.")
     payload = json.loads(match.group(1))
