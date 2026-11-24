@@ -1,5 +1,7 @@
 [build]
-  command = "echo \"FPKGi private review dashboard\""
+  # The repository root is the Netlify base directory. Publish the review UI
+  # from dashboard/ and load its API function from the repository-level folder.
+  command = "echo \"Deploying FPKGi private human review dashboard\""
   publish = "dashboard"
   functions = "netlify/review-functions"
 
