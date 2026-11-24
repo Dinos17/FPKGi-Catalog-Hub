@@ -7,6 +7,7 @@ import unittest
 from pathlib import Path
 
 from tools.approve_mocha_candidate import apply_candidate, CATALOG_PATHS
+from tools.mocha_decision_key import decision_key
 
 COMMIT = "a" * 40
 FILE_ID = "d5ac3913-802b-4d68-9803-8f5c07c7640e"
@@ -86,17 +87,14 @@ class ApproveMochaCandidateTests(unittest.TestCase):
         self.assertEqual(len(payload["DATA"]), 1)
 
     def test_existing_keep_decision_blocks_candidate_approval(self):
-        from datetime import datetime, timezone
-        from unicodedata import normalize
-        identity = "\0".join((
-            "PS4", "games", normalize("NFKC", self.candidate["name"]).strip().casefold(),
-            datetime.fromisoformat(self.candidate["created_at"].replace("Z", "+00:00")).astimezone(timezone.utc).isoformat(),
-        ))
+        key = decision_key(
+            "PS4", "games", self.candidate["name"], self.candidate["created_at"]
+        )
         decisions = {
             "schema_version": 1,
             "records": [{
                 "status": "resolved", "action": "keep",
-                "decision_key": hashlib.sha256(identity.encode("utf-8")).hexdigest(),
+                "decision_key": key,
             }],
         }
         with self.assertRaises(ValueError):
