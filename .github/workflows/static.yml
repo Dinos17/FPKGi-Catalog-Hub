@@ -1,4 +1,4 @@
-# Simple workflow for deploying static content to GitHub Pages
+# Build and deploy the public catalog dashboard to GitHub Pages.
 name: Deploy static content to Pages
 
 on:
@@ -16,30 +16,26 @@ on:
   # Allows you to run this workflow manually from the Actions tab.
   workflow_dispatch:
 
-# Sets permissions of the GITHUB_TOKEN to allow deployment to GitHub Pages
-permissions:
-  contents: read
-  pages: write
-  id-token: write
-
-# Allow only one concurrent deployment, skipping runs queued between the run in-progress and latest queued.
-# However, do NOT cancel in-progress runs as we want to allow these production deployments to complete.
+# Allow only one production deployment at a time.
+# Keeping build and deploy separate means a failed deploy can be retried
+# without rerunning the artifact upload and creating a duplicate artifact.
 concurrency:
   group: "pages"
   cancel-in-progress: false
 
 jobs:
-  # Single deploy job since we're just deploying
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
+    name: Build Pages artifact
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+
       - name: Setup Pages
         uses: actions/configure-pages@v5
+
       - name: Prepare dashboard data
         run: |
           python - <<'PY'
@@ -90,6 +86,7 @@ jobs:
           if total == 0:
               raise SystemExit("Dashboard data generation produced 0 records.")
           PY
+
       - name: Prepare public Pages artifact (exclude private review dashboard)
         run: |
           python - <<'PY'
@@ -106,10 +103,23 @@ jobs:
               raise SystemExit("Public catalog dashboard is missing from the Pages artifact.")
           print("Prepared public catalog dashboard without review.html")
           PY
-      - name: Upload artifact
+
+      - name: Upload Pages artifact
         uses: actions/upload-pages-artifact@v3
         with:
           path: ${{ runner.temp }}/pages-site
+
+  deploy:
+    name: Deploy Pages artifact
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
