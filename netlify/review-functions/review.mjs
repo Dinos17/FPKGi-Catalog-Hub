@@ -103,7 +103,7 @@ async function publishPrivateReport(request, store) {
   const observed = payload.value.scan_observed_at;
   if (payload.resource !== "rejections") {
     if (typeof observed !== "string" || !Number.isFinite(Date.parse(observed)) ||
-        !/(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(observed)) {
+        !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(observed)) {
       return json({ error: "invalid_scan_timestamp" }, 400);
     }
     const currentSummary = await store.get(PUBLISH_KEYS.summary, {
