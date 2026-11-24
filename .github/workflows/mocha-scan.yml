@@ -928,6 +928,25 @@ jobs:
           echo "Could not publish the Mocha summary after 3 bounded attempts." >&2
           exit 1
 
+
+      - name: Mirror validated review snapshot to private Netlify storage
+        if: vars.REVIEW_API_URL != '' && secrets.REVIEW_PUBLISH_TOKEN != ''
+        working-directory: source
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/publish_mocha_private_snapshot.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --catalog-commit "$GITHUB_SHA" \
+            --summary "$GITHUB_WORKSPACE/reports-branch/reports/mocha-scan-summary.json" \
+            --inventory "$GITHUB_WORKSPACE/reports-branch/reports/mocha-file-inventory.json" \
+            --scan "$RUNNER_TEMP/mocha-scan-reports/mocha-scan-report.json" \
+            --comparison "$RUNNER_TEMP/mocha-scan-reports/mocha-comparison-report.json" \
+            --queue "$GITHUB_WORKSPACE/reports-branch/reports/mocha-review-queue.json" \
+            --candidates "$GITHUB_WORKSPACE/reports-branch/reports/mocha-catalog-candidates.json" \
+            --rejections "$GITHUB_WORKSPACE/reports-branch/reports/akirabox-rejections.json"
+
   auto-register-safe-replacements:
     if: needs.publish-dashboard-summary.result == 'success' && github.ref == 'refs/heads/main'
     needs: publish-dashboard-summary
