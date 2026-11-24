@@ -39,7 +39,7 @@ def main() -> int:
         raise SystemExit("Decision upload timestamp is invalid.") from exc
     if uploaded.tzinfo is None:
         raise SystemExit("Decision upload timestamp must include a timezone.")
-    identity = "\\0".join((
+    identity = "\0".join((
         payload["platform"],
         payload["category"],
         unicodedata.normalize("NFKC", payload["name"]).strip().lower(),

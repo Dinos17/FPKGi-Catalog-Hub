@@ -294,7 +294,7 @@ function validOrigin(request) {
 }
 
 function normalizeName(value) {
-  return value.normalize("NFKC").trim().toLocaleLowerCase("en-US");
+  return value.normalize("NFKC").trim().toLowerCase();
 }
 
 function decisionKey(item) {
@@ -302,7 +302,7 @@ function decisionKey(item) {
     item.platform,
     item.category,
     normalizeName(item.name),
-    new Date(item.created_at).toISOString(),
+    new Date(item.created_at).toISOString().replace(/Z$/, "+00:00"),
   ].join("\0");
   return createHash("sha256").update(material, "utf8").digest("hex");
 }
