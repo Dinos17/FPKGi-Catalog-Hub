@@ -374,7 +374,7 @@ function validPrivateQueue(queue) {
     queue.pending_count === queue.entries.length &&
     typeof queue.scan_observed_at === "string" &&
     Number.isFinite(Date.parse(queue.scan_observed_at)) &&
-    /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(queue.scan_observed_at) &&
+    /(?:Z|[+-]\d{2}:?\d{2})$/i.test(queue.scan_observed_at) &&
     typeof queue.catalog_commit === "string" &&
     /^[0-9a-f]{40}$/.test(queue.catalog_commit));
 }
@@ -388,7 +388,7 @@ function validPrivateCandidates(report) {
     report.binary_integrity_verified === false &&
     typeof report.scan_observed_at === "string" &&
     Number.isFinite(Date.parse(report.scan_observed_at)) &&
-    /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(report.scan_observed_at) &&
+    /(?:Z|[+-]\d{2}:?\d{2})$/i.test(report.scan_observed_at) &&
     typeof report.catalog_commit === "string" &&
     /^[0-9a-f]{40}$/.test(report.catalog_commit));
 }
@@ -454,7 +454,7 @@ export default async (request) => {
   if (request.method === "GET") {
     if (resource === "queue") {
       const queue = await readQueue(store);
-      if (!queue) return json({ error: "github_review_queue_unavailable" }, 503);
+      if (!queue) return json({ error: "private_review_queue_unavailable" }, 503);
       return json({ queue, user: { email: user.email } });
     }
     if (resource === "candidates") {
