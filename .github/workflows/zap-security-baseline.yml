@@ -1,0 +1,25 @@
+name: ZAP Security Baseline
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: zap-security-baseline
+  cancel-in-progress: false
+
+jobs:
+  zap-baseline:
+    name: Passive ZAP scan
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Run OWASP ZAP Baseline Scan
+        uses: zaproxy/action-baseline@de8ad967d3548d44ef623df22cf95c3b0baf8b25
+        with:
+          target: 'https://fpkgi-review-dashboard.netlify.app/review.html'
+          allow_issue_writing: false
+          fail_action: false
+          artifact_name: zap-review-dashboard-report
