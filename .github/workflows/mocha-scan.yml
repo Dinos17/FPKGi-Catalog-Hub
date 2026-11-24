@@ -962,20 +962,36 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Check out the matching reports snapshot
+      - name: Fetch private review snapshot
+        if: vars.REVIEW_API_URL != ''
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/fetch_mocha_private_snapshot.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --output-dir "$RUNNER_TEMP/mocha-auto"
+          mkdir -p "$RUNNER_TEMP/mocha-raw"
+          cp "$RUNNER_TEMP/mocha-auto/scan.json" "$RUNNER_TEMP/mocha-raw/mocha-scan-report.json"
+          cp "$RUNNER_TEMP/mocha-auto/comparison.json" "$RUNNER_TEMP/mocha-raw/mocha-comparison-report.json"
+
+      - name: Check out the matching reports snapshot (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: Mocha-reports
           path: reports-branch
           fetch-depth: 1
 
-      - name: Download this run's raw Mocha scan reports
+      - name: Download this run's raw Mocha scan reports (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/mocha-raw
 
-      - name: Prepare validated candidate inputs
+      - name: Prepare validated candidate inputs (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/mocha-auto"
@@ -1082,7 +1098,20 @@ jobs:
       - name: Install repair dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
 
-      - name: Download this scan's validated Mocha inventory
+      - name: Fetch private scan report
+        if: vars.REVIEW_API_URL != ''
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/fetch_mocha_private_snapshot.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --output-dir "$RUNNER_TEMP/mocha-private-repair"
+          mkdir -p "$RUNNER_TEMP/mocha-scan-reports"
+          cp "$RUNNER_TEMP/mocha-private-repair/scan.json" "$RUNNER_TEMP/mocha-scan-reports/mocha-scan-report.json"
+
+      - name: Download this scan's validated Mocha inventory (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
