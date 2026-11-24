@@ -322,37 +322,6 @@ jobs:
           Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
 
-      - name: Display raw Mocha scan and comparison JSON
-        if: always()
-        env:
-          ARTIFACT_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          reports=(
-            "$RUNNER_TEMP/mocha-scan-report.json"
-            "$RUNNER_TEMP/mocha-comparison-report.json"
-          )
-          total_size=0
-          for report in "${reports[@]}"; do
-            if [ -f "$report" ]; then
-              total_size=$((total_size + $(wc -c < "$report")))
-            fi
-          done
-
-          if [ "$total_size" -le 750000 ]; then
-            for report in "${reports[@]}"; do
-              if [ -f "$report" ]; then
-                echo "## Raw Mocha report: $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
-                echo >> "$GITHUB_STEP_SUMMARY"
-                cat "$report" >> "$GITHUB_STEP_SUMMARY"
-                echo >> "$GITHUB_STEP_SUMMARY"
-              fi
-            done
-          else
-            echo "## Raw Mocha scan reports" >> "$GITHUB_STEP_SUMMARY"
-            echo >> "$GITHUB_STEP_SUMMARY"
-            echo "The combined reports exceed the safe run-summary size. Download both complete JSON files from the `mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}` artifact: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Report inventory artifact upload status
         if: always()
         env:
@@ -887,21 +856,28 @@ jobs:
             fi
 
             git add reports/mocha-scan-summary.json
-            for report in mocha-scan-report.json mocha-comparison-report.json; do
-              source="$RAW_REPORT_DIR/$report"
-              if [ -f "$source" ] && [ "$(wc -c < "$source")" -le 5000000 ]; then
-                cp "$source" "reports/$report"
-                git add "reports/$report"
-              else
-                echo "Keeping $report in the run artifact only (missing or larger than 5 MB)."
+            if [ -z "${{ vars.REVIEW_API_URL }}" ]; then
+              # Legacy fallback only: keep detailed reports public until the private
+              # publisher is configured. In private mode these files stay local for
+              # the Netlify publisher and are not added to Mocha-reports.
+              for report in mocha-scan-report.json mocha-comparison-report.json; do
+                source="$RAW_REPORT_DIR/$report"
+                if [ -f "$source" ] && [ "$(wc -c < "$source")" -le 5000000 ]; then
+                  cp "$source" "reports/$report"
+                  git add "reports/$report"
+                else
+                  echo "Keeping $report in the run artifact only (missing or larger than 5 MB)."
+                fi
+              done
+              if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
+              if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
+              if [ -f reports/mocha-catalog-candidates.json ]; then
+                git add reports/mocha-catalog-candidates.json
+              elif git ls-files --error-unmatch reports/mocha-catalog-candidates.json >/dev/null 2>&1; then
+                git add -u -- reports/mocha-catalog-candidates.json
               fi
-            done
-            if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
-            if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
-            if [ -f reports/mocha-catalog-candidates.json ]; then
-              git add reports/mocha-catalog-candidates.json
-            elif git ls-files --error-unmatch reports/mocha-catalog-candidates.json >/dev/null 2>&1; then
-              git add -u -- reports/mocha-catalog-candidates.json
+            else
+              echo "Private review mode: detailed reports will not be added to the public reports branch."
             fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
@@ -1027,7 +1003,7 @@ jobs:
             --current-commit "$GITHUB_SHA" > "$RUNNER_TEMP/mocha-auto/result.json"
           count="$(python -c 'import json,os; print(json.load(open(os.environ["RESULT"]))["applied_count"])')"
           echo "applied_count=$count" >> "$GITHUB_OUTPUT"
-          cat "$RUNNER_TEMP/mocha-auto/result.json"
+          echo "Automatic replacement result: applied_count=$count"
 
       - name: Stop when no safe replacements are available
         if: steps.apply.outputs.applied_count == '0'
@@ -1146,22 +1122,7 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"applied_count={applied}\n")
               output.write(f"proposed_count={proposed}\n")
-          print(json.dumps({
-              "targets_found": report.get("targets_found"),
-              "proposed_count": proposed,
-              "applied_count": applied,
-              "catalog_files_modified": report.get("catalog_files_modified"),
-              "results": [
-                  {
-                      "catalog": row.get("catalog"),
-                      "source": row.get("source"),
-                      "status": row.get("status"),
-                      "reason": row.get("reason"),
-                      "proposed_updates": row.get("proposed_updates"),
-                  }
-                  for row in report.get("results", [])
-              ],
-          }, indent=2))
+          print(f"Verified PKG metadata repair: proposed={proposed}, applied={applied}, catalog_files_modified={report.get('catalog_files_modified')}")
           PY
 
       - name: Upload PKG metadata repair report
