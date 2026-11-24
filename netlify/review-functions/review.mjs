@@ -38,7 +38,7 @@ function json(data, status = 200) {
 }
 
 function validPublisherToken(request) {
-  const expected = process.env.REVIEW_PUBLISH_TOKEN;
+  const expected = Netlify.env.get("REVIEW_PUBLISH_TOKEN");
   const supplied = request.headers.get("authorization") || "";
   if (typeof expected !== "string" || expected.length < 32 ||
       !supplied.startsWith("Bearer ")) return false;
