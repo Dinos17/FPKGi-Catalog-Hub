@@ -30,7 +30,18 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Validate and record decision
+      - name: Record decision in private Netlify storage
+        if: vars.REVIEW_API_URL != ''
+        env:
+          EVENT_PATH: ${{ github.event_path }}
+          REVIEW_API_URL: ${{ vars.REVIEW_API_URL }}
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/post_mocha_private_decision.py
+
+      - name: Validate and record decision (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         env:
           EVENT_PATH: ${{ github.event_path }}
           REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json
@@ -71,7 +82,7 @@ jobs:
               raise SystemExit("Invalid upload timestamp.") from exc
           if uploaded.tzinfo is None:
               raise SystemExit("Upload timestamp must include a timezone.")
-          key_material = "\0".join((platform, category, unicodedata.normalize("NFKC", name).strip().casefold(), uploaded.astimezone(timezone.utc).isoformat()))
+          key_material = "\0".join((platform, category, unicodedata.normalize("NFKC", name).strip().lower(), uploaded.astimezone(timezone.utc).isoformat()))
           decision_key = hashlib.sha256(key_material.encode("utf-8")).hexdigest()
           path = Path(os.environ["REPORT_PATH"])
           report = json.loads(path.read_text(encoding="utf-8"))
@@ -92,7 +103,8 @@ jobs:
           path.write_text(json.dumps({"schema_version":1,"records":records},indent=2,ensure_ascii=False)+"\n",encoding="utf-8")
           PY
 
-      - name: Publish decision record
+      - name: Publish decision record (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         env:
           REPORT_BRANCH: Mocha-reports
           REPORT_PATH: ${{ runner.temp }}/mocha-review-decisions.json

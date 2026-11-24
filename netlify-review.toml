@@ -1,0 +1,17 @@
+# Dedicated Netlify configuration for the private review dashboard.
+# Select this file as the Netlify project's config file.
+# This deliberately does not reuse the root netlify.toml, which deploys the
+# public Mocha resolver function.
+
+[build]
+  command = "echo \"FPKGi private review dashboard\""
+  publish = "dashboard"
+  functions = "netlify/review-functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/"
+  to = "/review.html"
+  status = 200

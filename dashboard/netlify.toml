@@ -1,0 +1,15 @@
+[build]
+  # Publish only the isolated Review UI. The catalog dashboard remains in dashboard/
+  # but is not part of this site's deployed files.
+  command = "echo \"Deploying isolated FPKGi Review dashboard\""
+  publish = "review-site"
+  functions = "netlify/review-functions"
+
+[functions]
+  node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/"
+  to = "/review.html"
+  status = 200
+  force = true

@@ -19,7 +19,7 @@ permissions:
 
 jobs:
   tests:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/security/netlify-private-review-dashboard')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -43,7 +43,7 @@ jobs:
         run: python -m pytest -q
 
   scan:
-    if: github.ref == 'refs/heads/main'
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/security/netlify-private-review-dashboard')
     needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -134,8 +134,9 @@ jobs:
               output.write(f"folder_count={len(approved_folders)}\n")
           PY
 
-      - name: Upload sanitized Mocha inventory artifact (public repository)
+      - name: Upload sanitized Mocha inventory artifact (legacy fallback)
         id: inventory_upload
+        if: vars.REVIEW_API_URL == ''
         continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
@@ -225,8 +226,8 @@ jobs:
           comparison_path.write_text(json.dumps(comparison, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
           PY
 
-      - name: Upload raw Mocha scan reports
-        if: always()
+      - name: Upload raw Mocha scan reports (legacy fallback)
+        if: always() && vars.REVIEW_API_URL == ''
         continue-on-error: true
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
@@ -236,6 +237,20 @@ jobs:
             ${{ runner.temp }}/mocha-comparison-report.json
           if-no-files-found: warn
           retention-days: 1
+
+      - name: Stage scanner inputs in private Netlify storage
+        if: success() && vars.REVIEW_API_URL != ''
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/stage_mocha_private_inputs.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --run-id "$GITHUB_RUN_ID" \
+            --catalog-commit "$GITHUB_SHA" \
+            --inventory "$RUNNER_TEMP/mocha-public-inventory.json" \
+            --scan "$RUNNER_TEMP/mocha-scan-report.json" \
+            --comparison "$RUNNER_TEMP/mocha-comparison-report.json"
 
       - name: Create sanitized dashboard summary
         id: export
@@ -322,39 +337,8 @@ jobs:
           Path(os.environ["GITHUB_STEP_SUMMARY"]).write_text("\n".join(lines) + "\n", encoding="utf-8")
           PY
 
-      - name: Display raw Mocha scan and comparison JSON
-        if: always()
-        env:
-          ARTIFACT_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
-        run: |
-          reports=(
-            "$RUNNER_TEMP/mocha-scan-report.json"
-            "$RUNNER_TEMP/mocha-comparison-report.json"
-          )
-          total_size=0
-          for report in "${reports[@]}"; do
-            if [ -f "$report" ]; then
-              total_size=$((total_size + $(wc -c < "$report")))
-            fi
-          done
-
-          if [ "$total_size" -le 750000 ]; then
-            for report in "${reports[@]}"; do
-              if [ -f "$report" ]; then
-                echo "## Raw Mocha report: $(basename "$report")" >> "$GITHUB_STEP_SUMMARY"
-                echo >> "$GITHUB_STEP_SUMMARY"
-                cat "$report" >> "$GITHUB_STEP_SUMMARY"
-                echo >> "$GITHUB_STEP_SUMMARY"
-              fi
-            done
-          else
-            echo "## Raw Mocha scan reports" >> "$GITHUB_STEP_SUMMARY"
-            echo >> "$GITHUB_STEP_SUMMARY"
-            echo "The combined reports exceed the safe run-summary size. Download both complete JSON files from the `mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}` artifact: $ARTIFACT_URL" >> "$GITHUB_STEP_SUMMARY"
-          fi
-
       - name: Report inventory artifact upload status
-        if: always()
+        if: always() && vars.REVIEW_API_URL == ''
         env:
           ARTIFACT_UPLOAD_OUTCOME: ${{ steps.inventory_upload.outcome }}
         run: |
@@ -366,7 +350,7 @@ jobs:
           fi
 
   publish-dashboard-summary:
-    if: needs.scan.result == 'success' && github.ref == 'refs/heads/main'
+    if: needs.scan.result == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/security/netlify-private-review-dashboard'))
     needs: scan
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -385,20 +369,38 @@ jobs:
           ref: ${{ github.sha }}
           path: source
           persist-credentials: false
-      - name: Download this run's sanitized Mocha inventory
+      - name: Download this run's sanitized Mocha inventory (legacy fallback)
         id: inventory_download
+        if: vars.REVIEW_API_URL == ''
         continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: mocha-file-inventory
           path: ${{ runner.temp }}/mocha-inventory
 
-      - name: Download this run's raw Mocha scan reports
+      - name: Download this run's raw Mocha scan reports (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         continue-on-error: true
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
         with:
           name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/mocha-scan-reports
+
+      - name: Fetch staged scanner inputs from private Netlify storage
+        if: vars.REVIEW_API_URL != ''
+        working-directory: source
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/fetch_mocha_staged_inputs.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --run-id "$GITHUB_RUN_ID" \
+            --output-dir "$RUNNER_TEMP/mocha-staged-inputs"
+          mkdir -p "$RUNNER_TEMP/mocha-inventory" "$RUNNER_TEMP/mocha-scan-reports"
+          cp "$RUNNER_TEMP/mocha-staged-inputs/mocha-public-inventory.json" "$RUNNER_TEMP/mocha-inventory/"
+          cp "$RUNNER_TEMP/mocha-staged-inputs/mocha-scan-report.json" "$RUNNER_TEMP/mocha-scan-reports/"
+          cp "$RUNNER_TEMP/mocha-staged-inputs/mocha-comparison-report.json" "$RUNNER_TEMP/mocha-scan-reports/"
 
       - name: Publish only the sanitized Mocha summary
         working-directory: reports-branch
@@ -408,6 +410,7 @@ jobs:
           RAW_REPORT_DIR: ${{ runner.temp }}/mocha-scan-reports
           SOURCE_ROOT: ${{ github.workspace }}/source
           PYTHONPATH: ${{ github.workspace }}/source
+          PRIVATE_REVIEW_ENABLED: ${{ vars.REVIEW_API_URL != '' }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -556,7 +559,9 @@ jobs:
               inventory = candidate
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
               print('Sanitized inventory unavailable; publishing aggregate summary only: ' + str(exc), file=__import__('sys').stderr)
-          summary['details_published'] = inventory is not None
+          summary['details_published'] = (
+              inventory is not None and os.environ.get('PRIVATE_REVIEW_ENABLED', '').lower() != 'true'
+          )
           target.parent.mkdir(parents=True, exist_ok=True)
           target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           if inventory is not None:
@@ -886,22 +891,34 @@ jobs:
               exit "$validation_status"
             fi
 
+            if [ "$GITHUB_REF" = "refs/heads/security/netlify-private-review-dashboard" ] && [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+              echo "Private review test: skipping all writes to the public Mocha-reports branch."
+              break
+            fi
+
             git add reports/mocha-scan-summary.json
-            for report in mocha-scan-report.json mocha-comparison-report.json; do
-              source="$RAW_REPORT_DIR/$report"
-              if [ -f "$source" ] && [ "$(wc -c < "$source")" -le 5000000 ]; then
-                cp "$source" "reports/$report"
-                git add "reports/$report"
-              else
-                echo "Keeping $report in the run artifact only (missing or larger than 5 MB)."
+            if [ -z "${{ vars.REVIEW_API_URL }}" ]; then
+              # Legacy fallback only: keep detailed reports public until the private
+              # publisher is configured. In private mode these files stay local for
+              # the Netlify publisher and are not added to Mocha-reports.
+              for report in mocha-scan-report.json mocha-comparison-report.json; do
+                source="$RAW_REPORT_DIR/$report"
+                if [ -f "$source" ] && [ "$(wc -c < "$source")" -le 5000000 ]; then
+                  cp "$source" "reports/$report"
+                  git add "reports/$report"
+                else
+                  echo "Keeping $report in the run artifact only (missing or larger than 5 MB)."
+                fi
+              done
+              if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
+              if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
+              if [ -f reports/mocha-catalog-candidates.json ]; then
+                git add reports/mocha-catalog-candidates.json
+              elif git ls-files --error-unmatch reports/mocha-catalog-candidates.json >/dev/null 2>&1; then
+                git add -u -- reports/mocha-catalog-candidates.json
               fi
-            done
-            if [ -f reports/mocha-file-inventory.json ]; then git add reports/mocha-file-inventory.json; fi
-            if [ -f reports/mocha-review-queue.json ]; then git add reports/mocha-review-queue.json; fi
-            if [ -f reports/mocha-catalog-candidates.json ]; then
-              git add reports/mocha-catalog-candidates.json
-            elif git ls-files --error-unmatch reports/mocha-catalog-candidates.json >/dev/null 2>&1; then
-              git add -u -- reports/mocha-catalog-candidates.json
+            else
+              echo "Private review mode: detailed reports will not be added to the public reports branch."
             fi
             if git diff --cached --quiet; then
               echo "Mocha dashboard summary is already current."
@@ -928,6 +945,25 @@ jobs:
           echo "Could not publish the Mocha summary after 3 bounded attempts." >&2
           exit 1
 
+
+      - name: Mirror validated review snapshot to private Netlify storage
+        if: vars.REVIEW_API_URL != ''
+        working-directory: source
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/publish_mocha_private_snapshot.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --catalog-commit "$GITHUB_SHA" \
+            --summary "$GITHUB_WORKSPACE/reports-branch/reports/mocha-scan-summary.json" \
+            --inventory "$GITHUB_WORKSPACE/reports-branch/reports/mocha-file-inventory.json" \
+            --scan "$RUNNER_TEMP/mocha-scan-reports/mocha-scan-report.json" \
+            --comparison "$RUNNER_TEMP/mocha-scan-reports/mocha-comparison-report.json" \
+            --queue "$GITHUB_WORKSPACE/reports-branch/reports/mocha-review-queue.json" \
+            --candidates "$GITHUB_WORKSPACE/reports-branch/reports/mocha-catalog-candidates.json" \
+            --rejections "$GITHUB_WORKSPACE/reports-branch/reports/akirabox-rejections.json"
+
   auto-register-safe-replacements:
     if: needs.publish-dashboard-summary.result == 'success' && github.ref == 'refs/heads/main'
     needs: publish-dashboard-summary
@@ -943,20 +979,36 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
 
-      - name: Check out the matching reports snapshot
+      - name: Fetch private review snapshot
+        if: vars.REVIEW_API_URL != ''
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/fetch_mocha_private_snapshot.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --output-dir "$RUNNER_TEMP/mocha-auto"
+          mkdir -p "$RUNNER_TEMP/mocha-raw"
+          cp "$RUNNER_TEMP/mocha-auto/scan.json" "$RUNNER_TEMP/mocha-raw/mocha-scan-report.json"
+          cp "$RUNNER_TEMP/mocha-auto/comparison.json" "$RUNNER_TEMP/mocha-raw/mocha-comparison-report.json"
+
+      - name: Check out the matching reports snapshot (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: Mocha-reports
           path: reports-branch
           fetch-depth: 1
 
-      - name: Download this run's raw Mocha scan reports
+      - name: Download this run's raw Mocha scan reports (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
           path: ${{ runner.temp }}/mocha-raw
 
-      - name: Prepare validated candidate inputs
+      - name: Prepare validated candidate inputs (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         run: |
           set -euo pipefail
           mkdir -p "$RUNNER_TEMP/mocha-auto"
@@ -992,7 +1044,7 @@ jobs:
             --current-commit "$GITHUB_SHA" > "$RUNNER_TEMP/mocha-auto/result.json"
           count="$(python -c 'import json,os; print(json.load(open(os.environ["RESULT"]))["applied_count"])')"
           echo "applied_count=$count" >> "$GITHUB_OUTPUT"
-          cat "$RUNNER_TEMP/mocha-auto/result.json"
+          echo "Automatic replacement result: applied_count=$count"
 
       - name: Stop when no safe replacements are available
         if: steps.apply.outputs.applied_count == '0'
@@ -1063,7 +1115,20 @@ jobs:
       - name: Install repair dependencies
         run: python -m pip install --disable-pip-version-check -r requirements.txt "pytest==8.4.2"
 
-      - name: Download this scan's validated Mocha inventory
+      - name: Fetch private scan report
+        if: vars.REVIEW_API_URL != ''
+        env:
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python tools/fetch_mocha_private_snapshot.py \
+            --api-url "${{ vars.REVIEW_API_URL }}" \
+            --output-dir "$RUNNER_TEMP/mocha-private-repair"
+          mkdir -p "$RUNNER_TEMP/mocha-scan-reports"
+          cp "$RUNNER_TEMP/mocha-private-repair/scan.json" "$RUNNER_TEMP/mocha-scan-reports/mocha-scan-report.json"
+
+      - name: Download this scan's validated Mocha inventory (legacy fallback)
+        if: vars.REVIEW_API_URL == ''
         uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333
         with:
           name: mocha-scan-reports-${{ github.run_id }}-${{ github.run_attempt }}
@@ -1098,26 +1163,11 @@ jobs:
           with open(os.environ["GITHUB_OUTPUT"], "a", encoding="utf-8") as output:
               output.write(f"applied_count={applied}\n")
               output.write(f"proposed_count={proposed}\n")
-          print(json.dumps({
-              "targets_found": report.get("targets_found"),
-              "proposed_count": proposed,
-              "applied_count": applied,
-              "catalog_files_modified": report.get("catalog_files_modified"),
-              "results": [
-                  {
-                      "catalog": row.get("catalog"),
-                      "source": row.get("source"),
-                      "status": row.get("status"),
-                      "reason": row.get("reason"),
-                      "proposed_updates": row.get("proposed_updates"),
-                  }
-                  for row in report.get("results", [])
-              ],
-          }, indent=2))
+          print(f"Verified PKG metadata repair: proposed={proposed}, applied={applied}, catalog_files_modified={report.get('catalog_files_modified')}")
           PY
 
-      - name: Upload PKG metadata repair report
-        if: always()
+      - name: Upload PKG metadata repair report (legacy fallback)
+        if: always() && vars.REVIEW_API_URL == ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: pkg-metadata-repair-report-${{ github.run_id }}-${{ github.run_attempt }}
