@@ -15,22 +15,18 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 .stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
 .item{margin:10px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}.title{font-weight:700;overflow-wrap:anywhere}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;color:var(--red)}
 .side{padding:12px 13px}dl{display:grid;grid-template-columns:minmax(110px,.36fr) 1fr;gap:5px 8px;margin:0;font-size:.9rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.reason{padding:10px 13px;color:var(--muted);border-top:1px solid var(--line);font-size:.88rem}
-.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 13px}.compare>section{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px}.compare h3{margin:0 0 8px;font-size:.95rem}.empty{padding:38px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 13px}.compare>section{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px}.compare h3{margin:0 0 8px;font-size:.95rem}.empty{padding:38px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}#candidateQueue,#reviewQueue{display:contents}
 @media(max-width:650px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}.compare{grid-template-columns:1fr}}
 </style>
 </head>
 <body><section id="authPanel" class="auth" aria-labelledby="authTitle"><h1 id="authTitle">Private review access</h1><p>Sign in with an invited account to access the review dashboard.</p><form id="authForm"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="8"><button id="authSubmit" type="submit">Sign in</button></form><p id="authStatus" class="auth-status" role="status" aria-live="polite"></p></section><main id="reviewApp" hidden>
-<header><div><h1>FPKGi Catalog Review</h1><p>Review Mocha source-registration candidates separately from unresolved upload decisions.</p></div><div><button id="logout" type="button">Sign out</button> </div></header>
-<div class="notice">Exact catalog matches are automatically cleared from the duplicate-review queue. They may still appear in the separate source-registration queue below. Keep, Reject and Resolve only record review decisions; they do not publish catalog entries. This page does not expose Mocha file IDs, share URLs, API paths or download links.</div>
-<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
-<section class="toolbar"><span id="candidateStatus" class="muted" role="status" aria-live="polite">Loading catalog candidates…</span><button id="refreshCandidates" type="button">Refresh candidates</button></section>
-<div id="candidateStats"></div>
-<h2 class="section-title">Mocha catalog source candidates</h2>
-<p>These are exact metadata matches that can add a Mocha download source to an existing catalog title. The automated workflow registers an eligible source; it does not publish the catalog. Binary integrity has not been verified.</p>
+<header><div><h1>FPKGi Catalog Review</h1><p>One place for Mocha source candidates and uploads that need your decision.</p></div><div><button id="logout" type="button">Sign out</button> </div></header>
+<div class="notice">All Mocha findings appear in one queue. Each item is labeled as either an automatic source candidate or an item requiring your decision. Keep, Reject and Resolve only record review decisions; they do not publish catalog entries. This page does not expose Mocha file IDs, share URLs, API paths or download links.</div>
+<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading Mocha review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
+<div id="candidateStats"></div><div id="queueStats"></div>
+<h2 class="section-title">Mocha Review Queue</h2>
 <div id="candidateQueue"><div class="empty">Loading source candidates…</div></div>
-<div id="queueStats"></div>
-<h2 class="section-title">Needs your decision</h2>
-<div id="reviewQueue"><div class="empty">Loading unresolved entries…</div></div>
+<div id="reviewQueue"><div class="empty">Loading items needing a decision…</div></div>
 <div id="warning"></div>
 </main>
 <script type="module">
@@ -111,7 +107,7 @@ async function loadQueue(){
  }catch(error){$("reviewQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("sourceStatus").textContent="Review queue unavailable; no decision can be confirmed.";}finally{button.disabled=false;}
 }
 $("reviewQueue").addEventListener("click",async event=>{const button=event.target.closest("button[data-action]");if(!button)return;const payload={schema_version:1,action:button.dataset.action,name:button.dataset.name,platform:button.dataset.platform,category:button.dataset.category,created_at:button.dataset.createdAt};button.disabled=true;try{const response=await boundedFetch("/api/review",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});const result=await response.json();if(!response.ok)throw Error(result.error||"Decision could not be saved (HTTP "+response.status+").");$("sourceStatus").textContent="Decision saved privately.";await loadQueue();}catch(error){$("warning").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';button.disabled=false;}});
-$("refresh").addEventListener("click",loadQueue);$("refreshCandidates").addEventListener("click",loadCandidates);initializeAuth();
+$("refresh").addEventListener("click",async()=>{await Promise.all([loadQueue(),loadCandidates()]);});initializeAuth();
 </script>
 </body>
 </html>
