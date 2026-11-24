@@ -9,7 +9,7 @@ from typing import Any
 
 
 def canonical_created_at(value: Any) -> str:
-    """Match JavaScript Date#toISOString() exactly, including its UTC Z suffix."""
+    """Match JavaScript decisionKey(), which converts ISO UTC Z to +00:00."""
     if not isinstance(value, str) or not value.strip():
         raise ValueError("Decision upload timestamp is missing")
     try:
@@ -18,9 +18,7 @@ def canonical_created_at(value: Any) -> str:
         raise ValueError("Decision upload timestamp is invalid") from exc
     if parsed.tzinfo is None:
         raise ValueError("Decision upload timestamp must include a timezone")
-    return parsed.astimezone(timezone.utc).isoformat(
-        timespec="milliseconds"
-    ).replace("+00:00", "Z")
+    return parsed.astimezone(timezone.utc).isoformat(timespec="milliseconds")
 
 
 def decision_key(platform: Any, category: Any, name: Any, created_at: Any) -> str:
