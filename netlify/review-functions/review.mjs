@@ -16,6 +16,15 @@ const PUBLISH_KEYS = Object.freeze({
   candidates: CANDIDATES_KEY,
   rejections: "rejections/current.json",
 });
+const MACHINE_READ_KEYS = Object.freeze({
+  summary: PUBLISH_KEYS.summary,
+  inventory: PUBLISH_KEYS.inventory,
+  scan: PUBLISH_KEYS.scan,
+  comparison: PUBLISH_KEYS.comparison,
+  queue: PUBLISH_KEYS.queue,
+  candidates: PUBLISH_KEYS.candidates,
+  rejections: PUBLISH_KEYS.rejections,
+});
 
 function json(data, status = 200) {
   return Response.json(data, {
@@ -134,6 +143,48 @@ async function publishPrivateReport(request, store) {
   return json({ ok: true, resource: payload.resource, catalog_commit: payload.catalog_commit }, 201);
 }
 
+async function readMachineResource(name, store) {
+  if (name === "decisions") {
+    const { blobs } = await store.list({ prefix: "decisions/" });
+    const records = [];
+    for (const blob of blobs) {
+      const record = await store.get(blob.key, { type: "json", consistency: "strong" });
+      if (record && record.schema_version === 1 && record.decision_key === blob.key.slice("decisions/".length, -5)) {
+        records.push(record);
+      }
+    }
+    records.sort((a, b) => String(a.decided_at || "").localeCompare(String(b.decided_at || "")));
+    const body = JSON.stringify({ resource: name, records });
+    if (new TextEncoder().encode(body).byteLength > MAX_PUBLISH_BYTES) {
+      return json({ error: "machine_response_too_large", resource: name }, 413);
+    }
+    return new Response(body, {
+      headers: {
+        "content-type": "application/json; charset=utf-8",
+        "cache-control": "no-store, private",
+        "x-content-type-options": "nosniff",
+        "vary": "authorization",
+      },
+    });
+  }
+
+  if (!Object.hasOwn(MACHINE_READ_KEYS, name)) return json({ error: "unknown_machine_resource" }, 400);
+  const value = await store.get(MACHINE_READ_KEYS[name], { type: "json", consistency: "strong" });
+  if (value === null) return json({ error: "machine_resource_not_ready", resource: name }, 404);
+  const body = JSON.stringify({ resource: name, value });
+  if (new TextEncoder().encode(body).byteLength > MAX_PUBLISH_BYTES) {
+    return json({ error: "machine_response_too_large", resource: name }, 413);
+  }
+  return new Response(body, {
+    headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store, private",
+      "x-content-type-options": "nosniff",
+      "vary": "authorization",
+    },
+  });
+}
+
 function validOrigin(request) {
   const origin = request.headers.get("origin");
   if (!origin) return request.method === "GET" || request.method === "HEAD";
@@ -190,8 +241,12 @@ export default async (request) => {
   const resource = url.searchParams.get("resource") || "queue";
   const store = getStore({ name: STORE_NAME, consistency: "strong" });
 
-  // GitHub Actions publishes reports with a dedicated machine token. It cannot
-  // read review decisions or use the browser's decision-writing path.
+  // GitHub Actions uses a dedicated machine token for private report reads
+  // and publishing. Machine access is limited to explicit resource allowlists.
+  if (resource === "machine" && request.method === "GET") {
+    if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
+    return readMachineResource(url.searchParams.get("name") || "", store);
+  }
   if (request.method === "POST" && resource === "publish") {
     if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
     return publishPrivateReport(request, store);
