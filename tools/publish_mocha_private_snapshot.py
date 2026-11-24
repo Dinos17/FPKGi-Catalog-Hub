@@ -49,7 +49,7 @@ def post(api_url: str, token: str, catalog_commit: str, resource: str, value: di
     try:
         with urllib.request.urlopen(request, timeout=45) as response:
             result = json.loads(response.read().decode("utf-8"))
-            if response.status != 201 or result.get("ok") is not True:
+            if response.status not in (200, 201) or result.get("ok") is not True:
                 raise SystemExit(f"Private {resource} publication was not acknowledged.")
     except urllib.error.HTTPError as exc:
         detail = exc.read(2048).decode("utf-8", "replace")
