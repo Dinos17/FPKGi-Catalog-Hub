@@ -82,7 +82,7 @@ jobs:
               raise SystemExit("Invalid upload timestamp.") from exc
           if uploaded.tzinfo is None:
               raise SystemExit("Upload timestamp must include a timezone.")
-          key_material = "\0".join((platform, category, unicodedata.normalize("NFKC", name).strip().casefold(), uploaded.astimezone(timezone.utc).isoformat()))
+          key_material = "\0".join((platform, category, unicodedata.normalize("NFKC", name).strip().lower(), uploaded.astimezone(timezone.utc).isoformat()))
           decision_key = hashlib.sha256(key_material.encode("utf-8")).hexdigest()
           path = Path(os.environ["REPORT_PATH"])
           report = json.loads(path.read_text(encoding="utf-8"))

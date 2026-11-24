@@ -84,7 +84,7 @@ def apply_automatic_candidates(
 def _normalize_rejection_name(value: Any) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ValueError("Rejection record has no valid filename")
-    normalized = unicodedata.normalize("NFKC", value).strip().casefold()
+    normalized = unicodedata.normalize("NFKC", value).strip().lower()
     return normalized[:-4] if normalized.endswith(".pkg") else normalized
 
 
@@ -100,7 +100,7 @@ def _decision_key(platform: Any, category: Any, name: Any, created_text: Any) ->
         return None
     identity = "\0".join((
         platform, category,
-        unicodedata.normalize("NFKC", name).strip().casefold(),
+        unicodedata.normalize("NFKC", name).strip().lower(),
         uploaded.astimezone(timezone.utc).isoformat(),
     ))
     return hashlib.sha256(identity.encode("utf-8")).hexdigest()

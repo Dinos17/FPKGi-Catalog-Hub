@@ -111,7 +111,7 @@ def apply_candidate(
     decision_identity = "\0".join((
         platform,
         category,
-        unicodedata.normalize("NFKC", candidate_name).strip().casefold(),
+        unicodedata.normalize("NFKC", candidate_name).strip().lower(),
         parsed_created.astimezone(timezone.utc).isoformat(),
     ))
     if hashlib.sha256(decision_identity.encode("utf-8")).hexdigest() in decision_keys:
@@ -119,7 +119,7 @@ def apply_candidate(
 
     if rejections.get("schema_version") != 1 or not isinstance(rejections.get("records"), list):
         raise ValueError("Saved Mocha rejection report is malformed")
-    normalized_name = unicodedata.normalize("NFKC", candidate_name).strip().casefold()
+    normalized_name = unicodedata.normalize("NFKC", candidate_name).strip().lower()
     if normalized_name.endswith(".pkg"):
         normalized_name = normalized_name[:-4]
     for record in rejections["records"]:
@@ -135,7 +135,7 @@ def apply_candidate(
             raise ValueError("Saved Mocha rejection timestamp is invalid") from exc
         if rejected_at.tzinfo is None or not isinstance(record.get("name"), str) or not record["name"].strip():
             raise ValueError("Saved Mocha rejection identity is invalid")
-        rejected_name = unicodedata.normalize("NFKC", record["name"]).strip().casefold()
+        rejected_name = unicodedata.normalize("NFKC", record["name"]).strip().lower()
         if rejected_name.endswith(".pkg"):
             rejected_name = rejected_name[:-4]
         if (record["platform"] == platform and record["catalog_category"] == category

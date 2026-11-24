@@ -42,7 +42,7 @@ def main() -> int:
     identity = "\\0".join((
         payload["platform"],
         payload["category"],
-        unicodedata.normalize("NFKC", payload["name"]).strip().casefold(),
+        unicodedata.normalize("NFKC", payload["name"]).strip().lower(),
         uploaded.astimezone(timezone.utc).isoformat(),
     ))
     payload["decision_key"] = hashlib.sha256(identity.encode("utf-8")).hexdigest()

@@ -297,6 +297,16 @@ function normalizeName(value) {
   return value.normalize("NFKC").trim().toLocaleLowerCase("en-US");
 }
 
+function decisionKey(item) {
+  const material = [
+    item.platform,
+    item.category,
+    normalizeName(item.name),
+    new Date(item.created_at).toISOString(),
+  ].join("\0");
+  return createHash("sha256").update(material, "utf8").digest("hex");
+}
+
 function validDecision(value) {
   if (!value || typeof value !== "object" || Array.isArray(value)) return false;
   if (value.schema_version !== 1) return false;
