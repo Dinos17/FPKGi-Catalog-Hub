@@ -338,7 +338,7 @@ jobs:
           PY
 
       - name: Report inventory artifact upload status
-        if: always()
+        if: always() && vars.REVIEW_API_URL == ''
         env:
           ARTIFACT_UPLOAD_OUTCOME: ${{ steps.inventory_upload.outcome }}
         run: |
@@ -1161,8 +1161,8 @@ jobs:
           print(f"Verified PKG metadata repair: proposed={proposed}, applied={applied}, catalog_files_modified={report.get('catalog_files_modified')}")
           PY
 
-      - name: Upload PKG metadata repair report
-        if: always()
+      - name: Upload PKG metadata repair report (legacy fallback)
+        if: always() && vars.REVIEW_API_URL == ''
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a
         with:
           name: pkg-metadata-repair-report-${{ github.run_id }}-${{ github.run_attempt }}
