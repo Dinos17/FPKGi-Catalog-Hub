@@ -93,11 +93,12 @@ jobs:
       - name: Prepare public Pages artifact (exclude private review dashboard)
         run: |
           python - <<'PY'
+          import os
           import shutil
           from pathlib import Path
 
           source = Path("dashboard")
-          target = Path("$RUNNER_TEMP/pages-site")
+          target = Path(os.environ["RUNNER_TEMP"]) / "pages-site"
           shutil.copytree(source, target, ignore=shutil.ignore_patterns("review.html"))
           if (target / "review.html").exists():
               raise SystemExit("Private review dashboard must not enter the public Pages artifact.")
