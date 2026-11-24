@@ -319,6 +319,52 @@ function validDecision(value) {
   return Number.isFinite(date.getTime()) && /(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.created_at);
 }
 
+async function recordMachineDecision(request, store) {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > MAX_BODY_BYTES) return json({ error: "payload_too_large" }, 413);
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).byteLength > MAX_BODY_BYTES) {
+    return json({ error: "payload_too_large" }, 413);
+  }
+  let payload;
+  try { payload = JSON.parse(raw); } catch { return json({ error: "invalid_json" }, 400); }
+  if (!validDecision(payload)) return json({ error: "invalid_decision" }, 400);
+  if (!Number.isSafeInteger(payload.issue_number) || payload.issue_number < 1 ||
+      typeof payload.decided_by !== "string" ||
+      !/^[A-Za-z0-9_-]{1,39}$/.test(payload.decided_by)) {
+    return json({ error: "invalid_issue_attribution" }, 400);
+  }
+  const queue = await readQueue(store);
+  if (!queue) return json({ error: "review_queue_not_ready" }, 503);
+  const pending = queue.entries.find((entry) =>
+    entry && entry.platform === payload.platform &&
+    entry.category === payload.category &&
+    entry.created_at === payload.created_at &&
+    typeof entry.name === "string" &&
+    normalizeName(entry.name) === normalizeName(payload.name)
+  );
+  if (!pending) return json({ error: "item_not_pending_in_current_scan" }, 409);
+  const key = decisionKey(payload);
+  const record = {
+    schema_version: 1,
+    decision_key: key,
+    name: pending.name,
+    platform: pending.platform,
+    category: pending.category,
+    created_at: new Date(pending.created_at).toISOString(),
+    action: payload.action,
+    decided_at: new Date().toISOString(),
+    decided_by: payload.decided_by,
+    issue_number: payload.issue_number,
+    scan_observed_at: queue.scan_observed_at,
+    catalog_commit: queue.catalog_commit,
+    status: "resolved",
+  };
+  const result = await store.setJSON("decisions/" + key + ".json", record, { onlyIfNew: true });
+  if (!result.modified) return json({ error: "decision_already_recorded" }, 409);
+  return json({ ok: true, decision: record }, 201);
+}
+
 async function readQueue(store) {
   const queue = await store.get(QUEUE_KEY, { type: "json", consistency: "strong" });
   if (!queue || queue.schema_version !== 1 || queue.scanner !== "mocha" ||
@@ -352,6 +398,10 @@ export default async (request) => {
   if (request.method === "POST" && resource === "stage") {
     if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
     return stagePrivateInput(request, store);
+  }
+  if (request.method === "POST" && resource === "decision") {
+    if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
+    return recordMachineDecision(request, store);
   }
   if (!validOrigin(request)) return json({ error: "origin_not_allowed" }, 403);
 
