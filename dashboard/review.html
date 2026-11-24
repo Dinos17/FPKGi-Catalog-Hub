@@ -76,7 +76,7 @@ function renderCandidate(item){
  '<div class="actions"><span class="muted">Queued for automatic registration after safety checks.</span></div></article>';
 }
 async function loadCandidates(){
- const button=$("refreshCandidates");button.disabled=true;$("candidateStatus").textContent="Loading private source candidates…";
+ $("sourceStatus").textContent="Loading Mocha review queue…";
  $("candidateQueue").innerHTML='<div class="empty">Loading source candidates…</div>';$("candidateStats").innerHTML="";
  try{
   const response=await boundedFetch("/api/review?resource=candidates");
@@ -91,10 +91,10 @@ async function loadCandidates(){
   $("candidateStats").innerHTML='<div class="stats"><div class="stat">Automatic replacements<strong>'+queue.candidate_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
   $("candidateQueue").innerHTML=queue.candidates.length?queue.candidates.map(renderCandidate).join(""):'<div class="empty">No exact-match Mocha source candidates are waiting for approval.</div>';
   $("candidateStatus").textContent="Private catalog candidate queue refreshed successfully.";
- }catch(error){$("candidateQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("candidateStatus").textContent="Catalog candidate queue unavailable.";}finally{button.disabled=false;}
+ }catch(error){$("candidateQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("sourceStatus").textContent="Some Mocha queue data could not be loaded.";}finally{}
 }
 async function loadQueue(){
- const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading the private review queue…";
+ const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading Mocha review queue…";
  $("reviewQueue").innerHTML='<div class="empty">Loading unresolved entries…</div>';$("queueStats").innerHTML="";$("warning").innerHTML="";
  try{
   const response=await boundedFetch("/api/review?resource=queue");
@@ -103,8 +103,8 @@ async function loadQueue(){
   if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.entries)||!Number.isSafeInteger(queue.pending_count)||queue.pending_count!==queue.entries.length||!Number.isSafeInteger(queue.auto_approved_count)||!Number.isSafeInteger(queue.previously_rejected_count)||queue.previously_rejected_count<0||!Number.isSafeInteger(queue.previously_decided_count)||queue.previously_decided_count<0)throw Error("Review queue has an invalid format.");
   $("queueStats").innerHTML='<div class="stats"><div class="stat">Automatically cleared<strong>'+queue.auto_approved_count+'</strong></div><div class="stat">Previously rejected (hidden)<strong>'+queue.previously_rejected_count+'</strong></div><div class="stat">Previously decided (hidden)<strong>'+queue.previously_decided_count+'</strong></div><div class="stat">Needs human review<strong>'+queue.pending_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
   $("reviewQueue").innerHTML=queue.entries.length?queue.entries.map(renderEntry).join(""):'<div class="empty">No entries need a human decision. All eligible entries were automatically cleared.</div>';
-  $("sourceStatus").textContent="Private review queue refreshed successfully.";
- }catch(error){$("reviewQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("sourceStatus").textContent="Review queue unavailable; no decision can be confirmed.";}finally{button.disabled=false;}
+  $("sourceStatus").textContent="Mocha review queue refreshed successfully.";
+ }catch(error){$("reviewQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("sourceStatus").textContent="Some Mocha queue data could not be loaded; no decision is confirmed.";}finally{button.disabled=false;}
 }
 $("reviewQueue").addEventListener("click",async event=>{const button=event.target.closest("button[data-action]");if(!button)return;const payload={schema_version:1,action:button.dataset.action,name:button.dataset.name,platform:button.dataset.platform,category:button.dataset.category,created_at:button.dataset.createdAt};button.disabled=true;try{const response=await boundedFetch("/api/review",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});const result=await response.json();if(!response.ok)throw Error(result.error||"Decision could not be saved (HTTP "+response.status+").");$("sourceStatus").textContent="Decision saved privately.";await loadQueue();}catch(error){$("warning").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';button.disabled=false;}});
 $("refresh").addEventListener("click",async()=>{await Promise.all([loadQueue(),loadCandidates()]);});initializeAuth();
