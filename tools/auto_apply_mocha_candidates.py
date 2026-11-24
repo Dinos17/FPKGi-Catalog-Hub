@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import argparse
 import json
-import hashlib
 import re
 import unicodedata
 from datetime import datetime, timezone
@@ -12,6 +11,7 @@ from pathlib import Path
 from typing import Any
 
 from tools.approve_mocha_candidate import apply_candidate
+from tools.mocha_decision_key import decision_key
 from tools.mocha_catalog_candidates import build_candidate_queue
 
 
@@ -89,21 +89,10 @@ def _normalize_rejection_name(value: Any) -> str:
 
 
 def _decision_key(platform: Any, category: Any, name: Any, created_text: Any) -> str | None:
-    if not all(isinstance(value, str) and value.strip() for value in
-               (platform, category, name, created_text)):
-        return None
     try:
-        uploaded = datetime.fromisoformat(created_text.replace("Z", "+00:00"))
+        return decision_key(platform, category, name, created_text)
     except ValueError:
         return None
-    if uploaded.tzinfo is None:
-        return None
-    identity = "\0".join((
-        platform, category,
-        unicodedata.normalize("NFKC", name).strip().lower(),
-        uploaded.astimezone(timezone.utc).isoformat(),
-    ))
-    return hashlib.sha256(identity.encode("utf-8")).hexdigest()
 
 
 def _excluded_ids(
