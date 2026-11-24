@@ -1,9 +1,15 @@
 [build]
-  # The repository root is the Netlify base directory. Publish the review UI
-  # from dashboard/ and load its API function from the repository-level folder.
-  command = "echo \"Deploying FPKGi private human review dashboard\""
-  publish = "dashboard"
+  # Publish only the isolated Review UI. The catalog dashboard remains in dashboard/
+  # but is not part of this site's deployed files.
+  command = "echo \"Deploying isolated FPKGi Review dashboard\""
+  publish = "review-site"
   functions = "netlify/review-functions"
 
 [functions]
   node_bundler = "esbuild"
+
+[[redirects]]
+  from = "/"
+  to = "/review.html"
+  status = 200
+  force = true
