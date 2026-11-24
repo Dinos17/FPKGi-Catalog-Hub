@@ -1,4 +1,5 @@
 import { createHash, timingSafeEqual } from "node:crypto";
+import { isDeepStrictEqual } from "node:util";
 import { getUser } from "@netlify/identity";
 import { getStore } from "@netlify/blobs";
 
@@ -115,14 +116,6 @@ async function publishPrivateReport(request, store) {
         !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(observed)) {
       return json({ error: "invalid_scan_timestamp" }, 400);
     }
-    const currentSummary = await store.get(PUBLISH_KEYS.summary, {
-      type: "json",
-      consistency: "strong",
-    });
-    if (currentSummary && typeof currentSummary.scan_observed_at === "string" &&
-        Date.parse(observed) <= Date.parse(currentSummary.scan_observed_at)) {
-      return json({ error: "stale_scan_snapshot" }, 409);
-    }
     if (payload.resource !== "summary" &&
         (payload.value.catalog_commit !== undefined &&
          payload.value.catalog_commit !== payload.catalog_commit)) {
@@ -134,13 +127,44 @@ async function publishPrivateReport(request, store) {
     : observed.replace(/[^0-9TZ.-]/g, "_");
   const snapshotKey = "snapshots/" + payload.catalog_commit + "/" +
     snapshotId + "/" + payload.resource + ".json";
-  const snapshot = await store.setJSON(snapshotKey, payload.value, { onlyIfNew: true });
-  if (!snapshot.modified) return json({ error: "snapshot_already_exists" }, 409);
+  const existingSnapshot = await store.get(snapshotKey, {
+    type: "json",
+    consistency: "strong",
+  });
+  if (existingSnapshot !== null && !isDeepStrictEqual(existingSnapshot, payload.value)) {
+    return json({ error: "snapshot_conflict" }, 409);
+  }
 
-  // The publisher workflow must remain serialized and publish summary last:
-  // current pointers are last-write-wins, not transactional.
-  await store.setJSON(PUBLISH_KEYS[payload.resource], payload.value);
-  return json({ ok: true, resource: payload.resource, catalog_commit: payload.catalog_commit }, 201);
+  const currentSummary = payload.resource === "rejections" ? null : await store.get(PUBLISH_KEYS.summary, {
+    type: "json",
+    consistency: "strong",
+  });
+  if (currentSummary && typeof currentSummary.scan_observed_at === "string" &&
+      Date.parse(observed) < Date.parse(currentSummary.scan_observed_at)) {
+    return json({ error: "stale_scan_snapshot" }, 409);
+  }
+
+  if (existingSnapshot === null) {
+    const snapshot = await store.setJSON(snapshotKey, payload.value, { onlyIfNew: true });
+    if (!snapshot.modified) {
+      const racedSnapshot = await store.get(snapshotKey, { type: "json", consistency: "strong" });
+      if (!isDeepStrictEqual(racedSnapshot, payload.value)) {
+        return json({ error: "snapshot_conflict" }, 409);
+      }
+    }
+  }
+
+  // The publisher workflow must remain serialized and publish summary last.
+  // Equal-timestamp retries are idempotent; older snapshots never replace newer pointers.
+  if (!currentSummary || Date.parse(observed) >= Date.parse(currentSummary.scan_observed_at || "")) {
+    await store.setJSON(PUBLISH_KEYS[payload.resource], payload.value);
+  }
+  return json({
+    ok: true,
+    resource: payload.resource,
+    catalog_commit: payload.catalog_commit,
+    already_published: existingSnapshot !== null,
+  }, existingSnapshot === null ? 201 : 200);
 }
 
 async function readMachineResource(name, store) {
