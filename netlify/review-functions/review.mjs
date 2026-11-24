@@ -100,11 +100,36 @@ async function publishPrivateReport(request, store) {
   }
   if (!validPublishPayload(payload)) return json({ error: "invalid_publish_payload" }, 400);
 
-  const snapshotKey = "snapshots/" + payload.catalog_commit + "/" + payload.resource + ".json";
+  const observed = payload.value.scan_observed_at;
+  if (payload.resource !== "rejections") {
+    if (typeof observed !== "string" || !Number.isFinite(Date.parse(observed)) ||
+        !/(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(observed)) {
+      return json({ error: "invalid_scan_timestamp" }, 400);
+    }
+    const currentSummary = await store.get(PUBLISH_KEYS.summary, {
+      type: "json",
+      consistency: "strong",
+    });
+    if (currentSummary && typeof currentSummary.scan_observed_at === "string" &&
+        Date.parse(observed) <= Date.parse(currentSummary.scan_observed_at)) {
+      return json({ error: "stale_scan_snapshot" }, 409);
+    }
+    if (payload.resource !== "summary" &&
+        (payload.value.catalog_commit !== undefined &&
+         payload.value.catalog_commit !== payload.catalog_commit)) {
+      return json({ error: "catalog_commit_mismatch" }, 409);
+    }
+  }
+  const snapshotId = payload.resource === "rejections"
+    ? createHash("sha256").update(JSON.stringify(payload.value)).digest("hex")
+    : observed.replace(/[^0-9TZ.-]/g, "_");
+  const snapshotKey = "snapshots/" + payload.catalog_commit + "/" +
+    snapshotId + "/" + payload.resource + ".json";
   const snapshot = await store.setJSON(snapshotKey, payload.value, { onlyIfNew: true });
   if (!snapshot.modified) return json({ error: "snapshot_already_exists" }, 409);
 
-  // The publisher workflow must remain serialized: current pointers are last-write-wins.
+  // The publisher workflow must remain serialized and publish summary last:
+  // current pointers are last-write-wins, not transactional.
   await store.setJSON(PUBLISH_KEYS[payload.resource], payload.value);
   return json({ ok: true, resource: payload.resource, catalog_commit: payload.catalog_commit }, 201);
 }
