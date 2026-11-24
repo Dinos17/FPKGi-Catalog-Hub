@@ -1,7 +1,0 @@
-[build]
-  command = "echo \"FPKGi private review dashboard\""
-  publish = "dashboard"
-  functions = "netlify/review-functions"
-
-[functions]
-  node_bundler = "esbuild"
