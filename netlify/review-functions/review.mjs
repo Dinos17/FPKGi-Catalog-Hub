@@ -211,6 +211,10 @@ async function stagePrivateInput(request, store) {
       !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(value.scan_observed_at)) {
     return json({ error: "invalid_scan_timestamp" }, 400);
   }
+  const stagedResponse = JSON.stringify({ resource: "staged_" + payload.resource, value });
+  if (new TextEncoder().encode(stagedResponse).byteLength > MAX_PUBLISH_BYTES) {
+    return json({ error: "staged_response_too_large" }, 413);
+  }
   await store.setJSON(STAGED_KEYS[payload.resource], {
     run_id: payload.run_id,
     catalog_commit: payload.catalog_commit,

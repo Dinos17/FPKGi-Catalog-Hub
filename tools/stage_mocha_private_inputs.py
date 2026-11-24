@@ -4,7 +4,7 @@ from __future__ import annotations
 import argparse, json, os, sys, urllib.error, urllib.request
 from pathlib import Path
 
-LIMIT = 5 * 1024 * 1024
+LIMIT = 5 * 1024 * 1024 - 4096
 
 def main() -> int:
     parser = argparse.ArgumentParser()
