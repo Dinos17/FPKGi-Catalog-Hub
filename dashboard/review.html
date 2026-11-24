@@ -9,7 +9,7 @@
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:32px 20px 70px}
 header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:22px}h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.04em;margin:0}p,.muted{color:var(--muted);margin:6px 0}a{color:var(--blue)}
 .toolbar,.notice,.item{background:var(--panel);border:1px solid var(--line);border-radius:14px}.toolbar{padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0}
-button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}
+button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}[hidden]{display:none!important}.auth{max-width:460px;margin:10vh auto;padding:24px;background:var(--panel);border:1px solid var(--line);border-radius:14px}.auth h1{font-size:1.8rem}.auth label{display:block;margin:14px 0 5px;color:var(--muted)}.auth input{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);font:inherit}.auth button{margin-top:14px}.auth-status{min-height:24px;color:var(--amber)}
 .actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 13px 13px}.actions a{display:inline-block;text-decoration:none;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 12px;border-radius:9px;font-size:.9rem}.actions a:hover{border-color:var(--blue)}.actions a.reject{color:var(--red)}.actions a.resolve{color:var(--green)}
 .notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
 .stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
@@ -19,8 +19,8 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 @media(max-width:650px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}.compare{grid-template-columns:1fr}}
 </style>
 </head>
-<body><main>
-<header><div><h1>FPKGi Catalog Review</h1><p>Review Mocha source-registration candidates separately from unresolved upload decisions. Approvals create catalog pull requests through GitHub.</p></div><a href="./index.html">← Back to Catalog</a></header>
+<body><section id="authPanel" class="auth" aria-labelledby="authTitle"><h1 id="authTitle">Private review access</h1><p>Sign in with an invited account to access the review dashboard.</p><form id="authForm"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="8"><button id="authSubmit" type="submit">Sign in</button></form><p id="authStatus" class="auth-status" role="status" aria-live="polite"></p></section><main id="reviewApp" hidden>
+<header><div><h1>FPKGi Catalog Review</h1><p>Review Mocha source-registration candidates separately from unresolved upload decisions. Approvals create catalog pull requests through GitHub.</p></div><div><button id="logout" type="button">Sign out</button> <a href="./index.html">← Back to Catalog</a></div></header>
 <div class="notice">Exact catalog matches are automatically cleared from the duplicate-review queue. They may still appear in the separate source-registration queue below. Keep, Reject and Resolve only record review decisions; they do not publish catalog entries. This page does not expose Mocha file IDs, share URLs, API paths or download links.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
 <section class="toolbar"><span id="candidateStatus" class="muted" role="status" aria-live="polite">Loading catalog candidates…</span><button id="refreshCandidates" type="button">Refresh candidates</button></section>
@@ -33,12 +33,19 @@ button{border:1px solid var(--line);background:var(--panel2);color:var(--text);p
 <div id="reviewQueue"><div class="empty">Loading unresolved entries…</div></div>
 <div id="warning"></div>
 </main>
-<script>
+<script type="module">
+import {login,logout,getUser,handleAuthCallback,acceptInvite} from "https://esm.sh/@netlify/identity@2.0.1";
 const $=id=>document.getElementById(id);
-const REPORT_BASE="https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/Mocha-reports/reports/";
-async function boundedFetch(url){
+let inviteToken=null;
+async function establishSession(user){if(!user)return false;$("authPanel").hidden=true;$("reviewApp").hidden=false;$("authStatus").textContent="";await Promise.all([loadQueue(),loadCandidates()]);return true;}
+async function initializeAuth(){try{const callback=await handleAuthCallback();if(callback?.type==="invite"&&callback.token){inviteToken=callback.token;$("authTitle").textContent="Accept your invitation";$("authSubmit").textContent="Set password and continue";$("authPassword").autocomplete="new-password";$("authStatus").textContent="Enter your email address and choose a password to activate your invited account.";}const user=await getUser();if(user)await establishSession(user);}catch(error){$("authStatus").textContent="Authentication callback failed: "+(error.message||String(error));}}
+$("authForm").addEventListener("submit",async event=>{event.preventDefault();const button=$("authSubmit");button.disabled=true;$("authStatus").textContent="Authenticating…";try{const email=$("authEmail").value.trim(),password=$("authPassword").value;if(inviteToken){await acceptInvite(inviteToken,password);inviteToken=null;$("authStatus").textContent="Invitation accepted. Sign in with your new password.";$("authTitle").textContent="Private review access";button.textContent="Sign in";$("authPassword").value="";$("authPassword").autocomplete="current-password";}else{await login(email,password);await establishSession(await getUser());}}catch(error){$("authStatus").textContent=error.message||"Authentication failed.";}finally{button.disabled=false;}});
+$("logout").addEventListener("click",async()=>{try{await logout();$("reviewApp").hidden=true;$("authPanel").hidden=false;$("authPassword").value="";$("authStatus").textContent="Signed out.";}catch(error){$("warning").textContent="Sign out failed: "+(error.message||String(error));}});
+
+const $=id=>document.getElementById(id);
+async function boundedFetch(url,options={}){
  const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
- try{return await fetch(url,{cache:"no-store",signal:controller.signal});}finally{clearTimeout(timeout);}
+ try{return await fetch(url,{...options,credentials:"same-origin",cache:"no-store",signal:controller.signal});}finally{clearTimeout(timeout);}
 }
 const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
 const pretty=value=>String(value).replace(/_/g," ").replace(/\b\w/g,char=>char.toUpperCase());
@@ -46,13 +53,6 @@ const isRecord=value=>value!==null&&typeof value==="object"&&!Array.isArray(valu
 function metadataHtml(data,fields){
  if(!isRecord(data)||!Object.keys(data).length)return '<p class="muted">No catalog candidate available.</p>';
  return '<dl>'+fields.filter(([key])=>Object.prototype.hasOwnProperty.call(data,key)).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(Array.isArray(data[key])?data[key].join(", "):data[key])+'</dd>').join("")+'</dl>';
-}
-function decisionUrl(item,action){
- if(!item.created_at||!item.name||!item.platform||!item.category)return null;
- const payload={schema_version:1,action,name:item.name,platform:item.platform,category:item.category,created_at:item.created_at};
- const body="Please record this Mocha review decision.\n\n<!-- FPKGI_REVIEW_DECISION\n"+JSON.stringify(payload)+"\n-->";
- const title="FPKGi review decision: "+action.toUpperCase()+" — "+item.name;
- return "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new?"+new URLSearchParams({title,body}).toString();
 }
 function renderEntry(item){
  const status=pretty(item.status||"needs review");
@@ -67,17 +67,8 @@ function renderEntry(item){
  (differences.length?'<br><strong>Differences:</strong> '+esc(differences.join(", ")):"")+
  (unavailable.length?'<br><strong>Unavailable metadata:</strong> '+esc(unavailable.join(", ")):"")+'</div>'+
  '<div class="actions">'+
- (decisionUrl(item,"keep")?'<a href="'+esc(decisionUrl(item,"keep"))+'" target="_blank" rel="noopener">Keep</a>':'')+
- (decisionUrl(item,"reject")?'<a class="reject" href="'+esc(decisionUrl(item,"reject"))+'" target="_blank" rel="noopener">Reject</a>':'')+
- (decisionUrl(item,"resolve")?'<a class="resolve" href="'+esc(decisionUrl(item,"resolve"))+'" target="_blank" rel="noopener">Resolve</a>':'')+
+ (item.created_at&&item.name&&item.platform&&item.category?'<button data-action="keep" data-name="'+esc(item.name)+'" data-platform="'+esc(item.platform)+'" data-category="'+esc(item.category)+'" data-created-at="'+esc(item.created_at)+'">Keep</button><button class="reject" data-action="reject" data-name="'+esc(item.name)+'" data-platform="'+esc(item.platform)+'" data-category="'+esc(item.category)+'" data-created-at="'+esc(item.created_at)+'">Reject</button><button class="resolve" data-action="resolve" data-name="'+esc(item.name)+'" data-platform="'+esc(item.platform)+'" data-category="'+esc(item.category)+'" data-created-at="'+esc(item.created_at)+'">Resolve</button>':'')+
  '</div></article>';
-}
-function candidateApprovalUrl(item){
- if(!/^[0-9a-f]{24}$/.test(item.candidate_id||"")||!item.name)return null;
- const payload={schema_version:1,candidate_id:item.candidate_id};
- const body="Please create a catalog pull request for this scanner-generated Mocha source candidate.\n\n<!-- FPKGI_CATALOG_CANDIDATE_APPROVAL\n"+JSON.stringify(payload)+"\n-->";
- const title="FPKGi catalog candidate approval: "+item.name;
- return "https://github.com/Dinos17/FPKGi-Catalog-Hub/issues/new?"+new URLSearchParams({title,body}).toString();
 }
 function renderCandidate(item){
  const metadata=item.proposed_entry||{};
@@ -89,54 +80,38 @@ function renderCandidate(item){
  '<div class="actions"><span class="muted">Queued for automatic registration after safety checks.</span></div></article>';
 }
 async function loadCandidates(){
- const button=$("refreshCandidates");button.disabled=true;$("candidateStatus").textContent="Loading the latest source candidates…";
+ const button=$("refreshCandidates");button.disabled=true;$("candidateStatus").textContent="Loading private source candidates…";
  $("candidateQueue").innerHTML='<div class="empty">Loading source candidates…</div>';$("candidateStats").innerHTML="";
  try{
-  const [summaryResponse,candidateResponse]=await Promise.all([
-   boundedFetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now()),
-   boundedFetch(REPORT_BASE+"mocha-catalog-candidates.json?v="+Date.now())
-  ]);
-  if(!summaryResponse.ok)throw Error("Latest Mocha scan summary is unavailable (HTTP "+summaryResponse.status+").");
-  if(!candidateResponse.ok)throw Error("Catalog candidate report is unavailable (HTTP "+candidateResponse.status+"). The scanner may not have published a candidate report yet.");
-  const summary=await summaryResponse.json(),queue=await candidateResponse.json();
-  if(!isRecord(summary)||summary.schema_version!==1||summary.scanner!=="mocha"||summary.scan_complete!==true)throw Error("Latest scan is incomplete or invalid.");
+  const response=await boundedFetch("/api/review?resource=candidates");
+  if(!response.ok)throw Error(response.status===401?"Your session expired. Sign in again.":"Private candidate report unavailable (HTTP "+response.status+").");
+  const data=await response.json(),queue=data.report;
+  if(!isRecord(queue))throw Error("Private candidate report has an invalid format.");
   if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.candidates)||!Number.isSafeInteger(queue.candidate_count)||queue.candidate_count!==queue.candidates.length||queue.catalog_write_performed!==false||queue.automatic_approval!==true||queue.binary_integrity_verified!==false)throw Error("Catalog candidate report has an invalid format.");
-  if(queue.scan_observed_at!==summary.scan_observed_at||queue.catalog_commit!==summary.catalog_commit)throw Error("Candidate report does not match the latest scan. Waiting for matching publication.");
   const targets={"PS4:games":"ps4/games.json","PS4:dlc":"ps4/dlc.json","PS5:games":"ps5/ps5-games.json","PS5:dlc":"ps5/ps5-dlc.json"};
   for(const item of queue.candidates){
    if(!isRecord(item)||!/^[0-9a-f]{24}$/.test(item.candidate_id||"")||!targets[item.platform+":"+item.category]||item.catalog_path!==targets[item.platform+":"+item.category]||item.match_status!=="matched"||!Array.isArray(item.metadata_differences)||item.metadata_differences.length!==0||item.approval_required!==false||item.binary_integrity_verified!==false||!isRecord(item.proposed_entry)||item.proposed_entry.download_source!=="mocha")throw Error("A candidate failed validation; no approval links are available.");
   }
   $("candidateStats").innerHTML='<div class="stats"><div class="stat">Automatic replacements<strong>'+queue.candidate_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
   $("candidateQueue").innerHTML=queue.candidates.length?queue.candidates.map(renderCandidate).join(""):'<div class="empty">No exact-match Mocha source candidates are waiting for approval.</div>';
-  $("candidateStatus").textContent="Catalog candidate queue refreshed successfully.";
- }catch(error){
-  $("candidateQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';
-  $("candidateStatus").textContent="Catalog candidate queue unavailable; no approval can be confirmed.";
- }finally{button.disabled=false;}
+  $("candidateStatus").textContent="Private catalog candidate queue refreshed successfully.";
+ }catch(error){$("candidateQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("candidateStatus").textContent="Catalog candidate queue unavailable.";}finally{button.disabled=false;}
 }
 async function loadQueue(){
- const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading the latest scan and review queue…";
+ const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading the private review queue…";
  $("reviewQueue").innerHTML='<div class="empty">Loading unresolved entries…</div>';$("queueStats").innerHTML="";$("warning").innerHTML="";
  try{
-  const [summaryResponse,queueResponse]=await Promise.all([
-   boundedFetch(REPORT_BASE+"mocha-scan-summary.json?v="+Date.now()),
-   boundedFetch(REPORT_BASE+"mocha-review-queue.json?v="+Date.now())
-  ]);
-  if(!summaryResponse.ok)throw Error("Latest Mocha scan summary is unavailable (HTTP "+summaryResponse.status+").");
-  if(!queueResponse.ok)throw Error("Review queue is unavailable (HTTP "+queueResponse.status+").");
-  const summary=await summaryResponse.json(),queue=await queueResponse.json();
-  if(!isRecord(summary)||summary.schema_version!==1||summary.scanner!=="mocha"||summary.scan_complete!==true)throw Error("Latest scan is incomplete or has an invalid format; no decisions can be made.");
+  const response=await boundedFetch("/api/review?resource=queue");
+  if(!response.ok)throw Error(response.status===401?"Your session expired. Sign in again.":"Private review queue unavailable (HTTP "+response.status+").");
+  const data=await response.json(),queue=data.queue;
   if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.entries)||!Number.isSafeInteger(queue.pending_count)||queue.pending_count!==queue.entries.length||!Number.isSafeInteger(queue.auto_approved_count)||!Number.isSafeInteger(queue.previously_rejected_count)||queue.previously_rejected_count<0||!Number.isSafeInteger(queue.previously_decided_count)||queue.previously_decided_count<0)throw Error("Review queue has an invalid format.");
-  if(queue.scan_observed_at!==summary.scan_observed_at||queue.catalog_commit!==summary.catalog_commit)throw Error("Review queue does not match the latest scan. Waiting for matching publication.");
   $("queueStats").innerHTML='<div class="stats"><div class="stat">Automatically cleared<strong>'+queue.auto_approved_count+'</strong></div><div class="stat">Previously rejected (hidden)<strong>'+queue.previously_rejected_count+'</strong></div><div class="stat">Previously decided (hidden)<strong>'+queue.previously_decided_count+'</strong></div><div class="stat">Needs human review<strong>'+queue.pending_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
   $("reviewQueue").innerHTML=queue.entries.length?queue.entries.map(renderEntry).join(""):'<div class="empty">No entries need a human decision. All eligible entries were automatically cleared.</div>';
-  $("sourceStatus").textContent="Review queue refreshed successfully.";
- }catch(error){
-  $("reviewQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';
-  $("sourceStatus").textContent="Review queue unavailable; no automatic approval status can be confirmed.";
- }finally{button.disabled=false;}
+  $("sourceStatus").textContent="Private review queue refreshed successfully.";
+ }catch(error){$("reviewQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("sourceStatus").textContent="Review queue unavailable; no decision can be confirmed.";}finally{button.disabled=false;}
 }
-$("refresh").addEventListener("click",loadQueue);$("refreshCandidates").addEventListener("click",loadCandidates);loadQueue();loadCandidates();
+$("reviewQueue").addEventListener("click",async event=>{const button=event.target.closest("button[data-action]");if(!button)return;const payload={schema_version:1,action:button.dataset.action,name:button.dataset.name,platform:button.dataset.platform,category:button.dataset.category,created_at:button.dataset.createdAt};button.disabled=true;try{const response=await boundedFetch("/api/review",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});const result=await response.json();if(!response.ok)throw Error(result.error||"Decision could not be saved (HTTP "+response.status+").");$("sourceStatus").textContent="Decision saved privately.";await loadQueue();}catch(error){$("warning").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';button.disabled=false;}});
+$("refresh").addEventListener("click",loadQueue);$("refreshCandidates").addEventListener("click",loadCandidates);initializeAuth();
 </script>
 </body>
 </html>
