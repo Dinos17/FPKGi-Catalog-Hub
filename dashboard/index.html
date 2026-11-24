@@ -1,506 +1,117 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>FPKGi Catalog Hub</title>
-  <style>
-    :root { color-scheme: dark; --bg:#0b0d10; --panel:#151922; --panel2:#1b202b; --text:#f4f6f8; --muted:#9aa4b2; --accent:#5eead4; --border:#2a3140; }
-    * { box-sizing:border-box; }
-    body { margin:0; font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif; background:linear-gradient(180deg,#0b0d10 0%,#10141b 100%); color:var(--text); }
-    .wrap { max-width:1100px; margin:auto; padding:48px 20px 64px; }
-    header { text-align:center; margin-bottom:34px; }
-    h1 { margin:0 0 10px; font-size:clamp(2rem,5vw,3.4rem); letter-spacing:-.04em; }
-    header p { margin:0; color:var(--muted); }
-    .search { margin:30px auto 24px; max-width:760px; }
-    input { width:100%; padding:17px 20px; border:1px solid var(--border); border-radius:14px; background:var(--panel); color:var(--text); font-size:1.05rem; outline:none; }
-    input:focus { border-color:var(--accent); }
-    .filters { display:flex; justify-content:center; gap:10px; flex-wrap:wrap; margin-bottom:12px; }\n    .platform-filters { margin-bottom:32px; }
-    button { border:1px solid var(--border); background:var(--panel); color:var(--text); padding:9px 15px; border-radius:999px; cursor:pointer; font:inherit; transition:background .18s,border-color .18s,color .18s,transform .18s; }
-    button:hover { transform:translateY(-1px); }\n    button:hover, button.active { background:var(--panel2); border-color:var(--accent); color:var(--accent); }
-    .meta { display:flex; justify-content:space-between; gap:12px; color:var(--muted); margin-bottom:16px; padding:0 2px; font-size:.9rem; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(250px,1fr)); gap:14px; }
-    .card { position:relative; background:linear-gradient(145deg,rgba(27,32,43,.96),rgba(18,22,30,.96)); border:1px solid var(--border); border-radius:16px; padding:18px; min-height:130px; box-shadow:0 8px 24px rgba(0,0,0,.16); transition:transform .18s,border-color .18s,box-shadow .18s; }\n    .card:hover { transform:translateY(-2px); border-color:#3a4558; box-shadow:0 12px 30px rgba(0,0,0,.24); }
-    .platform { position:absolute; top:12px; right:12px; padding:4px 8px; border:1px solid var(--border); border-radius:7px; background:#202733; color:#fff; font-size:.68rem; font-weight:800; letter-spacing:.04em; }
-    .card h2 { margin:0 70px 10px 0; font-size:1.05rem; }
-    .card p { margin:5px 0; color:var(--muted); font-size:.9rem; }
-    .empty { text-align:center; color:var(--muted); padding:50px 10px; }
-    .error { color:#fca5a5; text-align:center; padding:30px; }
-  </style>
-
-    <style>
-      body { background: radial-gradient(circle at 50% -15%, rgba(88,166,255,.14), transparent 38%), #0b0e13; }
-      .container { max-width:1280px; }
-      header { padding:58px 0 28px; }
-      header h1 { font-size:clamp(2.1rem,5vw,3.5rem); letter-spacing:-.045em; margin-bottom:10px; text-shadow:0 8px 40px rgba(88,166,255,.12); }
-      header p { font-size:1rem; color:#8e99aa; }
-      .search { position:relative; max-width:760px; margin:24px auto 30px; }
-      .search input { width:100%; box-sizing:border-box; padding:17px 20px; border-radius:14px; border:1px solid #2b3442; background:rgba(17,21,29,.88); color:var(--text); font:inherit; outline:none; box-shadow:0 12px 40px rgba(0,0,0,.22), inset 0 1px 0 rgba(255,255,255,.025); transition:border-color .2s,box-shadow .2s; }
-      .search input:focus { border-color:#4f8fdc; box-shadow:0 0 0 4px rgba(79,143,220,.11),0 16px 45px rgba(0,0,0,.25); }
-      .toolbar { margin-top:28px; padding:18px; border:1px solid #202936; border-radius:18px; background:rgba(15,19,26,.72); backdrop-filter:blur(12px); box-shadow:0 18px 45px rgba(0,0,0,.16); }
-      .filters { gap:7px; }
-      .category-filters { margin-top:4px; }
-      .filters button { background:#151a22; border-color:#293240; color:#aeb8c7; }
-      .filters button.active { background:#1c3857; border-color:#4f8fdc; color:#d9ebff; box-shadow:0 4px 14px rgba(79,143,220,.12); }
-      .platform-filters { margin-top:12px; padding-top:14px; border-top:1px solid #202936; }
-      .platform-filters button { padding:7px 13px; font-size:.8rem; }
-      .statusbar { display:flex; align-items:center; justify-content:space-between; gap:12px; margin:22px 2px 14px; color:#7f8a9b; font-size:.85rem; }
-      #count { color:#c6d0de; font-weight:700; }
-      .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(270px,1fr)); gap:16px; }
-      .card { min-height:150px; padding:20px; border-radius:18px; overflow:hidden; }
-      .card::after { content:""; position:absolute; inset:0; pointer-events:none; background:linear-gradient(135deg,rgba(255,255,255,.025),transparent 35%); }
-      .card h3 { margin:0 55px 11px 0; font-size:1.02rem; line-height:1.4; letter-spacing:-.01em; }
-      .card .id { color:#6f9fd4; font-size:.78rem; font-family:ui-monospace,SFMono-Regular,Consolas,monospace; }
-      .platform { z-index:1; background:#111722; border-color:#354153; color:#c9d7e8; box-shadow:0 4px 12px rgba(0,0,0,.2); }
-      .empty,.error { border:1px solid #202936; background:#10151d; border-radius:18px; padding:40px; text-align:center; color:#7f8a9b; }
-      @media(max-width:650px) { header { padding-top:35px; } .toolbar { padding:13px; } .grid { grid-template-columns:1fr; } .statusbar { flex-direction:column; align-items:flex-start; } }
-    </style>
-    <style>.pagination{display:flex;justify-content:center;align-items:center;gap:6px;margin:30px 0 55px;min-height:40px}.page-btn{min-width:38px;height:38px;padding:0 11px;background:#121820;border-color:#273241;color:#9eabbc}.page-btn:hover:not(:disabled),.page-btn.active{background:#1c3857;border-color:#4f8fdc;color:#d9ebff}.page-btn:disabled{opacity:.3;cursor:not-allowed}.page-gap{color:#667386;padding:0 3px}</style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>FPKGi Catalog Review</title>
 <style>
-.details{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;padding:34px;background:rgba(0,0,0,.78);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
-.details[hidden]{display:none}
-.detail-modal{position:relative;width:min(980px,94vw);max-height:90vh;overflow:auto;border:1px solid #303b4b;border-radius:10px;background:#14181f;box-shadow:0 30px 100px rgba(0,0,0,.65)}
-.detail-close{position:absolute;z-index:3;top:16px;right:16px;width:38px;height:38px;padding:0;border:0;border-radius:50%;background:rgba(15,18,23,.78);color:#fff;font-size:1.5rem;line-height:38px}
-.detail-close:hover{background:#fff;color:#111;transform:none}
-.detail-hero{position:relative;min-height:430px;display:flex;align-items:flex-end;overflow:hidden;background:radial-gradient(circle at 78% 18%,rgba(79,143,220,.25),transparent 34%),linear-gradient(135deg,#202936,#0d1117 68%)}
-.detail-glow{position:absolute;inset:0;background:linear-gradient(90deg,rgba(9,11,15,.98) 0%,rgba(9,11,15,.82) 48%,rgba(9,11,15,.2) 100%),linear-gradient(0deg,#14181f 0%,transparent 45%)}
-.detail-content{position:relative;max-width:720px;padding:52px 52px 44px}
-.detail-platform{display:inline-block;padding:6px 10px;border:1px solid #40516a;border-radius:5px;background:#111823;color:#cfe2f7;font-size:.72rem;font-weight:800;letter-spacing:.08em}
-.detail-content h2{font-size:clamp(2.2rem,5vw,4.2rem);line-height:1.02;letter-spacing:-.045em;margin:18px 0 12px}
-.detail-subtitle{color:#b8c2cf;font-size:.92rem}
-.detail-description{color:#d7dce3;font-size:1rem;line-height:1.7;max-width:650px;margin-top:22px}
-.detail-info{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:#303640}
-.detail-info div{padding:17px 20px;background:#171b22}
-.detail-info span{display:block;color:#737e8e;font-size:.7rem;text-transform:uppercase;letter-spacing:.08em;margin-bottom:6px}
-.detail-info strong{font-size:.9rem;color:#e1e6ed;word-break:break-word}
-.card{cursor:pointer}
-.card:focus-visible{outline:2px solid #4f8fdc;outline-offset:3px}
-@media(max-width:700px){.details{padding:12px}.detail-modal{width:100%;max-height:94vh}.detail-content{padding:40px 25px 30px}.detail-hero{min-height:400px}.detail-info{grid-template-columns:1fr 1fr}}
+:root{color-scheme:dark;--bg:#0b0e13;--panel:#141a23;--panel2:#1b2430;--line:#2b3544;--text:#edf2f8;--muted:#98a6b8;--blue:#78b7ff;--green:#55d6a3;--red:#ff8585;--amber:#f4c66a}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif}main{max-width:1200px;margin:auto;padding:32px 20px 70px}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;flex-wrap:wrap;margin-bottom:22px}h1{font-size:clamp(2rem,4vw,3rem);letter-spacing:-.04em;margin:0}p,.muted{color:var(--muted);margin:6px 0}a{color:var(--blue)}
+.toolbar,.notice,.item{background:var(--panel);border:1px solid var(--line);border-radius:14px}.toolbar{padding:16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin:14px 0}
+button{border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:9px 14px;border-radius:9px;font:inherit;cursor:pointer}button:hover{border-color:var(--blue)}button:disabled{opacity:.4;cursor:not-allowed}[hidden]{display:none!important}.auth{max-width:460px;margin:10vh auto;padding:24px;background:var(--panel);border:1px solid var(--line);border-radius:14px}.auth h1{font-size:1.8rem}.auth label{display:block;margin:14px 0 5px;color:var(--muted)}.auth input{width:100%;padding:11px;border:1px solid var(--line);border-radius:8px;background:var(--panel2);color:var(--text);font:inherit}.auth button{margin-top:14px}.auth-status{min-height:24px;color:var(--amber)}
+.actions{display:flex;gap:8px;flex-wrap:wrap;padding:0 13px 13px}.actions a{display:inline-block;text-decoration:none;border:1px solid var(--line);background:var(--panel2);color:var(--text);padding:8px 12px;border-radius:9px;font-size:.9rem}.actions a:hover,.actions button:hover{border-color:var(--blue)}.actions button{padding:8px 12px;font-size:.9rem}.actions button.reject{color:var(--red)}.actions button.resolve{color:var(--green)}.actions a.reject{color:var(--red)}.actions a.resolve{color:var(--green)}
+.notice{padding:13px 16px;margin:14px 0;color:var(--amber);border-color:#65532e}.notice.good{color:var(--green);border-color:#285a49}
+.stats{display:flex;gap:9px;flex-wrap:wrap;margin:14px 0 20px}.stat{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:9px 13px;color:var(--muted)}.stat strong{display:block;color:var(--text);font-size:1.2rem}
+.item{margin:10px 0;overflow:hidden}.item-head{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:10px 13px;border-bottom:1px solid var(--line);flex-wrap:wrap}.title{font-weight:700;overflow-wrap:anywhere}.pill{font-size:.74rem;padding:4px 8px;border-radius:99px;border:1px solid var(--line);text-transform:uppercase;color:var(--red)}
+.side{padding:12px 13px}dl{display:grid;grid-template-columns:minmax(110px,.36fr) 1fr;gap:5px 8px;margin:0;font-size:.9rem}dt{color:var(--muted);overflow-wrap:anywhere}dd{margin:0;overflow-wrap:anywhere;white-space:pre-wrap}.reason{padding:10px 13px;color:var(--muted);border-top:1px solid var(--line);font-size:.88rem}
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px 13px}.compare>section{background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:11px}.compare h3{margin:0 0 8px;font-size:.95rem}.empty{padding:38px 18px;text-align:center;color:var(--muted);border:1px dashed var(--line);border-radius:14px}.section-title{margin:28px 0 8px}
+@media(max-width:650px){dl{grid-template-columns:1fr;gap:2px}dd{margin-bottom:8px}.compare{grid-template-columns:1fr}}
 </style>
 </head>
-<body>
-  <main class="wrap">
-    <header>
-      <h1>FPKGi Catalog Hub</h1>
-      <p>Search and browse the FPKGi catalog.</p>
-      <div class="search"><input id="search" type="search" placeholder="Search the catalog..." autocomplete="off"></div>
-      <div id="categoryFilters" class="filters category-filters"></div>
-      <div id="platformFilters" class="filters platform-filters"></div>
-    </header>
+<body><section id="authPanel" class="auth" aria-labelledby="authTitle"><h1 id="authTitle">Private review access</h1><p>Sign in with an invited account to access the review dashboard.</p><form id="authForm"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="8"><button id="authSubmit" type="submit">Sign in</button></form><p id="authStatus" class="auth-status" role="status" aria-live="polite"></p></section><main id="reviewApp" hidden>
+<header><div><h1>FPKGi Catalog Review</h1><p>Review Mocha source-registration candidates separately from unresolved upload decisions.</p></div><div><button id="logout" type="button">Sign out</button> </div></header>
+<div class="notice">Exact catalog matches are automatically cleared from the duplicate-review queue. They may still appear in the separate source-registration queue below. Keep, Reject and Resolve only record review decisions; they do not publish catalog entries. This page does not expose Mocha file IDs, share URLs, API paths or download links.</div>
+<section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
+<section class="toolbar"><span id="candidateStatus" class="muted" role="status" aria-live="polite">Loading catalog candidates…</span><button id="refreshCandidates" type="button">Refresh candidates</button></section>
+<div id="candidateStats"></div>
+<h2 class="section-title">Mocha catalog source candidates</h2>
+<p>These are exact metadata matches that can add a Mocha download source to an existing catalog title. The automated workflow registers an eligible source; it does not publish the catalog. Binary integrity has not been verified.</p>
+<div id="candidateQueue"><div class="empty">Loading source candidates…</div></div>
+<div id="queueStats"></div>
+<h2 class="section-title">Needs your decision</h2>
+<div id="reviewQueue"><div class="empty">Loading unresolved entries…</div></div>
+<div id="warning"></div>
+</main>
+<script type="module">
+import {login,logout,getUser,handleAuthCallback,acceptInvite} from "https://esm.sh/@netlify/identity@2.0.1";
+const $=id=>document.getElementById(id);
+let inviteToken=null;
+async function establishSession(user){if(!user)return false;$("authPanel").hidden=true;$("reviewApp").hidden=false;$("authStatus").textContent="";await Promise.all([loadQueue(),loadCandidates()]);return true;}
+async function initializeAuth(){try{const callback=await handleAuthCallback();if(callback?.type==="invite"&&callback.token){inviteToken=callback.token;$("authTitle").textContent="Accept your invitation";$("authSubmit").textContent="Set password and continue";$("authPassword").autocomplete="new-password";$("authStatus").textContent="Enter your email address and choose a password to activate your invited account.";}const user=await getUser();if(user)await establishSession(user);}catch(error){$("authStatus").textContent="Authentication callback failed: "+(error.message||String(error));}}
+$("authForm").addEventListener("submit",async event=>{event.preventDefault();const button=$("authSubmit");button.disabled=true;$("authStatus").textContent="Authenticating…";try{const email=$("authEmail").value.trim(),password=$("authPassword").value;if(inviteToken){await acceptInvite(inviteToken,password);inviteToken=null;$("authStatus").textContent="Invitation accepted. Sign in with your new password.";$("authTitle").textContent="Private review access";button.textContent="Sign in";$("authPassword").value="";$("authPassword").autocomplete="current-password";}else{await login(email,password);await establishSession(await getUser());}}catch(error){$("authStatus").textContent=error.message||"Authentication failed.";}finally{button.disabled=false;}});
+$("logout").addEventListener("click",async()=>{try{await logout();$("reviewApp").hidden=true;$("authPanel").hidden=false;$("authPassword").value="";$("authStatus").textContent="Signed out.";}catch(error){$("warning").textContent="Sign out failed: "+(error.message||String(error));}});
 
-    <section>
-      <div class="meta"><span id="count">Loading…</span><span id="status"></span></div>
-      <section id="details" class="details" hidden></section>
-      <div id="results" class="grid"></div>
-      <div id="pagination" class="pagination" aria-label="Catalog pages"></div>
-    </section>
-  </main>
 
-<script src="https://cdn.jsdelivr.net/npm/fuse.js@7.0.0/dist/fuse.min.js"></script>
-<script>
-const state = { records: [], category: "all", platform: "all", query: "", page: 1, pageSize: 48, selected: null };
-
-const categoryLabels = {
-  all: "All",
-  games: "Games",
-  apps: "Apps",
-  dlc: "DLC",
-  demos: "Demos",
-  emulators: "Emulators",
-  homebrew: "Homebrew",
-  themes: "Themes",
-  updates: "Updates",
-  ps1: "PS1",
-  ps2: "PS2",
-  psp: "PSP"
-};
-
-function categoryForFile(file) {
-  const name = file.toLowerCase().replace(/\.json$/, "");
-  if (name.startsWith("ps5-")) {
-    const base = name.slice(4);
-    return categoryLabels[base] ? base : "other";
+async function boundedFetch(url,options={}){
+ const controller=new AbortController(),timeout=setTimeout(()=>controller.abort(),15000);
+ try{return await fetch(url,{...options,credentials:"same-origin",cache:"no-store",signal:controller.signal});}finally{clearTimeout(timeout);}
+}
+const esc=value=>String(value??"").replace(/[&<>"']/g,char=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[char]));
+const pretty=value=>String(value).replace(/_/g," ").replace(/\b\w/g,char=>char.toUpperCase());
+const isRecord=value=>value!==null&&typeof value==="object"&&!Array.isArray(value);
+function metadataHtml(data,fields){
+ if(!isRecord(data)||!Object.keys(data).length)return '<p class="muted">No catalog candidate available.</p>';
+ return '<dl>'+fields.filter(([key])=>Object.prototype.hasOwnProperty.call(data,key)).map(([key,label])=>'<dt>'+esc(label)+'</dt><dd>'+esc(Array.isArray(data[key])?data[key].join(", "):data[key])+'</dd>').join("")+'</dl>';
+}
+function renderEntry(item){
+ const status=pretty(item.status||"needs review");
+ const sourceFields=[["title","Title"],["title_id","Title ID"],["region","Region"],["languages","Languages"],["version","Version"],["min_fw","Minimum firmware"],["size_bytes","Size (bytes)"]];
+ const catalogFields=[["name","Catalog title"],["title_id","Title ID"],["region","Region"],["languages","Languages"],["version","Version"],["min_fw","Minimum firmware"],["size","Catalog size"]];
+ const differences=Array.isArray(item.metadata_differences)?item.metadata_differences:[];
+ const unavailable=Array.isArray(item.unavailable_metadata)?item.unavailable_metadata:[];
+ return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||"Unnamed file")+'</div><span class="pill">'+esc(status)+'</span></div>'+
+ '<div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform||"Unknown")+'</dd><dt>Category</dt><dd>'+esc(item.category||"Unknown")+'</dd><dt>Folder</dt><dd>'+esc(item.folder_path||"Unknown")+'</dd></dl></div>'+
+ '<div class="compare"><section><h3>Mocha upload metadata</h3>'+metadataHtml(item.source_metadata,sourceFields)+'</section><section><h3>Catalog metadata</h3>'+metadataHtml(item.catalog_metadata,catalogFields)+'</section></div>'+
+ '<div class="reason"><strong>Why this needs review:</strong> '+esc(item.reason||"Manual verification required")+
+ (differences.length?'<br><strong>Differences:</strong> '+esc(differences.join(", ")):"")+
+ (unavailable.length?'<br><strong>Unavailable metadata:</strong> '+esc(unavailable.join(", ")):"")+'</div>'+
+ '<div class="actions">'+
+ (item.created_at&&item.name&&item.platform&&item.category?'<button data-action="keep" data-name="'+esc(item.name)+'" data-platform="'+esc(item.platform)+'" data-category="'+esc(item.category)+'" data-created-at="'+esc(item.created_at)+'">Keep</button><button class="reject" data-action="reject" data-name="'+esc(item.name)+'" data-platform="'+esc(item.platform)+'" data-category="'+esc(item.category)+'" data-created-at="'+esc(item.created_at)+'">Reject</button><button class="resolve" data-action="resolve" data-name="'+esc(item.name)+'" data-platform="'+esc(item.platform)+'" data-category="'+esc(item.category)+'" data-created-at="'+esc(item.created_at)+'">Resolve</button>':'')+
+ '</div></article>';
+}
+function renderCandidate(item){
+ const metadata=item.proposed_entry||{};
+ const fields=[["name","Catalog title"],["title_id","Title ID"],["region","Region"],["version","Version"],["release","Release"],["size","Size (bytes)"],["min_fw","Minimum firmware"]];
+ return '<article class="item"><div class="item-head"><div class="title">'+esc(item.name||metadata.name||"Unnamed Mocha upload")+'</div><span class="pill" style="color:var(--amber)">Source candidate</span></div>'+
+ '<div class="side"><dl><dt>Platform</dt><dd>'+esc(item.platform)+'</dd><dt>Category</dt><dd>'+esc(item.category)+'</dd><dt>Matched catalog</dt><dd>'+esc(item.matched_catalog_key)+'</dd><dt>Mocha upload date</dt><dd>'+esc(item.created_at)+'</dd></dl></div>'+
+ '<div class="compare"><section><h3>Proposed catalog metadata</h3>'+metadataHtml(metadata,fields)+'</section><section><h3>Source registration</h3><dl><dt>Download source</dt><dd>Mocha</dd><dt>Processing</dt><dd>Automatic — no human approval required</dd><dt>Binary integrity</dt><dd>Not verified</dd></dl></section></div>'+
+ '<div class="reason">The scanner found a unique exact metadata match. The automated workflow validates the current catalog and saved rejection/decision records, then registers the Mocha source without human review. Binary integrity is not verified.</div>'+
+ '<div class="actions"><span class="muted">Queued for automatic registration after safety checks.</span></div></article>';
+}
+async function loadCandidates(){
+ const button=$("refreshCandidates");button.disabled=true;$("candidateStatus").textContent="Loading private source candidates…";
+ $("candidateQueue").innerHTML='<div class="empty">Loading source candidates…</div>';$("candidateStats").innerHTML="";
+ try{
+  const response=await boundedFetch("/api/review?resource=candidates");
+  if(!response.ok)throw Error(response.status===401?"Your session expired. Sign in again.":"Private candidate report unavailable (HTTP "+response.status+").");
+  const data=await response.json(),queue=data.report;
+  if(!isRecord(queue))throw Error("Private candidate report has an invalid format.");
+  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.candidates)||!Number.isSafeInteger(queue.candidate_count)||queue.candidate_count!==queue.candidates.length||queue.catalog_write_performed!==false||queue.automatic_approval!==true||queue.binary_integrity_verified!==false)throw Error("Catalog candidate report has an invalid format.");
+  const targets={"PS4:games":"ps4/games.json","PS4:dlc":"ps4/dlc.json","PS5:games":"ps5/ps5-games.json","PS5:dlc":"ps5/ps5-dlc.json"};
+  for(const item of queue.candidates){
+   if(!isRecord(item)||!/^[0-9a-f]{24}$/.test(item.candidate_id||"")||!targets[item.platform+":"+item.category]||item.catalog_path!==targets[item.platform+":"+item.category]||item.match_status!=="matched"||!Array.isArray(item.metadata_differences)||item.metadata_differences.length!==0||item.approval_required!==false||item.binary_integrity_verified!==false||!isRecord(item.proposed_entry)||item.proposed_entry.download_source!=="mocha")throw Error("A candidate failed validation; no approval links are available.");
   }
-  return categoryLabels[name] ? name : "other";
+  $("candidateStats").innerHTML='<div class="stats"><div class="stat">Automatic replacements<strong>'+queue.candidate_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
+  $("candidateQueue").innerHTML=queue.candidates.length?queue.candidates.map(renderCandidate).join(""):'<div class="empty">No exact-match Mocha source candidates are waiting for approval.</div>';
+  $("candidateStatus").textContent="Private catalog candidate queue refreshed successfully.";
+ }catch(error){$("candidateQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("candidateStatus").textContent="Catalog candidate queue unavailable.";}finally{button.disabled=false;}
 }
-
-function platformForFile(file) {
-  const name = file.toLowerCase();
-  if (name.startsWith("ps5")) return "PS5";
-  if (name === "ps1.json") return "PS1";
-  if (name === "ps2.json") return "PS2";
-  if (name === "psp.json") return "PSP";
-  return "PS4";
+async function loadQueue(){
+ const button=$("refresh");button.disabled=true;$("sourceStatus").textContent="Loading the private review queue…";
+ $("reviewQueue").innerHTML='<div class="empty">Loading unresolved entries…</div>';$("queueStats").innerHTML="";$("warning").innerHTML="";
+ try{
+  const response=await boundedFetch("/api/review?resource=queue");
+  if(!response.ok)throw Error(response.status===401?"Your session expired. Sign in again.":"Private review queue unavailable (HTTP "+response.status+").");
+  const data=await response.json(),queue=data.queue;
+  if(!isRecord(queue)||queue.schema_version!==1||queue.scanner!=="mocha"||!Array.isArray(queue.entries)||!Number.isSafeInteger(queue.pending_count)||queue.pending_count!==queue.entries.length||!Number.isSafeInteger(queue.auto_approved_count)||!Number.isSafeInteger(queue.previously_rejected_count)||queue.previously_rejected_count<0||!Number.isSafeInteger(queue.previously_decided_count)||queue.previously_decided_count<0)throw Error("Review queue has an invalid format.");
+  $("queueStats").innerHTML='<div class="stats"><div class="stat">Automatically cleared<strong>'+queue.auto_approved_count+'</strong></div><div class="stat">Previously rejected (hidden)<strong>'+queue.previously_rejected_count+'</strong></div><div class="stat">Previously decided (hidden)<strong>'+queue.previously_decided_count+'</strong></div><div class="stat">Needs human review<strong>'+queue.pending_count+'</strong></div><div class="stat">Scan observed<strong>'+esc(queue.scan_observed_at)+'</strong></div></div>';
+  $("reviewQueue").innerHTML=queue.entries.length?queue.entries.map(renderEntry).join(""):'<div class="empty">No entries need a human decision. All eligible entries were automatically cleared.</div>';
+  $("sourceStatus").textContent="Private review queue refreshed successfully.";
+ }catch(error){$("reviewQueue").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';$("sourceStatus").textContent="Review queue unavailable; no decision can be confirmed.";}finally{button.disabled=false;}
 }
-
-function normalize(value) {
-  return String(value ?? "")
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[\p{P}\p{S}]+/gu, " ")
-    .replace(/\s+/g, " ")
-    .toLowerCase()
-    .trim();
-}
-
-let searchIndex = null;
-
-function createSearchIndex() {
-  searchIndex = new Fuse(
-    state.records.map((record, index) => ({
-      ...record.data,
-      __recordIndex: index
-    })),
-    {
-      includeScore: true,
-      ignoreLocation: true,
-      threshold: 0.42,
-      distance: 100,
-      minMatchCharLength: 1,
-      findAllMatches: true,
-      ignoreFieldNorm: false,
-      keys: [
-        { name: "name", weight: 0.78 },
-        { name: "title_id", weight: 0.20 },
-        { name: "region", weight: 0.01 },
-        { name: "version", weight: 0.01 }
-      ],
-      getFn: (object, path) => normalize(object[path])
-    }
-  );
-}
-
-function editDistance(a, b) {
-  if (a === b) return 0;
-  if (!a.length) return b.length;
-  if (!b.length) return a.length;
-  const prev = Array.from({ length: b.length + 1 }, (_, i) => i);
-  for (let i = 1; i <= a.length; i++) {
-    const curr = [i];
-    for (let j = 1; j <= b.length; j++) {
-      curr[j] = Math.min(
-        curr[j - 1] + 1,
-        prev[j] + 1,
-        prev[j - 1] + (a[i - 1] === b[j - 1] ? 0 : 1)
-      );
-    }
-    for (let j = 0; j <= b.length; j++) prev[j] = curr[j];
-  }
-  return prev[b.length];
-}
-
-function tokenMatchScore(queryToken, textToken) {
-  if (queryToken === textToken) return 1;
-  if (textToken.startsWith(queryToken)) return 0.94;
-  if (textToken.includes(queryToken)) return 0.80;
-
-  // Numeric tokens are strict: "1" must not fuzzy-match "2".
-  const queryIsNumeric = /^\d+(?:\.\d+)?$/.test(queryToken);
-  const textIsNumeric = /^\d+(?:\.\d+)?$/.test(textToken);
-  if (queryIsNumeric || textIsNumeric) return 0;
-
-  const maxDistance = queryToken.length <= 3 ? 1 : queryToken.length <= 6 ? 2 : 3;
-  const distance = editDistance(queryToken, textToken);
-  if (distance > maxDistance) return 0;
-
-  return Math.max(0.45, 1 - distance / Math.max(queryToken.length, textToken.length));
-}
-
-function scoreName(query, name) {
-  const queryText = normalize(query);
-  const nameText = normalize(name);
-  if (!queryText || !nameText) return 0;
-
-  if (nameText === queryText) return 1.00;
-  if (nameText.startsWith(queryText)) return 0.98;
-  if (nameText.includes(queryText)) return 0.96;
-
-  const queryTokens = queryText.split(" ").filter(Boolean);
-  const nameTokens = nameText.split(" ").filter(Boolean);
-  if (!queryTokens.length || !nameTokens.length) return 0;
-
-  let total = 0;
-  let matched = 0;
-
-  for (const queryToken of queryTokens) {
-    let best = 0;
-    for (const nameToken of nameTokens) {
-      best = Math.max(best, tokenMatchScore(queryToken, nameToken));
-    }
-    if (best > 0) matched++;
-    total += best;
-  }
-
-  const coverage = matched / queryTokens.length;
-  const average = total / queryTokens.length;
-
-  // Every query token must have a meaningful match.
-  if (coverage < 1) return 0;
-
-  // Multi-word queries need stronger aggregate similarity.
-  if (queryTokens.length > 1 && average < 0.70) return 0;
-
-  return average;
-}
-
-function getSearchMatches(query) {
-  const normalizedQuery = normalize(query);
-  if (!normalizedQuery) return state.records;
-
-  if (!searchIndex) createSearchIndex();
-
-  const exactMatches = state.records
-    .map(record => {
-      const name = normalize(record.data.name);
-      const titleId = normalize(record.data.title_id);
-      const nameScore = scoreName(normalizedQuery, record.data.name);
-      const titleScore = titleId === normalizedQuery
-        ? 1
-        : titleId.startsWith(normalizedQuery)
-          ? 0.98
-          : 0;
-      return { record, score: Math.max(nameScore, titleScore) };
-    })
-    .filter(item => item.score > 0)
-    .sort((a, b) =>
-      b.score - a.score ||
-      normalize(a.record.data.name).localeCompare(normalize(b.record.data.name))
-    );
-
-  // If our semantic/token search found something, use it first.
-  if (exactMatches.length) {
-    return exactMatches.map(item => item.record);
-  }
-
-  // Fuse is now a fallback for genuine spelling mistakes.
-  return searchIndex.search(normalizedQuery)
-    .map(result => {
-      const record = state.records[result.item.__recordIndex];
-      return {
-        record,
-        score: result.score ?? 1,
-        nameScore: scoreName(normalizedQuery, record.data.name)
-      };
-    })
-    .filter(item => item.nameScore >= 0.58)
-    .sort((a, b) =>
-      b.nameScore - a.nameScore ||
-      a.score - b.score ||
-      normalize(a.record.data.name).localeCompare(normalize(b.record.data.name))
-    )
-    .map(item => item.record);
-}
-
-function buildCategoryFilters() {
-  const container = document.getElementById("categoryFilters");
-  container.innerHTML = Object.entries(categoryLabels)
-    .map(([key, label]) =>
-      '<button data-category="' + key + '">' + escapeHtml(label) + '</button>'
-    ).join("");
-
-  container.querySelector('[data-category="all"]').classList.add("active");
-
-  container.querySelectorAll("[data-category]").forEach(button => {
-    button.addEventListener("click", () => {
-      container.querySelectorAll("[data-category]").forEach(b => b.classList.remove("active"));
-      button.classList.add("active");
-      state.category = button.dataset.category;
-      state.page = 1;
-      render();
-    });
-  });
-}
-
-function buildPlatformFilters() {
-  const container = document.getElementById("platformFilters");
-
-  container.innerHTML = ["PS4", "PS5"].map(platform =>
-    '<button data-platform="' + platform + '">' + platform + '</button>'
-  ).join("");
-
-  container.querySelectorAll("[data-platform]").forEach(button => {
-    button.classList.toggle("active", button.dataset.platform === state.platform);
-    button.addEventListener("click", () => {
-      state.platform = state.platform === button.dataset.platform ? "all" : button.dataset.platform;
-      state.page = 1;
-      container.querySelectorAll("[data-platform]").forEach(b =>
-        b.classList.toggle("active", b.dataset.platform === state.platform)
-      );
-      render();
-    });
-  });
-}
-
-function render() {
-  const q = state.query.trim();
-  const searchMatches = getSearchMatches(q);
-
-  const matches = searchMatches.filter(record => {
-    if (state.category !== "all" && record.category !== state.category) return false;
-    if (state.platform !== "all" && record.platform !== state.platform) return false;
-    return true;
-  });
-
-  document.getElementById("count").textContent =
-    matches.length.toLocaleString() + (state.category === "all" ? " items" : " " + (categoryLabels[state.category] || "items"));
-
-  const results = document.getElementById("results");
-  if (!matches.length) {
-    results.innerHTML = '<div class="empty">No items found.</div>';
-    document.getElementById("pagination").innerHTML = "";
-    return;
-  }
-
-  results.innerHTML = matches.slice((state.page - 1) * state.pageSize, state.page * state.pageSize).map(record => {
-    const game = record.data;
-    const size = Number(game.size);
-    const sizeText = Number.isFinite(size) && size > 0
-      ? (size / 1073741824).toFixed(1) + " GB"
-      : "Size unavailable";
-
-    return `
-      <article class="card" data-index="${state.records.indexOf(record)}" tabindex="0" role="button">
-        <span class="platform">${escapeHtml(record.platform)}</span>
-        <h2>${escapeHtml(game.name || "Unknown title")}</h2>
-        <p>${escapeHtml(game.title_id || "No Title ID")}</p>
-        <p>${escapeHtml(game.region || "Region unknown")} · ${escapeHtml(game.version || "Version unknown")}</p>
-        <p>${sizeText}</p>
-      </article>`;
-  }).join("");
-
-  results.querySelectorAll(".card").forEach(card => {
-    const record = state.records[Number(card.dataset.index)];
-    card.addEventListener("click", () => openDetails(record));
-    card.addEventListener("keydown", event => {
-      if (event.key === "Enter" || event.key === " ") {
-        event.preventDefault();
-        openDetails(record);
-      }
-    });
-  });
-
-  renderPagination(Math.ceil(matches.length / state.pageSize));
-}
-
-function openDetails(record) {
-  state.selected = record;
-  const game = record.data;
-  const details = document.getElementById("details");
-  details.innerHTML = '<div class="detail-modal" role="dialog" aria-modal="true" aria-label="' + escapeHtml(game.name || "Game details") + '">' +
-    '<button class="detail-close" id="detailClose" aria-label="Close">×</button>' +
-    '<div class="detail-hero"><div class="detail-glow"></div><div class="detail-content">' +
-    '<span class="detail-platform">' + escapeHtml(record.platform) + '</span>' +
-    '<h2>' + escapeHtml(game.name || "Unknown title") + '</h2>' +
-    '<p class="detail-subtitle">' + escapeHtml(game.title_id || "No Title ID") + ' · ' + escapeHtml(game.region || "Region unknown") + ' · ' + escapeHtml(game.version || "Version unknown") + '</p>' +
-    '<p class="detail-description">' + escapeHtml(game.description || game.desc || "No description is available for this title yet.") + '</p>' +
-    '</div></div>' +
-    '<div class="detail-info"><div><span>Title ID</span><strong>' + escapeHtml(game.title_id || "—") + '</strong></div>' +
-    '<div><span>Region</span><strong>' + escapeHtml(game.region || "—") + '</strong></div>' +
-    '<div><span>Version</span><strong>' + escapeHtml(game.version || "—") + '</strong></div>' +
-    '<div><span>Size</span><strong>' + (Number.isFinite(Number(game.size)) && Number(game.size) > 0 ? (Number(game.size) / 1073741824).toFixed(1) + " GB" : "Size unavailable") + '</strong></div></div></div>';
-  details.hidden = false;
-  document.getElementById("detailClose").addEventListener("click", closeDetails);
-  details.addEventListener("click", event => { if (event.target === details) closeDetails(); }, { once:true });
-  document.addEventListener("keydown", handleDetailEscape);
-}
-
-function handleDetailEscape(event) {
-  if (event.key === "Escape" && state.selected) closeDetails();
-}
-
-function closeDetails() {
-  state.selected = null;
-  document.getElementById("details").hidden = true;
-  document.removeEventListener("keydown", handleDetailEscape);
-}
-
-function renderPagination(pageCount) {
-  const container = document.getElementById("pagination");
-  if (pageCount <= 1) { container.innerHTML = ""; return; }
-  const pages = [];
-  const add = (page, label, active, disabled) => pages.push("<button class=\"page-btn" + (active ? " active" : "") + "\" data-page=\"" + page + "\"" + (disabled ? " disabled" : "") + ">" + label + "</button>");
-  add(state.page - 1, "‹", false, state.page === 1);
-  const visible = [...new Set([1, state.page - 1, state.page, state.page + 1, pageCount])].filter(p => p >= 1 && p <= pageCount).sort((a,b) => a-b);
-  let last = 0;
-  visible.forEach(page => { if (last && page - last > 1) pages.push("<span class=\"page-gap\">…</span>"); add(page, String(page), page === state.page, false); last = page; });
-  add(state.page + 1, "›", false, state.page === pageCount);
-  container.innerHTML = pages.join("");
-  container.querySelectorAll("[data-page]").forEach(button => button.addEventListener("click", () => { const page = Number(button.dataset.page); if (page < 1 || page > pageCount || page === state.page) return; state.page = page; render(); window.scrollTo({ top: 0, behavior: "smooth" }); }));
-}
-
-function escapeHtml(value) {
-  return String(value).replace(/[&<>"']/g, ch => ({
-    "&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"
-  }[ch]));
-}
-
-document.getElementById("search").addEventListener("input", event => {
-  state.query = event.target.value;
-  state.page = 1;
-  render();
-});
-
-const REPO_RAW = "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/main/";
-
-const catalogFiles = [
-  "ps4/games.json", "ps4/apps.json", "ps4/updates.json", "ps4/dlc.json",
-  "ps4/demos.json", "ps4/homebrew.json", "ps4/emulators.json", "ps4/themes.json",
-  "ps4/ps1.json", "ps4/ps2.json", "ps4/psp.json",
-  "ps5/ps5-games.json", "ps5/ps5-apps.json", "ps5/ps5-updates.json",
-  "ps5/ps5-dlc.json", "ps5/ps5-demos.json", "ps5/ps5-homebrew.json",
-  "ps5/ps5-emulators.json", "ps5/ps5-themes.json"
-];
-
-async function loadCatalogsLive() {
-  const responses = await Promise.all(catalogFiles.map(async file => {
-    const response = await fetch(REPO_RAW + file + "?t=" + Date.now(), { cache: "no-store" });
-    if (!response.ok) throw new Error(file + " returned " + response.status);
-    return { file, data: await response.json() };
-  }));
-
-  const records = [];
-  for (const { file, data } of responses) {
-    const category = categoryForFile(file.split("/").pop());
-    const platform = platformForFile(file.split("/").pop());
-    const entries = data && typeof data.DATA === "object" ? data.DATA : {};
-
-    for (const game of Object.values(entries)) {
-      if (game && typeof game === "object") {
-        records.push({ data: game, category, platform });
-      }
-    }
-  }
-
-  return records;
-}
-
-loadCatalogsLive()
-  .then(records => {
-    state.records = records;
-
-    // A package URL is the catalog record identity, so the dashboard
-    // must never render the same package twice.
-    const uniqueRecords = new Map();
-    for (const record of state.records) {
-      const url = record && record.data && record.data.url;
-      const key = url || JSON.stringify(record && record.data || record);
-      if (!uniqueRecords.has(key)) uniqueRecords.set(key, record);
-    }
-    state.records = [...uniqueRecords.values()];
-
-    if (!state.records.length) throw new Error("Catalog data contains 0 records.");
-    createSearchIndex();
-    buildCategoryFilters();
-    buildPlatformFilters();
-    document.getElementById("status").textContent = "Live catalog loaded";
-    render();
-  })
-  .catch(error => {
-    document.getElementById("count").textContent = "Catalog unavailable";
-    document.getElementById("status").textContent = "";
-    document.getElementById("results").innerHTML =
-      '<div class="error">Could not load the live catalog.<br>' + escapeHtml(error.message) + '</div>';
-  });
+$("reviewQueue").addEventListener("click",async event=>{const button=event.target.closest("button[data-action]");if(!button)return;const payload={schema_version:1,action:button.dataset.action,name:button.dataset.name,platform:button.dataset.platform,category:button.dataset.category,created_at:button.dataset.createdAt};button.disabled=true;try{const response=await boundedFetch("/api/review",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify(payload)});const result=await response.json();if(!response.ok)throw Error(result.error||"Decision could not be saved (HTTP "+response.status+").");$("sourceStatus").textContent="Decision saved privately.";await loadQueue();}catch(error){$("warning").innerHTML='<div class="notice">'+esc(error.message||String(error))+'</div>';button.disabled=false;}});
+$("refresh").addEventListener("click",loadQueue);$("refreshCandidates").addEventListener("click",loadCandidates);initializeAuth();
 </script>
 </body>
 </html>
