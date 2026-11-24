@@ -40,18 +40,29 @@ jobs:
         env:
           EVENT_PATH: ${{ github.event_path }}
           REPORT_BRANCH: Mocha-reports
+          REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
-          git fetch origin "$REPORT_BRANCH"
           mkdir -p "$RUNNER_TEMP/mocha-candidate"
-          git show "FETCH_HEAD:reports/mocha-catalog-candidates.json" > "$RUNNER_TEMP/mocha-candidate/candidates.json"
-          git show "FETCH_HEAD:reports/mocha-scan-summary.json" > "$RUNNER_TEMP/mocha-candidate/summary.json"
-          git show "FETCH_HEAD:reports/akirabox-rejections.json" > "$RUNNER_TEMP/mocha-candidate/rejections.json"
-          if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
-            git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+          if [ -n "${{ vars.REVIEW_API_URL }}" ]; then
+            python tools/fetch_mocha_private_snapshot.py \
+              --api-url "${{ vars.REVIEW_API_URL }}" \
+              --output-dir "$RUNNER_TEMP/mocha-candidate"
+            cp "$RUNNER_TEMP/mocha-candidate/candidates.json" "$RUNNER_TEMP/mocha-candidate/candidates-private.json"
           else
-            printf '%s\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+            git fetch origin "$REPORT_BRANCH"
+            git show "FETCH_HEAD:reports/mocha-catalog-candidates.json" > "$RUNNER_TEMP/mocha-candidate/candidates.json"
+            git show "FETCH_HEAD:reports/mocha-scan-summary.json" > "$RUNNER_TEMP/mocha-candidate/summary.json"
+            git show "FETCH_HEAD:reports/akirabox-rejections.json" > "$RUNNER_TEMP/mocha-candidate/rejections.json"
+            if git cat-file -e "FETCH_HEAD:reports/mocha-review-decisions.json" 2>/dev/null; then
+              git show "FETCH_HEAD:reports/mocha-review-decisions.json" > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+            else
+              printf '%s\\n' '{"schema_version":1,"records":[]}' > "$RUNNER_TEMP/mocha-candidate/decisions.json"
+            fi
+          fi
+          if [ -f "$RUNNER_TEMP/mocha-candidate/candidates-private.json" ]; then
+            mv "$RUNNER_TEMP/mocha-candidate/candidates-private.json" "$RUNNER_TEMP/mocha-candidate/candidates.json"
           fi
 
           python - <<'PY' > "$RUNNER_TEMP/mocha-candidate/approval-output.txt"
