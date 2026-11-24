@@ -90,10 +90,25 @@ jobs:
           if total == 0:
               raise SystemExit("Dashboard data generation produced 0 records.")
           PY
+      - name: Prepare public Pages artifact (exclude private review dashboard)
+        run: |
+          python - <<'PY'
+          import shutil
+          from pathlib import Path
+
+          source = Path("dashboard")
+          target = Path("$RUNNER_TEMP/pages-site")
+          shutil.copytree(source, target, ignore=shutil.ignore_patterns("review.html"))
+          if (target / "review.html").exists():
+              raise SystemExit("Private review dashboard must not enter the public Pages artifact.")
+          if not (target / "index.html").is_file():
+              raise SystemExit("Public catalog dashboard is missing from the Pages artifact.")
+          print("Prepared public catalog dashboard without review.html")
+          PY
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: 'dashboard'
+          path: ${{ runner.temp }}/pages-site
       - name: Deploy to GitHub Pages
         id: deployment
         uses: actions/deploy-pages@v5
