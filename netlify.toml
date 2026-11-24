@@ -1,11 +1,4 @@
-# Dedicated Netlify configuration for the private review dashboard.
-# This branch deploys the review dashboard only. The resolver remains configured
-# by the root netlify.toml on main.
-
 [build]
-  command = "echo \"FPKGi private review dashboard\""
-  publish = "dashboard"
-  functions = "netlify/review-functions"
-
-[functions]
-  node_bundler = "esbuild"
+  command = "echo \"No build required\""
+  publish = "netlify-empty"
+  functions = "netlify/functions"
