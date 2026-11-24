@@ -377,6 +377,7 @@ jobs:
           RAW_REPORT_DIR: ${{ runner.temp }}/mocha-scan-reports
           SOURCE_ROOT: ${{ github.workspace }}/source
           PYTHONPATH: ${{ github.workspace }}/source
+          PRIVATE_REVIEW_ENABLED: ${{ vars.REVIEW_API_URL != '' }}
         run: |
           set -euo pipefail
           git config user.name "github-actions[bot]"
@@ -525,7 +526,9 @@ jobs:
               inventory = candidate
           except (OSError, json.JSONDecodeError, UnicodeDecodeError, ValueError, KeyError, TypeError) as exc:
               print('Sanitized inventory unavailable; publishing aggregate summary only: ' + str(exc), file=__import__('sys').stderr)
-          summary['details_published'] = inventory is not None
+          summary['details_published'] = (
+              inventory is not None and os.environ.get('PRIVATE_REVIEW_ENABLED', '').lower() != 'true'
+          )
           target.parent.mkdir(parents=True, exist_ok=True)
           target.write_text(json.dumps(summary, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           if inventory is not None:
