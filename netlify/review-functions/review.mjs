@@ -1,4 +1,4 @@
-import { createHash } from "node:crypto";
+import { createHash, timingSafeEqual } from "node:crypto";
 import { getUser } from "@netlify/identity";
 import { getStore } from "@netlify/blobs";
 
@@ -6,6 +6,16 @@ const STORE_NAME = "fpkgi-private-review";
 const QUEUE_KEY = "queue/current.json";
 const CANDIDATES_KEY = "candidates/current.json";
 const MAX_BODY_BYTES = 16 * 1024;
+const MAX_PUBLISH_BYTES = 5 * 1024 * 1024;
+const PUBLISH_KEYS = Object.freeze({
+  summary: "summary/current.json",
+  inventory: "inventory/current.json",
+  scan: "raw/scan/current.json",
+  comparison: "raw/comparison/current.json",
+  queue: QUEUE_KEY,
+  candidates: CANDIDATES_KEY,
+  rejections: "rejections/current.json",
+});
 
 function json(data, status = 200) {
   return Response.json(data, {
@@ -16,6 +26,87 @@ function json(data, status = 200) {
       "vary": "cookie, authorization",
     },
   });
+}
+
+function validPublisherToken(request) {
+  const expected = process.env.REVIEW_PUBLISH_TOKEN;
+  const supplied = request.headers.get("authorization") || "";
+  if (typeof expected !== "string" || expected.length < 32 ||
+      !supplied.startsWith("Bearer ")) return false;
+  const actualBytes = Buffer.from(supplied.slice(7), "utf8");
+  const expectedBytes = Buffer.from(expected, "utf8");
+  return actualBytes.length === expectedBytes.length &&
+    timingSafeEqual(actualBytes, expectedBytes);
+}
+
+function validPublishPayload(payload) {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload) ||
+      payload.schema_version !== 1 ||
+      !/^[0-9a-f]{40}$/.test(payload.catalog_commit || "") ||
+      !Object.hasOwn(PUBLISH_KEYS, payload.resource) ||
+      !payload.value || typeof payload.value !== "object" || Array.isArray(payload.value)) {
+    return false;
+  }
+  const value = payload.value;
+  if (payload.resource === "summary") {
+    return value.schema_version === 1 && value.scanner === "mocha" &&
+      value.scan_complete === true && value.catalog_commit === payload.catalog_commit &&
+      typeof value.scan_observed_at === "string";
+  }
+  if (payload.resource === "inventory") {
+    return value.schema_version === 1 && value.scanner === "mocha" &&
+      Array.isArray(value.files) && value.file_count === value.files.length &&
+      typeof value.scan_observed_at === "string";
+  }
+  if (payload.resource === "scan") {
+    return value.scanner === "mocha" && value.scan_complete === true &&
+      typeof value.scan_observed_at === "string" && Array.isArray(value.files);
+  }
+  if (payload.resource === "comparison") {
+    return value.comparison === "mocha_catalog" &&
+      value.catalog_commit === payload.catalog_commit &&
+      Array.isArray(value.results);
+  }
+  if (payload.resource === "queue") {
+    return value.schema_version === 1 && value.scanner === "mocha" &&
+      value.catalog_commit === payload.catalog_commit &&
+      Array.isArray(value.entries) && value.pending_count === value.entries.length &&
+      typeof value.scan_observed_at === "string";
+  }
+  if (payload.resource === "candidates") {
+    return value.schema_version === 1 && value.scanner === "mocha" &&
+      value.catalog_commit === payload.catalog_commit &&
+      Array.isArray(value.candidates) && value.candidate_count === value.candidates.length &&
+      typeof value.scan_observed_at === "string";
+  }
+  if (payload.resource === "rejections") {
+    return value.schema_version === 1 && Array.isArray(value.records);
+  }
+  return false;
+}
+
+async function publishPrivateReport(request, store) {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > MAX_PUBLISH_BYTES) return json({ error: "payload_too_large" }, 413);
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).byteLength > MAX_PUBLISH_BYTES) {
+    return json({ error: "payload_too_large" }, 413);
+  }
+  let payload;
+  try {
+    payload = JSON.parse(raw);
+  } catch {
+    return json({ error: "invalid_json" }, 400);
+  }
+  if (!validPublishPayload(payload)) return json({ error: "invalid_publish_payload" }, 400);
+
+  const snapshotKey = "snapshots/" + payload.catalog_commit + "/" + payload.resource + ".json";
+  const snapshot = await store.setJSON(snapshotKey, payload.value, { onlyIfNew: true });
+  if (!snapshot.modified) return json({ error: "snapshot_already_exists" }, 409);
+
+  // The publisher workflow must remain serialized: current pointers are last-write-wins.
+  await store.setJSON(PUBLISH_KEYS[payload.resource], payload.value);
+  return json({ ok: true, resource: payload.resource, catalog_commit: payload.catalog_commit }, 201);
 }
 
 function validOrigin(request) {
@@ -69,6 +160,17 @@ export default async (request) => {
   if (!["GET", "POST"].includes(request.method)) {
     return json({ error: "method_not_allowed" }, 405);
   }
+
+  const url = new URL(request.url);
+  const resource = url.searchParams.get("resource") || "queue";
+  const store = getStore({ name: STORE_NAME, consistency: "strong" });
+
+  // GitHub Actions publishes reports with a dedicated machine token. It cannot
+  // read review decisions or use the browser's decision-writing path.
+  if (request.method === "POST" && resource === "publish") {
+    if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
+    return publishPrivateReport(request, store);
+  }
   if (!validOrigin(request)) return json({ error: "origin_not_allowed" }, 403);
 
   let user;
@@ -79,10 +181,6 @@ export default async (request) => {
     return json({ error: "authentication_unavailable" }, 503);
   }
   if (!user) return json({ error: "unauthorized" }, 401);
-
-  const store = getStore({ name: STORE_NAME, consistency: "strong" });
-  const url = new URL(request.url);
-  const resource = url.searchParams.get("resource") || "queue";
 
   if (request.method === "GET") {
     if (resource === "queue") {
