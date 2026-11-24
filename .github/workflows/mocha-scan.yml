@@ -930,7 +930,7 @@ jobs:
 
 
       - name: Mirror validated review snapshot to private Netlify storage
-        if: vars.REVIEW_API_URL != '' && secrets.REVIEW_PUBLISH_TOKEN != ''
+        if: vars.REVIEW_API_URL != ''
         working-directory: source
         env:
           REVIEW_PUBLISH_TOKEN: ${{ secrets.REVIEW_PUBLISH_TOKEN }}
