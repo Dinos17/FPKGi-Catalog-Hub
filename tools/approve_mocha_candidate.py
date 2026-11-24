@@ -3,13 +3,14 @@
 from __future__ import annotations
 
 import argparse
-import hashlib
 import json
 import re
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+from tools.mocha_decision_key import decision_key
 
 CATALOG_PATHS = {
     ("PS4", "games"): "ps4/games.json",
@@ -108,13 +109,7 @@ def apply_candidate(
                 or not re.fullmatch(r"[0-9a-f]{64}", record["decision_key"])):
             raise ValueError("Saved Mocha review decision record is malformed")
         decision_keys.add(record["decision_key"])
-    decision_identity = "\0".join((
-        platform,
-        category,
-        unicodedata.normalize("NFKC", candidate_name).strip().lower(),
-        parsed_created.astimezone(timezone.utc).isoformat(),
-    ))
-    if hashlib.sha256(decision_identity.encode("utf-8")).hexdigest() in decision_keys:
+    if decision_key(platform, category, candidate_name, created_at) in decision_keys:
         raise ValueError("This exact upload already has a recorded review decision")
 
     if rejections.get("schema_version") != 1 or not isinstance(rejections.get("records"), list):
