@@ -26,7 +26,7 @@ def decision_key(platform: Any, category: Any, name: Any, created_at: Any) -> st
     if not all(isinstance(value, str) and value.strip()
                for value in (platform, category, name)):
         raise ValueError("Decision identity fields are missing")
-    material = "\\0".join((
+    material = "\0".join((
         platform,
         category,
         unicodedata.normalize("NFKC", name).strip().lower(),
