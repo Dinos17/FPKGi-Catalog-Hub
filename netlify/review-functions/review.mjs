@@ -4,6 +4,7 @@ import { getStore } from "@netlify/blobs";
 
 const STORE_NAME = "fpkgi-private-review";
 const QUEUE_KEY = "queue/current.json";
+const CANDIDATES_KEY = "candidates/current.json";
 const MAX_BODY_BYTES = 16 * 1024;
 
 function json(data, status = 200) {
@@ -88,6 +89,18 @@ export default async (request) => {
       const queue = await readQueue(store);
       if (!queue) return json({ error: "review_queue_not_ready" }, 503);
       return json({ queue, user: { email: user.email } });
+    }
+    if (resource === "candidates") {
+      const report = await store.get(CANDIDATES_KEY, { type: "json", consistency: "strong" });
+      if (!report || report.schema_version !== 1 || report.scanner !== "mocha" ||
+          !Array.isArray(report.candidates) || !Number.isSafeInteger(report.candidate_count) ||
+          report.candidate_count !== report.candidates.length ||
+          report.catalog_write_performed !== false || report.automatic_approval !== true ||
+          report.binary_integrity_verified !== false ||
+          typeof report.scan_observed_at !== "string" || typeof report.catalog_commit !== "string") {
+        return json({ error: "candidate_report_not_ready" }, 503);
+      }
+      return json({ report, user: { email: user.email } });
     }
     if (resource === "decisions") {
       const { blobs } = await store.list({ prefix: "decisions/" });
