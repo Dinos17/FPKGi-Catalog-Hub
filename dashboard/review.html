@@ -7,7 +7,7 @@
 <link rel="stylesheet" href="/assets/review.css">
 </head>
 <body><section id="authPanel" class="auth" aria-labelledby="authTitle"><h1 id="authTitle">Private review access</h1><p>Sign in with an invited account to access the review dashboard.</p><form id="authForm"><label for="authEmail">Email</label><input id="authEmail" type="email" autocomplete="username" required><label for="authPassword">Password</label><input id="authPassword" type="password" autocomplete="current-password" required minlength="8"><button id="authSubmit" type="submit">Sign in</button></form><p id="authStatus" class="auth-status" role="status" aria-live="polite"></p></section><main id="reviewApp" hidden>
-<header><div><h1>FPKGi Catalog Review</h1><p>One place for Mocha source candidates and uploads that need your decision.</p></div><div><button id="logout" type="button">Sign out</button> <a href="./index.html">← Back to Catalog</a></div></header>
+<header><div><h1>FPKGi Catalog Review</h1><p>One place for Mocha source candidates and uploads that need your decision.</p></div><div><button id="logout" type="button">Sign out</button></div></header>
 <div class="notice">All Mocha findings appear in one queue. Each item is labeled as either an automatic source candidate or an item requiring your decision. Keep, Reject and Resolve only record review decisions; they do not publish catalog entries. This page does not expose Mocha file IDs, share URLs, API paths or download links.</div>
 <section class="toolbar"><span id="sourceStatus" class="muted" role="status" aria-live="polite">Loading Mocha review queue…</span><button id="refresh" type="button">Refresh queue</button></section>
 <div id="candidateStats"></div><div id="queueStats"></div>
