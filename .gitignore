@@ -1,2 +1,5 @@
 # GitHub Actions temporary catalog build artifacts
 /build-artifacts/
+
+# Netlify local project state
+.netlify/
