@@ -2,12 +2,6 @@ name: Mocha Scan, Duplicate Review, and Verified PKG Metadata Repair
 
 on:
   workflow_dispatch:
-    inputs:
-      private_review_test:
-        description: "Run a one-off private review snapshot test without publishing to Mocha-reports or running automatic catalog changes"
-        required: false
-        type: boolean
-        default: false
   push:
     branches:
       - main
@@ -25,7 +19,7 @@ permissions:
 
 jobs:
   tests:
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.private_review_test == true && github.ref == 'refs/heads/security/netlify-private-review-dashboard')
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/security/netlify-private-review-dashboard')
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
@@ -49,7 +43,7 @@ jobs:
         run: python -m pytest -q
 
   scan:
-    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.private_review_test == true && github.ref == 'refs/heads/security/netlify-private-review-dashboard')
+    if: github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/security/netlify-private-review-dashboard')
     needs: tests
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -356,7 +350,7 @@ jobs:
           fi
 
   publish-dashboard-summary:
-    if: needs.scan.result == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && inputs.private_review_test == true && github.ref == 'refs/heads/security/netlify-private-review-dashboard'))
+    if: needs.scan.result == 'success' && (github.ref == 'refs/heads/main' || (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/security/netlify-private-review-dashboard'))
     needs: scan
     runs-on: ubuntu-latest
     timeout-minutes: 5
@@ -897,7 +891,7 @@ jobs:
               exit "$validation_status"
             fi
 
-            if [ "${{ inputs.private_review_test }}" = "true" ]; then
+            if [ "$GITHUB_REF" = "refs/heads/security/netlify-private-review-dashboard" ] && [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
               echo "Private review test: skipping all writes to the public Mocha-reports branch."
               break
             fi
