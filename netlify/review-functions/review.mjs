@@ -367,46 +367,48 @@ async function recordMachineDecision(request, store) {
   return json({ ok: true, decision: record }, 201);
 }
 
-async function readGitHubReport(name) {
-  const paths = Object.freeze({
-    queue: "mocha-review-queue.json",
-    candidates: "mocha-catalog-candidates.json",
-  });
-  if (!Object.hasOwn(paths, name)) throw new Error("unsupported_github_report");
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
-  try {
-    const response = await fetch(
-      "https://raw.githubusercontent.com/Dinos17/FPKGi-Catalog-Hub/reports/reports/" + paths[name],
-      { headers: { accept: "application/json" }, cache: "no-store", signal: controller.signal },
-    );
-    if (!response.ok) throw new Error("github_report_http_" + response.status);
-    const raw = await response.text();
-    if (new TextEncoder().encode(raw).byteLength > MAX_PUBLISH_BYTES) {
-      throw new Error("github_report_too_large");
-    }
-    const report = JSON.parse(raw);
-    if (!report || typeof report !== "object" || Array.isArray(report)) {
-      throw new Error("invalid_github_report");
-    }
-    return report;
-  } finally {
-    clearTimeout(timeout);
-  }
+function validPrivateQueue(queue) {
+  return Boolean(queue && typeof queue === "object" && !Array.isArray(queue) &&
+    queue.schema_version === 1 && queue.scanner === "mocha" &&
+    Array.isArray(queue.entries) && Number.isSafeInteger(queue.pending_count) &&
+    queue.pending_count === queue.entries.length &&
+    typeof queue.scan_observed_at === "string" &&
+    Number.isFinite(Date.parse(queue.scan_observed_at)) &&
+    /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(queue.scan_observed_at) &&
+    typeof queue.catalog_commit === "string" &&
+    /^[0-9a-f]{40}$/.test(queue.catalog_commit));
+}
+
+function validPrivateCandidates(report) {
+  return Boolean(report && typeof report === "object" && !Array.isArray(report) &&
+    report.schema_version === 1 && report.scanner === "mocha" &&
+    Array.isArray(report.candidates) && Number.isSafeInteger(report.candidate_count) &&
+    report.candidate_count === report.candidates.length &&
+    report.catalog_write_performed === false && report.automatic_approval === true &&
+    report.binary_integrity_verified === false &&
+    typeof report.scan_observed_at === "string" &&
+    Number.isFinite(Date.parse(report.scan_observed_at)) &&
+    /(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(report.scan_observed_at) &&
+    typeof report.catalog_commit === "string" &&
+    /^[0-9a-f]{40}$/.test(report.catalog_commit));
 }
 
 async function readQueue(store) {
   try {
-    const queue = await readGitHubReport("queue");
-    if (queue.schema_version !== 1 || queue.scanner !== "mocha" ||
-        !Array.isArray(queue.entries) || !Number.isSafeInteger(queue.pending_count) ||
-        queue.pending_count !== queue.entries.length ||
-        typeof queue.scan_observed_at !== "string" || typeof queue.catalog_commit !== "string") {
-      return null;
-    }
-    return queue;
+    const queue = await store.get(QUEUE_KEY, { type: "json", consistency: "strong" });
+    return validPrivateQueue(queue) ? queue : null;
   } catch (error) {
-    console.error("github_mocha_review_queue_fetch_failed", error);
+    console.error("private_mocha_review_queue_read_failed", error);
+    return null;
+  }
+}
+
+async function readCandidates(store) {
+  try {
+    const report = await store.get(CANDIDATES_KEY, { type: "json", consistency: "strong" });
+    return validPrivateCandidates(report) ? report : null;
+  } catch (error) {
+    console.error("private_mocha_candidate_report_read_failed", error);
     return null;
   }
 }
@@ -456,21 +458,8 @@ export default async (request) => {
       return json({ queue, user: { email: user.email } });
     }
     if (resource === "candidates") {
-      let report;
-      try {
-        report = await readGitHubReport("candidates");
-      } catch (error) {
-        console.error("github_mocha_candidate_report_fetch_failed", error);
-        return json({ error: "candidate_report_unavailable" }, 503);
-      }
-      if (report.schema_version !== 1 || report.scanner !== "mocha" ||
-          !Array.isArray(report.candidates) || !Number.isSafeInteger(report.candidate_count) ||
-          report.candidate_count !== report.candidates.length ||
-          report.catalog_write_performed !== false || report.automatic_approval !== true ||
-          report.binary_integrity_verified !== false ||
-          typeof report.scan_observed_at !== "string" || typeof report.catalog_commit !== "string") {
-        return json({ error: "candidate_report_not_ready" }, 503);
-      }
+      const report = await readCandidates(store);
+      if (!report) return json({ error: "private_candidate_report_not_ready" }, 503);
       return json({ report, user: { email: user.email } });
     }
     if (resource === "decisions") {
