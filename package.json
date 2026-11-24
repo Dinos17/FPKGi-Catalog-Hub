@@ -6,7 +6,7 @@
     "test": "node --test tests/netlify-mocha.test.mjs"
   },
   "dependencies": {
-    "@netlify/blobs": "^11.1.10",
+    "@netlify/blobs": "11.1.9",
     "@netlify/identity": "^2.0.1"
   }
 }
