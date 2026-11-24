@@ -167,7 +167,77 @@ async function publishPrivateReport(request, store) {
   }, existingSnapshot === null ? 201 : 200);
 }
 
-async function readMachineResource(name, store) {
+const STAGED_KEYS = Object.freeze({
+  inventory: "staging/inventory.json",
+  scan: "staging/scan.json",
+  comparison: "staging/comparison.json",
+});
+
+async function stagePrivateInput(request, store) {
+  const declaredLength = Number(request.headers.get("content-length") || 0);
+  if (declaredLength > MAX_PUBLISH_BYTES) return json({ error: "payload_too_large" }, 413);
+  const raw = await request.text();
+  if (new TextEncoder().encode(raw).byteLength > MAX_PUBLISH_BYTES) {
+    return json({ error: "payload_too_large" }, 413);
+  }
+  let payload;
+  try { payload = JSON.parse(raw); } catch { return json({ error: "invalid_json" }, 400); }
+  if (!payload || payload.schema_version !== 1 ||
+      !/^[0-9]+-[0-9]+$/.test(payload.run_id || "") ||
+      !/^[0-9a-f]{40}$/.test(payload.catalog_commit || "") ||
+      !Object.hasOwn(STAGED_KEYS, payload.resource) ||
+      !payload.value || typeof payload.value !== "object" || Array.isArray(payload.value)) {
+    return json({ error: "invalid_stage_payload" }, 400);
+  }
+  const value = payload.value;
+  if (payload.resource === "inventory" &&
+      !(value.schema_version === 1 && value.scanner === "mocha" &&
+        Array.isArray(value.files) && value.file_count === value.files.length &&
+        typeof value.scan_observed_at === "string")) {
+    return json({ error: "invalid_inventory" }, 400);
+  }
+  if (payload.resource === "scan" &&
+      !(value.scanner === "mocha" && value.scan_complete === true &&
+        Array.isArray(value.files) && typeof value.scan_observed_at === "string")) {
+    return json({ error: "invalid_scan" }, 400);
+  }
+  if (payload.resource === "comparison" &&
+      !(value.comparison === "mocha_catalog" &&
+        value.catalog_commit === payload.catalog_commit &&
+        Array.isArray(value.results) && typeof value.scan_observed_at === "string")) {
+    return json({ error: "invalid_comparison" }, 400);
+  }
+  if (!Number.isFinite(Date.parse(value.scan_observed_at)) ||
+      !/(?:Z|[+-]\\d{2}:?\\d{2})$/i.test(value.scan_observed_at)) {
+    return json({ error: "invalid_scan_timestamp" }, 400);
+  }
+  await store.setJSON(STAGED_KEYS[payload.resource], {
+    run_id: payload.run_id,
+    catalog_commit: payload.catalog_commit,
+    value,
+  });
+  return json({ ok: true, resource: payload.resource, run_id: payload.run_id }, 201);
+}
+
+async function readMachineResource(name, store, runId = "") {
+  const stagedName = name.startsWith("staged_") ? name.slice(7) : "";
+  if (stagedName && Object.hasOwn(STAGED_KEYS, stagedName)) {
+    if (!/^[0-9]+-[0-9]+$/.test(runId)) return json({ error: "invalid_run_id" }, 400);
+    const staged = await store.get(STAGED_KEYS[stagedName], { type: "json", consistency: "strong" });
+    if (!staged || staged.run_id !== runId || !staged.value) {
+      return json({ error: "staged_resource_not_ready", resource: stagedName }, 404);
+    }
+    const body = JSON.stringify({ resource: name, value: staged.value });
+    if (new TextEncoder().encode(body).byteLength > MAX_PUBLISH_BYTES) {
+      return json({ error: "machine_response_too_large", resource: name }, 413);
+    }
+    return new Response(body, { headers: {
+      "content-type": "application/json; charset=utf-8",
+      "cache-control": "no-store, private",
+      "x-content-type-options": "nosniff",
+      "vary": "authorization",
+    }});
+  }
   if (name === "decisions") {
     const { blobs } = await store.list({ prefix: "decisions/" });
     const records = [];
@@ -269,11 +339,15 @@ export default async (request) => {
   // and publishing. Machine access is limited to explicit resource allowlists.
   if (resource === "machine" && request.method === "GET") {
     if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
-    return readMachineResource(url.searchParams.get("name") || "", store);
+    return readMachineResource(url.searchParams.get("name") || "", store, url.searchParams.get("run_id") || "");
   }
   if (request.method === "POST" && resource === "publish") {
     if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
     return publishPrivateReport(request, store);
+  }
+  if (request.method === "POST" && resource === "stage") {
+    if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
+    return stagePrivateInput(request, store);
   }
   if (!validOrigin(request)) return json({ error: "origin_not_allowed" }, 403);
 
