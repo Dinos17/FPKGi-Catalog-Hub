@@ -8,9 +8,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import re
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -21,7 +21,6 @@ import requests
 API_ROOT = "https://share.deepstorage.dev/public/api/files"
 USERNAME_DEFAULT = "fallen"
 DEFAULT_PATH = "PS4/Games/"
-PAGE_SIZE = 50
 MAX_PAGES = 1000
 MAX_FILES = 50000
 TIMEOUT = (15, 30)
@@ -108,7 +107,8 @@ class DeepStorageScanner:
                 direct_link = _validate_file_link(raw.get("file_link"))
                 if not isinstance(name, str) or not name.strip():
                     raise ScanError("Listing file has an invalid filename")
-                if isinstance(size, bool) or not isinstance(size, (int, float)) or size < 0:
+                if (isinstance(size, bool) or not isinstance(size, (int, float))
+                        or not math.isfinite(size) or size < 0 or int(size) != size):
                     raise ScanError("Listing file has an invalid size")
                 if direct_link in seen_links:
                     continue
