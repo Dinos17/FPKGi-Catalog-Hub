@@ -35,6 +35,9 @@ CATALOGS = {
     "ps5/ps5-apps.json": "PS5",
 }
 
+# Exact public host used by DeepStorage share links; no wildcard subdomains.
+DEEPSTORAGE_STORAGE_HOSTS = {"share.deepstorage.dev"}
+
 
 class MetadataError(RuntimeError):
     pass
@@ -350,7 +353,7 @@ def inspect_target(target: dict[str, Any], *, session: requests.Session | None =
         url = source
     allowed = {h.strip().lower() for h in os.environ.get(
         "MOCHA_STORAGE_HOSTS", "stor11.mochaprox.li"
-    ).split(",") if h.strip()}
+    ).split(",") if h.strip()} | DEEPSTORAGE_STORAGE_HOSTS
     reader = RangeReader(url, session=session, allowed_hosts=allowed)
     extracted = extract_ps4_metadata(reader)
     return {**_report_target_fields(target),
