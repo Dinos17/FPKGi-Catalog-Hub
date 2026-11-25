@@ -6,7 +6,6 @@ import { getStore } from "@netlify/blobs";
 const STORE_NAME = "fpkgi-private-review";
 const QUEUE_KEY = "queue/current.json";
 const CANDIDATES_KEY = "candidates/current.json";
-const DEEPSTORAGE_KEY = "deepstorage/current.json";
 const MAX_BODY_BYTES = 16 * 1024;
 const MAX_PUBLISH_BYTES = 5 * 1024 * 1024;
 const PUBLISH_KEYS = Object.freeze({
@@ -17,7 +16,6 @@ const PUBLISH_KEYS = Object.freeze({
   queue: QUEUE_KEY,
   candidates: CANDIDATES_KEY,
   rejections: "rejections/current.json",
-  deepstorage: DEEPSTORAGE_KEY,
 });
 const MACHINE_READ_KEYS = Object.freeze({
   summary: PUBLISH_KEYS.summary,
@@ -27,7 +25,6 @@ const MACHINE_READ_KEYS = Object.freeze({
   queue: PUBLISH_KEYS.queue,
   candidates: PUBLISH_KEYS.candidates,
   rejections: PUBLISH_KEYS.rejections,
-  deepstorage: PUBLISH_KEYS.deepstorage,
 });
 
 function json(data, status = 200) {
@@ -50,107 +47,6 @@ function validPublisherToken(request) {
   const expectedBytes = Buffer.from(expected, "utf8");
   return actualBytes.length === expectedBytes.length &&
     timingSafeEqual(actualBytes, expectedBytes);
-}
-
-function validDeepStorageReport(report) {
-  if (!report || typeof report !== "object" || Array.isArray(report) ||
-      report.schema_version !== 1 || report.scanner !== "deepstorage" ||
-      report.scan_complete !== true || report.read_only !== true ||
-      report.metadata_only !== true || report.package_binaries_downloaded !== false ||
-      report.catalog_write_performed !== false ||
-      !Number.isSafeInteger(report.file_count) || report.file_count < 0 ||
-      !Array.isArray(report.files) || report.file_count !== report.files.length ||
-      !Number.isSafeInteger(report.listing_page_count) || report.listing_page_count < 1 ||
-      typeof report.username !== "string" || !/^[A-Za-z0-9_-]{1,80}$/.test(report.username) ||
-      typeof report.folder_path !== "string" || report.folder_path.length > 500 ||
-      typeof report.scan_observed_at !== "string" ||
-      !Number.isFinite(Date.parse(report.scan_observed_at)) ||
-      !/(?:Z|[+-]\d{2}:?\d{2})$/i.test(report.scan_observed_at)) return false;
-
-  const allowedFileKeys = new Set([
-    "name", "size_bytes", "upload_date", "folder_path", "extension",
-    "metadata_status", "metadata", "metadata_reason"
-  ]);
-  const allowedMetadataKeys = new Set([
-    "platform", "title_id", "name", "version", "min_fw", "category",
-    "region", "region_note", "package_size", "sfo_fields", "pkg_file_count", "status"
-  ]);
-  for (const file of report.files) {
-    if (!file || typeof file !== "object" || Array.isArray(file) ||
-        Object.keys(file).some((key) => !allowedFileKeys.has(key)) ||
-        typeof file.name !== "string" || !file.name.trim() || file.name.length > 500 ||
-        !Number.isSafeInteger(file.size_bytes) || file.size_bytes < 0 ||
-        !["extracted", "unavailable", "unsupported_platform", "not_attempted"].includes(file.metadata_status)) {
-      return false;
-    }
-    if (file.upload_date !== null && file.upload_date !== undefined &&
-        (typeof file.upload_date !== "string" || file.upload_date.length > 100)) return false;
-    if (file.folder_path !== undefined &&
-        (typeof file.folder_path !== "string" || file.folder_path.length > 500)) return false;
-    if (file.extension !== null && file.extension !== undefined &&
-        (typeof file.extension !== "string" || file.extension.length > 20)) return false;
-    if (file.metadata_reason !== undefined &&
-        (typeof file.metadata_reason !== "string" || file.metadata_reason.length > 1000)) return false;
-    if (file.metadata !== undefined) {
-      const metadata = file.metadata;
-      if (!metadata || typeof metadata !== "object" || Array.isArray(metadata) ||
-          Object.keys(metadata).some((key) => !allowedMetadataKeys.has(key))) return false;
-      for (const [key, value] of Object.entries(metadata)) {
-        if (key === "sfo_fields") {
-          if (!value || typeof value !== "object" || Array.isArray(value) ||
-              Object.keys(value).length > 1024 ||
-              Object.entries(value).some(([field, fieldValue]) =>
-                !/^[A-Z0-9_]{1,64}$/.test(field) ||
-                !(typeof fieldValue === "string" && fieldValue.length <= 4096 ||
-                  Number.isSafeInteger(fieldValue)))) return false;
-        } else if (value !== null && !(typeof value === "string" && value.length <= 4096) &&
-                   !(Number.isSafeInteger(value) && value >= 0)) {
-          return false;
-        }
-      }
-    }
-    if (file.metadata_status === "extracted" &&
-        (!file.metadata || file.metadata.status !== "extracted")) return false;
-  }
-  return true;
-}
-
-async function publishDeepStorageReport(request, store) {
-  const declaredLength = Number(request.headers.get("content-length") || 0);
-  if (declaredLength > MAX_PUBLISH_BYTES) return json({ error: "payload_too_large" }, 413);
-  const raw = await request.text();
-  if (new TextEncoder().encode(raw).byteLength > MAX_PUBLISH_BYTES) {
-    return json({ error: "payload_too_large" }, 413);
-  }
-  let payload;
-  try { payload = JSON.parse(raw); } catch { return json({ error: "invalid_json" }, 400); }
-  if (!payload || payload.schema_version !== 1 || !validDeepStorageReport(payload.value)) {
-    return json({ error: "invalid_deepstorage_report" }, 400);
-  }
-
-  const report = payload.value;
-  const snapshotId = report.scan_observed_at.replace(/[^0-9TZ.-]/g, "_");
-  const snapshotKey = "snapshots/deepstorage/" + snapshotId + ".json";
-  const existing = await store.get(snapshotKey, { type: "json", consistency: "strong" });
-  if (existing !== null && !isDeepStrictEqual(existing, report)) {
-    return json({ error: "snapshot_conflict" }, 409);
-  }
-  const current = await store.get(DEEPSTORAGE_KEY, { type: "json", consistency: "strong" });
-  if (current && Date.parse(report.scan_observed_at) < Date.parse(current.scan_observed_at || "")) {
-    return json({ error: "stale_scan_snapshot" }, 409);
-  }
-  if (existing === null) {
-    const saved = await store.setJSON(snapshotKey, report, { onlyIfNew: true });
-    if (!saved.modified) {
-      const raced = await store.get(snapshotKey, { type: "json", consistency: "strong" });
-      if (!isDeepStrictEqual(raced, report)) return json({ error: "snapshot_conflict" }, 409);
-    }
-  }
-  if (!current || Date.parse(report.scan_observed_at) >= Date.parse(current.scan_observed_at || "")) {
-    await store.setJSON(DEEPSTORAGE_KEY, report);
-  }
-  return json({ ok: true, resource: "deepstorage", already_published: existing !== null },
-    existing === null ? 201 : 200);
 }
 
 function validPublishPayload(payload) {
@@ -546,7 +442,7 @@ export default async (request) => {
     if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
     return readMachineResource(url.searchParams.get("name") || "", store, url.searchParams.get("run_id") || "");
   }
-  if (request.method === "POST" && resource === "deepstorage-publish") {\n    if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);\n    return publishDeepStorageReport(request, store);\n  }\n  if (request.method === "POST" && resource === "publish") {
+  if (request.method === "POST" && resource === "publish") {
     if (!validPublisherToken(request)) return json({ error: "unauthorized_publisher" }, 401);
     return publishPrivateReport(request, store);
   }
@@ -579,13 +475,6 @@ export default async (request) => {
     if (resource === "candidates") {
       const report = await readCandidates(store);
       if (!report) return json({ error: "private_candidate_report_not_ready" }, 503);
-      return json({ report, user: { email: user.email } });
-    }
-    if (resource === "deepstorage") {
-      const report = await store.get(DEEPSTORAGE_KEY, { type: "json", consistency: "strong" });
-      if (!report || !validDeepStorageReport(report)) {
-        return json({ error: "private_deepstorage_report_not_ready" }, 503);
-      }
       return json({ report, user: { email: user.email } });
     }
     if (resource === "decisions") {
