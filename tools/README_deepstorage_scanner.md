@@ -24,6 +24,28 @@ python3 tools/deepstorage_scanner.py \
 The username and folder are configurable. Folder paths are relative to the share
 root and cannot contain traversal components.
 
+## Remote PKG metadata extraction
+
+The existing `tools/pkg_remote_metadata.py` reader can inspect a DeepStorage PS4
+PKG directly through bounded HTTP `Range` requests. It reads the PKG header,
+entry table, and `PARAM.SFO`; it does not save the package or fall back to a full
+file download. The exact host `share.deepstorage.dev` is allowlisted for this
+reader; redirects to other hosts are rejected unless separately allowlisted by
+the existing provider configuration.
+
+Example (one known public test package):
+
+```sh
+python3 tools/pkg_remote_metadata.py \\
+  --source "https://share.deepstorage.dev/91be0fdbedb6a37d47530386c9d135e4/RESOGUN%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg" \\
+  --platform PS4 \\
+  --output reports/deepstorage-resogun-metadata.json
+```
+
+This currently extracts PS4 `PARAM.SFO` fields. Region is deliberately left
+unknown because it is not reliably encoded in the extracted fields. PS5 parsing
+is not enabled by this change.
+
 ## GitHub Actions
 
 The workflow `.github/workflows/deepstorage-scan.yml` supports manual dispatch
