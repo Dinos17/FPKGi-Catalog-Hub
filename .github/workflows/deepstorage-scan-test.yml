@@ -65,9 +65,28 @@ jobs:
                   output.write(f"## {report.name}\n\n")
                   try:
                       data = json.loads(report.read_text(encoding="utf-8"))
-                      output.write("```json\n")
-                      output.write(json.dumps(data, indent=2, ensure_ascii=False))
-                      output.write("\n```\n\n")
+                      if report.name == "deepstorage-comparison.json":
+                          counts = data.get("counts", {})
+                          output.write("| Result | Count |\n|---|---:|\n")
+                          for key, value in counts.items():
+                              output.write(f"| {key.replace('_', ' ')} | {value} |\n")
+                          output.write("\n### Items requiring review\n\n")
+                          flagged = [
+                              row for row in data.get("results", [])
+                              if row.get("status") not in {"matched"}
+                          ]
+                          if not flagged:
+                              output.write("No flagged items.\n\n")
+                          for row in flagged:
+                              output.write(f"**{row.get('status', 'unknown')}: {row.get('name', 'unnamed')}**\n\n")
+                              output.write(f"- Reason: {row.get('reason', 'Not provided')}\n")
+                              output.write(f"- Differences: {', '.join(row.get('metadata_differences', [])) or 'None'}\n")
+                              output.write(f"- Source: {row.get('deepstorage_url', 'Not available')}\n")
+                              output.write(f"- Catalog: {row.get('catalog_url') or 'No unique catalog match'}\n\n")
+                      else:
+                          output.write("```json\n")
+                          output.write(json.dumps(data, indent=2, ensure_ascii=False))
+                          output.write("\n```\n\n")
                   except Exception as error:
                       output.write(f"Could not read report: {error}\n\n")
           PY
