@@ -1,0 +1,48 @@
+name: DeepStorage Public Share Scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      share_username:
+        description: Public-share username
+        required: true
+        default: fallen
+      folder_path:
+        description: Relative path inside the share
+        required: true
+        default: PS4/Games/
+  schedule:
+    - cron: "17 5 * * 1"
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install scanner dependency
+        run: python -m pip install requests
+      - name: Run read-only scan
+        env:
+          SHARE_USERNAME: ${{ github.event.inputs.share_username || 'fallen' }}
+          SHARE_PATH: ${{ github.event.inputs.folder_path || 'PS4/Games/' }}
+        run: |
+          python tools/deepstorage_scanner.py \
+            --username "$SHARE_USERNAME" \
+            --path "$SHARE_PATH" \
+            --output reports/deepstorage-scan.json
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepstorage-scan-report
+          path: reports/deepstorage-scan.json
+          if-no-files-found: error
+          retention-days: 14
