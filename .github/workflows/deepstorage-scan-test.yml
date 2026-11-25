@@ -38,10 +38,27 @@ jobs:
             --platform PS4 \
             --output reports/deepstorage-resogun-metadata.json
 
-      - name: Upload scan report
-        uses: actions/upload-artifact@v4
-        with:
-          name: deepstorage-scan-validation
-          path: reports/deepstorage-*.json
-          if-no-files-found: error
-          retention-days: 14
+      - name: Display scan reports in the workflow summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          reports = sorted(Path("reports").glob("deepstorage-*.json"))
+          with summary.open("a", encoding="utf-8") as output:
+              output.write("# DeepStorage scan results\n\n")
+              if not reports:
+                  output.write("No report files were generated. Check the job logs for the failure.\n")
+              for report in reports:
+                  output.write(f"## {report.name}\n\n")
+                  try:
+                      data = json.loads(report.read_text(encoding="utf-8"))
+                      output.write("```json\n")
+                      output.write(json.dumps(data, indent=2, ensure_ascii=False))
+                      output.write("\n```\n\n")
+                  except Exception as error:
+                      output.write(f"Could not read report: {error}\n\n")
+          PY
