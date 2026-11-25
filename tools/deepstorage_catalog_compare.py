@@ -14,7 +14,10 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from tools.mocha_catalog_compare import compare_scan
+try:
+    from .mocha_catalog_compare import compare_scan
+except ImportError:  # Running as a script from the tools directory.
+    from mocha_catalog_compare import compare_scan
 
 
 ALLOWED_HOST = "share.deepstorage.dev"
