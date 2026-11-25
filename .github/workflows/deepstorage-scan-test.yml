@@ -1,0 +1,40 @@
+name: DeepStorage Scanner Validation
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout scanner branch
+        uses: actions/checkout@v4
+        with:
+          ref: feature/deepstorage-scanner
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install scanner dependency
+        run: python -m pip install requests
+
+      - name: Run read-only scan
+        run: |
+          python tools/deepstorage_scanner.py \
+            --username fallen \
+            --path "PS4/Games/" \
+            --output reports/deepstorage-scan.json
+
+      - name: Upload scan report
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepstorage-scan-validation
+          path: reports/deepstorage-scan.json
+          if-no-files-found: error
+          retention-days: 14
