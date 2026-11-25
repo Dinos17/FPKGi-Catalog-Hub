@@ -31,10 +31,17 @@ jobs:
             --path "PS4/Games/" \
             --output reports/deepstorage-scan.json
 
+      - name: Read one PKG remotely using HTTP Range
+        run: |
+          python tools/pkg_remote_metadata.py \
+            --source "https://share.deepstorage.dev/91be0fdbedb6a37d47530386c9d135e4/RESOGUN%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg" \
+            --platform PS4 \
+            --output reports/deepstorage-resogun-metadata.json
+
       - name: Upload scan report
         uses: actions/upload-artifact@v4
         with:
           name: deepstorage-scan-validation
-          path: reports/deepstorage-scan.json
+          path: reports/deepstorage-*.json
           if-no-files-found: error
           retention-days: 14
