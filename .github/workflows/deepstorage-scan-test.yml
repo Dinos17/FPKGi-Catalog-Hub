@@ -38,6 +38,15 @@ jobs:
             --platform PS4 \
             --output reports/deepstorage-resogun-metadata.json
 
+      - name: Compare scan with FPKGi catalogs
+        run: |
+          CATALOG_COMMIT="$(git rev-parse HEAD)"
+          python tools/deepstorage_catalog_compare.py \
+            --scan-report reports/deepstorage-scan.json \
+            --catalog-root . \
+            --catalog-commit "$CATALOG_COMMIT" \
+            --output reports/deepstorage-comparison.json
+
       - name: Display scan reports in the workflow summary
         if: always()
         run: |
