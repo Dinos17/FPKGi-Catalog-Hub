@@ -20,7 +20,7 @@ permissions:
 jobs:
   scan:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -39,10 +39,60 @@ jobs:
             --username "$SHARE_USERNAME" \
             --path "$SHARE_PATH" \
             --output reports/deepstorage-scan.json
-      - name: Upload scan report
-        uses: actions/upload-artifact@v4
-        with:
-          name: deepstorage-scan-report
-          path: reports/deepstorage-scan.json
-          if-no-files-found: error
-          retention-days: 14
+      - name: Compare scan with FPKGi catalogs
+        run: |
+          python tools/deepstorage_catalog_compare.py \
+            --scan-report reports/deepstorage-scan.json \
+            --catalog-root . \
+            --catalog-commit "${GITHUB_SHA}" \
+            --output reports/deepstorage-comparison.json
+      - name: Display scan and comparison in Actions summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          with summary.open("a", encoding="utf-8") as output:
+              output.write("# DeepStorage scan and catalog comparison\n\n")
+              scan_path = Path("reports/deepstorage-scan.json")
+              comparison_path = Path("reports/deepstorage-comparison.json")
+
+              if scan_path.is_file():
+                  scan = json.loads(scan_path.read_text(encoding="utf-8"))
+                  output.write("## Source scan\n\n")
+                  output.write(f"- Complete: **{scan.get('scan_complete')}**\n")
+                  output.write(f"- Share folder: `{scan.get('folder_path')}`\n")
+                  output.write(f"- PKG/file entries: **{scan.get('file_count', 0)}**\n")
+                  output.write(f"- Listing pages: **{scan.get('listing_page_count', 0)}**\n")
+                  output.write("- Package binaries downloaded: **No**\n")
+                  output.write("- Catalog changed: **No**\n\n")
+              else:
+                  output.write("Scan report was not generated. Check the job logs.\n\n")
+
+              if comparison_path.is_file():
+                  report = json.loads(comparison_path.read_text(encoding="utf-8"))
+                  counts = report.get("counts", {})
+                  output.write("## Catalog comparison\n\n")
+                  output.write("| Result | Count |\n|---|---:|\n")
+                  for key in ("matched", "metadata_difference", "unverified", "new", "ambiguous", "unclassified", "possible_duplicate"):
+                      output.write(f"| {key.replace('_', ' ')} | {counts.get(key, 0)} |\n")
+                  output.write("\n")
+                  output.write("> This comparison uses filename tags and listing file sizes. It does not inspect PKG internals or verify binary integrity. Nothing is added, replaced, or deleted.\n\n")
+                  output.write("## Files\n\n")
+                  output.write("| Status | File | Catalog match | Reason |\n|---|---|---|---|\n")
+                  for row in report.get("results", []):
+                      name = str(row.get("name", "unnamed")).replace("|", "\\|").replace("[", "\\[").replace("]", "\\]")
+                      url = row.get("deepstorage_url")
+                      file_label = f"[{name}]({url})" if isinstance(url, str) else name
+                      catalog = row.get("catalog_url")
+                      catalog_label = f"[catalog entry]({catalog})" if isinstance(catalog, str) else "—"
+                      reason = str(row.get("reason", "")).replace("|", "\\|").replace("\n", " ")
+                      output.write(f"| {row.get('status', 'unknown')} | {file_label} | {catalog_label} | {reason} |\n")
+                  if not report.get("results"):
+                      output.write("| — | No PKG files to compare | — | — |\n")
+              else:
+                  output.write("## Catalog comparison\n\nComparison report was not generated. Check the preceding steps.\n")
+          PY
