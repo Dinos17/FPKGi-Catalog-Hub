@@ -80,7 +80,18 @@ jobs:
                           for row in flagged:
                               output.write(f"**{row.get('status', 'unknown')}: {row.get('name', 'unnamed')}**\n\n")
                               output.write(f"- Reason: {row.get('reason', 'Not provided')}\n")
-                              output.write(f"- Differences: {', '.join(row.get('metadata_differences', [])) or 'None'}\n")
+                              differences = row.get("metadata_differences", [])
+                              output.write(f"- Differences: {', '.join(differences) or 'None'}\n")
+                              if "size_bytes" in differences:
+                                  source_size = (row.get("source_metadata") or {}).get("size_bytes")
+                                  catalog_size = (row.get("catalog_metadata") or {}).get("size")
+                                  if isinstance(source_size, int) and isinstance(catalog_size, int):
+                                      delta = source_size - catalog_size
+                                      output.write(f"- DeepStorage size: {source_size:,} bytes\n")
+                                      output.write(f"- Catalog size: {catalog_size:,} bytes\n")
+                                      output.write(f"- Size difference: {delta:+,} bytes\n")
+                                  else:
+                                      output.write("- Size comparison: one or both size values are unavailable\n")
                               output.write(f"- Source: {row.get('deepstorage_url', 'Not available')}\n")
                               output.write(f"- Catalog: {row.get('catalog_url') or 'No unique catalog match'}\n\n")
                       else:
