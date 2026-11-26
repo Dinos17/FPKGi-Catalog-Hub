@@ -135,6 +135,50 @@ jobs:
           print(json.dumps(results, indent=2))
           PY
 
+      - name: Verify Archive.org metadata for DmC
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import requests
+          from pathlib import Path
+
+          identifier = "ps4-fpkg-collection-english-d"
+          target_name = "DmC Devil May Cry - [EU] [EN] [1.03].pkg"
+          endpoint = f"https://archive.org/metadata/{identifier}"
+          result = {
+              "read_only": True,
+              "package_binary_downloaded": False,
+              "identifier": identifier,
+              "target_filename": target_name,
+              "metadata_api": endpoint,
+              "matched_files": [],
+              "error": None,
+          }
+          try:
+              response = requests.get(endpoint, timeout=(15, 45))
+              response.raise_for_status()
+              metadata = response.json()
+              files = metadata.get("files", [])
+              result["matched_files"] = [
+                  {
+                      "name": item.get("name"),
+                      "size_bytes": int(item["size"]) if str(item.get("size", "")).isdigit() else None,
+                      "source": item.get("source"),
+                      "mtime": item.get("mtime"),
+                  }
+                  for item in files
+                  if item.get("name") == target_name
+              ]
+              if not result["matched_files"]:
+                  result["error"] = "Exact filename not found in Archive.org metadata response"
+          except Exception as exc:
+              result["error"] = str(exc)
+          Path("reports").mkdir(exist_ok=True)
+          Path("reports/archive-org-dmc-metadata.json").write_text(json.dumps(result, indent=2), encoding="utf-8")
+          print(json.dumps(result, indent=2))
+          PY
+
       - name: Display scan reports in the workflow summary
         if: always()
         run: |
@@ -168,6 +212,14 @@ jobs:
                                   else f"| {item.get('name')} | {item.get('http_status') or '—'} | {server_size or '—'} | {reference_size or '—'} | — | {item.get('accept_ranges') or '—'} | {item.get('error') or 'Size unavailable'} |\\n"
                               )
                           output.write("\\nOnly a one-byte Range request is used; full PKG downloads are not performed.\\n\\n")
+                      elif report.name == "archive-org-dmc-metadata.json":
+                          output.write("| Filename | Archive.org metadata size | Source | Modified |\n|---|---:|---|---|\n")
+                          for item in data.get("matched_files", []):
+                              size = item.get("size_bytes")
+                              output.write(f"| {item.get('name')} | {f'{size:,} bytes' if isinstance(size, int) else 'Unavailable'} | {item.get('source') or '—'} | {item.get('mtime') or '—'} |\n")
+                          if data.get("error"):
+                              output.write(f"\n**Error:** {data['error']}\n")
+                          output.write("\nThis uses Archive.org metadata only; no PKG binary is downloaded.\n\n")
                       elif report.name == "deepstorage-comparison.json":
                           counts = data.get("counts", {})
                           output.write("| Result | Count |\n|---|---:|\n")
