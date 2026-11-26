@@ -47,6 +47,94 @@ jobs:
             --catalog-commit "$CATALOG_COMMIT" \
             --output reports/deepstorage-comparison.json
 
+      - name: Verify DmC remote sizes with HTTP Range requests
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import re
+          from urllib.parse import urlparse, urljoin
+          from pathlib import Path
+          import requests
+
+          targets = [
+              {
+                  "name": "DeepStorage DmC EU 1.03",
+                  "url": "https://share.deepstorage.dev/16773e155f681f88d210088c77f6e816/DmC%20Devil%20May%20Cry%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.03%5D.pkg",
+                  "listing_size_bytes": 3648601580,
+              },
+              {
+                  "name": "Archive.org catalog DmC EU 1.03",
+                  "url": "https://archive.org/download/ps4-fpkg-collection-english-d/DmC%20Devil%20May%20Cry%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.03%5D.pkg",
+                  "catalog_size_bytes": 17599102976,
+              },
+          ]
+
+          def allowed(host, initial_host):
+              host = (host or "").lower().rstrip(".")
+              if initial_host == "share.deepstorage.dev":
+                  return host == "share.deepstorage.dev"
+              return host == "archive.org" or host.endswith(".archive.org")
+
+          results = []
+          for item in targets:
+              initial_host = urlparse(item["url"]).hostname
+              current = item["url"]
+              result = {key: value for key, value in item.items() if key != "url"}
+              result["url"] = item["url"]
+              result["http_status"] = None
+              result["server_size_bytes"] = None
+              result["content_range"] = None
+              result["content_length"] = None
+              result["accept_ranges"] = None
+              result["final_url"] = None
+              result["error"] = None
+              try:
+                  for redirect_count in range(4):
+                      parsed = urlparse(current)
+                      if parsed.scheme != "https" or not allowed(parsed.hostname, initial_host):
+                          raise RuntimeError(f"Redirect blocked: host/scheme not allowlisted ({parsed.hostname})")
+                      response = requests.get(
+                          current, headers={"Range": "bytes=0-0"},
+                          stream=True, allow_redirects=False, timeout=(15, 30)
+                      )
+                      if response.status_code in (301, 302, 303, 307, 308):
+                          location = response.headers.get("Location")
+                          response.close()
+                          if not location:
+                              raise RuntimeError("Redirect response missing Location")
+                          current = urljoin(current, location)
+                          continue
+                      result["http_status"] = response.status_code
+                      result["final_url"] = current
+                      result["content_range"] = response.headers.get("Content-Range")
+                      result["content_length"] = response.headers.get("Content-Length")
+                      result["accept_ranges"] = response.headers.get("Accept-Ranges")
+                      if response.status_code == 206:
+                          match = re.fullmatch(r"bytes\s+0-0/(\d+)", response.headers.get("Content-Range", ""), re.I)
+                          if not match:
+                              raise RuntimeError("206 response had unexpected Content-Range")
+                          result["server_size_bytes"] = int(match.group(1))
+                          # Read at most one byte, then close; never stream the PKG.
+                          response.raw.read(1)
+                      else:
+                          raise RuntimeError(f"Expected HTTP 206 for one-byte Range; received {response.status_code}")
+                      response.close()
+                      break
+                  else:
+                      raise RuntimeError("Too many redirects")
+              except Exception as exc:
+                  result["error"] = str(exc)
+              results.append(result)
+
+          Path("reports").mkdir(exist_ok=True)
+          Path("reports/deepstorage-remote-size-check.json").write_text(
+              json.dumps({"read_only": True, "full_package_downloaded": False, "results": results}, indent=2),
+              encoding="utf-8"
+          )
+          print(json.dumps(results, indent=2))
+          PY
+
       - name: Display scan reports in the workflow summary
         if: always()
         run: |
