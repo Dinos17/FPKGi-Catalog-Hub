@@ -44,6 +44,9 @@ jobs:
             --source "https://share.deepstorage.dev/16773e155f681f88d210088c77f6e816/DmC%20Devil%20May%20Cry%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.03%5D.pkg" \
             --platform PS4 \
             --output reports/deepstorage-dmc-metadata.json
+          echo "===== DMC PKG METADATA JSON ====="
+          cat reports/deepstorage-dmc-metadata.json
+          echo "===== END DMC PKG METADATA JSON ====="
 
       - name: Compare scan with FPKGi catalogs
         run: |
