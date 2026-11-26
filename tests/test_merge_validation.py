@@ -745,3 +745,115 @@ def test_main_preserves_existing_deepstorage_ps5_registration(tmp_path, monkeypa
     result = json.loads(output_path.read_text(encoding="utf-8"))["DATA"]
     assert result[deepstorage_url] == deepstorage_entry
     assert "https://example.com/new-ps5.pkg" in result
+
+
+
+@pytest.mark.parametrize("url", [
+    "https://share.deepstorage.dev:bad/Game.pkg",
+    "https://share.deepstorage.dev:99999/Game.pkg",
+])
+def test_validate_entry_rejects_malformed_deepstorage_ports(url):
+    errors, warnings = validate_entry(
+        url,
+        {"name": "Bad Game", "download_source": "deepstorage"},
+        allow_deepstorage=True,
+    )
+    assert any("DeepStorage package URL is invalid" in error for error in errors)
+    assert warnings == []
+
+
+def test_merge_category_keeps_entire_catalog_when_all_sources_fail_with_provider_entries(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    output_path = tmp_path / "ps4" / "games.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    deepstorage_url = (
+        "https://share.deepstorage.dev/"
+        "0123456789abcdef0123456789abcdef/Registered.pkg"
+    )
+    existing = {
+        "DATA": {
+            "https://example.com/ordinary.pkg": {"name": "Ordinary"},
+            deepstorage_url: {
+                "name": "Registered",
+                "title_id": "CUSA12345",
+                "size": 123,
+                "version": "1.0",
+                "download_source": "deepstorage",
+            },
+        }
+    }
+    output_path.write_text(json.dumps(existing), encoding="utf-8")
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(
+        merge, "fetch_source",
+        lambda _url: (_ for _ in ()).throw(RuntimeError("upstream down")),
+    )
+
+    result = merge.merge_category(
+        "games", ["https://example.com/source.json"], {}
+    )
+
+    assert result == 2
+    assert json.loads(output_path.read_text(encoding="utf-8")) == existing
+
+
+def test_main_rejects_deepstorage_marked_ps5_external_records(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(merge, "load_sources", lambda: {"games": []})
+    monkeypatch.setattr(merge, "fetch_release_entries", lambda: ({}, {"games": {}}))
+    monkeypatch.setattr(
+        merge,
+        "fetch_external_database_entries",
+        lambda: {
+            "https://share.deepstorage.dev/0123456789abcdef0123456789abcdef/Injected.pkg": {
+                "name": "Injected",
+                "title_id": "PPSA12345",
+                "category": "games",
+                "size": 123,
+                "download_source": "deepstorage",
+            }
+        },
+    )
+    monkeypatch.setattr(
+        merge, "merge_category",
+        lambda category, urls, release_entries, excluded_urls=None: 0,
+    )
+
+    merge.main()
+
+    ps5_data = json.loads(
+        (tmp_path / "ps5" / "ps5-games.json").read_text(encoding="utf-8")
+    )
+    assert ps5_data == {"DATA": {}}
+
+
+def test_main_rejects_invalid_ps5_deepstorage_registration_on_empty_input(
+    tmp_path, monkeypatch
+):
+    import json
+    import merge
+
+    output_path = tmp_path / "ps5" / "ps5-games.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    output_path.write_text(json.dumps({"DATA": {
+        "https://evil.example/Injected.pkg": {
+            "name": "Injected",
+            "title_id": "PPSA12345",
+            "size": 123,
+            "download_source": "deepstorage",
+        }
+    }}), encoding="utf-8")
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(merge, "load_sources", lambda: {"games": []})
+    monkeypatch.setattr(merge, "fetch_release_entries", lambda: ({}, {"games": {}}))
+    monkeypatch.setattr(merge, "fetch_external_database_entries", lambda: {})
+    with pytest.raises(RuntimeError, match="invalid PS5 DeepStorage entry"):
+        merge.main()
