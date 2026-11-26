@@ -259,24 +259,61 @@ def parse_sfo(data: bytes) -> dict[str, Any]:
 def extract_ps4_metadata(reader: RangeReader) -> dict[str, Any]:
     header = reader.read(0, MAX_HEADER)
     entry_count, table_offset, file_count = parse_pkg_header(header)
+    # PS4 PKG header fields documented at offsets 0x20-0x2F and 0x410-0x437.
+    body_offset, body_size = struct.unpack_from(">QQ", header, 0x20)
+    pfs_image_offset, pfs_image_size = struct.unpack_from(">QQ", header, 0x410)
+    declared_pkg_size = struct.unpack_from(">Q", header, 0x430)[0]
+
     table_length = entry_count * ENTRY_SIZE
     if table_length > MAX_ENTRY_BYTES:
         raise MetadataError("PKG entry table exceeds safety limit")
     table = reader.read(table_offset, table_length)
     sfo_entry = None
+    entry_bounds = []
     for offset in range(0, len(table), ENTRY_SIZE):
         entry_id, name_offset, flags1, flags2, entry_offset, entry_size = struct.unpack_from(
             ">IIIIII", table, offset
         )
+        if entry_size:
+            entry_bounds.append({
+                "entry_id": entry_id,
+                "offset": entry_offset,
+                "size": entry_size,
+                "end_offset": entry_offset + entry_size,
+            })
         if entry_id == PARAM_SFO_ID:
             if flags1 & 0x80000000:
                 raise MetadataError("PARAM.SFO is encrypted; refusing to decrypt or guess")
             if entry_size <= 0 or entry_size > MAX_ENTRY_BYTES:
                 raise MetadataError("PARAM.SFO size is outside safety limits")
             sfo_entry = (entry_offset, entry_size)
-            break
     if sfo_entry is None:
         raise MetadataError("PKG has no PARAM.SFO entry")
+
+    remote_size = reader.total_size
+    bounds_checks = {
+        "body_within_remote_file": (
+            remote_size is not None and body_offset <= remote_size
+            and body_size <= remote_size - body_offset
+        ),
+        "pfs_image_within_remote_file": (
+            remote_size is not None and pfs_image_offset <= remote_size
+            and pfs_image_size <= remote_size - pfs_image_offset
+        ),
+        "entry_table_within_remote_file": (
+            remote_size is not None and table_offset + table_length <= remote_size
+        ),
+        "all_table_entries_within_remote_file": (
+            remote_size is not None
+            and all(item["offset"] <= remote_size
+                    and item["size"] <= remote_size - item["offset"]
+                    for item in entry_bounds)
+        ),
+    }
+    declared_size_matches = (
+        declared_pkg_size == remote_size if remote_size is not None else None
+    )
+
     sfo_bytes = reader.read(*sfo_entry)
     fields = parse_sfo(sfo_bytes)
     title_id = fields.get("TITLE_ID")
@@ -291,7 +328,18 @@ def extract_ps4_metadata(reader: RangeReader) -> dict[str, Any]:
         "category": fields.get("CATEGORY") if isinstance(fields.get("CATEGORY"), str) else None,
         "region": None,
         "region_note": "Not reliably encoded in the fields extracted from PARAM.SFO",
-        "package_size": reader.total_size,
+        "package_size": remote_size,
+        "pkg_header": {
+            "declared_pkg_size": declared_pkg_size,
+            "body_offset": body_offset,
+            "body_size": body_size,
+            "pfs_image_offset": pfs_image_offset,
+            "pfs_image_size": pfs_image_size,
+            "size_matches_remote": declared_size_matches,
+            "bounds_checks": bounds_checks,
+            "bounds_valid": all(bounds_checks.values()),
+            "entry_count": entry_count,
+        },
         "sfo_fields": fields,
         "pkg_file_count": file_count,
         "status": "extracted",
