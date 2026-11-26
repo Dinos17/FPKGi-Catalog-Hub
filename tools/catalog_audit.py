@@ -187,7 +187,12 @@ def audit_catalogs():
         # Package-level CATEGORY is authoritative whenever available.
         # It describes this exact PKG, unlike title-ID metadata which may
         # describe the base product or another package sharing the title ID.
-        pkg_category = _resolve_pkg_category(url, record, pkg_cache)
+        if record.get("download_source") == "deepstorage":
+            # DeepStorage registrations are preserved based on their validated
+            # catalog metadata; auditing must not issue package-byte requests.
+            pkg_category = None
+        else:
+            pkg_category = _resolve_pkg_category(url, record, pkg_cache)
 
         if pkg_category:
             resolved = pkg_category
