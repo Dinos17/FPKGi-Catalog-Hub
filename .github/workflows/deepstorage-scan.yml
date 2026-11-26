@@ -1,4 +1,4 @@
-name: DeepStorage Public Share Scan
+name: DeepStorage Catalog Sync
 
 on:
   workflow_dispatch:
@@ -7,46 +7,102 @@ on:
         description: Public-share username
         required: true
         default: fallen
+        type: string
       folder_path:
-        description: Relative path inside the share
+        description: PS4 folder to scan (PS4/Games/ or PS4/DLC/)
         required: true
         default: PS4/Games/
+        type: string
   schedule:
     - cron: "17 5 * * 1"
 
 permissions:
-  contents: read
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: deepstorage-catalog-sync
+  cancel-in-progress: false
 
 jobs:
-  scan:
+  scan-and-propose:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 30
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+
       - name: Install scanner dependency
         run: python -m pip install requests
-      - name: Run read-only scan
+
+      - name: Scan DeepStorage public folder
         env:
-          SHARE_USERNAME: ${{ github.event.inputs.share_username || 'fallen' }}
-          SHARE_PATH: ${{ github.event.inputs.folder_path || 'PS4/Games/' }}
+          SHARE_USERNAME: ${{ inputs.share_username || 'fallen' }}
+          SHARE_PATH: ${{ inputs.folder_path || 'PS4/Games/' }}
         run: |
           python tools/deepstorage_scanner.py \
             --username "$SHARE_USERNAME" \
             --path "$SHARE_PATH" \
             --output reports/deepstorage-scan.json
-      - name: Compare scan with FPKGi catalogs
+
+      - name: Compare inventory with existing catalogs
         run: |
+          CATALOG_COMMIT="$(git rev-parse HEAD)"
           python tools/deepstorage_catalog_compare.py \
             --scan-report reports/deepstorage-scan.json \
             --catalog-root . \
-            --catalog-commit "${GITHUB_SHA}" \
+            --catalog-commit "$CATALOG_COMMIT" \
             --output reports/deepstorage-comparison.json
-      - name: Display scan and comparison in Actions summary
+
+      - name: Extract and synchronize verified PS4 packages
+        run: |
+          python tools/deepstorage_catalog_sync.py \
+            --scan-report reports/deepstorage-scan.json \
+            --catalog-root . \
+            --output reports/deepstorage-catalog-sync.json
+
+      - name: Validate all catalog files
+        run: python tools/validate_catalogs.py
+
+      - name: Create or update catalog pull request
+        id: catalog_pr
+        uses: peter-evans/create-pull-request@v7
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          branch: automation/deepstorage-catalog-sync
+          delete-branch: false
+          commit-message: "chore(catalog): sync verified DeepStorage packages"
+          title: "Update catalog from verified DeepStorage packages"
+          body: |
+            ## DeepStorage catalog synchronization
+
+            This pull request contains only catalog changes produced by the guarded DeepStorage sync workflow.
+
+            - New PS4 packages are added only after bounded Range-based PKG metadata extraction and structural validation.
+            - Uniquely matched non-Mocha entries may have their source URL replaced with the DeepStorage URL.
+            - Ambiguous, conflicting, malformed, incomplete, and structurally invalid packages are skipped.
+            - Existing Mocha registrations are protected.
+            - No PKG binaries are downloaded.
+            - No Archive.org requests are made by the DeepStorage metadata reader.
+            - This workflow never merges the pull request automatically.
+
+            Review the Actions run summary and `deepstorage-catalog-sync.json` artifact before merging.
+          labels: |
+            catalog
+            deepstorage
+          add-paths: |
+            ps4/games.json
+            ps4/dlc.json
+
+      - name: Display scan and catalog proposal summary
         if: always()
         run: |
           python - <<'PY'
@@ -56,43 +112,52 @@ jobs:
 
           summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
           with summary.open("a", encoding="utf-8") as output:
-              output.write("# DeepStorage scan and catalog comparison\n\n")
-              scan_path = Path("reports/deepstorage-scan.json")
-              comparison_path = Path("reports/deepstorage-comparison.json")
-
-              if scan_path.is_file():
-                  scan = json.loads(scan_path.read_text(encoding="utf-8"))
-                  output.write("## Source scan\n\n")
-                  output.write(f"- Complete: **{scan.get('scan_complete')}**\n")
-                  output.write(f"- Share folder: `{scan.get('folder_path')}`\n")
-                  output.write(f"- PKG/file entries: **{scan.get('file_count', 0)}**\n")
-                  output.write(f"- Listing pages: **{scan.get('listing_page_count', 0)}**\n")
-                  output.write("- Package binaries downloaded: **No**\n")
-                  output.write("- Catalog changed: **No**\n\n")
-              else:
-                  output.write("Scan report was not generated. Check the job logs.\n\n")
-
-              if comparison_path.is_file():
-                  report = json.loads(comparison_path.read_text(encoding="utf-8"))
-                  counts = report.get("counts", {})
-                  output.write("## Catalog comparison\n\n")
-                  output.write("| Result | Count |\n|---|---:|\n")
-                  for key in ("matched", "metadata_difference", "unverified", "new", "ambiguous", "unclassified", "possible_duplicate"):
-                      output.write(f"| {key.replace('_', ' ')} | {counts.get(key, 0)} |\n")
-                  output.write("\n")
-                  output.write("> This comparison uses filename tags and listing file sizes. It does not inspect PKG internals or verify binary integrity. Nothing is added, replaced, or deleted.\n\n")
-                  output.write("## Files\n\n")
-                  output.write("| Status | File | Catalog match | Reason |\n|---|---|---|---|\n")
-                  for row in report.get("results", []):
-                      name = str(row.get("name", "unnamed")).replace("|", "\\|").replace("[", "\\[").replace("]", "\\]")
-                      url = row.get("deepstorage_url")
-                      file_label = f"[{name}]({url})" if isinstance(url, str) else name
-                      catalog = row.get("catalog_url")
-                      catalog_label = f"[catalog entry]({catalog})" if isinstance(catalog, str) else "—"
-                      reason = str(row.get("reason", "")).replace("|", "\\|").replace("\n", " ")
-                      output.write(f"| {row.get('status', 'unknown')} | {file_label} | {catalog_label} | {reason} |\n")
-                  if not report.get("results"):
-                      output.write("| — | No PKG files to compare | — | — |\n")
-              else:
-                  output.write("## Catalog comparison\n\nComparison report was not generated. Check the preceding steps.\n")
+              output.write("# DeepStorage catalog synchronization\n\n")
+              for filename, heading in (
+                  ("deepstorage-scan.json", "Inventory"),
+                  ("deepstorage-comparison.json", "Catalog comparison"),
+                  ("deepstorage-catalog-sync.json", "Catalog changes"),
+              ):
+                  path = Path("reports") / filename
+                  output.write(f"## {heading}\n\n")
+                  if not path.is_file():
+                      output.write("Report not generated; inspect the failed workflow step.\n\n")
+                      continue
+                  try:
+                      data = json.loads(path.read_text(encoding="utf-8"))
+                  except (OSError, json.JSONDecodeError) as exc:
+                      output.write(f"Could not read report: {exc}\n\n")
+                      continue
+                  if filename == "deepstorage-scan.json":
+                      output.write(f"- Scan complete: **{data.get('scan_complete')}**\n")
+                      output.write(f"- Folder: `{data.get('folder_path')}`\n")
+                      output.write(f"- Files: **{data.get('file_count', 0)}**\n")
+                      output.write(f"- Listing pages: **{data.get('listing_page_count', 0)}**\n\n")
+                  elif filename == "deepstorage-comparison.json":
+                      output.write("| Comparison status | Count |\n|---|---:|\n")
+                      for key, value in data.get("counts", {}).items():
+                          output.write(f"| {key.replace('_', ' ')} | {value} |\n")
+                      output.write("\n")
+                  else:
+                      output.write(f"- Catalog files changed: **{', '.join(data.get('changed_catalogs', [])) or 'None'}**\n")
+                      output.write(f"- Working-tree catalog write: **{data.get('catalog_write_performed')}**\n")
+                      output.write("- Package binaries downloaded: **No**\n")
+                      output.write("- Binary integrity cryptographically verified: **No**\n\n")
+                      output.write("| Result | Package | Reason |\n|---|---|---|\n")
+                      for row in data.get("results", []):
+                          name = str(row.get("name", "unnamed")).replace("|", "\\|")
+                          reason = str(row.get("reason", "")).replace("|", "\\|").replace("\n", " ")
+                          output.write(f"| {row.get('status', 'unknown')} | {name} | {reason} |\n")
+                      if not data.get("results"):
+                          output.write("| — | No PKG files found | — |\n")
+                      output.write("\n")
           PY
+
+      - name: Upload scan and sync reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepstorage-catalog-sync-reports
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
