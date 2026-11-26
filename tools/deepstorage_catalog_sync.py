@@ -17,9 +17,14 @@ from urllib.parse import unquote, urljoin, urlsplit
 
 import requests
 
-from tools.akirabox_catalog_compare import normalize_title, parse_source_metadata
-from tools.merge import validate_entry
-from tools.pkg_remote_metadata import extract_ps4_metadata
+try:
+    from .akirabox_catalog_compare import normalize_title, parse_source_metadata
+    from .merge import validate_entry
+    from .pkg_remote_metadata import extract_ps4_metadata
+except ImportError:  # Running as a script from the tools directory.
+    from akirabox_catalog_compare import normalize_title, parse_source_metadata
+    from merge import validate_entry
+    from pkg_remote_metadata import extract_ps4_metadata
 
 HOST = "share.deepstorage.dev"
 CATALOGS = {
