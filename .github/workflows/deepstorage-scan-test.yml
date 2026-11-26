@@ -11,10 +11,17 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout scanner branch
+      - name: Checkout main catalog and preservation code
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          path: catalog
+
+      - name: Checkout scanner tools
         uses: actions/checkout@v4
         with:
           ref: feature/deepstorage-scanner
+          path: scanner-tools
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -26,21 +33,21 @@ jobs:
 
       - name: Run read-only scan
         run: |
-          python tools/deepstorage_scanner.py \
+          python scanner-tools/tools/deepstorage_scanner.py \
             --username fallen \
             --path "PS4/Games/" \
             --output reports/deepstorage-scan.json
 
       - name: Read one PKG remotely using HTTP Range
         run: |
-          python tools/pkg_remote_metadata.py \
+          python scanner-tools/tools/pkg_remote_metadata.py \
             --source "https://share.deepstorage.dev/91be0fdbedb6a37d47530386c9d135e4/RESOGUN%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg" \
             --platform PS4 \
             --output reports/deepstorage-resogun-metadata.json
 
       - name: Read DmC PKG metadata remotely using HTTP Range
         run: |
-          python tools/pkg_remote_metadata.py \
+          python scanner-tools/tools/pkg_remote_metadata.py \
             --source "https://share.deepstorage.dev/16773e155f681f88d210088c77f6e816/DmC%20Devil%20May%20Cry%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.03%5D.pkg" \
             --platform PS4 \
             --output reports/deepstorage-dmc-metadata.json
@@ -50,10 +57,10 @@ jobs:
 
       - name: Compare scan with FPKGi catalogs
         run: |
-          CATALOG_COMMIT="$(git rev-parse HEAD)"
-          python tools/deepstorage_catalog_compare.py \
+          CATALOG_COMMIT="$(git -C catalog rev-parse HEAD)"
+          python scanner-tools/tools/deepstorage_catalog_compare.py \
             --scan-report reports/deepstorage-scan.json \
-            --catalog-root . \
+            --catalog-root catalog \
             --catalog-commit "$CATALOG_COMMIT" \
             --output reports/deepstorage-comparison.json
 
