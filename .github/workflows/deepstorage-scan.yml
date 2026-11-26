@@ -95,9 +95,6 @@ jobs:
             - This workflow never merges the pull request automatically.
 
             Review the Actions run summary and `deepstorage-catalog-sync.json` artifact before merging.
-          labels: |
-            catalog
-            deepstorage
           add-paths: |
             ps4/games.json
             ps4/dlc.json
