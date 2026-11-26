@@ -18,7 +18,9 @@ def validate_catalog(path):
     entries = read_catalog(path)
     rejected = 0
     for key, metadata in entries.items():
-        errors, _ = validate_entry(key, metadata, allow_mocha=True)
+        errors, _ = validate_entry(
+            key, metadata, allow_mocha=True, allow_deepstorage=True
+        )
         if errors:
             rejected += 1
             print(f"ERROR: {path}: {key}: {'; '.join(errors)}")
