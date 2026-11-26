@@ -124,7 +124,7 @@ def _preserve_current_provider_entries(current_catalog, artifact_catalog):
         artifact_entries[key] = metadata
 
     artifact_catalog.write_text(
-        json.dumps(artifact_data, indent=2, ensure_ascii=False) + "\\n",
+        json.dumps(artifact_data, indent=2, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
 
