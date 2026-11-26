@@ -630,3 +630,118 @@ def test_validate_entry_rejects_mocha_marker_unless_catalog_context_is_explicit(
     )
     assert any("not accepted from fetched sources" in error for error in errors)
     assert warnings == []
+
+
+
+def test_validate_entries_rejects_deepstorage_markers_from_external_sources():
+    entries = {
+        "https://share.deepstorage.dev/abc/Game.pkg": {
+            "name": "Injected Game",
+            "download_source": "deepstorage",
+        }
+    }
+    assert validate_entries(entries, "untrusted source") == {}
+
+
+def test_validate_entry_accepts_only_valid_deepstorage_url_when_explicit():
+    valid = "https://share.deepstorage.dev/0123456789abcdef0123456789abcdef/Game.pkg"
+    errors, warnings = validate_entry(
+        valid,
+        {"name": "DeepStorage Game", "download_source": "deepstorage"},
+        allow_deepstorage=True,
+    )
+    assert errors == []
+    assert warnings == []
+
+    for invalid in (
+        "https://evil.example/Game.pkg",
+        "http://share.deepstorage.dev/Game.pkg",
+        "https://share.deepstorage.dev/Game.pkg?redirect=evil",
+        "https://user@share.deepstorage.dev/Game.pkg",
+        "https://share.deepstorage.dev/Game.zip",
+    ):
+        errors, _ = validate_entry(
+            invalid,
+            {"name": "Bad Game", "download_source": "deepstorage"},
+            allow_deepstorage=True,
+        )
+        assert any("DeepStorage package URL is invalid" in error for error in errors)
+
+
+def test_merge_category_preserves_existing_deepstorage_registrations(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    output_path = tmp_path / "ps4" / "games.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    deepstorage_url = (
+        "https://share.deepstorage.dev/"
+        "0123456789abcdef0123456789abcdef/DeepStorage%20Game.pkg"
+    )
+    deepstorage_entry = {
+        "name": "DeepStorage Game",
+        "title_id": "CUSA12345",
+        "size": 123456,
+        "version": "1.0",
+        "download_source": "deepstorage",
+    }
+    output_path.write_text(
+        json.dumps({"DATA": {deepstorage_url: deepstorage_entry}}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(
+        merge,
+        "fetch_source",
+        lambda _url: {"https://example.com/new.pkg": {"name": "New Game"}},
+    )
+
+    merge.merge_category("games", ["https://example.com/source.json"], {})
+    result = json.loads(output_path.read_text(encoding="utf-8"))["DATA"]
+    assert result[deepstorage_url] == deepstorage_entry
+    assert "https://example.com/new.pkg" in result
+
+
+def test_main_preserves_existing_deepstorage_ps5_registration(tmp_path, monkeypatch):
+    import json
+    import merge
+
+    output_path = tmp_path / "ps5" / "ps5-games.json"
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    deepstorage_url = (
+        "https://share.deepstorage.dev/"
+        "abcdef0123456789abcdef0123456789/PS5%20Game.pkg"
+    )
+    deepstorage_entry = {
+        "name": "DeepStorage PS5 Game",
+        "title_id": "PPSA12345",
+        "size": 987654,
+        "version": "1.0",
+        "download_source": "deepstorage",
+    }
+    output_path.write_text(
+        json.dumps({"DATA": {deepstorage_url: deepstorage_entry}}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(merge, "OUTPUT_DIR", tmp_path)
+    monkeypatch.setattr(merge, "load_sources", lambda: {"games": []})
+    monkeypatch.setattr(
+        merge,
+        "fetch_release_entries",
+        lambda: ({}, {"games": {
+            "https://example.com/new-ps5.pkg": {
+                "name": "New PS5 Game",
+                "title_id": "PPSA54321",
+                "size": 123,
+                "version": "1.0",
+            }
+        }}),
+    )
+    monkeypatch.setattr(merge, "fetch_external_database_entries", lambda: {})
+
+    merge.main()
+    result = json.loads(output_path.read_text(encoding="utf-8"))["DATA"]
+    assert result[deepstorage_url] == deepstorage_entry
+    assert "https://example.com/new-ps5.pkg" in result
