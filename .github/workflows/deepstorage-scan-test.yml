@@ -2,6 +2,11 @@ name: DeepStorage Scanner Validation
 
 on:
   workflow_dispatch:
+  push:
+    branches:
+      - main
+    paths:
+      - ".github/workflows/deepstorage-scan-test.yml"
 
 permissions:
   contents: read
