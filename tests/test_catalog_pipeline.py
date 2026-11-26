@@ -100,3 +100,59 @@ def test_apply_removes_only_catalogs_recorded_in_manifest(tmp_path):
     assert json.loads((root / "config" / "generated_catalogs.json").read_text(encoding="utf-8")) == sorted(
         catalog_pipeline.expected_catalogs(root)
     )
+
+
+
+def test_apply_preserves_provider_registration_committed_after_artifact_build(
+    tmp_path,
+):
+    root = tmp_path / "repo"
+    artifact = tmp_path / "artifact"
+    root.mkdir()
+    write_catalogs(root, {"games": []})
+    catalog_pipeline.prepare_catalog_artifact(root, artifact)
+
+    url = (
+        "https://share.deepstorage.dev/"
+        "0123456789abcdef0123456789abcdef/Registered.pkg"
+    )
+    registration = {
+        "name": "Registered after build",
+        "title_id": "CUSA12345",
+        "size": 123,
+        "version": "1.0",
+        "download_source": "deepstorage",
+    }
+    (root / "ps4" / "games.json").write_text(
+        json.dumps({"DATA": {url: registration}}), encoding="utf-8"
+    )
+
+    catalog_pipeline.apply_catalog_artifact(root, artifact)
+
+    result = json.loads(
+        (root / "ps4" / "games.json").read_text(encoding="utf-8")
+    )
+    assert result["DATA"][url] == registration
+    assert "https://example.com/a.pkg" in result["DATA"]
+
+
+def test_apply_refuses_invalid_current_deepstorage_registration(tmp_path):
+    root = tmp_path / "repo"
+    artifact = tmp_path / "artifact"
+    root.mkdir()
+    write_catalogs(root, {"games": []})
+    catalog_pipeline.prepare_catalog_artifact(root, artifact)
+
+    (root / "ps4" / "games.json").write_text(
+        json.dumps({"DATA": {
+            "https://evil.example/Injected.pkg": {
+                "name": "Injected",
+                "download_source": "deepstorage",
+            }
+        }}),
+        encoding="utf-8",
+    )
+
+    import pytest
+    with pytest.raises(ValueError, match="invalid deepstorage registration"):
+        catalog_pipeline.apply_catalog_artifact(root, artifact)
