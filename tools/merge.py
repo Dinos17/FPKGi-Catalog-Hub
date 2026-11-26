@@ -163,18 +163,22 @@ def validate_entry(pkg_url, metadata, allow_mocha=False, allow_deepstorage=False
         if not allow_deepstorage:
             errors.append("DeepStorage entries are not accepted from fetched sources")
         else:
-            parsed = urlsplit(pkg_url)
-            if (
-                parsed.scheme.lower() != "https"
-                or parsed.hostname is None
-                or parsed.hostname.lower().rstrip(".") != DEEPSTORAGE_HOST
-                or parsed.username is not None
-                or parsed.password is not None
-                or parsed.port not in (None, 443)
-                or not parsed.path.lower().endswith(".pkg")
-                or parsed.query
-                or parsed.fragment
-            ):
+            try:
+                parsed = urlsplit(pkg_url)
+                valid_url = (
+                    parsed.scheme.lower() == "https"
+                    and parsed.hostname is not None
+                    and parsed.hostname.lower().rstrip(".") == DEEPSTORAGE_HOST
+                    and parsed.username is None
+                    and parsed.password is None
+                    and parsed.port in (None, 443)
+                    and parsed.path.lower().endswith(".pkg")
+                    and not parsed.query
+                    and not parsed.fragment
+                )
+            except ValueError:
+                valid_url = False
+            if not valid_url:
                 errors.append("DeepStorage package URL is invalid")
     elif not pkg_url.lower().startswith(("http://", "https://")):
         errors.append("package URL is not HTTP(S)")
@@ -322,6 +326,32 @@ def merge_category(category, urls, release_entries, excluded_urls=None):
         )
 
     output_path = catalog_output_path(category)
+    fresh_entry_count = len(merged)
+
+    # If every upstream source failed and no fresh records were obtained,
+    # keep the entire existing catalog. Provider-only merged data must not
+    # make a failed ingestion look like a successful refresh.
+    if failed_sources and fresh_entry_count == 0 and output_path.exists():
+        try:
+            with output_path.open("r", encoding="utf-8") as file:
+                existing_output = json.load(file)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise RuntimeError(
+                f"Cannot safely preserve existing catalog {output_path}: {exc}"
+            ) from exc
+        existing_entries = (
+            existing_output.get("DATA") if isinstance(existing_output, dict) else None
+        )
+        if not isinstance(existing_entries, dict):
+            raise RuntimeError(
+                f"Cannot safely preserve existing catalog {output_path}: "
+                'missing valid "DATA" object'
+            )
+        print(
+            f"WARNING: All source ingestion failed without fresh entries; "
+            f"preserving the complete existing catalog ({len(existing_entries)} entries)."
+        )
+        return len(existing_entries)
 
     # Preserve provider-registered entries across ordinary rebuilds. These
     # entries may only originate from the guarded provider registration flows,
@@ -459,6 +489,7 @@ def main():
             pkg_url: metadata
             for pkg_url, metadata in dataset_entries.items()
             if metadata.get("category") == category
+            and metadata.get("download_source") != "deepstorage"
         }
 
     for category, urls in sources.items():
@@ -509,6 +540,20 @@ def main():
                     f"Cannot safely preserve existing PS5 catalog "
                     f"{ps5_output_path}: missing valid \"DATA\" object"
                 )
+
+            for entry_key, metadata in existing_ps5_entries.items():
+                if not isinstance(metadata, dict):
+                    continue
+                provider = metadata.get("download_source")
+                if provider == "deepstorage":
+                    errors, _ = validate_entry(
+                        entry_key, metadata, allow_deepstorage=True
+                    )
+                    if errors:
+                        raise RuntimeError(
+                            f"Refusing to preserve invalid PS5 DeepStorage entry "
+                            f"{entry_key}: {'; '.join(errors)}"
+                        )
 
             if existing_ps5_entries:
                 print(
