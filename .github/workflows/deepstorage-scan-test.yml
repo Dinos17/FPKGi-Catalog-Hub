@@ -153,7 +153,22 @@ jobs:
                   output.write(f"## {report.name}\n\n")
                   try:
                       data = json.loads(report.read_text(encoding="utf-8"))
-                      if report.name == "deepstorage-comparison.json":
+                      if report.name == "deepstorage-remote-size-check.json":
+                          output.write("| File | HTTP | Server size | Listed/catalog size | Difference | Accept-Ranges | Error |\\n|---|---:|---:|---:|---:|---|---|\\n")
+                          for item in data.get("results", []):
+                              server_size = item.get("server_size_bytes")
+                              reference_size = item.get("listing_size_bytes", item.get("catalog_size_bytes"))
+                              delta = server_size - reference_size if isinstance(server_size, int) and isinstance(reference_size, int) else None
+                              output.write(
+                                  f"| {item.get('name')} | {item.get('http_status') or '—'} | "
+                                  f"{server_size:,} | {reference_size:,} | "
+                                  f"{delta:+,} | {item.get('accept_ranges') or '—'} | "
+                                  f"{item.get('error') or '—'} |\\n"
+                                  if isinstance(server_size, int) and isinstance(reference_size, int)
+                                  else f"| {item.get('name')} | {item.get('http_status') or '—'} | {server_size or '—'} | {reference_size or '—'} | — | {item.get('accept_ranges') or '—'} | {item.get('error') or 'Size unavailable'} |\\n"
+                              )
+                          output.write("\\nOnly a one-byte Range request is used; full PKG downloads are not performed.\\n\\n")
+                      elif report.name == "deepstorage-comparison.json":
                           counts = data.get("counts", {})
                           output.write("| Result | Count |\n|---|---:|\n")
                           for key, value in counts.items():
