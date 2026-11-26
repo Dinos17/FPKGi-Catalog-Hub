@@ -13,7 +13,7 @@ import re
 from collections import Counter
 from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin, urlsplit
+from urllib.parse import unquote, urljoin, urlsplit
 
 import requests
 
@@ -198,7 +198,7 @@ def _entry_identity(key: str, metadata: dict[str, Any]) -> tuple[str, str, str, 
     version = metadata.get("version")
     if not all(isinstance(value, str) and value.strip()
                for value in (title_id, title, region, version)):
-        filename = parse_source_metadata(key.rsplit("/", 1)[-1])
+        filename = parse_source_metadata(unquote(key.rsplit("/", 1)[-1]))
         title_id = title_id or filename.get("title_id")
         title = title or metadata.get("name") or filename.get("title")
         region = region or filename.get("region")
@@ -302,7 +302,7 @@ def sync_catalog(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             if isinstance(metadata.get("title_id"), str)
             and metadata["title_id"].strip().upper() == record["title_id"]
             and _normalized_version(metadata.get("version")) == _normalized_version(record["version"])
-            and str(metadata.get("region", "")).strip().upper() == record["region"]
+            and (not metadata.get("region") or str(metadata.get("region", "")).strip().upper() == record["region"])
         ]
         if len(candidates) > 1 or (not candidates and related):
             results.append({
