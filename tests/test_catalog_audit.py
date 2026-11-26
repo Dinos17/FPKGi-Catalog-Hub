@@ -242,3 +242,39 @@ def test_audit_pkg_category_overrides_stale_title_app_classification(
     assert json.loads((ps4 / "apps.json").read_text(encoding="utf-8")) == {
         "DATA": {}
     }
+
+
+
+def test_audit_does_not_fetch_deepstorage_package_bytes(tmp_path, monkeypatch):
+    ps4 = tmp_path / "ps4"
+    ps5 = tmp_path / "ps5"
+    ps4.mkdir()
+    ps5.mkdir()
+    url = (
+        "https://share.deepstorage.dev/"
+        "0123456789abcdef0123456789abcdef/Game.pkg"
+    )
+    (ps4 / "games.json").write_text(
+        json.dumps({"DATA": {url: {
+            "name": "DeepStorage Game",
+            "title_id": "CUSA12345",
+            "size": 123,
+            "category": "games",
+            "download_source": "deepstorage",
+        }}}),
+        encoding="utf-8",
+    )
+
+    monkeypatch.setattr(catalog_audit, "ROOT", tmp_path)
+    monkeypatch.setattr(
+        catalog_audit, "PKG_CACHE_PATH", tmp_path / "pkg_category_cache.json"
+    )
+    monkeypatch.setattr(catalog_audit, "resolve_external_categories", lambda: ({}, {}))
+    monkeypatch.setattr(catalog_audit, "_load_pkg_cache", lambda: {})
+    monkeypatch.setattr(catalog_audit, "_save_pkg_cache", lambda _cache: None)
+
+    def forbidden_lookup(*_args, **_kwargs):
+        raise AssertionError("DeepStorage package bytes must not be fetched by catalog audit")
+
+    monkeypatch.setattr(catalog_audit, "_resolve_pkg_category", forbidden_lookup)
+    assert catalog_audit.audit_catalogs() == []

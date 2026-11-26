@@ -86,12 +86,58 @@ def reconcile_catalog_files(root):
     return sorted(removed)
 
 
+def _preserve_current_provider_entries(current_catalog, artifact_catalog):
+    from merge import validate_entry
+
+    if not current_catalog.is_file():
+        return
+    if not artifact_catalog.is_file():
+        raise FileNotFoundError(
+            f"Expected generated artifact is missing: {artifact_catalog}"
+        )
+
+    current_data = json.loads(current_catalog.read_text(encoding="utf-8"))
+    artifact_data = json.loads(artifact_catalog.read_text(encoding="utf-8"))
+    current_entries = current_data.get("DATA") if isinstance(current_data, dict) else None
+    artifact_entries = artifact_data.get("DATA") if isinstance(artifact_data, dict) else None
+    if not isinstance(current_entries, dict) or not isinstance(artifact_entries, dict):
+        raise ValueError("Cannot reconcile provider registrations without valid DATA objects")
+
+    for key, metadata in current_entries.items():
+        if not isinstance(metadata, dict):
+            continue
+        provider = metadata.get("download_source")
+        if provider not in {"mocha", "deepstorage"}:
+            continue
+        errors, _ = validate_entry(
+            key, metadata, allow_mocha=True, allow_deepstorage=True
+        )
+        if errors:
+            raise ValueError(
+                f"Refusing to carry forward invalid {provider} registration "
+                f"{key}: {'; '.join(errors)}"
+            )
+        if key in artifact_entries and artifact_entries[key] != metadata:
+            raise ValueError(
+                f"Current {provider} registration conflicts with generated artifact: {key}"
+            )
+        artifact_entries[key] = metadata
+
+    artifact_catalog.write_text(
+        json.dumps(artifact_data, indent=2, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
 def apply_catalog_artifact(root, artifact):
     for filename in expected_catalogs(root):
         source = artifact / filename
         if not source.is_file():
             raise FileNotFoundError(f"Expected generated artifact is missing: {filename}")
         destination = catalog_path(root, filename)
+        # The publish job checks out the latest main. Carry provider registrations
+        # committed after the build snapshot into the artifact before applying it.
+        _preserve_current_provider_entries(destination, source)
         destination.parent.mkdir(parents=True, exist_ok=True)
         shutil.copy2(source, destination)
 
