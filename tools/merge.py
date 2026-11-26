@@ -145,9 +145,10 @@ ALLOWED_METADATA_TYPES = (str, int, float, bool, type(None))
 TITLE_ID_RE = re.compile(r"^[A-Z]{4}\d{5}$", re.IGNORECASE)
 VERSION_RE = re.compile(r"^\d+(?:\.\d+)*$")
 MOCHA_FILE_ID_RE = re.compile(r"^[A-Za-z0-9._-]{1,128}$")
+DEEPSTORAGE_HOST = "share.deepstorage.dev"
 
 
-def validate_entry(pkg_url, metadata, allow_mocha=False):
+def validate_entry(pkg_url, metadata, allow_mocha=False, allow_deepstorage=False):
     errors = []
     warnings = []
 
@@ -158,6 +159,23 @@ def validate_entry(pkg_url, metadata, allow_mocha=False):
             errors.append("Mocha entries are not accepted from fetched sources")
         elif not MOCHA_FILE_ID_RE.fullmatch(pkg_url):
             errors.append("Mocha file ID is invalid")
+    elif isinstance(metadata, dict) and metadata.get("download_source") == "deepstorage":
+        if not allow_deepstorage:
+            errors.append("DeepStorage entries are not accepted from fetched sources")
+        else:
+            parsed = urlsplit(pkg_url)
+            if (
+                parsed.scheme.lower() != "https"
+                or parsed.hostname is None
+                or parsed.hostname.lower().rstrip(".") != DEEPSTORAGE_HOST
+                or parsed.username is not None
+                or parsed.password is not None
+                or parsed.port not in (None, 443)
+                or not parsed.path.lower().endswith(".pkg")
+                or parsed.query
+                or parsed.fragment
+            ):
+                errors.append("DeepStorage package URL is invalid")
     elif not pkg_url.lower().startswith(("http://", "https://")):
         errors.append("package URL is not HTTP(S)")
 
@@ -305,32 +323,46 @@ def merge_category(category, urls, release_entries, excluded_urls=None):
 
     output_path = catalog_output_path(category)
 
-    # Mocha registrations are written only by the scanner's guarded catalog
-    # workflow. Preserve them across ordinary source rebuilds; never import
-    # Mocha entries from fetched sources.
+    # Preserve provider-registered entries across ordinary rebuilds. These
+    # entries may only originate from the guarded provider registration flows,
+    # never from fetched external catalog sources.
     if output_path.exists():
         try:
             with output_path.open("r", encoding="utf-8") as file:
                 existing_output = json.load(file)
         except (OSError, json.JSONDecodeError) as exc:
             raise RuntimeError(
-                f"Cannot safely preserve Mocha registrations in {output_path}: {exc}"
+                f"Cannot safely preserve provider registrations in {output_path}: {exc}"
             ) from exc
         existing_entries = (
             existing_output.get("DATA") if isinstance(existing_output, dict) else None
         )
         if not isinstance(existing_entries, dict):
             raise RuntimeError(
-                f"Cannot safely preserve Mocha registrations in {output_path}: "
+                f"Cannot safely preserve provider registrations in {output_path}: "
                 'missing valid "DATA" object'
             )
-        for file_id, metadata in existing_entries.items():
-            if isinstance(metadata, dict) and metadata.get("download_source") == "mocha":
-                if file_id in merged and merged[file_id] != metadata:
+        for entry_key, metadata in existing_entries.items():
+            if not isinstance(metadata, dict):
+                continue
+            provider = metadata.get("download_source")
+            if provider not in {"mocha", "deepstorage"}:
+                continue
+            if provider == "deepstorage":
+                errors, _ = validate_entry(
+                    entry_key, metadata, allow_deepstorage=True
+                )
+                if errors:
                     raise RuntimeError(
-                        f"Mocha file ID conflicts with a fetched catalog key: {file_id}"
+                        f"Refusing to preserve invalid DeepStorage entry "
+                        f"{entry_key}: {'; '.join(errors)}"
                     )
-                merged[file_id] = metadata
+            if entry_key in merged and merged[entry_key] != metadata:
+                raise RuntimeError(
+                    f"{provider} catalog key conflicts with a fetched catalog key: "
+                    f"{entry_key}"
+                )
+            merged[entry_key] = metadata
 
     if failed_sources and output_path.exists() and merged:
         try:
@@ -489,14 +521,14 @@ def main():
                 )
                 continue
 
-        # Preserve scanner-registered Mocha entries during PS5 catalog rebuilds.
+        # Preserve guarded provider registrations during PS5 catalog rebuilds.
         if ps5_output_path.exists():
             try:
                 with ps5_output_path.open("r", encoding="utf-8") as file:
                     existing_ps5_output = json.load(file)
             except (OSError, json.JSONDecodeError) as exc:
                 raise RuntimeError(
-                    f"Cannot safely preserve PS5 Mocha registrations in "
+                    f"Cannot safely preserve PS5 provider registrations in "
                     f"{ps5_output_path}: {exc}"
                 ) from exc
             existing_ps5_entries = (
@@ -506,16 +538,30 @@ def main():
             )
             if not isinstance(existing_ps5_entries, dict):
                 raise RuntimeError(
-                    f"Cannot safely preserve PS5 Mocha registrations in "
+                    f"Cannot safely preserve PS5 provider registrations in "
                     f"{ps5_output_path}: missing valid DATA object"
                 )
-            for file_id, metadata in existing_ps5_entries.items():
-                if isinstance(metadata, dict) and metadata.get("download_source") == "mocha":
-                    if file_id in ps5_entries and ps5_entries[file_id] != metadata:
+            for entry_key, metadata in existing_ps5_entries.items():
+                if not isinstance(metadata, dict):
+                    continue
+                provider = metadata.get("download_source")
+                if provider not in {"mocha", "deepstorage"}:
+                    continue
+                if provider == "deepstorage":
+                    errors, _ = validate_entry(
+                        entry_key, metadata, allow_deepstorage=True
+                    )
+                    if errors:
                         raise RuntimeError(
-                            f"PS5 Mocha file ID conflicts with a fetched catalog key: {file_id}"
+                            f"Refusing to preserve invalid PS5 DeepStorage entry "
+                            f"{entry_key}: {'; '.join(errors)}"
                         )
-                    ps5_entries[file_id] = metadata
+                if entry_key in ps5_entries and ps5_entries[entry_key] != metadata:
+                    raise RuntimeError(
+                        f"PS5 {provider} catalog key conflicts with a fetched catalog "
+                        f"key: {entry_key}"
+                    )
+                ps5_entries[entry_key] = metadata
 
         ps5_output = {"DATA": ps5_entries}
         with ps5_output_path.open("w", encoding="utf-8") as file:
