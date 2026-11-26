@@ -43,3 +43,30 @@ def test_catalog_validation_accepts_unique_mocha_ids(tmp_path, monkeypatch):
     monkeypatch.setattr(validate_catalogs, "load_sources", lambda: {"games": []})
 
     validate_catalogs.main()
+
+
+
+def test_catalog_validation_accepts_valid_deepstorage_registration(tmp_path, monkeypatch):
+    url = (
+        "https://share.deepstorage.dev/"
+        "0123456789abcdef0123456789abcdef/Game.pkg"
+    )
+    (tmp_path / "ps4").mkdir()
+    (tmp_path / "ps5").mkdir()
+    (tmp_path / "ps4" / "games.json").write_text(
+        json.dumps({"DATA": {url: {
+            "name": "DeepStorage Game",
+            "title_id": "CUSA12345",
+            "size": 123,
+            "version": "1.0",
+            "download_source": "deepstorage",
+        }}}),
+        encoding="utf-8",
+    )
+    (tmp_path / "ps5" / "ps5-games.json").write_text(
+        json.dumps({"DATA": {}}), encoding="utf-8"
+    )
+    monkeypatch.setattr(validate_catalogs, "ROOT", tmp_path)
+    monkeypatch.setattr(validate_catalogs, "load_sources", lambda: {"games": []})
+
+    validate_catalogs.main()
