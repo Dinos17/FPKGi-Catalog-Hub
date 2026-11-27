@@ -34,8 +34,12 @@ def _validate_file_link(link: Any) -> str:
     if not isinstance(link, str):
         raise ScanError("Listing file_link is not a string")
     parsed = urlparse(link)
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ScanError("Listing contains an invalid direct file URL") from exc
     if (parsed.scheme != "https" or parsed.hostname != ALLOWED_HOST
-            or parsed.username or parsed.password or parsed.port not in (None, 443)):
+            or parsed.username or parsed.password or port not in (None, 443)):
         raise ScanError("Listing contains a file URL outside the approved DeepStorage host")
     if not parsed.path.startswith("/") or not parsed.path.strip("/"):
         raise ScanError("Listing contains an invalid direct file URL")
@@ -57,7 +61,7 @@ def _child_folder_path(raw: Any, parent: str) -> str:
 
     candidate = value.strip("/")
     parent_base = parent.rstrip("/")
-    if (value.startswith("/") or value.endswith("/")) and not candidate.startswith(parent_base + "/"):
+    if value.startswith("/") and not candidate.startswith(parent_base + "/"):
         raise ScanError("Folder path does not belong to the requested parent")
     if not candidate:
         raise ScanError("Listing contains an empty folder path")
