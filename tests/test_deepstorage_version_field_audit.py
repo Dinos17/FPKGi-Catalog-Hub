@@ -55,21 +55,21 @@ def test_markdown_cell_neutralizes_untrusted_multiline_metadata():
 
 
 def test_duplicate_audited_sfo_fields_are_rejected():
-    entries = [("CATEGORY", b"gd\\0"), ("CATEGORY", b"gp\\0")]
+    entries = [("CATEGORY", bytes((103, 100, 0))), ("CATEGORY", bytes((103, 112, 0)))]
     count = len(entries)
     key_base = 0x14 + count * 16
     key_data = bytearray()
     value_data = bytearray()
     indexes = bytearray()
     for key, value in entries:
-        key_bytes = key.encode("ascii") + b"\\0"
+        key_bytes = key.encode("ascii") + bytes((0,))
         key_offset = len(key_data)
         value_offset = len(value_data)
         key_data.extend(key_bytes)
         value_data.extend(value)
         indexes.extend(struct.pack("<HHIII", key_offset, 0x0204, len(value), len(value), value_offset))
     value_base = key_base + len(key_data)
-    header = b"\\x00PSF" + struct.pack("<IIII", 0x00000101, key_base, value_base, count)
+    header = bytes((0,)) + b"PSF" + struct.pack("<IIII", 0x00000101, key_base, value_base, count)
     payload = header + indexes + key_data + value_data
     with pytest.raises(audit.parser.DiagnosticError, match="duplicate CATEGORY"):
         audit.parser.parse_sfo_independent(payload)
