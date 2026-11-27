@@ -73,3 +73,39 @@ def test_duplicate_audited_sfo_fields_are_rejected():
     payload = header + indexes + key_data + value_data
     with pytest.raises(audit.parser.DiagnosticError, match="duplicate CATEGORY"):
         audit.parser.parse_sfo_independent(payload)
+
+
+
+def test_range_reader_pins_all_reads_to_the_same_etag():
+    class Response:
+        status_code = 206
+        url = audit.parser.SOURCE_URL
+
+        def __init__(self, start, end):
+            self.headers = {
+                "Content-Range": f"bytes {start}-{end}/100",
+                "ETag": '"revision-1"',
+            }
+
+        def iter_content(self, chunk_size):
+            yield b"ab"
+
+        def close(self):
+            pass
+
+    class Session:
+        def __init__(self):
+            self.headers = {}
+            self.calls = []
+
+        def get(self, url, **kwargs):
+            self.calls.append(kwargs)
+            start, end = map(int, kwargs["headers"]["Range"][6:].split("-"))
+            return Response(start, end)
+
+    session = Session()
+    reader = audit.parser.BoundedRangeReader(audit.parser.SOURCE_URL, session=session)
+    assert reader.read(0, 2) == b"ab"
+    assert reader.read(2, 2) == b"ab"
+    assert session.calls[1]["headers"]["If-Range"] == '"revision-1"'
+    assert reader.bytes_read == 4
