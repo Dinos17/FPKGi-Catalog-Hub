@@ -69,7 +69,7 @@ def inspect_one(name: str, url: str) -> dict[str, object]:
             "app_ver": fields.get("APP_VER"),
             "system_ver": fields.get("SYSTEM_VER"),
             "package_size_bytes": reader.total_size,
-            "bytes_requested": reader.bytes_read,
+            "bytes_read": reader.bytes_read,
             "ranges_requested": reader.ranges,
             "status": "success",
         }
@@ -99,7 +99,7 @@ def build_report(results: list[dict[str, object]], total_bytes: int, complete: b
         "packages_completed": len(results),
         "packages_succeeded": succeeded,
         "packages_failed": len(results) - succeeded,
-        "total_bytes_requested": total_bytes,
+        "total_bytes_read": total_bytes,
         "results": results,
         "status": ("success" if succeeded == targeted else "partial_failure") if complete
                   else "in_progress",
@@ -127,11 +127,11 @@ def main() -> int:
                 "filename_version": filename_version(name),
                 "status": "failed",
                 "error": str(exc),
-                "bytes_requested": reader.bytes_read if reader is not None else 0,
+                "bytes_read": reader.bytes_read if reader is not None else 0,
                 "ranges_requested": reader.ranges if reader is not None else [],
                 "package_size_bytes": reader.total_size if reader is not None else None,
             }
-        total_bytes += int(item.get("bytes_requested", 0))
+        total_bytes += int(item.get("bytes_read", 0))
         results.append(item)
         # Atomic checkpoint after every package so a job timeout preserves completed work.
         write_report(output_path, build_report(results, total_bytes, complete=False))
