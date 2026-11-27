@@ -177,7 +177,10 @@ def inspect_file(item: dict[str, Any], scan_folder: str) -> dict[str, Any]:
     if not isinstance(version, str) or not re.fullmatch(r"\d+(?:\.\d+)*", version):
         raise ValueError("PARAM.SFO did not provide a valid package version")
     if filename.get("version") and _normalized_version(filename["version"]) != _normalized_version(version):
-        raise ValueError("filename version conflicts with PARAM.SFO")
+        raise ValueError(
+            f"filename version {filename['version']} conflicts with "
+            f"PARAM.SFO APP_VER {version}"
+        )
     if not isinstance(raw_name, str) or not raw_name.strip():
         raise ValueError("PARAM.SFO did not provide a package title")
     if not isinstance(region, str) or region not in {"USA", "EUR", "JAP", "ASIA"}:
