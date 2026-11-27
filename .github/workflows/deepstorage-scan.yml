@@ -2,17 +2,6 @@ name: DeepStorage Catalog Sync
 
 on:
   workflow_dispatch:
-    inputs:
-      share_username:
-        description: Public-share username
-        required: true
-        default: fallen
-        type: string
-      folder_path:
-        description: PS4 folder to scan (PS4/Games/ or PS4/DLC/)
-        required: true
-        default: PS4/Games/
-        type: string
   schedule:
     - cron: "17 5 * * 1"
 
@@ -43,14 +32,9 @@ jobs:
       - name: Install scanner dependency
         run: python -m pip install requests
 
-      - name: Scan DeepStorage public folder
-        env:
-          SHARE_USERNAME: ${{ inputs.share_username || 'fallen' }}
-          SHARE_PATH: ${{ inputs.folder_path || 'PS4/Games/' }}
+      - name: Recursively scan fixed DeepStorage PS4 and PS5 trees
         run: |
           python tools/deepstorage_scanner.py \
-            --username "$SHARE_USERNAME" \
-            --path "$SHARE_PATH" \
             --output reports/deepstorage-scan.json
 
       - name: Compare inventory with existing catalogs
@@ -86,7 +70,8 @@ jobs:
 
             This pull request contains only catalog changes produced by the guarded DeepStorage sync workflow.
 
-            - New PS4 packages are added only after bounded Range-based PKG metadata extraction and structural validation.
+            - PS4 packages are eligible for catalog changes only after bounded Range-based PKG metadata extraction and structural validation.
+            - PS5 is inventory-only; PS5 catalog registration is disabled pending independent extractor validation.
             - Uniquely matched non-Mocha entries may have their source URL replaced with the DeepStorage URL.
             - Ambiguous, conflicting, malformed, incomplete, and structurally invalid packages are skipped.
             - Existing Mocha registrations are protected.

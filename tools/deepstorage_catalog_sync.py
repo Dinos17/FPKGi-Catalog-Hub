@@ -265,6 +265,16 @@ def sync_catalog(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             raise ValueError("scan contains a malformed file row")
         if item.get("extension") != "pkg":
             continue
+        item_folder = item.get("folder_path")
+        folder_parts = [part.casefold() for part in item_folder.split("/") if part] if isinstance(item_folder, str) else []
+        if folder_parts and folder_parts[0] == "ps5":
+            results.append({
+                "status": "unsupported",
+                "name": item.get("name"),
+                "url": item.get("download_url"),
+                "reason": "PS5 is inventory-only; catalog registration is disabled until PS5 PKG metadata extraction is independently validated",
+            })
+            continue
         try:
             inspected.append(inspect_file(item, scan_folder))
         except (MetadataError, ValueError, requests.RequestException, OSError) as exc:
@@ -425,7 +435,7 @@ def sync_catalog(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
         "package_binaries_downloaded": False,
         "binary_integrity_verified": False,
         "notes": [
-            "Only PS4 Games and DLC are supported by the current validated extractor",
+            "PS4 Games and DLC are eligible for catalog changes; PS5 is inventory-only",
             "Only bounded Range requests to share.deepstorage.dev are permitted",
             "New entries omit release date and cover URL when those fields cannot be established",
             "Mocha registrations are never replaced automatically",

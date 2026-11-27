@@ -1,28 +1,27 @@
 #!/usr/bin/env python3
-"""Read-only inventory scanner for a public DeepStorage share.
-
-Fetches listing metadata only; it does not download PKGs, change catalogs, or
-perform any upload/delete actions.
-"""
+"""Read-only recursive inventory of the fixed public DeepStorage share."""
 from __future__ import annotations
 
 import argparse
 import json
 import math
-import re
 import sys
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import requests
 
 API_ROOT = "https://share.deepstorage.dev/public/api/files"
-USERNAME_DEFAULT = "fallen"
-DEFAULT_PATH = "PS4/Games/"
+SHARE_USERNAME = "fallen"
+SHARE_URL = "https://deepstorage.dev/fallen"
+ROOT_FOLDERS = ("PS4/", "PS5/")
 MAX_PAGES = 1000
 MAX_FILES = 50000
+MAX_FOLDERS = 5000
+MAX_FOLDER_DEPTH = 64
 TIMEOUT = (15, 30)
 ALLOWED_HOST = "share.deepstorage.dev"
 
@@ -35,108 +34,201 @@ def _validate_file_link(link: Any) -> str:
     if not isinstance(link, str):
         raise ScanError("Listing file_link is not a string")
     parsed = urlparse(link)
-    if parsed.scheme != "https" or parsed.hostname != ALLOWED_HOST or parsed.username or parsed.password:
+    try:
+        port = parsed.port
+    except ValueError as exc:
+        raise ScanError("Listing contains an invalid direct file URL") from exc
+    if (parsed.scheme != "https" or parsed.hostname != ALLOWED_HOST
+            or parsed.username or parsed.password or port not in (None, 443)):
         raise ScanError("Listing contains a file URL outside the approved DeepStorage host")
     if not parsed.path.startswith("/") or not parsed.path.strip("/"):
         raise ScanError("Listing contains an invalid direct file URL")
     return link
 
 
+def _child_folder_path(raw: Any, parent: str) -> str:
+    """Resolve one immediate child folder without allowing traversal or scope escape."""
+    value: Any = raw
+    if isinstance(raw, dict):
+        value = raw.get("path") or raw.get("folder_path")
+        if not value:
+            value = raw.get("name") or raw.get("folder_name")
+    if not isinstance(value, str) or not value.strip():
+        raise ScanError("Listing contains a folder without a valid name or path")
+    value = value.strip()
+    if "\x00" in value or "\\" in value:
+        raise ScanError("Listing contains an invalid folder path")
+
+    candidate = value.strip("/")
+    parent_base = parent.rstrip("/")
+    if value.startswith("/") and not candidate.startswith(parent_base + "/"):
+        raise ScanError("Folder path does not belong to the requested parent")
+    if not candidate:
+        raise ScanError("Listing contains an empty folder path")
+    if candidate.startswith(parent_base + "/"):
+        relative = candidate[len(parent_base) + 1:]
+    else:
+        relative = candidate
+    if "/" in relative:
+        raise ScanError("Folder listing did not identify an immediate child folder")
+    if relative in {"", ".", ".."}:
+        raise ScanError("Listing contains a traversal or empty folder name")
+
+    # Reject percent-encoded separators and traversal, including double-encoded
+    # forms, before the value is ever used as an API folder path.
+    decoded = relative
+    for _ in range(8):
+        next_decoded = unquote(decoded)
+        if next_decoded == decoded:
+            break
+        if "/" in next_decoded or "\\" in next_decoded or next_decoded in {".", ".."}:
+            raise ScanError("Listing contains encoded folder traversal or separators")
+        decoded = next_decoded
+    else:
+        raise ScanError("Listing contains excessively encoded folder path")
+    return parent_base + "/" + relative + "/"
+
+
 class DeepStorageScanner:
     def __init__(
         self,
-        username: str = USERNAME_DEFAULT,
-        folder_path: str = DEFAULT_PATH,
         session: requests.Session | None = None,
         *,
         max_pages: int = MAX_PAGES,
         max_files: int = MAX_FILES,
+        max_folders: int = MAX_FOLDERS,
     ):
-        if not isinstance(username, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", username):
-            raise ScanError("Invalid public-share username")
-        if not isinstance(folder_path, str) or folder_path.startswith("/") or "\\x00" in folder_path:
-            raise ScanError("Folder path must be a relative path")
-        normalized = folder_path.strip("/")
-        if any(part in {".", ".."} for part in normalized.split("/") if part):
-            raise ScanError("Folder path contains traversal components")
-        self.username = username
-        self.folder_path = normalized + ("/" if normalized else "")
         self.session = session or requests.Session()
         self.session.headers.update({
             "Accept": "application/json",
-            "User-Agent": "FPKGi-Catalog-Hub-DeepStorage-Scanner/1.0",
+            "User-Agent": "FPKGi-Catalog-Hub-DeepStorage-Scanner/2.0",
         })
         self.max_pages = max_pages
         self.max_files = max_files
+        self.max_folders = max_folders
 
-    def _get_page(self, offset: int) -> dict[str, Any]:
-        url = f"{API_ROOT}/{self.username}"
+    def _get_page(self, folder_path: str, offset: int) -> dict[str, Any]:
         try:
             response = self.session.get(
-                url,
-                params={"path": self.folder_path, "offset": offset, "sort": "date_desc"},
+                f"{API_ROOT}/{SHARE_USERNAME}",
+                params={"path": folder_path, "offset": offset, "sort": "date_desc"},
                 timeout=TIMEOUT,
+                allow_redirects=False,
             )
         except requests.RequestException as exc:
             raise ScanError(f"DeepStorage listing request failed ({type(exc).__name__})") from exc
         if response.status_code != 200:
-            raise ScanError(f"DeepStorage listing returned HTTP {response.status_code}")
+            # Redirects are deliberately not followed: the scanner must never
+            # fetch listing data from a host other than the fixed API endpoint.
+            raise ScanError(f"DeepStorage listing for {folder_path} returned HTTP {response.status_code}")
+        response_url = getattr(response, "url", None)
+        if not isinstance(response_url, str):
+            raise ScanError("DeepStorage listing response is missing its final URL")
+        parsed_response_url = urlparse(response_url)
+        try:
+            response_port = parsed_response_url.port
+        except ValueError as exc:
+            raise ScanError("DeepStorage listing response has an invalid URL") from exc
+        if (parsed_response_url.scheme != "https"
+                or parsed_response_url.hostname != ALLOWED_HOST
+                or parsed_response_url.username or parsed_response_url.password
+                or response_port not in (None, 443)):
+            raise ScanError("DeepStorage listing response URL is outside the approved HTTPS host")
         try:
             payload = response.json()
         except (ValueError, requests.JSONDecodeError) as exc:
             raise ScanError("DeepStorage listing response was not valid JSON") from exc
-        if not isinstance(payload, dict) or not isinstance(payload.get("files"), list) or not isinstance(payload.get("folders"), list):
+        if (not isinstance(payload, dict) or not isinstance(payload.get("files"), list)
+                or not isinstance(payload.get("folders"), list)):
             raise ScanError("DeepStorage listing response has an invalid shape")
         return payload
 
     def run(self) -> dict[str, Any]:
-        offset = 0
-        pages = 0
-        files: list[dict[str, Any]] = []
+        pending = deque(ROOT_FOLDERS)
+        scheduled_folders: set[str] = set(ROOT_FOLDERS)
+        visited_folders: set[str] = set()
         seen_links: set[str] = set()
-        while True:
-            if pages >= self.max_pages:
-                raise ScanError("Listing page safety limit reached; scan incomplete")
-            payload = self._get_page(offset)
-            pages += 1
-            for raw in payload["files"]:
-                if not isinstance(raw, dict):
-                    raise ScanError("Listing contains malformed file metadata")
-                name = raw.get("file_name")
-                size = raw.get("file_size")
-                direct_link = _validate_file_link(raw.get("file_link"))
-                if not isinstance(name, str) or not name.strip():
-                    raise ScanError("Listing file has an invalid filename")
-                if (isinstance(size, bool) or not isinstance(size, (int, float))
-                        or not math.isfinite(size) or size < 0 or int(size) != size):
-                    raise ScanError("Listing file has an invalid size")
-                if direct_link in seen_links:
-                    continue
-                seen_links.add(direct_link)
-                files.append({
-                    "name": name,
-                    "size_bytes": int(size),
-                    "upload_date": raw.get("upload_date") if isinstance(raw.get("upload_date"), str) else None,
-                    "folder_path": raw.get("folder_path") if isinstance(raw.get("folder_path"), str) else self.folder_path,
-                    "download_url": direct_link,
-                    "extension": Path(name).suffix.lower().lstrip(".") or None,
-                })
-                if len(files) > self.max_files:
-                    raise ScanError("File-count safety limit reached; scan incomplete")
-            has_more = payload.get("has_more")
-            next_offset = payload.get("next_offset")
-            if has_more is False:
-                break
-            if has_more is not True or isinstance(next_offset, bool) or not isinstance(next_offset, int) or next_offset <= offset:
-                raise ScanError("Pagination metadata is missing, invalid, or non-advancing")
-            offset = next_offset
+        files: list[dict[str, Any]] = []
+        pages = 0
+
+        while pending:
+            folder_path = pending.popleft()
+            if folder_path in visited_folders:
+                continue
+            if not any(folder_path == root or folder_path.startswith(root) for root in ROOT_FOLDERS):
+                raise ScanError("Refusing to scan a folder outside the fixed PS4/ and PS5/ roots")
+            visited_folders.add(folder_path)
+            if len(visited_folders) > self.max_folders:
+                raise ScanError("Folder-count safety limit reached; scan incomplete")
+
+            offset = 0
+            first_page = True
+            while True:
+                if pages >= self.max_pages:
+                    raise ScanError("Listing page safety limit reached; scan incomplete")
+                payload = self._get_page(folder_path, offset)
+                pages += 1
+
+                # DeepStorage returns immediate subfolders on the first listing page.
+                if first_page:
+                    for raw_folder in payload["folders"]:
+                        child = _child_folder_path(raw_folder, folder_path)
+                        if not any(child.startswith(root) for root in ROOT_FOLDERS):
+                            raise ScanError("Folder listing escaped the fixed PS4/ and PS5/ roots")
+                        if child not in scheduled_folders:
+                            if len(child.strip("/").split("/")) > MAX_FOLDER_DEPTH:
+                                raise ScanError("Folder-depth safety limit reached; scan incomplete")
+                            scheduled_folders.add(child)
+                            if len(scheduled_folders) > self.max_folders:
+                                raise ScanError("Folder-count safety limit reached; scan incomplete")
+                            pending.append(child)
+                    first_page = False
+
+                for raw in payload["files"]:
+                    if not isinstance(raw, dict):
+                        raise ScanError("Listing contains malformed file metadata")
+                    name = raw.get("file_name")
+                    size = raw.get("file_size")
+                    direct_link = _validate_file_link(raw.get("file_link"))
+                    if not isinstance(name, str) or not name.strip():
+                        raise ScanError("Listing file has an invalid filename")
+                    if (isinstance(size, bool) or not isinstance(size, (int, float))
+                            or not math.isfinite(size) or size < 0 or int(size) != size):
+                        raise ScanError("Listing file has an invalid size")
+                    if direct_link in seen_links:
+                        continue
+                    seen_links.add(direct_link)
+                    files.append({
+                        "name": name,
+                        "size_bytes": int(size),
+                        "upload_date": raw.get("upload_date") if isinstance(raw.get("upload_date"), str) else None,
+                        "folder_path": folder_path,
+                        "download_url": direct_link,
+                        "extension": Path(name).suffix.lower().lstrip(".") or None,
+                    })
+                    if len(files) > self.max_files:
+                        raise ScanError("File-count safety limit reached; scan incomplete")
+
+                has_more = payload.get("has_more")
+                next_offset = payload.get("next_offset")
+                if has_more is False:
+                    break
+                if (has_more is not True or isinstance(next_offset, bool)
+                        or not isinstance(next_offset, int) or next_offset <= offset):
+                    raise ScanError("Pagination metadata is missing, invalid, or non-advancing")
+                offset = next_offset
 
         observed = datetime.now(timezone.utc).isoformat(timespec="microseconds").replace("+00:00", "Z")
+        ordered_folders = sorted(visited_folders)
         return {
-            "schema_version": 1,
+            "schema_version": 2,
             "scanner": "deepstorage",
-            "username": self.username,
-            "folder_path": self.folder_path,
+            "username": SHARE_USERNAME,
+            "share_url": SHARE_URL,
+            "folder_path": "PS4/ and PS5/ (recursive)",
+            "root_folders": list(ROOT_FOLDERS),
+            "folder_paths": ordered_folders,
+            "folder_count": len(ordered_folders),
             "scan_observed_at": observed,
             "scan_complete": True,
             "read_only": True,
@@ -152,18 +244,17 @@ class DeepStorageScanner:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--username", default=USERNAME_DEFAULT)
-    parser.add_argument("--path", default=DEFAULT_PATH, help="Relative folder path in the public share")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args(argv)
     try:
-        report = DeepStorageScanner(args.username, args.path).run()
+        report = DeepStorageScanner().run()
     except ScanError as exc:
         incomplete = {
-            "schema_version": 1,
+            "schema_version": 2,
             "scanner": "deepstorage",
-            "username": args.username,
-            "folder_path": args.path,
+            "username": SHARE_USERNAME,
+            "share_url": SHARE_URL,
+            "root_folders": list(ROOT_FOLDERS),
             "scan_complete": False,
             "read_only": True,
             "catalog_write_performed": False,
@@ -175,7 +266,7 @@ def main(argv: list[str] | None = None) -> int:
         return 1
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    print(f"DeepStorage scan complete: {report['file_count']} files across {report['listing_page_count']} listing page(s).")
+    print(f"DeepStorage scan complete: {report['file_count']} files in {report['folder_count']} folders across {report['listing_page_count']} listing page(s).")
     return 0
 
 
