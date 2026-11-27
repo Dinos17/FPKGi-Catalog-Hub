@@ -139,3 +139,25 @@ def test_range_reader_rejects_redirect_to_non_deepstorage_host():
     )
     with pytest.raises(ValueError, match="left the exact approved"):
         reader.read(0, 4)
+
+
+def test_blocks_declared_pkg_size_mismatch(monkeypatch):
+    class Reader:
+        total_size = 123456
+
+    monkeypatch.setattr(sync, "DeepStorageRangeReader", lambda url: Reader())
+    monkeypatch.setattr(sync, "extract_ps4_metadata", lambda reader: {
+        "pkg_header": {"bounds_valid": True, "size_matches_remote": False},
+        "package_size": 123456,
+        "title_id": "CUSA12345",
+        "version": "01.00",
+        "name": "Example Game",
+    })
+    item = {
+        "name": "Example Game [US] [1.00].pkg",
+        "download_url": "https://share.deepstorage.dev/" + "f" * 32 + "/Example.pkg",
+        "size_bytes": 123456,
+        "folder_path": "PS4/Games/",
+    }
+    with pytest.raises(ValueError, match="declared size does not match"):
+        sync.inspect_file(item, "PS4/Games/")
