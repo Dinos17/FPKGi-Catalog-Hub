@@ -4,22 +4,31 @@ from tools.deepstorage_scanner import DeepStorageScanner, ScanError, SHARE_USERN
 
 
 class FakeResponse:
-    status_code = 200
-    def __init__(self, payload): self.payload = payload
+    def __init__(self, payload, url, status_code=200):
+        self.payload = payload
+        self.url = url
+        self.status_code = status_code
     def json(self): return self.payload
 
 
 class FakeSession:
-    def __init__(self, listings):
+    def __init__(self, listings, *, status_code=200, response_url=None):
         self.listings = listings
+        self.status_code = status_code
+        self.response_url = response_url
         self.headers = {}
         self.calls = []
-    def get(self, url, *, params, timeout):
-        self.calls.append((url, dict(params), timeout))
+    def get(self, url, *, params, timeout, allow_redirects):
+        self.calls.append((url, dict(params), timeout, allow_redirects))
+        assert allow_redirects is False
         key = (params["path"], params["offset"])
         if key not in self.listings:
             raise AssertionError(f"unexpected listing request: {key}")
-        return FakeResponse(self.listings[key])
+        return FakeResponse(
+            self.listings[key],
+            self.response_url or url,
+            status_code=self.status_code,
+        )
 
 
 def listing(files=(), folders=(), has_more=False, next_offset=None):
@@ -70,7 +79,7 @@ def test_paginates_each_folder_and_discovers_child_folders_once():
 
 
 def test_rejects_folder_traversal_and_nested_path_as_child():
-    for bad in ("../outside", "/outside/", "Games/child", ".", "..", ""):
+    for bad in ("../outside", "/outside/", "Games/child", ".", "..", "", "%2e%2e", "%252e%252e", "Games%2fchild", "%5coutside"):
         session = FakeSession({("PS4/", 0): listing(folders=[bad])})
         with pytest.raises(ScanError):
             DeepStorageScanner(session=session).run()
@@ -94,6 +103,26 @@ def test_rejects_file_url_outside_deepstorage_host():
     with pytest.raises(ScanError, match="approved DeepStorage host"):
         DeepStorageScanner(session=session).run()
 
+
+
+def test_listing_redirects_are_not_followed():
+    session = FakeSession(
+        {("PS4/", 0): listing()},
+        status_code=302,
+        response_url="https://evil.example/redirected",
+    )
+    with pytest.raises(ScanError, match="returned HTTP 302"):
+        DeepStorageScanner(session=session).run()
+    assert session.calls[0][3] is False
+
+
+def test_rejects_listing_response_from_unapproved_host():
+    session = FakeSession(
+        {("PS4/", 0): listing()},
+        response_url="https://evil.example/listing",
+    )
+    with pytest.raises(ScanError, match="outside the approved HTTPS host"):
+        DeepStorageScanner(session=session).run()
 
 def test_folder_safety_limit_is_global():
     session = FakeSession({
