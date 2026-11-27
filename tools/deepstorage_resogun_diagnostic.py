@@ -117,10 +117,12 @@ def find_sfo_entry(table: bytes, entry_count: int) -> tuple[int, int]:
     found: tuple[int, int] | None = None
     for index in range(entry_count):
         base = index * 32
-        entry_id, _flags, _flags2, _padding, data_offset, data_size = struct.unpack_from(
+        entry_id, _name_offset, flags1, _flags2, data_offset, data_size = struct.unpack_from(
             ">IIIIII8x", table, base
         )
         if entry_id == 0x1000:
+            if flags1 & 0x80000000:
+                raise DiagnosticError("PARAM.SFO is encrypted; refusing to decrypt or guess")
             if found is not None:
                 raise DiagnosticError("PKG contains duplicate PARAM.SFO table entries")
             found = (data_offset, data_size)
