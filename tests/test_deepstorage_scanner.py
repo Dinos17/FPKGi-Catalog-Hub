@@ -1,3 +1,5 @@
+import pytest
+
 from tools.deepstorage_scanner import DeepStorageScanner, ScanError, SHARE_USERNAME
 
 
@@ -68,7 +70,7 @@ def test_paginates_each_folder_and_discovers_child_folders_once():
 
 
 def test_rejects_folder_traversal_and_nested_path_as_child():
-    for bad in ("../outside", "Games/child", ".", "..", ""):
+    for bad in ("../outside", "/outside/", "Games/child", ".", "..", ""):
         session = FakeSession({("PS4/", 0): listing(folders=[bad])})
         with pytest.raises(ScanError):
             DeepStorageScanner(session=session).run()
@@ -102,5 +104,3 @@ def test_folder_safety_limit_is_global():
     with pytest.raises(ScanError, match="Folder-count safety limit"):
         DeepStorageScanner(session=session, max_folders=2).run()
 
-
-import pytest
