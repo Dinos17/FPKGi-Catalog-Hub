@@ -28,11 +28,12 @@ def make_sfo(values):
 def test_independent_sfo_parser_reads_app_ver_and_identity():
     parsed = diagnostic.parse_sfo_independent(make_sfo({
         "TITLE": "RESOGUN", "TITLE_ID": "CUSA00038",
-        "APP_VER": "01.00", "SYSTEM_VER": "09.000",
+        "APP_VER": "01.00", "VERSION": "01.10", "SYSTEM_VER": "09.000",
     }))
     assert parsed["TITLE"] == "RESOGUN"
     assert parsed["TITLE_ID"] == "CUSA00038"
     assert parsed["APP_VER"] == "01.00"
+    assert parsed["VERSION"] == "01.10"
 
 
 def test_independent_sfo_parser_rejects_bad_offsets():
