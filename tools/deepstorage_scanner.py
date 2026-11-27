@@ -56,6 +56,8 @@ def _child_folder_path(raw: Any, parent: str) -> str:
 
     candidate = value.strip("/")
     parent_base = parent.rstrip("/")
+    if (value.startswith("/") or value.endswith("/")) and not candidate.startswith(parent_base + "/"):
+        raise ScanError("Folder path does not belong to the requested parent")
     if not candidate:
         raise ScanError("Listing contains an empty folder path")
     if candidate.startswith(parent_base + "/"):
