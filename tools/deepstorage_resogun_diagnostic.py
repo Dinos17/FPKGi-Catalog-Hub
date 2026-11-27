@@ -166,6 +166,7 @@ def parse_sfo_independent(data: bytes) -> dict[str, str | int]:
             or key_base > value_base or value_base > len(data)):
         raise DiagnosticError("PARAM.SFO key/value tables are out of bounds")
     fields: dict[str, str | int] = {}
+    seen_audited_keys: set[str] = set()
     for index in range(count):
         pos = index_base + index * 16
         key_rel = struct.unpack_from("<H", data, pos)[0]
@@ -181,6 +182,10 @@ def parse_sfo_independent(data: bytes) -> dict[str, str | int]:
         if key_end < 0:
             raise DiagnosticError("PARAM.SFO key is not NUL-terminated")
         key = data[key_pos:key_end].decode("ascii", errors="strict")
+        if key in {"CATEGORY", "VERSION", "APP_VER"}:
+            if key in seen_audited_keys:
+                raise DiagnosticError(f"PARAM.SFO contains duplicate {key} entries")
+            seen_audited_keys.add(key)
         raw_value = data[value_pos:value_pos + used_length]
         if format_code == 0x0204:
             value: str | int = raw_value.split(b"\0", 1)[0].decode("utf-8", errors="strict")
@@ -188,8 +193,6 @@ def parse_sfo_independent(data: bytes) -> dict[str, str | int]:
             value = struct.unpack("<I", raw_value)[0]
         else:
             continue
-        if key in {"CATEGORY", "VERSION", "APP_VER"} and key in fields:
-            raise DiagnosticError(f"PARAM.SFO contains duplicate {key} entries")
         fields[key] = value
     return fields
 
