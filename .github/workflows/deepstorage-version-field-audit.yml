@@ -53,7 +53,7 @@ jobs:
               out.write(f"- Status: **{report['status']}**\n")
               out.write(f"- Packages: **{report['packages_succeeded']}/{report['packages_targeted']}**\n")
               out.write(f"- Completed: **{report['packages_completed']}/{report['packages_targeted']}**\n")
-              out.write(f"- Total bytes fetched: **{report['total_bytes_requested']}**\n")
+              out.write(f"- Total bytes fetched: **{report['total_bytes_read']}**\n")
               out.write("- Full package downloads: **None**\n")
               out.write("- Catalog modifications: **None**\n\n")
               out.write("| Package | Filename | CATEGORY | VERSION | APP_VER | Result |\n")
