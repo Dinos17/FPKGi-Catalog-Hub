@@ -211,3 +211,30 @@ def test_ps5_packages_are_inventory_only_and_never_inspected(monkeypatch, tmp_pa
     assert report["counts"]["unsupported"] == 1
     assert report["catalog_write_performed"] is False
     assert json.loads((root / "ps4" / "games.json").read_text())["DATA"] == {}
+
+
+
+def test_version_conflict_report_includes_filename_and_param_sfo_values(monkeypatch):
+    class Reader:
+        total_size = 100
+
+    monkeypatch.setattr(sync, "DeepStorageRangeReader", lambda url: Reader())
+    monkeypatch.setattr(sync, "extract_ps4_metadata", lambda reader: {
+        "pkg_header": {"bounds_valid": True, "size_matches_remote": True},
+        "package_size": 100,
+        "title_id": "CUSA12345",
+        "version": "01.00",
+        "name": "Example Game",
+    })
+    item = {
+        "name": "Example Game - [US] [EN] [1.10].pkg",
+        "download_url": "https://share.deepstorage.dev/" + "a" * 32 + "/Example.pkg",
+        "size_bytes": 100,
+        "folder_path": "PS4/Games/",
+    }
+
+    with pytest.raises(
+        ValueError,
+        match=r"filename version 1\.10 conflicts with PARAM\.SFO APP_VER 01\.00",
+    ):
+        sync.inspect_file(item, "PS4/Games/")
