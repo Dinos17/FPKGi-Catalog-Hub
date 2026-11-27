@@ -52,6 +52,8 @@ def test_markdown_cell_neutralizes_untrusted_multiline_metadata():
     assert "\\|" in rendered
     assert "\\[" in rendered
     assert "\\:" in rendered
+    assert "\\\\<" in audit.markdown_cell("<img src=x onerror=alert(1)>")
+    assert "\\\\&" in audit.markdown_cell("&lt;script&gt;")
 
 
 def test_duplicate_audited_sfo_fields_are_rejected():
