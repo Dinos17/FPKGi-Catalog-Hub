@@ -105,11 +105,11 @@ class BoundedRangeReader:
             for chunk in response.iter_content(chunk_size=min(65536, length)):
                 if chunk:
                     body.extend(chunk)
+                    self.bytes_read += len(chunk)
                     if len(body) > length:
                         raise DiagnosticError("Range response exceeded requested byte count")
             if len(body) != length:
                 raise DiagnosticError("Range response body length did not match requested range")
-            self.bytes_read += len(body)
             self.ranges.append({"start": start, "end": end, "bytes": len(body)})
             return bytes(body)
         except requests.RequestException as exc:
