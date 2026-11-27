@@ -2,31 +2,41 @@ name: DeepStorage Scanner Validation
 
 on:
   workflow_dispatch:
+    inputs:
+      share_username:
+        description: Public-share username
+        required: true
+        default: fallen
+        type: string
+      folder_path:
+        description: Relative folder path in the public share
+        required: true
+        default: PS4/Games/
+        type: string
   push:
     branches:
       - main
     paths:
       - ".github/workflows/deepstorage-scan-test.yml"
+      - "tools/deepstorage_scanner.py"
+      - "tools/deepstorage_catalog_compare.py"
 
 permissions:
   contents: read
 
+concurrency:
+  group: deepstorage-scanner-validation
+  cancel-in-progress: false
+
 jobs:
-  scan:
+  validate:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 15
     steps:
-      - name: Checkout main catalog and preservation code
+      - name: Checkout main repository
         uses: actions/checkout@v4
         with:
           ref: main
-          path: catalog
-
-      - name: Checkout scanner tools
-        uses: actions/checkout@v4
-        with:
-          ref: feature/deepstorage-scanner
-          path: scanner-tools
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -36,120 +46,26 @@ jobs:
       - name: Install scanner dependency
         run: python -m pip install requests
 
-      - name: Run read-only scan
+      - name: Run read-only DeepStorage inventory
+        env:
+          SHARE_USERNAME: ${{ inputs.share_username || 'fallen' }}
+          SHARE_PATH: ${{ inputs.folder_path || 'PS4/Games/' }}
         run: |
-          python scanner-tools/tools/deepstorage_scanner.py \
-            --username fallen \
-            --path "PS4/Games/" \
+          python tools/deepstorage_scanner.py \
+            --username "$SHARE_USERNAME" \
+            --path "$SHARE_PATH" \
             --output reports/deepstorage-scan.json
 
-      - name: Read one PKG remotely using HTTP Range
+      - name: Compare inventory with main catalogs
         run: |
-          python scanner-tools/tools/pkg_remote_metadata.py \
-            --source "https://share.deepstorage.dev/91be0fdbedb6a37d47530386c9d135e4/RESOGUN%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.10%5D.pkg" \
-            --platform PS4 \
-            --output reports/deepstorage-resogun-metadata.json
-
-      - name: Read DmC PKG metadata remotely using HTTP Range
-        run: |
-          python scanner-tools/tools/pkg_remote_metadata.py \
-            --source "https://share.deepstorage.dev/16773e155f681f88d210088c77f6e816/DmC%20Devil%20May%20Cry%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.03%5D.pkg" \
-            --platform PS4 \
-            --output reports/deepstorage-dmc-metadata.json
-          echo "===== DMC PKG METADATA JSON ====="
-          cat reports/deepstorage-dmc-metadata.json
-          echo "===== END DMC PKG METADATA JSON ====="
-
-      - name: Compare scan with FPKGi catalogs
-        run: |
-          CATALOG_COMMIT="$(git -C catalog rev-parse HEAD)"
-          python scanner-tools/tools/deepstorage_catalog_compare.py \
+          CATALOG_COMMIT="$(git rev-parse HEAD)"
+          python tools/deepstorage_catalog_compare.py \
             --scan-report reports/deepstorage-scan.json \
-            --catalog-root catalog \
+            --catalog-root . \
             --catalog-commit "$CATALOG_COMMIT" \
             --output reports/deepstorage-comparison.json
 
-      - name: Verify DmC remote sizes with HTTP Range requests
-        if: always()
-        run: |
-          python - <<'PY'
-          import json
-          import re
-          from urllib.parse import urlparse, urljoin
-          from pathlib import Path
-          import requests
-
-          targets = [
-              {
-                  "name": "DeepStorage DmC EU 1.03",
-                  "url": "https://share.deepstorage.dev/16773e155f681f88d210088c77f6e816/DmC%20Devil%20May%20Cry%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.03%5D.pkg",
-                  "listing_size_bytes": 3648601580,
-              },
-          ]
-
-          def allowed(host):
-              return (host or "").lower().rstrip(".") == "share.deepstorage.dev"
-
-          results = []
-          for item in targets:
-              initial_host = urlparse(item["url"]).hostname
-              current = item["url"]
-              result = {key: value for key, value in item.items() if key != "url"}
-              result["url"] = item["url"]
-              result["http_status"] = None
-              result["server_size_bytes"] = None
-              result["content_range"] = None
-              result["content_length"] = None
-              result["accept_ranges"] = None
-              result["final_url"] = None
-              result["error"] = None
-              try:
-                  for redirect_count in range(4):
-                      parsed = urlparse(current)
-                      if parsed.scheme != "https" or not allowed(parsed.hostname):
-                          raise RuntimeError(f"Redirect blocked: host/scheme not allowlisted ({parsed.hostname})")
-                      response = requests.get(
-                          current, headers={"Range": "bytes=0-0"},
-                          stream=True, allow_redirects=False, timeout=(15, 30)
-                      )
-                      if response.status_code in (301, 302, 303, 307, 308):
-                          location = response.headers.get("Location")
-                          response.close()
-                          if not location:
-                              raise RuntimeError("Redirect response missing Location")
-                          current = urljoin(current, location)
-                          continue
-                      result["http_status"] = response.status_code
-                      result["final_url"] = current
-                      result["content_range"] = response.headers.get("Content-Range")
-                      result["content_length"] = response.headers.get("Content-Length")
-                      result["accept_ranges"] = response.headers.get("Accept-Ranges")
-                      if response.status_code == 206:
-                          match = re.fullmatch(r"bytes\s+0-0/(\d+)", response.headers.get("Content-Range", ""), re.I)
-                          if not match:
-                              raise RuntimeError("206 response had unexpected Content-Range")
-                          result["server_size_bytes"] = int(match.group(1))
-                          # Read at most one byte, then close; never stream the PKG.
-                          response.raw.read(1)
-                      else:
-                          raise RuntimeError(f"Expected HTTP 206 for one-byte Range; received {response.status_code}")
-                      response.close()
-                      break
-                  else:
-                      raise RuntimeError("Too many redirects")
-              except Exception as exc:
-                  result["error"] = str(exc)
-              results.append(result)
-
-          Path("reports").mkdir(exist_ok=True)
-          Path("reports/deepstorage-remote-size-check.json").write_text(
-              json.dumps({"read_only": True, "full_package_downloaded": False, "results": results}, indent=2),
-              encoding="utf-8"
-          )
-          print(json.dumps(results, indent=2))
-          PY
-
-      - name: Display scan reports in the workflow summary
+      - name: Display read-only validation summary
         if: always()
         run: |
           python - <<'PY'
@@ -158,63 +74,41 @@ jobs:
           from pathlib import Path
 
           summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
-          reports = sorted(Path("reports").glob("deepstorage-*.json"))
           with summary.open("a", encoding="utf-8") as output:
-              output.write("# DeepStorage scan results\n\n")
-              if not reports:
-                  output.write("No report files were generated. Check the job logs for the failure.\n")
-              for report in reports:
-                  output.write(f"## {report.name}\n\n")
-                  try:
-                      data = json.loads(report.read_text(encoding="utf-8"))
-                      if report.name == "deepstorage-remote-size-check.json":
-                          output.write("| File | HTTP | Server size | Listed/catalog size | Difference | Accept-Ranges | Error |\\n|---|---:|---:|---:|---:|---|---|\\n")
-                          for item in data.get("results", []):
-                              server_size = item.get("server_size_bytes")
-                              reference_size = item.get("listing_size_bytes", item.get("catalog_size_bytes"))
-                              delta = server_size - reference_size if isinstance(server_size, int) and isinstance(reference_size, int) else None
-                              output.write(
-                                  f"| {item.get('name')} | {item.get('http_status') or '—'} | "
-                                  f"{server_size:,} | {reference_size:,} | "
-                                  f"{delta:+,} | {item.get('accept_ranges') or '—'} | "
-                                  f"{item.get('error') or '—'} |\\n"
-                                  if isinstance(server_size, int) and isinstance(reference_size, int)
-                                  else f"| {item.get('name')} | {item.get('http_status') or '—'} | {server_size or '—'} | {reference_size or '—'} | — | {item.get('accept_ranges') or '—'} | {item.get('error') or 'Size unavailable'} |\\n"
-                              )
-                          output.write("\\nOnly a one-byte Range request is used; full PKG downloads are not performed.\\n\\n")
-                      elif report.name == "deepstorage-comparison.json":
-                          counts = data.get("counts", {})
-                          output.write("| Result | Count |\n|---|---:|\n")
-                          for key, value in counts.items():
-                              output.write(f"| {key.replace('_', ' ')} | {value} |\n")
-                          output.write("\n### Items requiring review\n\n")
-                          flagged = [
-                              row for row in data.get("results", [])
-                              if row.get("status") not in {"matched"}
-                          ]
-                          if not flagged:
-                              output.write("No flagged items.\n\n")
-                          for row in flagged:
-                              output.write(f"**{row.get('status', 'unknown')}: {row.get('name', 'unnamed')}**\n\n")
-                              output.write(f"- Reason: {row.get('reason', 'Not provided')}\n")
-                              differences = row.get("metadata_differences", [])
-                              output.write(f"- Differences: {', '.join(differences) or 'None'}\n")
-                              if "size_bytes" in differences:
-                                  source_size = (row.get("source_metadata") or {}).get("size_bytes")
-                                  catalog_size = (row.get("catalog_metadata") or {}).get("size")
-                                  if isinstance(source_size, int) and isinstance(catalog_size, int):
-                                      delta = source_size - catalog_size
-                                      output.write(f"- DeepStorage size: {source_size:,} bytes\n")
-                                      output.write(f"- Catalog size: {catalog_size:,} bytes\n")
-                                      output.write(f"- Size difference: {delta:+,} bytes\n")
-                                  else:
-                                      output.write("- Size comparison: one or both size values are unavailable\n")
-                              output.write(f"- Source: {row.get('deepstorage_url', 'Not available')}\n")
-                              output.write(f"- Catalog: {row.get('catalog_url') or 'No unique catalog match'}\n\n")
-                      else:
-                          output.write("```json\n")
-                          output.write(json.dumps(data, indent=2, ensure_ascii=False))
-                          output.write("\n```\n\n")
-                  except Exception as error:
-                      output.write(f"Could not read report: {error}\n\n")
+              output.write("# DeepStorage read-only validation\n\n")
+              scan_path = Path("reports/deepstorage-scan.json")
+              compare_path = Path("reports/deepstorage-comparison.json")
+              if scan_path.is_file():
+                  scan = json.loads(scan_path.read_text(encoding="utf-8"))
+                  output.write(f"- Scan complete: **{scan.get('scan_complete')}**\n")
+                  output.write(f"- Folder: `{scan.get('folder_path')}`\n")
+                  output.write(f"- Files: **{scan.get('file_count', 0)}**\n")
+                  output.write(f"- Listing pages: **{scan.get('listing_page_count', 0)}**\n")
+                  output.write("- Package binaries downloaded: **No**\n")
+                  output.write("- Catalog writes: **No**\n\n")
+              else:
+                  output.write("Scan report was not generated.\n\n")
+              if compare_path.is_file():
+                  report = json.loads(compare_path.read_text(encoding="utf-8"))
+                  output.write("## Catalog comparison\n\n")
+                  output.write("| Status | Count |\n|---|---:|\n")
+                  for key, value in report.get("counts", {}).items():
+                      output.write(f"| {key.replace('_', ' ')} | {value} |\n")
+                  output.write("\n")
+                  output.write("| File | Status | Reason |\n|---|---|---|\n")
+                  for row in report.get("results", []):
+                      name = str(row.get("name", "unnamed")).replace("|", "\\|")
+                      reason = str(row.get("reason", "")).replace("|", "\\|").replace("\n", " ")
+                      output.write(f"| {name} | {row.get('status', 'unknown')} | {reason} |\n")
+              else:
+                  output.write("Catalog comparison report was not generated.\n")
           PY
+
+      - name: Upload validation reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepstorage-validation-reports
+          path: reports/
+          if-no-files-found: warn
+          retention-days: 14
