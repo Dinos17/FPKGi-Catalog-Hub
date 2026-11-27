@@ -252,6 +252,8 @@ def parse_sfo(data: bytes) -> dict[str, Any]:
             value = raw.split(b"\0", 1)[0].decode("utf-8", errors="strict")
         else:
             raise MetadataError(f"Unsupported PARAM.SFO value format 0x{fmt:04X}")
+        if key in {"CATEGORY", "VERSION", "APP_VER"} and key in result:
+            raise MetadataError(f"PARAM.SFO contains duplicate {key} entries")
         result[key] = value
     return result
 

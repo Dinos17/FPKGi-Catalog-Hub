@@ -9,14 +9,15 @@ import pkg_remote_metadata as pkg
 
 
 def make_sfo(values):
+    values = list(values.items()) if isinstance(values, dict) else list(values)
     keys = bytearray()
     data = bytearray()
     indexes = bytearray()
     key_offsets = []
-    for key, value in values.items():
+    for key, value in values:
         key_offsets.append(len(keys))
         keys.extend(key.encode("ascii") + b"\0")
-    for (key, value), key_offset in zip(values.items(), key_offsets):
+    for (key, value), key_offset in zip(values, key_offsets):
         raw = value.encode("utf-8") + b"\0"
         indexes.extend(struct.pack("<HHIII", key_offset, 0x0204, len(raw), len(raw), len(data)))
         data.extend(raw)
@@ -74,6 +75,15 @@ def test_parse_sfo_reads_strings():
     assert fields["TITLE_ID"] == "CUSA00466"
     assert fields["APP_VER"] == "01.02"
     assert fields["SYSTEM_VER"] == "09.000"
+
+
+@pytest.mark.parametrize("duplicate_key", ["CATEGORY", "VERSION", "APP_VER"])
+def test_parse_sfo_rejects_duplicate_version_critical_fields(duplicate_key):
+    with pytest.raises(pkg.MetadataError, match=f"duplicate {duplicate_key}"):
+        pkg.parse_sfo(make_sfo([
+            (duplicate_key, "gd" if duplicate_key == "CATEGORY" else "01.00"),
+            (duplicate_key, "gp" if duplicate_key == "CATEGORY" else "02.00"),
+        ]))
 
 
 def test_rejects_bad_sfo_magic_and_out_of_bounds():

@@ -167,7 +167,18 @@ def inspect_file(item: dict[str, Any], scan_folder: str) -> dict[str, Any]:
         raise ValueError("DeepStorage listing size and Range-reported package size disagree")
 
     title_id = extracted.get("title_id")
-    version = extracted.get("version")
+    sfo_fields = extracted.get("sfo_fields")
+    if not isinstance(sfo_fields, dict):
+        raise ValueError("PARAM.SFO fields are unavailable; version validation cannot proceed")
+    pkg_category = sfo_fields.get("CATEGORY", extracted.get("category"))
+    # PS4 base-game packages (CATEGORY=gd) store their release version in
+    # VERSION. APP_VER is commonly 01.00 and is not the package release version.
+    # Other categories retain the existing APP_VER check until independently
+    # validated category mappings are available.
+    version_field = "VERSION" if pkg_category == "gd" else "APP_VER"
+    version = sfo_fields.get(version_field)
+    if version is None and version_field == "APP_VER":
+        version = extracted.get("version")
     raw_name = extracted.get("name")
     region = filename.get("region")
     if not isinstance(title_id, str) or not re.fullmatch(r"[A-Z]{4}\d{5}", title_id, re.I):
@@ -179,7 +190,7 @@ def inspect_file(item: dict[str, Any], scan_folder: str) -> dict[str, Any]:
     if filename.get("version") and _normalized_version(filename["version"]) != _normalized_version(version):
         raise ValueError(
             f"filename version {filename['version']} conflicts with "
-            f"PARAM.SFO APP_VER {version}"
+            f"PARAM.SFO {version_field} {version}"
         )
     if not isinstance(raw_name, str) or not raw_name.strip():
         raise ValueError("PARAM.SFO did not provide a package title")
@@ -195,6 +206,8 @@ def inspect_file(item: dict[str, Any], scan_folder: str) -> dict[str, Any]:
         "normalized_title": normalize_title(raw_name),
         "region": region,
         "version": version,
+        "pkg_category": pkg_category,
+        "version_field": version_field,
         "size": listed_size,
         "min_fw": extracted.get("min_fw"),
         "pkg_header": header,
