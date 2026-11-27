@@ -46,6 +46,7 @@ class BoundedRangeReader:
             "User-Agent": "FPKGi-RESOGUN-SFO-Diagnostic/1.0",
         })
         self.total_size: int | None = None
+        self.validator: tuple[str, str] | None = None
         self.bytes_read = 0
         self.ranges: list[dict[str, int]] = []
 
@@ -55,8 +56,11 @@ class BoundedRangeReader:
         end = start + length - 1
         response = None
         try:
+            request_headers = {"Range": f"bytes={start}-{end}"}
+            if self.validator is not None:
+                request_headers["If-Range"] = self.validator[1]
             response = self.session.get(
-                self.url, headers={"Range": f"bytes={start}-{end}"},
+                self.url, headers=request_headers,
                 timeout=TIMEOUT, allow_redirects=False, stream=True,
             )
             if response.status_code != 206:
@@ -80,16 +84,32 @@ class BoundedRangeReader:
                 raise DiagnosticError("Server returned a different or invalid byte range")
             if self.total_size is not None and total != self.total_size:
                 raise DiagnosticError("Package size changed between Range requests")
+            etag = response.headers.get("ETag")
+            last_modified = response.headers.get("Last-Modified")
+            if self.validator is None:
+                if etag and not etag.lstrip().startswith("W/"):
+                    self.validator = ("ETag", etag)
+                elif last_modified:
+                    self.validator = ("Last-Modified", last_modified)
+                else:
+                    raise DiagnosticError(
+                        "Range response has no strong ETag or Last-Modified validator"
+                    )
+            else:
+                validator_name, validator_value = self.validator
+                response_validator = response.headers.get(validator_name)
+                if response_validator != validator_value:
+                    raise DiagnosticError("Package validator changed between Range requests")
             self.total_size = total
             body = bytearray()
             for chunk in response.iter_content(chunk_size=min(65536, length)):
                 if chunk:
                     body.extend(chunk)
+                    self.bytes_read += len(chunk)
                     if len(body) > length:
                         raise DiagnosticError("Range response exceeded requested byte count")
             if len(body) != length:
                 raise DiagnosticError("Range response body length did not match requested range")
-            self.bytes_read += len(body)
             self.ranges.append({"start": start, "end": end, "bytes": len(body)})
             return bytes(body)
         except requests.RequestException as exc:
@@ -146,6 +166,7 @@ def parse_sfo_independent(data: bytes) -> dict[str, str | int]:
             or key_base > value_base or value_base > len(data)):
         raise DiagnosticError("PARAM.SFO key/value tables are out of bounds")
     fields: dict[str, str | int] = {}
+    seen_audited_keys: set[str] = set()
     for index in range(count):
         pos = index_base + index * 16
         key_rel = struct.unpack_from("<H", data, pos)[0]
@@ -161,6 +182,10 @@ def parse_sfo_independent(data: bytes) -> dict[str, str | int]:
         if key_end < 0:
             raise DiagnosticError("PARAM.SFO key is not NUL-terminated")
         key = data[key_pos:key_end].decode("ascii", errors="strict")
+        if key in {"CATEGORY", "VERSION", "APP_VER"}:
+            if key in seen_audited_keys:
+                raise DiagnosticError(f"PARAM.SFO contains duplicate {key} entries")
+            seen_audited_keys.add(key)
         raw_value = data[value_pos:value_pos + used_length]
         if format_code == 0x0204:
             value: str | int = raw_value.split(b"\0", 1)[0].decode("utf-8", errors="strict")
