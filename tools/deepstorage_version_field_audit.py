@@ -108,7 +108,7 @@ def build_report(results: list[dict[str, object]], total_bytes: int, complete: b
 
 def write_report(path: Path, report: dict[str, object]) -> None:
     temporary = path.with_suffix(path.suffix + ".tmp")
-    temporary.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    temporary.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
     temporary.replace(path)
 
 def main() -> int:
