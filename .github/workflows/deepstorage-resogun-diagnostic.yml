@@ -53,7 +53,9 @@ jobs:
               result = report.get("result", {})
               if result:
                   output.write("- Filename version: **1.10**\n")
-                  output.write(f"- Independent PARAM.SFO APP_VER: **{result.get('app_ver')}**\n")
+                  output.write(f"- PARAM.SFO CATEGORY: **{result.get('category')}**\n")
+                  output.write(f"- PARAM.SFO VERSION: **{result.get('version')}**\n")
+                  output.write(f"- PARAM.SFO APP_VER: **{result.get('app_ver')}**\n")
                   output.write(f"- Previous extractor APP_VER: **{result.get('previous_catalog_sync_extractor_app_ver')}**\n")
                   output.write(f"- Independent result matches previous extractor: **{result.get('matches_previous_extractor')}**\n")
                   output.write(f"- Package size: **{result.get('package_size_bytes')} bytes**\n")
