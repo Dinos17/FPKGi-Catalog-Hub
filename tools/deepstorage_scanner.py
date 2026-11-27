@@ -21,6 +21,7 @@ ROOT_FOLDERS = ("PS4/", "PS5/")
 MAX_PAGES = 1000
 MAX_FILES = 50000
 MAX_FOLDERS = 5000
+MAX_FOLDER_DEPTH = 64
 TIMEOUT = (15, 30)
 ALLOWED_HOST = "share.deepstorage.dev"
 
@@ -111,6 +112,7 @@ class DeepStorageScanner:
 
     def run(self) -> dict[str, Any]:
         pending = deque(ROOT_FOLDERS)
+        scheduled_folders: set[str] = set(ROOT_FOLDERS)
         visited_folders: set[str] = set()
         seen_links: set[str] = set()
         files: list[dict[str, Any]] = []
@@ -140,7 +142,12 @@ class DeepStorageScanner:
                         child = _child_folder_path(raw_folder, folder_path)
                         if not any(child.startswith(root) for root in ROOT_FOLDERS):
                             raise ScanError("Folder listing escaped the fixed PS4/ and PS5/ roots")
-                        if child not in visited_folders:
+                        if child not in scheduled_folders:
+                            if len(child.strip("/").split("/")) > MAX_FOLDER_DEPTH:
+                                raise ScanError("Folder-depth safety limit reached; scan incomplete")
+                            scheduled_folders.add(child)
+                            if len(scheduled_folders) > self.max_folders:
+                                raise ScanError("Folder-count safety limit reached; scan incomplete")
                             pending.append(child)
                     first_page = False
 
