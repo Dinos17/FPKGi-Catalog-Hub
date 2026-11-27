@@ -192,6 +192,7 @@ def extract_diagnostic(reader: BoundedRangeReader) -> dict[str, object]:
         "title": fields.get("TITLE"),
         "title_id": fields.get("TITLE_ID"),
         "app_ver": app_ver,
+        "version": fields.get("VERSION"),
         "system_ver": fields.get("SYSTEM_VER"),
         "category": fields.get("CATEGORY"),
         "previous_catalog_sync_extractor_app_ver": PREVIOUS_EXTRACTOR_APP_VER,
