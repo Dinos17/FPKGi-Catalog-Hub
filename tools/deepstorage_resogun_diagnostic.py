@@ -46,6 +46,7 @@ class BoundedRangeReader:
             "User-Agent": "FPKGi-RESOGUN-SFO-Diagnostic/1.0",
         })
         self.total_size: int | None = None
+        self.validator: tuple[str, str] | None = None
         self.bytes_read = 0
         self.ranges: list[dict[str, int]] = []
 
@@ -55,8 +56,11 @@ class BoundedRangeReader:
         end = start + length - 1
         response = None
         try:
+            request_headers = {"Range": f"bytes={start}-{end}"}
+            if self.validator is not None:
+                request_headers["If-Range"] = self.validator[1]
             response = self.session.get(
-                self.url, headers={"Range": f"bytes={start}-{end}"},
+                self.url, headers=request_headers,
                 timeout=TIMEOUT, allow_redirects=False, stream=True,
             )
             if response.status_code != 206:
@@ -80,6 +84,22 @@ class BoundedRangeReader:
                 raise DiagnosticError("Server returned a different or invalid byte range")
             if self.total_size is not None and total != self.total_size:
                 raise DiagnosticError("Package size changed between Range requests")
+            etag = response.headers.get("ETag")
+            last_modified = response.headers.get("Last-Modified")
+            if self.validator is None:
+                if etag and not etag.lstrip().startswith("W/"):
+                    self.validator = ("ETag", etag)
+                elif last_modified:
+                    self.validator = ("Last-Modified", last_modified)
+                else:
+                    raise DiagnosticError(
+                        "Range response has no strong ETag or Last-Modified validator"
+                    )
+            else:
+                validator_name, validator_value = self.validator
+                response_validator = response.headers.get(validator_name)
+                if response_validator != validator_value:
+                    raise DiagnosticError("Package validator changed between Range requests")
             self.total_size = total
             body = bytearray()
             for chunk in response.iter_content(chunk_size=min(65536, length)):
@@ -168,6 +188,8 @@ def parse_sfo_independent(data: bytes) -> dict[str, str | int]:
             value = struct.unpack("<I", raw_value)[0]
         else:
             continue
+        if key in {"CATEGORY", "VERSION", "APP_VER"} and key in fields:
+            raise DiagnosticError(f"PARAM.SFO contains duplicate {key} entries")
         fields[key] = value
     return fields
 
