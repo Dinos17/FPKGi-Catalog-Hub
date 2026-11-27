@@ -37,28 +37,34 @@ jobs:
           python - <<'PY'
           import json
           import os
+          import sys
           from pathlib import Path
+
+          sys.path.insert(0, "tools")
+          from deepstorage_version_field_audit import markdown_cell
 
           path = Path("reports/deepstorage-version-field-audit.json")
           with Path(os.environ["GITHUB_STEP_SUMMARY"]).open("a", encoding="utf-8") as out:
-              out.write("# DeepStorage PS4 version-field audit\n\n")
+              out.write("# DeepStorage PS4 version-field audit\\n\\n")
               if not path.is_file():
-                  out.write("No report produced; inspect the audit step.\n")
+                  out.write("No report produced; inspect the audit step.\\n")
                   raise SystemExit(0)
               report = json.loads(path.read_text(encoding="utf-8"))
-              out.write(f"- Status: **{report['status']}**\n")
-              out.write(f"- Packages: **{report['packages_succeeded']}/{report['packages_targeted']}**\n")
-              out.write(f"- Total bytes fetched: **{report['total_bytes_requested']}**\n")
-              out.write("- Full package downloads: **None**\n")
-              out.write("- Catalog modifications: **None**\n\n")
-              out.write("| Package | Filename | CATEGORY | VERSION | APP_VER | Result |\n")
-              out.write("|---|---:|---|---|---|---|\n")
+              out.write(f"- Status: **{report['status']}**\\n")
+              out.write(f"- Packages: **{report['packages_succeeded']}/{report['packages_targeted']}**\\n")
+              out.write(f"- Completed: **{report['packages_completed']}/{report['packages_targeted']}**\\n")
+              out.write(f"- Total bytes fetched: **{report['total_bytes_requested']}**\\n")
+              out.write("- Full package downloads: **None**\\n")
+              out.write("- Catalog modifications: **None**\\n\\n")
+              out.write("| Package | Filename | CATEGORY | VERSION | APP_VER | Result |\\n")
+              out.write("|---|---:|---|---|---|---|\\n")
               for item in report["results"]:
-                  out.write("| " + " | ".join(str(item.get(k) or "—").replace("|", "\\|") for k in (
+                  cells = [markdown_cell(item.get(k)) for k in (
                       "package", "filename_version", "category", "version", "app_ver", "status"
-                  )) + " |\n")
+                  )]
+                  out.write("| " + " | ".join(cells) + " |\\n")
                   if item.get("error"):
-                      out.write(f"\n- {item['package']}: {item['error']}\n")
+                      out.write(f"\\n- {markdown_cell(item['package'])}: {markdown_cell(item['error'])}\\n")
 
       - name: Upload audit report
         if: always()
