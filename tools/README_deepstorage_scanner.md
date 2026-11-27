@@ -1,8 +1,12 @@
 # DeepStorage scanner and catalog sync
 
-The DeepStorage workflow inventories a public share and can propose guarded
-catalog additions or source-URL updates. Catalog changes are never pushed
-directly to `main`: GitHub Actions creates or updates a pull request for review.
+The scanner is hardcoded to the public share
+[https://deepstorage.dev/fallen](https://deepstorage.dev/fallen). It recursively
+inventories every folder beneath `PS4/` and `PS5/`. There are no workflow
+inputs for changing the username or scan roots.
+
+The inventory is read-only. It does not upload, delete, move, or download
+package binaries. Catalog proposals are a separate, guarded stage.
 
 ## Local usage
 
@@ -12,62 +16,48 @@ Install the dependency:
 python3 -m pip install requests
 ```
 
-Scan the public `fallen` share's PS4 Games folder:
+Run the fixed-scope inventory:
 
 ```sh
-python3 tools/deepstorage_scanner.py \
-  --username fallen \
-  --path "PS4/Games/" \
-  --output reports/deepstorage-scan.json
+python3 tools/deepstorage_scanner.py --output reports/deepstorage-scan.json
 ```
 
-Folder paths are relative to the share root and cannot contain traversal
-components. The sync currently supports `PS4/Games/` and `PS4/DLC/`.
+The scanner paginates each folder, discovers immediate child folders from the
+first listing page, and recursively visits them. It enforces global limits for
+listing pages, folders, and files. Invalid paths, non-advancing pagination,
+malformed metadata, and links outside `share.deepstorage.dev` fail the scan
+closed.
 
 ## Catalog synchronization
 
 After a complete scan, the workflow runs
-`tools/deepstorage_catalog_sync.py`. For every PKG it:
+`tools/deepstorage_catalog_sync.py`.
 
-1. Validates that the source URL is HTTPS on the exact host
-   `share.deepstorage.dev`.
-2. Reads the PKG header, entry table, and `PARAM.SFO` through bounded HTTP
-   Range requests. Every redirect must remain on that exact host; there is no
-   full-package download fallback and no Archive.org request.
-3. Requires valid PKG structural bounds, agreement between the listing and
-   Range-reported package size, and agreement between filename identity tags
-   and extracted PARAM.SFO identity where both are available.
-4. Requires a valid title ID, package title, version, and filename region.
-5. Adds a new PS4 catalog entry when no existing identity matches.
-6. Replaces the source URL of a uniquely matched non-Mocha entry with the
-   DeepStorage URL, preserving existing metadata and filling only missing
-   supported fields.
+- PS4 Games and DLC packages may be considered for catalog changes only after
+  bounded Range-based PKG metadata extraction and structural validation.
+- PS5 packages are inventoried and reported as `unsupported`; they are not
+  sent to the PS4 extractor and cannot be registered or used to update catalogs.
+- Existing Mocha registrations are protected.
+- Ambiguous, conflicting, malformed, incomplete, and structurally invalid
+  packages are blocked.
+- Catalog changes are made only in the GitHub Actions working tree and proposed
+  through a pull request; the workflow never merges that pull request.
 
-The sync fails closed for incomplete scans, invalid package structure,
-conflicting metadata, ambiguous identities, duplicate scanned identities, and
-uncertain catalog matches. Existing Mocha registrations are never replaced.
-Packages that cannot establish a region from their filename are skipped rather
-than assigned an inferred region.
-
-New entries include title ID, region, title, version, package size, minimum
-firmware when available, and `download_source: "deepstorage"`. Release dates
-and cover URLs are omitted when they cannot be established from the package;
-the workflow does not invent them.
-
-The current validated metadata extractor supports PS4 only. PS5 packages are
-not registered by this workflow. It does not cryptographically verify package
-contents because no trusted checksum is supplied by the DeepStorage listing.
+The current validated metadata extractor supports PS4 only. PS5 catalog
+registration remains disabled until PS5 PKG parsing is independently validated.
+No package binaries are downloaded and no Archive.org requests are made.
 
 ## GitHub Actions
 
 `.github/workflows/deepstorage-scan.yml` supports manual dispatch and a weekly
-scheduled scan. The default folder is `PS4/Games/`; manual dispatch can select
-`PS4/DLC/`.
+scheduled scan. Both triggers always scan the same fixed roots: `PS4/` and
+`PS5/`, including all nested folders. The validation workflow uses the same
+fixed scope and is read-only.
 
-If catalog changes are produced, the workflow creates or updates the pull
-request branch `automation/deepstorage-catalog-sync` and opens a pull request.
-It never merges that pull request. Review the Actions summary and the
-`deepstorage-catalog-sync-reports` artifact before merging.
+If eligible PS4 catalog changes are produced, the workflow creates or updates
+the pull request branch `automation/deepstorage-catalog-sync` and opens a
+pull request. It never merges that pull request. Review the Actions summary and
+the `deepstorage-catalog-sync-reports` artifact before merging.
 
 The repository must allow GitHub Actions' `GITHUB_TOKEN` to create pull
 requests. If that repository setting is disabled, the catalog proposal step
@@ -75,12 +65,12 @@ will fail rather than pushing directly to `main`.
 
 ## Inventory and safety guarantees
 
-- A scan is complete only after all listing pages have been read successfully.
+- A scan is complete only after both root trees and every discovered nested
+  folder have been listed successfully.
 - Pagination must advance; malformed offsets and safety-limit violations are
   rejected.
-- Duplicate direct links are de-duplicated.
+- Duplicate direct links are de-duplicated across both platform trees.
 - The API does not guarantee a consistent point-in-time snapshot.
-- Catalog JSON is changed only in the workflow working tree and then proposed
-  through a pull request.
+- The scanner only requests listings for descendants of `PS4/` and `PS5/`.
 - No PKG binaries are downloaded, no files are uploaded or deleted, and no
   Mocha registration is overwritten.
