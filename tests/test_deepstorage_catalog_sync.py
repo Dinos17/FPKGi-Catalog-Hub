@@ -196,3 +196,18 @@ def test_metadata_error_blocks_bad_file_and_continues(monkeypatch, tmp_path):
     assert report["counts"]["added"] == 1
     assert "PKG header is truncated" in report["results"][0]["reason"]
     assert good["url"] in data["DATA"]
+
+
+def test_ps5_packages_are_inventory_only_and_never_inspected(monkeypatch, tmp_path):
+    root = _catalog_root(tmp_path)
+    def fail_if_inspected(item, folder):
+        raise AssertionError("PS5 package must not be sent to the PS4 extractor")
+    monkeypatch.setattr(sync, "inspect_file", fail_if_inspected)
+    report = sync.sync_catalog(_scan([{
+        "name": "PS5.pkg", "extension": "pkg",
+        "download_url": "https://share.deepstorage.dev/" + "7" * 32 + "/PS5.pkg",
+        "size_bytes": 123456, "folder_path": "PS5/Games/Nested/",
+    }]), root)
+    assert report["counts"]["unsupported"] == 1
+    assert report["catalog_write_performed"] is False
+    assert json.loads((root / "ps4" / "games.json").read_text())["DATA"] == {}
