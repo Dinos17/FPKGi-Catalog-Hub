@@ -214,27 +214,73 @@ def test_ps5_packages_are_inventory_only_and_never_inspected(monkeypatch, tmp_pa
 
 
 
-def test_version_conflict_report_includes_filename_and_param_sfo_values(monkeypatch):
-    class Reader:
-        total_size = 100
-
-    monkeypatch.setattr(sync, "DeepStorageRangeReader", lambda url: Reader())
-    monkeypatch.setattr(sync, "extract_ps4_metadata", lambda reader: {
-        "pkg_header": {"bounds_valid": True, "size_matches_remote": True},
-        "package_size": 100,
-        "title_id": "CUSA12345",
-        "version": "01.00",
-        "name": "Example Game",
-    })
-    item = {
+def _version_inspection_item():
+    return {
         "name": "Example Game - [US] [EN] [1.10].pkg",
         "download_url": "https://share.deepstorage.dev/" + "a" * 32 + "/Example.pkg",
         "size_bytes": 100,
         "folder_path": "PS4/Games/",
     }
 
+
+def _version_inspection_metadata(category, version, app_ver):
+    return {
+        "pkg_header": {"bounds_valid": True, "size_matches_remote": True},
+        "package_size": 100,
+        "title_id": "CUSA12345",
+        "version": app_ver,
+        "name": "Example Game",
+        "category": category,
+        "sfo_fields": {
+            "CATEGORY": category,
+            "VERSION": version,
+            "APP_VER": app_ver,
+        },
+    }
+
+
+def test_base_game_uses_param_sfo_version_not_app_ver(monkeypatch):
+    class Reader:
+        total_size = 100
+
+    monkeypatch.setattr(sync, "DeepStorageRangeReader", lambda url: Reader())
+    monkeypatch.setattr(
+        sync, "extract_ps4_metadata",
+        lambda reader: _version_inspection_metadata("gd", "01.10", "01.00"),
+    )
+
+    result = sync.inspect_file(_version_inspection_item(), "PS4/Games/")
+
+    assert result["version"] == "01.10"
+    assert result["pkg_category"] == "gd"
+    assert result["version_field"] == "VERSION"
+
+
+def test_non_base_game_retains_app_ver_validation(monkeypatch):
+    class Reader:
+        total_size = 100
+
+    monkeypatch.setattr(sync, "DeepStorageRangeReader", lambda url: Reader())
+    monkeypatch.setattr(
+        sync, "extract_ps4_metadata",
+        lambda reader: _version_inspection_metadata("gp", "01.10", "01.00"),
+    )
+
     with pytest.raises(
         ValueError,
         match=r"filename version 1\.10 conflicts with PARAM\.SFO APP_VER 01\.00",
     ):
-        sync.inspect_file(item, "PS4/Games/")
+        sync.inspect_file(_version_inspection_item(), "PS4/Games/")
+
+
+def test_base_game_missing_version_fails_closed(monkeypatch):
+    class Reader:
+        total_size = 100
+
+    metadata = _version_inspection_metadata("gd", None, "01.00")
+    metadata["sfo_fields"].pop("VERSION")
+    monkeypatch.setattr(sync, "DeepStorageRangeReader", lambda url: Reader())
+    monkeypatch.setattr(sync, "extract_ps4_metadata", lambda reader: metadata)
+
+    with pytest.raises(ValueError, match="PARAM.SFO did not provide a valid package version"):
+        sync.inspect_file(_version_inspection_item(), "PS4/Games/")
