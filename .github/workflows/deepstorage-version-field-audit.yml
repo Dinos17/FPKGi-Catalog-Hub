@@ -62,9 +62,13 @@ jobs:
                   cells = [markdown_cell(item.get(k)) for k in (
                       "package", "filename_version", "category", "version", "app_ver", "status"
                   )]
-                  out.write("| " + " | ".join(cells) + " |\n")
-                  if item.get("error"):
-                      out.write(f"\n- {markdown_cell(item['package'])}: {markdown_cell(item['error'])}\n")
+                  out.write("| " + " | ".join(cells) + " |\\n")
+              errors = [item for item in report["results"] if item.get("error")]
+              if errors:
+                  out.write("\\n**Package errors**\\n\\n")
+                  for item in errors:
+                      out.write(f"- {markdown_cell(item['package'])}: {markdown_cell(item['error'])}\\n")
+          PY
 
       - name: Upload audit report
         if: always()
