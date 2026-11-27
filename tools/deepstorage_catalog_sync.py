@@ -161,6 +161,8 @@ def inspect_file(item: dict[str, Any], scan_folder: str) -> dict[str, Any]:
     header = extracted.get("pkg_header")
     if not isinstance(header, dict) or header.get("bounds_valid") is not True:
         raise ValueError("PKG structural bounds are invalid; registration blocked")
+    if header.get("size_matches_remote") is not True:
+        raise ValueError("PKG header declared size does not match the remote package size")
     if extracted.get("package_size") != listed_size or reader.total_size != listed_size:
         raise ValueError("DeepStorage listing size and Range-reported package size disagree")
 
