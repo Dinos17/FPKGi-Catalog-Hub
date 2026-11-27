@@ -77,7 +77,7 @@ def inspect_one(name: str, url: str) -> dict[str, object]:
         raise PackageInspectionError(str(exc), reader) from exc
 
 
-MARKDOWN_SPECIAL = "\\\\*_{}[]()#+.!|>~-:" + chr(96)
+MARKDOWN_SPECIAL = "\\*_{}[]()#+.!|><&~-:" + chr(96)
 
 
 def markdown_cell(value: object) -> str:
