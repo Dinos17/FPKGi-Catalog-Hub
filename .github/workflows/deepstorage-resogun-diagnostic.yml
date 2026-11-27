@@ -1,0 +1,74 @@
+name: DeepStorage RESOGUN SFO Diagnostic
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: deepstorage-resogun-sfo-diagnostic
+  cancel-in-progress: false
+
+jobs:
+  inspect-one-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install bounded HTTP client
+        run: python -m pip install requests
+
+      - name: Independently extract RESOGUN PARAM.SFO
+        run: python tools/deepstorage_resogun_diagnostic.py
+
+      - name: Publish diagnostic summary
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          path = Path("reports/deepstorage-resogun-diagnostic.json")
+          summary = Path(os.environ["GITHUB_STEP_SUMMARY"])
+          with summary.open("a", encoding="utf-8") as output:
+              output.write("# DeepStorage RESOGUN PARAM.SFO diagnostic\n\n")
+              if not path.is_file():
+                  output.write("No diagnostic report was produced; inspect the failed step.\n")
+                  raise SystemExit(0)
+              report = json.loads(path.read_text(encoding="utf-8"))
+              output.write(f"- Status: **{report.get('status')}**\n")
+              output.write("- Catalog modified: **No**\n")
+              output.write("- Full package downloaded: **No**\n")
+              result = report.get("result", {})
+              if result:
+                  output.write("- Filename version: **1.10**\n")
+                  output.write(f"- Independent PARAM.SFO APP_VER: **{result.get('app_ver')}**\n")
+                  output.write(f"- Previous extractor APP_VER: **{result.get('previous_catalog_sync_extractor_app_ver')}**\n")
+                  output.write(f"- Independent result matches previous extractor: **{result.get('matches_previous_extractor')}**\n")
+                  output.write(f"- Package size: **{result.get('package_size_bytes')} bytes**\n")
+                  output.write(f"- Bytes fetched by Range: **{result.get('bytes_requested')}**\n")
+                  output.write(f"- PARAM.SFO TITLE_ID: {result.get('title_id')}\n")
+              if report.get("error"):
+                  output.write(f"- Error: {report['error']}\n")
+          PY
+
+      - name: Upload diagnostic report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: deepstorage-resogun-sfo-diagnostic
+          path: reports/deepstorage-resogun-diagnostic.json
+          if-no-files-found: warn
+          retention-days: 7
