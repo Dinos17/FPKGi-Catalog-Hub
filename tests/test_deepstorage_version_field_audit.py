@@ -30,10 +30,10 @@ EXPECTED_TARGETS = [
     ("Darksiders - [EU] [EN] [1.01].pkg", "https://share.deepstorage.dev/13b6666a51323df8e28742fd595f8df0/Darksiders%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg"),
     ("Assassin's Creed Rogue - [EU] [EN] [1.01].pkg", "https://share.deepstorage.dev/af49cbe2ea7e205208c37147427a010a/Assassin%27s%20Creed%20Rogue%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.01%5D.pkg"),
     ("Ancestors Legacy - [EU] [EN] [1.05].pkg", "https://share.deepstorage.dev/aa1208a42eba435435cb79ebda826e6c/Ancestors%20Legacy%20-%20%5BEU%5D%20%5BEN%5D%20%5B1.05%5D.pkg"),
-    ("Amnesia The Bunker - [US] [EN] [1.81].pkg", "https://share.deepstorage.dev/a9542932441da57b6b5a7557c7c8b821/Amnesia%20The%20Bunker%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.81%5D.pkg"),
     ("DEAD RISING - [US] [EN] [1.00].pkg", "https://share.deepstorage.dev/610cb4bd9935b90465b1a6d2a9d2ae98/DEAD%20RISING%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.00%5D.pkg"),
     ("Deadpool - [US] [EN] [1.00].pkg", "https://share.deepstorage.dev/d5f18fc6581d586e9e85a2a3cd787685/Deadpool%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.00%5D.pkg"),
     ("Attack on Titan - [US] [EN] [1.00].pkg", "https://share.deepstorage.dev/48ae9c0d3b6176cd05c0479f9c539d0c/Attack%20on%20Titan%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.00%5D.pkg"),
+    ("Amnesia The Bunker - [US] [EN] [1.81].pkg", "https://share.deepstorage.dev/a9542932441da57b6b5a7557c7c8b821/Amnesia%20The%20Bunker%20-%20%5BUS%5D%20%5BEN%5D%20%5B1.81%5D.pkg"),
 ]
 
 
