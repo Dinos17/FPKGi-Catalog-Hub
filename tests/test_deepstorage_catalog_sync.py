@@ -161,3 +161,38 @@ def test_blocks_declared_pkg_size_mismatch(monkeypatch):
     }
     with pytest.raises(ValueError, match="declared size does not match"):
         sync.inspect_file(item, "PS4/Games/")
+
+
+def test_metadata_error_blocks_bad_file_and_continues(monkeypatch, tmp_path):
+    root = _catalog_root(tmp_path)
+    good = _record("https://share.deepstorage.dev/" + "9" * 32 + "/Good.pkg")
+    calls = iter([
+        sync.MetadataError("PKG header is truncated"),
+        good,
+    ])
+
+    def inspect(item, folder):
+        result = next(calls)
+        if isinstance(result, Exception):
+            raise result
+        return result
+
+    monkeypatch.setattr(sync, "inspect_file", inspect)
+    report = sync.sync_catalog(_scan([
+        {
+            "name": "Malformed.pkg", "extension": "pkg",
+            "download_url": "https://share.deepstorage.dev/" + "8" * 32 + "/Malformed.pkg",
+            "size_bytes": 123456, "folder_path": "PS4/Games/",
+        },
+        {
+            "name": "Good.pkg", "extension": "pkg",
+            "download_url": good["url"], "size_bytes": good["size"],
+            "folder_path": "PS4/Games/",
+        },
+    ]), root)
+
+    data = json.loads((root / "ps4" / "games.json").read_text(encoding="utf-8"))
+    assert report["counts"]["blocked"] == 1
+    assert report["counts"]["added"] == 1
+    assert "PKG header is truncated" in report["results"][0]["reason"]
+    assert good["url"] in data["DATA"]
