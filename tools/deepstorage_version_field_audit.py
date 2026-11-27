@@ -83,7 +83,7 @@ MARKDOWN_SPECIAL = "\\*_{}[]()#+.!|><&~-:" + chr(96)
 def markdown_cell(value: object) -> str:
     """Render untrusted metadata as inert, single-line Markdown table text."""
     text = " ".join(str(value if value is not None else "—").split())
-    return "".join("\\\\" + char if char in MARKDOWN_SPECIAL else char for char in text)
+    return "".join("\\" + char if char in MARKDOWN_SPECIAL else char for char in text)
 
 
 def build_report(results: list[dict[str, object]], total_bytes: int, complete: bool) -> dict[str, object]:
