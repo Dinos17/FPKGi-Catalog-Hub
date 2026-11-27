@@ -7,7 +7,6 @@ import re
 import struct
 import sys
 from pathlib import Path
-from urllib.parse import unquote
 
 import requests
 
@@ -43,58 +42,101 @@ def filename_version(name: str) -> str | None:
     match = re.search(r"\[([0-9]+\.[0-9]+)\]\.pkg$", name, re.IGNORECASE)
     return match.group(1) if match else None
 
-def inspect_one(name: str, url: str) -> dict[str, object]:
-    reader = parser.BoundedRangeReader(url)
-    header = reader.read(0, 0x20)
-    entry_count, table_offset = parser.parse_pkg_table(header)
-    table = reader.read(table_offset, entry_count * 32)
-    sfo_offset, sfo_size = parser.find_sfo_entry(table, entry_count)
-    if reader.total_size is None or sfo_offset + sfo_size > reader.total_size:
-        raise parser.DiagnosticError("PARAM.SFO byte range exceeds reported package size")
-    fields = parser.parse_sfo_independent(reader.read(sfo_offset, sfo_size))
-    return {
-        "package": name,
-        "filename_version": filename_version(name),
-        "title": fields.get("TITLE"),
-        "title_id": fields.get("TITLE_ID"),
-        "category": fields.get("CATEGORY"),
-        "version": fields.get("VERSION"),
-        "app_ver": fields.get("APP_VER"),
-        "system_ver": fields.get("SYSTEM_VER"),
-        "package_size_bytes": reader.total_size,
-        "bytes_requested": reader.bytes_read,
-        "ranges_requested": reader.ranges,
-        "status": "success",
-    }
+class PackageInspectionError(RuntimeError):
+    def __init__(self, message: str, reader: parser.BoundedRangeReader | None):
+        super().__init__(message)
+        self.reader = reader
 
-def main() -> int:
-    output_path = Path("reports/deepstorage-version-field-audit.json")
-    output_path.parent.mkdir(parents=True, exist_ok=True)
-    results = []
-    total_bytes = 0
-    for name, url in TARGETS:
-        try:
-            item = inspect_one(name, url)
-        except (parser.DiagnosticError, requests.RequestException, UnicodeError, struct.error) as exc:
-            item = {"package": name, "filename_version": filename_version(name),
-                    "status": "failed", "error": str(exc), "bytes_requested": 0}
-        total_bytes += int(item.get("bytes_requested", 0))
-        results.append(item)
-    success_count = sum(item["status"] == "success" for item in results)
-    report = {
+
+def inspect_one(name: str, url: str) -> dict[str, object]:
+    reader: parser.BoundedRangeReader | None = None
+    try:
+        reader = parser.BoundedRangeReader(url)
+        header = reader.read(0, 0x20)
+        entry_count, table_offset = parser.parse_pkg_table(header)
+        table = reader.read(table_offset, entry_count * 32)
+        sfo_offset, sfo_size = parser.find_sfo_entry(table, entry_count)
+        if reader.total_size is None or sfo_offset + sfo_size > reader.total_size:
+            raise parser.DiagnosticError("PARAM.SFO byte range exceeds reported package size")
+        fields = parser.parse_sfo_independent(reader.read(sfo_offset, sfo_size))
+        return {
+            "package": name,
+            "filename_version": filename_version(name),
+            "title": fields.get("TITLE"),
+            "title_id": fields.get("TITLE_ID"),
+            "category": fields.get("CATEGORY"),
+            "version": fields.get("VERSION"),
+            "app_ver": fields.get("APP_VER"),
+            "system_ver": fields.get("SYSTEM_VER"),
+            "package_size_bytes": reader.total_size,
+            "bytes_requested": reader.bytes_read,
+            "ranges_requested": reader.ranges,
+            "status": "success",
+        }
+    except (parser.DiagnosticError, requests.RequestException, UnicodeError, struct.error) as exc:
+        raise PackageInspectionError(str(exc), reader) from exc
+
+
+MARKDOWN_SPECIAL = "\\\\*_{}[]()#+.!|>~-:" + chr(96)
+
+
+def markdown_cell(value: object) -> str:
+    """Render untrusted metadata as inert, single-line Markdown table text."""
+    text = " ".join(str(value if value is not None else "—").split())
+    return "".join("\\\\" + char if char in MARKDOWN_SPECIAL else char for char in text)
+
+
+def build_report(results: list[dict[str, object]], total_bytes: int, complete: bool) -> dict[str, object]:
+    succeeded = sum(item.get("status") == "success" for item in results)
+    targeted = len(TARGETS)
+    return {
         "schema_version": 1,
         "diagnostic": "deepstorage-ps4-version-field-audit",
         "read_only": True,
         "package_binary_downloaded": False,
         "catalog_modified": False,
-        "packages_targeted": len(TARGETS),
-        "packages_succeeded": success_count,
-        "packages_failed": len(TARGETS) - success_count,
+        "packages_targeted": targeted,
+        "packages_completed": len(results),
+        "packages_succeeded": succeeded,
+        "packages_failed": len(results) - succeeded,
         "total_bytes_requested": total_bytes,
         "results": results,
-        "status": "success" if success_count == len(TARGETS) else "partial_failure",
+        "status": ("success" if succeeded == targeted else "partial_failure") if complete
+                  else "in_progress",
     }
-    output_path.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+
+
+def write_report(path: Path, report: dict[str, object]) -> None:
+    temporary = path.with_suffix(path.suffix + ".tmp")
+    temporary.write_text(json.dumps(report, indent=2, ensure_ascii=False) + "\\n", encoding="utf-8")
+    temporary.replace(path)
+
+def main() -> int:
+    output_path = Path("reports/deepstorage-version-field-audit.json")
+    output_path.parent.mkdir(parents=True, exist_ok=True)
+    results: list[dict[str, object]] = []
+    total_bytes = 0
+    write_report(output_path, build_report(results, total_bytes, complete=False))
+    for name, url in TARGETS:
+        try:
+            item = inspect_one(name, url)
+        except PackageInspectionError as exc:
+            reader = exc.reader
+            item = {
+                "package": name,
+                "filename_version": filename_version(name),
+                "status": "failed",
+                "error": str(exc),
+                "bytes_requested": reader.bytes_read if reader is not None else 0,
+                "ranges_requested": reader.ranges if reader is not None else [],
+                "package_size_bytes": reader.total_size if reader is not None else None,
+            }
+        total_bytes += int(item.get("bytes_requested", 0))
+        results.append(item)
+        # Atomic checkpoint after every package so a job timeout preserves completed work.
+        write_report(output_path, build_report(results, total_bytes, complete=False))
+    report = build_report(results, total_bytes, complete=True)
+    write_report(output_path, report)
     print(json.dumps(report, indent=2, ensure_ascii=False))
     return 0 if report["status"] == "success" else 1
 
