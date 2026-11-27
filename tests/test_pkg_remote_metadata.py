@@ -17,7 +17,7 @@ def make_sfo(values):
     for key, value in values:
         key_offsets.append(len(keys))
         keys.extend(key.encode("ascii") + b"\0")
-    for (key, value), key_offset in zip(values.items(), key_offsets):
+    for (key, value), key_offset in zip(values, key_offsets):
         raw = value.encode("utf-8") + b"\0"
         indexes.extend(struct.pack("<HHIII", key_offset, 0x0204, len(raw), len(raw), len(data)))
         data.extend(raw)
