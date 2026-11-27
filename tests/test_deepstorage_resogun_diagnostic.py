@@ -82,3 +82,9 @@ def test_range_reader_refuses_redirects_and_full_downloads():
         )
         with pytest.raises(diagnostic.DiagnosticError, match="did not honor"):
             reader.read(0, 32)
+
+
+def test_encrypted_param_sfo_is_refused():
+    table = struct.pack(">IIIIII8x", 0x1000, 0, 0x80000000, 0, 0x4000, 128)
+    with pytest.raises(diagnostic.DiagnosticError, match="encrypted"):
+        diagnostic.find_sfo_entry(table, 1)
