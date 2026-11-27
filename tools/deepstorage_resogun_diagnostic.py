@@ -18,6 +18,7 @@ TIMEOUT = (10, 20)
 MAX_ENTRIES = 4096
 MAX_SFO_SIZE = 1024 * 1024
 MAX_TABLE_SIZE = MAX_ENTRIES * 32
+MAX_RANGE_SIZE = MAX_SFO_SIZE
 PREVIOUS_EXTRACTOR_APP_VER = "01.00"
 
 class DiagnosticError(RuntimeError):
@@ -49,7 +50,7 @@ class BoundedRangeReader:
         self.ranges: list[dict[str, int]] = []
 
     def read(self, start: int, length: int) -> bytes:
-        if start < 0 or length <= 0 or length > MAX_TABLE_SIZE:
+        if start < 0 or length <= 0 or length > MAX_RANGE_SIZE:
             raise DiagnosticError("Requested range is outside diagnostic limits")
         end = start + length - 1
         response = None
