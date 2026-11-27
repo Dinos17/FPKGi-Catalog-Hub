@@ -10,7 +10,7 @@ from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
-from urllib.parse import urlparse
+from urllib.parse import unquote, urlparse
 
 import requests
 
@@ -73,6 +73,19 @@ def _child_folder_path(raw: Any, parent: str) -> str:
         raise ScanError("Folder listing did not identify an immediate child folder")
     if relative in {"", ".", ".."}:
         raise ScanError("Listing contains a traversal or empty folder name")
+
+    # Reject percent-encoded separators and traversal, including double-encoded
+    # forms, before the value is ever used as an API folder path.
+    decoded = relative
+    for _ in range(8):
+        next_decoded = unquote(decoded)
+        if next_decoded == decoded:
+            break
+        if "/" in next_decoded or "\\" in next_decoded or next_decoded in {".", ".."}:
+            raise ScanError("Listing contains encoded folder traversal or separators")
+        decoded = next_decoded
+    else:
+        raise ScanError("Listing contains excessively encoded folder path")
     return parent_base + "/" + relative + "/"
 
 
@@ -100,11 +113,27 @@ class DeepStorageScanner:
                 f"{API_ROOT}/{SHARE_USERNAME}",
                 params={"path": folder_path, "offset": offset, "sort": "date_desc"},
                 timeout=TIMEOUT,
+                allow_redirects=False,
             )
         except requests.RequestException as exc:
             raise ScanError(f"DeepStorage listing request failed ({type(exc).__name__})") from exc
         if response.status_code != 200:
+            # Redirects are deliberately not followed: the scanner must never
+            # fetch listing data from a host other than the fixed API endpoint.
             raise ScanError(f"DeepStorage listing for {folder_path} returned HTTP {response.status_code}")
+        response_url = getattr(response, "url", None)
+        if not isinstance(response_url, str):
+            raise ScanError("DeepStorage listing response is missing its final URL")
+        parsed_response_url = urlparse(response_url)
+        try:
+            response_port = parsed_response_url.port
+        except ValueError as exc:
+            raise ScanError("DeepStorage listing response has an invalid URL") from exc
+        if (parsed_response_url.scheme != "https"
+                or parsed_response_url.hostname != ALLOWED_HOST
+                or parsed_response_url.username or parsed_response_url.password
+                or response_port not in (None, 443)):
+            raise ScanError("DeepStorage listing response URL is outside the approved HTTPS host")
         try:
             payload = response.json()
         except (ValueError, requests.JSONDecodeError) as exc:
