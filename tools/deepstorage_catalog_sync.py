@@ -20,11 +20,11 @@ import requests
 try:
     from .akirabox_catalog_compare import normalize_title, parse_source_metadata
     from .merge import validate_entry
-    from .pkg_remote_metadata import extract_ps4_metadata
+    from .pkg_remote_metadata import MetadataError, extract_ps4_metadata
 except ImportError:  # Running as a script from the tools directory.
     from akirabox_catalog_compare import normalize_title, parse_source_metadata
     from merge import validate_entry
-    from pkg_remote_metadata import extract_ps4_metadata
+    from pkg_remote_metadata import MetadataError, extract_ps4_metadata
 
 HOST = "share.deepstorage.dev"
 CATALOGS = {
@@ -267,7 +267,7 @@ def sync_catalog(scan: dict[str, Any], catalog_root: Path) -> dict[str, Any]:
             continue
         try:
             inspected.append(inspect_file(item, scan_folder))
-        except (ValueError, requests.RequestException, OSError) as exc:
+        except (MetadataError, ValueError, requests.RequestException, OSError) as exc:
             results.append({
                 "status": "blocked",
                 "name": item.get("name"),
